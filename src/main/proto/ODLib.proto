@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package odlib;
+
+option java_package = "io.grpc.examples";
+
+
+message Box {
+    float top_1 = 1;
+    float top_2 = 2 ;
+    float bottom_1 = 3;
+    float bottom_2 = 4;
+}
+
+message Detection {
+    float score = 1;
+    Box box = 2;
+    int32 class = 3;
+
+}
+
+message Image {
+    int32 id = 1;
+    bytes data = 2;
+}
+
+message Results {
+    repeated Detection detections = 1;
+    int32 id = 2;
+}
+
+message Empty {}
+
+message Status{
+    int32 code = 1;
+}
+
+service ODCommunication {
+    rpc putJob (Image) returns (Status) {};
+    rpc putResult (Results) returns (Status) {};
+}

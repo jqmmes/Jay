@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/IdeaProjects-ODLib.iml" filepath="$PROJECT_DIR$/.idea/modules/IdeaProjects-ODLib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ODLib_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ODLib_main.iml" group="ODLib" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ODLib_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ODLib_test.iml" group="ODLib" />
+    </modules>
+  </component>
+</project>

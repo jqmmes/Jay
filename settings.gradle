@@ -1,0 +1,2 @@
+//include ':Android'
+rootProject.name = 'ODLib'

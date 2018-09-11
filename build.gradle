@@ -1,0 +1,79 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.61"
+    }
+}
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.2.61'
+}
+
+plugins {
+    id "com.google.protobuf" version "0.8.6"
+    id "java"
+}
+
+//apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+// Generate IntelliJ IDEA's .idea & .iml project files
+// Starting with 0.8.4 of protobuf-gradle-plugin, *.proto and the gen output files are added
+// to IntelliJ as sources. It is no longer necessary to add them manually to the idea {} block
+// to jump to definitions from Java and Kotlin files.
+// For best results, install the Protobuf and Kotlin plugins for IntelliJ.
+apply plugin: 'idea'
+
+// Provide convenience executables for trying out the examples.
+//apply plugin: 'application'
+
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+repositories {
+    mavenCentral()
+}
+
+// IMPORTANT: You probably want the non-SNAPSHOT version of gRPC. Make sure you
+// are looking at a tagged version of the example and not "master"!
+
+// Feel free to delete the comment at the next line. It is just for safely
+// updating the version in our release process.
+//def grpcVersion = '1.16.0-SNAPSHOT' // CURRENT_GRPC_VERSION
+def grpcVersion = '1.15.0' // CURRENT_GRPC_VERSION
+
+sourceSets {
+    main.proto.srcDirs += 'src/main/proto/'
+}
+
+dependencies {
+    compile "javax.annotation:javax.annotation-api:1.3.2"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile "com.google.api.grpc:proto-google-common-protos:1.12.0"
+    compile "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    compile "io.grpc:grpc-protobuf:${grpcVersion}"
+    compile "io.grpc:grpc-stub:${grpcVersion}"
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.6.1"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.15.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
