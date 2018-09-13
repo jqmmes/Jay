@@ -18,6 +18,7 @@ plugins {
 apply plugin: 'java-library'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
+//apply plugin: 'fatjar'
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
@@ -87,11 +88,23 @@ protobuf {
             }
         }
     }
-    /*generateProtoTasks {
-        all()*.plugins {
-            grpc {
-                option 'lite'
-            }
-        }
-    }*/
 }
+
+/*task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': "pt.up.fc.dcc.hyrax.odlib.Odlib"
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}*/
+
+
+/*jar {
+    manifest {
+        attributes('Main-Class': "pt.up.fc.dcc.hyrax.odlib.Odlib",
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version)
+    }
+}
+*/

@@ -42,14 +42,6 @@ internal constructor(private val channel: ManagedChannel) {
             return
         }
         println("RPC putJobAsync success")
-        /*val response: HelloReply = try {
-            blockingStub.putJobAsync(request)
-        } catch (e: StatusRuntimeException) {
-            logger.log(Level.WARNING, "RPC failed: {0}", e.status)
-            return
-        }*/
-
-        //logger.info("Greeting: ${response.message}")
     }
 
 

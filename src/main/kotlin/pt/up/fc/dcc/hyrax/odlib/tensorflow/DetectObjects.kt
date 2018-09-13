@@ -25,8 +25,8 @@ import org.tensorflow.types.UInt8
  * Java inference for the Object Detection API at:
  * https://github.com/tensorflow/models/blob/master/research/object_detection/
  */
-//class DetectObjects(val modelPath: String, val labelPath: String, val imgPath: String, private val minimumScore: Float = 0.5f) {
-class DetectObjects() {
+//class JobObjects(val modelPath: String, val labelPath: String, val imgPath: String, private val minimumScore: Float = 0.5f) {
+class DetectObjects {
 
     private lateinit var modelPath: String
     private lateinit var labelPath: String
@@ -53,6 +53,10 @@ class DetectObjects() {
 
     internal fun detectObjects(imgPath: String) {
         // TODO: Check model is loaded
+        if (!::loadedModel.isInitialized) {
+            println("Model not loaded.")
+            return
+        }
         loadedModel.use { model ->
             var outputs: List<Tensor<*>>? = null
             makeImageTensor(imgPath).use { input ->
