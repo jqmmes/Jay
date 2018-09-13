@@ -24,7 +24,7 @@ class grpcServer(private val port: Int = 50051) {
                 .addService(ODCommunicationImpl())
                 .build()
                 .start()
-        logger.log(Level.INFO, "Server started, listening on {0}", port)
+        //logger.log(Level.INFO, "Server started, listening on {0}", port)
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
                 // Use stderr here since the logger may have been reset by its JVM shutdown hook.
@@ -47,6 +47,12 @@ class grpcServer(private val port: Int = 50051) {
         server?.awaitTermination()
     }
 
+    internal fun startServer() {
+        val server = grpcServer()
+        server.start()
+        server.blockUntilShutdown()
+    }
+
     internal class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
         override fun putJobAsync(req: ODLib.Image?, responseObserver: StreamObserver<ODLib.Status>) {
@@ -67,17 +73,5 @@ class grpcServer(private val port: Int = 50051) {
             responseObserver.onCompleted()
         }
 
-    }
-
-    companion object {
-        private val logger = Logger.getLogger(grpcServer::class.java.name)
-
-        @Throws(IOException::class, InterruptedException::class)
-        //@JvmStatic
-        fun startServer() {
-            val server = grpcServer()
-            server.start()
-            server.blockUntilShutdown()
-        }
     }
 }
