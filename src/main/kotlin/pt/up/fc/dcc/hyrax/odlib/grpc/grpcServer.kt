@@ -72,6 +72,5 @@ class grpcServer(private val port: Int = 50051) {
             responseObserver.onNext(reply)
             responseObserver.onCompleted()
         }
-
     }
 }
