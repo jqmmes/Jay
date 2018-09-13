@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="ODLib_main" />
     <orderEntry type="library" name="Gradle: org.tensorflow:tensorflow:1.10.0" level="project" />
     <orderEntry type="library" name="Gradle: org.tensorflow:libtensorflow:1.10.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.tensorflow:proto:1.10.0" level="project" />
     <orderEntry type="library" name="Gradle: javax.annotation:javax.annotation-api:1.3.2" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.61" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-protobuf:1.15.0" level="project" />
@@ -48,9 +49,9 @@
     <orderEntry type="library" name="Gradle: io.grpc:grpc-netty-shaded:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-stub:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: org.tensorflow:libtensorflow_jni:1.10.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.google.protobuf:protobuf-java:3.5.1" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.2.61" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.2.61" level="project" />
-    <orderEntry type="library" name="Gradle: com.google.protobuf:protobuf-java:3.5.1" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-protobuf-lite:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: io.grpc:grpc-core:1.15.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.guava:guava:20.0" level="project" />
@@ -63,7 +64,6 @@
     <orderEntry type="library" name="Gradle: com.google.errorprone:error_prone_annotations:2.2.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.findbugs:jsr305:3.0.0" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.mojo:animal-sniffer-annotations:1.17" level="project" />
-    <orderEntry type="library" name="Bundled Protobuf Distribution" level="application" />
   </component>
   <component name="TestModuleProperties" production-module="ODLib_main" />
 </module>
