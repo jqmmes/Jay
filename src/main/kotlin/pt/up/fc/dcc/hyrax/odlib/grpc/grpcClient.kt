@@ -1,11 +1,12 @@
-package pt.up.fc.dcc.hyrax.odlib
+package pt.up.fc.dcc.hyrax.odlib.grpc
 
 import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
+import pt.up.fc.dcc.hyrax.odlib.ODCommunicationGrpc
+import pt.up.fc.dcc.hyrax.odlib.ODLib
 import java.util.concurrent.TimeUnit
-import java.util.logging.Level
 import java.util.logging.Logger
 
 
@@ -31,18 +32,18 @@ internal constructor(private val channel: ManagedChannel) {
 
 
     /** Say hello to server.  */
-    fun putJob(id: Int, data: ByteArray) {
+    fun putJobAsync(id: Int, data: ByteArray) {
         //logger.log(Level.INFO, "Will try to greet {0}...", name)
         val request = ODLib.Image.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
         try {
-            blockingStub.putJob(request)
+            blockingStub.putJobAsync(request)
         } catch (e: StatusRuntimeException) {
             println("RPC failed: " + e.status)
             return
         }
-        println("RPC putJob success")
+        println("RPC putJobAsync success")
         /*val response: HelloReply = try {
-            blockingStub.putJob(request)
+            blockingStub.putJobAsync(request)
         } catch (e: StatusRuntimeException) {
             logger.log(Level.WARNING, "RPC failed: {0}", e.status)
             return
@@ -66,7 +67,7 @@ internal constructor(private val channel: ManagedChannel) {
             try {
                 /* Access a service running on the local machine on port 50051 */
                 val user = if (args.size > 0) "world" else "world"
-                client.putJob(user)
+                client.putJobAsync(user)
             } finally {
                 client.shutdown()
             }

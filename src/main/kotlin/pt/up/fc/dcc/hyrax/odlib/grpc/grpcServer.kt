@@ -1,8 +1,10 @@
-package pt.up.fc.dcc.hyrax.odlib
+package pt.up.fc.dcc.hyrax.odlib.grpc
 
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.stub.StreamObserver
+import pt.up.fc.dcc.hyrax.odlib.ODCommunicationGrpc
+import pt.up.fc.dcc.hyrax.odlib.ODLib
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -12,16 +14,14 @@ import java.util.logging.Logger
  *
  * Note: this file was automatically converted from Java
  */
-class grpcServer {
+class grpcServer(private val port: Int = 50051) {
 
     private var server: Server? = null
 
     @Throws(IOException::class)
     private fun start() {
-        /* The port on which the server should run */
-        val port = 50051
         server = ServerBuilder.forPort(port)
-                .addService(GreeterImpl())
+                .addService(ODCommunicationImpl())
                 .build()
                 .start()
         logger.log(Level.INFO, "Server started, listening on {0}", port)
@@ -47,24 +47,34 @@ class grpcServer {
         server?.awaitTermination()
     }
 
-    internal class GreeterImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
+    internal class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
-        override fun putJob(req: ODLib.Image?, responseObserver: StreamObserver<ODLib.Status>) {
+        override fun putJobAsync(req: ODLib.Image?, responseObserver: StreamObserver<ODLib.Status>) {
             val reply = ODLib.Status.newBuilder().setCode(0).build()
             responseObserver.onNext(reply)
             responseObserver.onCompleted()
         }
+
+        override fun putResultAsync(request: ODLib.Results?, responseObserver: StreamObserver<ODLib.Status>) {
+            val reply = ODLib.Status.newBuilder().setCode(0).build()
+            responseObserver.onNext(reply)
+            responseObserver.onCompleted()
+        }
+
+        override fun putJobSync(request: ODLib.Image?, responseObserver: StreamObserver<ODLib.Results>) {
+            val reply = ODLib.Results.newBuilder().build()
+            responseObserver.onNext(reply)
+            responseObserver.onCompleted()
+        }
+
     }
 
     companion object {
         private val logger = Logger.getLogger(grpcServer::class.java.name)
 
-        /**
-         * Main launches the server from the command line.
-         */
         @Throws(IOException::class, InterruptedException::class)
-        @JvmStatic
-        fun main(args: Array<String>) {
+        //@JvmStatic
+        fun startServer() {
             val server = grpcServer()
             server.start()
             server.blockUntilShutdown()

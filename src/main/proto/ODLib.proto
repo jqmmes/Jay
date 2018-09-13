@@ -36,6 +36,7 @@ message Status{
 }
 
 service ODCommunication {
-    rpc putJob (Image) returns (Status) {};
-    rpc putResult (Results) returns (Status) {};
+    rpc putJobAsync (Image) returns (Status) {};
+    rpc putResultAsync (Results) returns (Status) {};
+    rpc putJobSync (Image) returns (Results) {};
 }

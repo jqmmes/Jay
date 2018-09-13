@@ -4,8 +4,8 @@
     <bytecodeTargetLevel>
       <module name="Android_main" target="1.8" />
       <module name="Android_test" target="1.8" />
-      <module name="ODLib_main" target="1.8" />
-      <module name="ODLib_test" target="1.8" />
+      <module name="ODLib_main" target="1.10" />
+      <module name="ODLib_test" target="1.10" />
     </bytecodeTargetLevel>
   </component>
 </project>
