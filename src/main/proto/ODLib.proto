@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package odlib;
 
-option java_package = "io.grpc.examples";
+option java_package = "pt.up.fc.dcc.hyrax.odlib";
 
 
 message Box {
