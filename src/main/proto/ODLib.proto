@@ -31,12 +31,29 @@ message Results {
 
 message Empty {}
 
-message Status{
+message Status {
     int32 code = 1;
+}
+
+message Models {
+    repeated Model models = 1;
+}
+
+message Model {
+    int32 id = 1;
+    string name = 2;
+}
+
+message ModelConfig {
+    Model model = 1;
+    map<string, string> configs = 2;
 }
 
 service ODCommunication {
     rpc putJobAsync (Image) returns (Status) {};
     rpc putResultAsync (Results) returns (Status) {};
     rpc putJobSync (Image) returns (Results) {};
+    rpc listModels (Empty) returns (Models) {};
+    rpc selectModel (Model) returns (Status) {};
+    rpc configModel (ModelConfig) returns (Status) {};
 }

@@ -8,7 +8,6 @@ import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
 import java.io.File
 import java.io.IOException
-import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -16,42 +15,40 @@ import java.nio.file.Paths
 import javax.imageio.ImageIO
 import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
-import org.tensorflow.framework.MetaGraphDef
-import org.tensorflow.framework.SignatureDef
-import org.tensorflow.framework.TensorInfo
 import org.tensorflow.types.UInt8
+import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 
 /**
  * Java inference for the Object Detection API at:
  * https://github.com/tensorflow/models/blob/master/research/object_detection/
  */
 //class JobObjects(val modelPath: String, val labelPath: String, val imgPath: String, private val minimumScore: Float = 0.5f) {
-class DetectObjects {
+class cloudletDetectObjects : DetectObjects {
+    override var minimumScore: Float = 0.5f
 
     private lateinit var modelPath: String
     private lateinit var labelPath: String
     private lateinit var loadedModel : SavedModelBundle
     private lateinit var labels : Array<String?>
-    private var minimumScore: Float = 0.5f
 
 
-    internal fun setModel(path: String, label: String = String(), score: Float = minimumScore) {
+    override fun setModel(path: String, label: String, score: Float) {
         modelPath = path
         loadedModel = SavedModelBundle.load(modelPath, "serve")
         if (!label.isEmpty()) setLabels(label)
         if (score != minimumScore) setScore(score)
     }
 
-    internal fun setLabels(label: String) {
+    override fun setLabels(label: String) {
         labelPath = label
         labels = loadLabels(labelPath)
     }
 
-    internal fun setScore(score: Float) {
+    override fun setScore(score: Float) {
         if (score in 0.0f..1.0f) minimumScore = score
     }
 
-    internal fun detectObjects(imgPath: String) {
+    override fun detectObjects(imgPath: String) {
         // TODO: Check model is loaded
         if (!::loadedModel.isInitialized) {
             println("Model not loaded.")

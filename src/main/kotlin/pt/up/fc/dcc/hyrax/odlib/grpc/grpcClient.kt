@@ -13,7 +13,7 @@ import java.util.logging.Logger
 class grpcClient
     /** Construct client for accessing RouteGuide server using the existing channel.  */
 internal constructor(private val channel: ManagedChannel) {
-    private val logger = Logger.getLogger(grpcClient::class.java.name)
+    //private val logger = Logger.getLogger(grpcClient::class.java.name)
     private val blockingStub: ODCommunicationGrpc.ODCommunicationBlockingStub = ODCommunicationGrpc.newBlockingStub(channel)
 
 

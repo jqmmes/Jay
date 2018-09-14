@@ -6,10 +6,8 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.ODLib
 import pt.up.fc.dcc.hyrax.odlib.ODService
-import pt.up.fc.dcc.hyrax.odlib.tensorflow.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.tensorflow.cloudletDetectObjects
 import java.io.IOException
-import java.util.logging.Level
-import java.util.logging.Logger
 
 /**
  * Server that manages startup/shutdown of a `Greeter` server.
@@ -74,7 +72,7 @@ class grpcServer(private val port: Int = 50051) {
             val reply = ODLib.Results.newBuilder().build()
             responseObserver.onNext(reply)
             responseObserver.onCompleted()
-            DetectObjects()
+            cloudletDetectObjects()
         }
     }
 }

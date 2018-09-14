@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.tensorflow.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.tensorflow.cloudletDetectObjects
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
@@ -31,7 +31,7 @@ import kotlin.concurrent.thread
 
     inner class JobObjects(imageData: ByteArray) : Runnable {
         override fun run() {
-            DetectObjects()
+            cloudletDetectObjects()
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
     }
