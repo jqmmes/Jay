@@ -81,5 +81,6 @@
     <orderEntry type="library" name="Gradle: io.netty:netty-buffer:4.1.27.Final" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-resolver:4.1.27.Final" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-common:4.1.27.Final" level="project" />
+    <orderEntry type="library" name="Bundled Protobuf Distribution" level="application" />
   </component>
 </module>
