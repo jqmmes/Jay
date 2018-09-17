@@ -1,0 +1,14 @@
+apply plugin: 'kotlin'
+
+
+dependencies {
+
+    implementation "org.tensorflow:tensorflow:${TENSORFLOW_VERSION}"
+    implementation "org.tensorflow:libtensorflow:${TENSORFLOW_VERSION}"
+    implementation "org.tensorflow:proto:${TENSORFLOW_VERSION}"
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
+
+
+    implementation project(':ODLib-Common')
+}

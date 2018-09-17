@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package odlib;
+
+option java_package = "pt.up.fc.dcc.hyrax.ODLib";
+
+
+message Box {
+    float top_1 = 1;
+    float top_2 = 2 ;
+    float bottom_1 = 3;
+    float bottom_2 = 4;
+}
+
+message Detection {
+    float score = 1;
+    Box box = 2;
+    int32 class = 3;
+
+}
+
+message Image {
+    int32 id = 1;
+    bytes data = 2;
+}
+
+message Results {
+    repeated Detection detections = 1;
+    int32 id = 2;
+}
+
+message Empty {}
+
+message Status {
+    int32 code = 1;
+}
+
+message Models {
+    repeated Model models = 1;
+}
+
+message Model {
+    int32 id = 1;
+    string name = 2;
+}
+
+message ModelConfig {
+    Model model = 1;
+    map<string, string> configs = 2;
+}
+
+service ODCommunication {
+    rpc putJobAsync (Image) returns (Status) {};
+    rpc putResultAsync (Results) returns (Status) {};
+    rpc putJobSync (Image) returns (Results) {};
+    rpc listModels (Empty) returns (Models) {};
+    rpc selectModel (Model) returns (Status) {};
+    rpc configModel (ModelConfig) returns (Status) {};
+}
