@@ -3,26 +3,31 @@ package pt.up.fc.dcc.hyrax.odlib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
 
 /**
- * TODO: Threadpool to execute jobs
- * TODO: Run as a service
  *
  */
 
  class ODService(val localDetect: DetectObjects) {
 
     private val jobQueue = LinkedBlockingQueue<JobObjects>()
+    private var running = false
+    private var executor : ExecutorService = Executors.newFixedThreadPool(5)
 
     internal fun startService() : ODService{
         thread(start = true, isDaemon = true, name = "ODServiceThread") {
-            while (true) {
-                val executor = Executors.newFixedThreadPool(5)
-                executor.execute(jobQueue.take())
+            running = true
+            while (running) {
+                try {
+                    executor.execute(jobQueue.take())
+                } catch (e: InterruptedException) {
+                    running = false
+                }
             }
         }
         return this
@@ -38,7 +43,7 @@ import kotlin.concurrent.thread
     }
 
     fun stop() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        running = false
     }
 
     inner class JobObjects(var imageData: ByteArray, var callback: ODCallback? = null) : Runnable {

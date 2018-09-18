@@ -3,12 +3,10 @@ package pt.up.fc.dcc.hyrax.odlib.grpc
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.stub.StreamObserver
-import pt.up.fc.dcc.hyrax.ODLib.ODCommunicationGrpc
-import pt.up.fc.dcc.hyrax.ODLib.*
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.ODService
-import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
-//import pt.up.fc.dcc.hyrax.odlib.tensorflow.cloudletDetectObjects
 import java.io.IOException
 
 /**
@@ -59,24 +57,24 @@ internal class GRPCServer(private val port: Int = 50051, internal val odService:
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
         // Just send to odService and return
-        override fun putJobAsync(req: ODLib.Image?, responseObserver: StreamObserver<ODLib.Status>) {
-            val reply = ODLib.Status.newBuilder().setCode(odService.putJob().code).build()
+        override fun putJobAsync(req: ODProto.Image?, responseObserver: StreamObserver<ODProto.Status>) {
+            val reply = ODProto.Status.newBuilder().setCode(odService.putJob().code).build()
             responseObserver.onNext(reply)
             responseObserver.onCompleted()
         }
 
         // Just send to odService and return
-        override fun putResultAsync(request: ODLib.Results?, responseObserver: StreamObserver<ODLib.Status>) {
-            val reply = ODLib.Status.newBuilder().setCode(odService.putJob().code).build()
+        override fun putResultAsync(request: ODProto.Results?, responseObserver: StreamObserver<ODProto.Status>) {
+            val reply = ODProto.Status.newBuilder().setCode(odService.putJob().code).build()
             responseObserver.onNext(reply)
             responseObserver.onCompleted()
         }
 
         // Wait for an answer and send it back
-        override fun putJobSync(request: ODLib.Image?, responseObserver: StreamObserver<ODLib.Results>) {
+        override fun putJobSync(request: ODProto.Image?, responseObserver: StreamObserver<ODProto.Results>) {
             class xpto : ODCallback {
                 override fun onNewResult() {
-                    val reply = ODLib.Results.newBuilder().build()
+                    val reply = ODProto.Results.newBuilder().build()
                     responseObserver.onNext(reply)
                     responseObserver.onCompleted()
                 }

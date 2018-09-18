@@ -48,8 +48,6 @@ android {
 
 dependencies {
     implementation "org.tensorflow:tensorflow-android:${TENSORFLOW_VERSION}"
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
-
     implementation project(':ODLib-Common')
 }

@@ -1,3 +1,2 @@
-//include ':Android'
 rootProject.name = 'ODLib'
 include ':ODLib-Common', ':ODLib-Cloudlet', ':ODLib-Android'

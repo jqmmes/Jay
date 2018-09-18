@@ -1,8 +1,9 @@
 syntax = "proto3";
 
-package odlib;
+//package odlib;
 
-option java_package = "pt.up.fc.dcc.hyrax.ODLib";
+option java_package = "pt.up.fc.dcc.hyrax.odlib.protoc";
+option java_outer_classname = "ODProto";
 
 
 message Box {

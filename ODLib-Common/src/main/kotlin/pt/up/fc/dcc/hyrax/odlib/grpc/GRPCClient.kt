@@ -4,11 +4,10 @@ import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
-import pt.up.fc.dcc.hyrax.odlib.Model
-import pt.up.fc.dcc.hyrax.odlib.ODCommunicationGrpc
-import pt.up.fc.dcc.hyrax.odlib.ODLib
+import pt.up.fc.dcc.hyrax.odlib.ODModel
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.util.concurrent.TimeUnit
-import java.util.logging.Logger
 
 
 class GRPCClient
@@ -35,7 +34,7 @@ internal constructor(private val channel: ManagedChannel) {
     /** Say hello to server.  */
     fun putJobAsync(id: Int, data: ByteArray) {
         //logger.log(Level.INFO, "Will try to greet {0}...", name)
-        val request = ODLib.Image.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
+        val request = ODProto.Image.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
         try {
             blockingStub.putJobAsync(request)
         } catch (e: StatusRuntimeException) {
@@ -45,7 +44,7 @@ internal constructor(private val channel: ManagedChannel) {
         println("RPC putJobAsync success")
     }
 
-    fun getModels() : HashSet<Model> {
+    fun getModels() : HashSet<ODModel> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

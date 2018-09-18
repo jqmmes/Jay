@@ -4,7 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 
 open class RemoteODClient(private val address: String, private val port: Int) {
 
-    private var models : MutableSet<Model> = HashSet()
+    private var models : MutableSet<ODModel> = HashSet()
     private var remoteClient: GRPCClient = GRPCClient(address, port)
 
 
@@ -16,7 +16,7 @@ open class RemoteODClient(private val address: String, private val port: Int) {
         return port
     }
 
-    fun getModels() : List<Model> {
+    fun getModels() : List<ODModel> {
         models = remoteClient.getModels()
         return models.toList()
     }
