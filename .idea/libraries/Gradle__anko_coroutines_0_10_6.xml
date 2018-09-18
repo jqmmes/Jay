@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: anko-coroutines-0.10.6">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.anko/anko-coroutines/0.10.6/4b50259d9540977c659761c25b6a50f17080de04/anko-coroutines-0.10.6.aar" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.anko/anko-coroutines/0.10.6/60e9d77ea5b2b1921a5050989381a8607f1add37/anko-coroutines-0.10.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

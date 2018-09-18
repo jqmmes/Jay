@@ -24,6 +24,7 @@ allprojects {
 
 ext {
     KOTLIN_VERSION = '1.2.70'
+    ANKO_VERSION  = '0.10.6'
     GRADLE_VERSION = '3.1.4'
     GRPC_VERSION = '1.15.0'
     TENSORFLOW_VERSION = '1.10.0'

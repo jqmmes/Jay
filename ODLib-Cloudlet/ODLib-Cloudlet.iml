@@ -63,15 +63,40 @@
     <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-common-1.2.70" level="project" />
     <orderEntry type="library" exported="" name="Gradle: annotations-13.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto-google-common-protos-1.12.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-sqlite-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-sdk27-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-sdk27-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-appcompat-v7-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-support-v4-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-appcompat-v7-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-appcompat-v7-commons-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-support-v4-commons-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-commons-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: sqlite-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: platform-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: appcompatV7-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supportV4-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: commons-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-android-0.23.4" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-core-0.23.4" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: javax.annotation-api-1.3.2" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-netty-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-stub-1.15.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-core-common-0.23.4" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: atomicfu-common-0.10.3" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-combine-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-functional-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-jvm-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-core-3.3.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-core-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-codec-http2-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-handler-proxy-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: protobuf-lite-3.0.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: guava-20.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: appcompat-v7-27.1.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-context-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: gson-2.7" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: opencensus-contrib-grpc-metrics-0.12.3" level="project" />
@@ -84,19 +109,57 @@
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-codec-socks-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-codec-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-transport-4.1.27.Final" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-v4-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-fragment-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: animated-vector-drawable-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-core-ui-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-core-utils-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-vector-drawable-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-media-compat-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-compat-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: support-annotations-27.1.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-buffer-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-resolver-4.1.27.Final" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: livedata-core-1.1.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: viewmodel-1.1.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-common-4.1.27.Final" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: runtime-1.1.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: common-1.1.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto-google-common-protos-1.12.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sqlite-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sdk27-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sdk27-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-appcompat-v7-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-support-v4-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-appcompat-v7-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-appcompat-v7-commons-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-support-v4-commons-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-commons-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: sqlite-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: platform-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: appcompatV7-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: supportV4-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: commons-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-android-0.23.4" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-core-0.23.4" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: javax.annotation-api-1.3.2" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-netty-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-stub-1.15.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-core-common-0.23.4" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: atomicfu-common-0.10.3" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-combine-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-functional-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-jvm-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-core-3.3.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-core-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-codec-http2-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-handler-proxy-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: protobuf-lite-3.0.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: guava-20.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: appcompat-v7-27.1.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-context-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: gson-2.7" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: opencensus-contrib-grpc-metrics-0.12.3" level="project" />
@@ -109,8 +172,21 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-codec-socks-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-codec-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-transport-4.1.27.Final" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-v4-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-fragment-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: animated-vector-drawable-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-core-ui-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-core-utils-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-vector-drawable-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-media-compat-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-compat-27.1.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: support-annotations-27.1.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-buffer-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-resolver-4.1.27.Final" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: livedata-core-1.1.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: viewmodel-1.1.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-common-4.1.27.Final" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: runtime-1.1.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: common-1.1.0" level="project" />
   </component>
 </module>

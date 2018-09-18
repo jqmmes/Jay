@@ -22,6 +22,8 @@ dependencies {
     // Kotlin
     //noinspection DifferentStdlibGradleVersion
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
+    implementation "org.jetbrains.anko:anko:$ANKO_VERSION"
+    implementation 'nl.komponents.kovenant:kovenant:3.3.0'
     // GRPC
     implementation 'com.google.api.grpc:proto-google-common-protos:1.12.0'
     implementation "io.grpc:grpc-netty:${GRPC_VERSION}"
@@ -64,5 +66,11 @@ protobuf {
 idea {
     module {
         sourceDirs += file("$buildDir/generated-sources/release/javalite");
+    }
+}
+
+kotlin {
+    experimental {
+        coroutines "enable"
     }
 }

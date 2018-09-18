@@ -7,4 +7,6 @@ interface DetectObjects {
     fun setLabels(label: String)
     fun setScore(score: Float)
     fun detectObjects(imgPath: String)
+    fun detectObjects(imgData: ByteArray)
+    fun getByteArrayFromImage(imgPath: String) : ByteArray
 }

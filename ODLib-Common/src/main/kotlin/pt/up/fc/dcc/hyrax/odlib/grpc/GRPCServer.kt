@@ -3,10 +3,12 @@ package pt.up.fc.dcc.hyrax.odlib.grpc
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.stub.StreamObserver
+import pt.up.fc.dcc.hyrax.odlib.ODService
+import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.ODService
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
 import java.io.IOException
 
 /**
@@ -58,15 +60,14 @@ internal class GRPCServer(private val port: Int = 50051, internal val odService:
 
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.Image?, responseObserver: StreamObserver<ODProto.Status>) {
-            val reply = ODProto.Status.newBuilder().setCode(odService.putJob().code).build()
-            responseObserver.onNext(reply)
+            responseObserver.onNext(ODUtils.genStatus(ReturnStatus.Success))
             responseObserver.onCompleted()
         }
 
         // Just send to odService and return
         override fun putResultAsync(request: ODProto.Results?, responseObserver: StreamObserver<ODProto.Status>) {
-            val reply = ODProto.Status.newBuilder().setCode(odService.putJob().code).build()
-            responseObserver.onNext(reply)
+            odService.newRemoteResultAvailable(request!!.id, ODUtils.parseResults(request))
+            responseObserver.onNext(ODUtils.genStatus(ReturnStatus.Success))
             responseObserver.onCompleted()
         }
 
@@ -79,7 +80,19 @@ internal class GRPCServer(private val port: Int = 50051, internal val odService:
                     responseObserver.onCompleted()
                 }
             }
-            odService.putJobAndWay(xpto())
+            odService.putRemoteJob(request!!.id, request.data.toByteArray(), xpto())
+        }
+
+        override fun listModels (request: ODProto.Empty?, responseObserver: StreamObserver<ODProto.Models>) {
+
+        }
+
+        override fun selectModel (request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>) {
+            ODUtils.parseModel(request)
+        }
+
+        override fun configModel (request: ODProto.ModelConfig?, responseObserver: StreamObserver<ODProto.Status>) {
+            ODUtils.parseModelConfig(request)
         }
     }
 }

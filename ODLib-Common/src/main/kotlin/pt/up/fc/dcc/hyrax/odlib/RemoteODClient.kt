@@ -24,4 +24,8 @@ open class RemoteODClient(private val address: String, private val port: Int) {
     fun getModelCount() : Int {
         return getModels().count()
     }
+
+    fun sendJob(id: Int, image: ByteArray, async: Boolean = false) {
+        remoteClient.putJobAsync(id, image, async)
+    }
 }

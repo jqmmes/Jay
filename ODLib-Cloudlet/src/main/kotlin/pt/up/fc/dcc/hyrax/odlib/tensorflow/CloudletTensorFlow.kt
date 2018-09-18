@@ -10,6 +10,7 @@ import org.tensorflow.types.UInt8
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -23,7 +24,7 @@ import javax.imageio.ImageIO
  * https://github.com/tensorflow/models/blob/master/research/object_detection/
  */
 //class JobObjects(val modelPath: String, val labelPath: String, val imgPath: String, private val minimumScore: Float = 0.5f) {
-class CloudletTensorFlow : DetectObjects {
+internal class CloudletTensorFlow : DetectObjects {
     override var minimumScore: Float = 0.5f
 
     private lateinit var modelPath: String
@@ -48,54 +49,66 @@ class CloudletTensorFlow : DetectObjects {
         if (score in 0.0f..1.0f) minimumScore = score
     }
 
-    override fun detectObjects(imgPath: String) {
-        // TODO: Check model is loaded
+    override fun detectObjects(imgData: ByteArray) {
         if (!::loadedModel.isInitialized) {
             println("Model not loaded.")
             return
         }
         loadedModel.use { model ->
-            var outputs: List<Tensor<*>>? = null
-            makeImageTensor(imgPath).use { input ->
-                outputs = model
-                        .session()
-                        .runner()
-                        .feed("image_tensor", input)
-                        .fetch("detection_scores")
-                        .fetch("detection_classes")
-                        .fetch("detection_boxes")
-                        .run()
-            }
-            outputs!![0].expect(Float::class.java).use { scoresT ->
-                outputs!![1].expect(Float::class.java).use { classesT ->
-                    outputs!![2].expect(Float::class.java).use { _ ->//boxesT ->
-                        // All these tensors have:
-                        // - 1 as the first dimension
-                        // - maxObjects as the second dimension
-                        // While boxesT will have 4 as the third dimension (2 sets of (x, y) coordinates).
-                        // This can be verified by looking at scoresT.shape() etc.
-                        val maxObjects = scoresT.shape()[1].toInt()
-                        val scores = scoresT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
-                        val classes = classesT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
-                        //val boxes = boxesT.copyTo(Array(1) { Array(maxObjects) { FloatArray(4) } })[0]
-                        // Print all objects whose score is at least 0.5.
-                        //System.out.printf("* %s\n", filename)
-                        System.out.printf("* %s\n", imgPath)
-                        var foundSomething = false
-                        for (i in scores.indices) {
-                            if (scores[i] < minimumScore) {
-                                continue
-                            }
-                            foundSomething = true
-                            System.out.printf("\tFound %-20s (score: %.4f)\n", labels[classes[i].toInt()], scores[i])
+            processOutputs(model, makeImageTensor(imgData))
+        }
+    }
+
+    override fun detectObjects(imgPath: String) {
+        if (!::loadedModel.isInitialized) {
+            println("Model not loaded.")
+            return
+        }
+        loadedModel.use { model ->
+            processOutputs(model, makeImageTensor(imgPath))
+        }
+    }
+
+    private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>) {
+        var outputs: List<Tensor<*>>? = null
+        tensor.use { input ->
+            outputs = model
+                    .session()
+                    .runner()
+                    .feed("image_tensor", input)
+                    .fetch("detection_scores")
+                    .fetch("detection_classes")
+                    .fetch("detection_boxes")
+                    .run()
+        }
+        outputs!![0].expect(Float::class.java).use { scoresT ->
+            outputs!![1].expect(Float::class.java).use { classesT ->
+                outputs!![2].expect(Float::class.java).use { _ ->//boxesT ->
+                    // All these tensors have:
+                    // - 1 as the first dimension
+                    // - maxObjects as the second dimension
+                    // While boxesT will have 4 as the third dimension (2 sets of (x, y) coordinates).
+                    // This can be verified by looking at scoresT.shape() etc.
+                    val maxObjects = scoresT.shape()[1].toInt()
+                    val scores = scoresT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
+                    val classes = classesT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
+                    //val boxes = boxesT.copyTo(Array(1) { Array(maxObjects) { FloatArray(4) } })[0]
+                    // Print all objects whose score is at least 0.5.
+                    //System.out.printf("* %s\n", filename)
+                    //System.out.printf("* %s\n", imgPath)
+                    var foundSomething = false
+                    for (i in scores.indices) {
+                        if (scores[i] < minimumScore) {
+                            continue
                         }
-                        if (!foundSomething) {
-                            println("No objects detected with a high enough score.")
-                        }
+                        foundSomething = true
+                        System.out.printf("\tFound %-20s (score: %.4f)\n", labels[classes[i].toInt()], scores[i])
+                    }
+                    if (!foundSomething) {
+                        println("No objects detected with a high enough score.")
                     }
                 }
             }
-
         }
     }
 
@@ -218,6 +231,10 @@ class CloudletTensorFlow : DetectObjects {
         }
     }
 
+    override fun getByteArrayFromImage(imgPath: String) : ByteArray{
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     @Throws(IOException::class)
     private fun makeImageTensor(filename: String): Tensor<UInt8> {
         val img = ImageIO.read(File(filename))
@@ -236,24 +253,21 @@ class CloudletTensorFlow : DetectObjects {
         return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
     }
 
-    /*private fun printUsage(s: PrintStream) {
-        s.println("USAGE: <model> <label_map> <image> [<image>] [<image>]")
-        s.println("")
-        s.println("Where")
-        s.println("<model> is the path to the SavedModel directory of the model to use.")
-        s.println("        For example, the saved_model directory in tarballs from ")
-        s.println(
-                "        https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md)")
-        s.println("")
-        s.println(
-                "<label_map> is the path to a file containing information about the labels detected by the model.")
-        s.println("            For example, one of the .pbtxt files from ")
-        s.println(
-                "            https://github.com/tensorflow/models/tree/master/research/object_detection/data")
-        s.println("")
-        s.println("<image> is the path to an image file.")
-        s.println("        Sample images can be found from the COCO, Kitti, or Open Images dataset.")
-        s.println(
-                "        See: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md")
-    }*/
+
+    private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
+        val img = ImageIO.read(ByteArrayInputStream(imageData))
+        if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
+            throw IOException(
+                    String.format(
+                            "Expected 3-byte BGR encoding in BufferedImage, found %d (file: %s). This code could be made more robust",
+                            img.type))
+        }
+        val data = (img.data.dataBuffer as DataBufferByte).data
+        // ImageIO.read seems to produce BGR-encoded images, but the model expects RGB.
+        bgr2rgb(data)
+        val batchSize: Long = 1
+        val channels: Long = 3
+        val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
+        return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
+    }
 }

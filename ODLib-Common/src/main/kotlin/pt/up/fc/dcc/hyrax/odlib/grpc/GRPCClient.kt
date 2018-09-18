@@ -32,7 +32,7 @@ internal constructor(private val channel: ManagedChannel) {
 
 
     /** Say hello to server.  */
-    fun putJobAsync(id: Int, data: ByteArray) {
+    fun putJobAsync(id: Int, data: ByteArray, async : Boolean = false) {
         //logger.log(Level.INFO, "Will try to greet {0}...", name)
         val request = ODProto.Image.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
         try {

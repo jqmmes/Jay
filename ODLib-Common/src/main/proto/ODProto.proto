@@ -17,7 +17,6 @@ message Detection {
     float score = 1;
     Box box = 2;
     int32 class = 3;
-
 }
 
 message Image {

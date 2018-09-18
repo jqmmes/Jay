@@ -3,12 +3,14 @@ package pt.up.fc.dcc.hyrax.odlib.interfaces
 import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
+import java.util.*
 
 abstract class AbstractODLib(var localDetector : DetectObjects) {
 
     private var remoteClients : MutableSet<RemoteODClient> = HashSet()
     private var odService : ODService? = null
     private var grpcServer : GRPCServer? = null
+    private var nextJobId : Int = 0
 
 
     fun setTFModel(modelPath: String) {
@@ -39,13 +41,29 @@ abstract class AbstractODLib(var localDetector : DetectObjects) {
         remoteClients.remove(client)
     }
 
-    abstract fun detectObjects(image: String)
+    fun detectObjects(imgPath: String) {
+        //localDetector.detectObjects(imgPath)
+        if (odService == null) startODService()
+        odService!!.putJob(imgPath)
+    }
 
-    abstract fun detectObjects(image: String, remoteODClient: RemoteODClient)
+    fun detectObjects(imgPath: String, remoteODClient: RemoteODClient) : Int {
+        val jobId = nextJobId++
+        remoteODClient.sendJob(jobId, localDetector.getByteArrayFromImage(imgPath))
+        return jobId
+    }
 
-    abstract fun asyncDetectObjects(image: String, callback: ODCallback)
+    fun asyncDetectObjects(imgPath: String, callback: ODCallback) {
+        if (odService == null) startODService()
+        odService!!.putJob(imgPath, callback)
+    }
 
-    abstract fun asyncDetectObjects(image: String, remoteODClient: RemoteODClient, callback: RemoteODCallback)
+    fun asyncDetectObjects(imgPath: String, remoteODClient: RemoteODClient, callback: RemoteODCallback) : Int {
+        if (odService == null) startODService()
+        val jobId = detectObjects(imgPath, remoteODClient)
+        odService!!.waitResultsForTask(jobId, callback)
+        return jobId
+    }
 
     fun startODService() {
         odService = ODService(localDetector).startService()
