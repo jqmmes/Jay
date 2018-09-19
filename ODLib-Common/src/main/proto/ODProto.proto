@@ -4,6 +4,7 @@ syntax = "proto3";
 
 option java_package = "pt.up.fc.dcc.hyrax.odlib.protoc";
 option java_outer_classname = "ODProto";
+import "google/protobuf/empty.proto";
 
 
 message Box {
@@ -29,8 +30,6 @@ message Results {
     int32 id = 2;
 }
 
-message Empty {}
-
 message Status {
     int32 code = 1;
 }
@@ -53,7 +52,8 @@ service ODCommunication {
     rpc putJobAsync (Image) returns (Status) {};
     rpc putResultAsync (Results) returns (Status) {};
     rpc putJobSync (Image) returns (Results) {};
-    rpc listModels (Empty) returns (Models) {};
+    rpc listModels (google.protobuf.Empty) returns (Models) {};
     rpc selectModel (Model) returns (Status) {};
     rpc configModel (ModelConfig) returns (Status) {};
+    rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
 }

@@ -1,5 +1,12 @@
 apply plugin: 'kotlin'
+apply plugin: 'java-library'
+apply plugin: "com.github.johnrengelman.shadow"
 
+shadowJar {
+    baseName = 'ODLibCloudlet'
+    classifier = null
+    version = null
+}
 
 dependencies {
     implementation "org.tensorflow:tensorflow:${TENSORFLOW_VERSION}"

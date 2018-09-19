@@ -1,11 +1,12 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
+import com.google.protobuf.Empty
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
+import pt.up.fc.dcc.hyrax.odlib.interfaces.RemoteODCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -16,7 +17,7 @@ import java.io.IOException
  *
  * Note: this file was automatically converted from Java
  */
-internal class GRPCServer(private val port: Int = 50051, internal val odService: ODService) {
+internal class GRPCServer(private val port: Int = 50051) {
 
     private var server: Server? = null
 
@@ -50,40 +51,42 @@ internal class GRPCServer(private val port: Int = 50051, internal val odService:
         server?.awaitTermination()
     }
 
-    /*internal fun startServer() {
+    fun startServer() : GRPCServer {
         val server = GRPCServer()
         server.start()
         server.blockUntilShutdown()
-    }*/
+        return server
+    }
+
+    private fun <T>genericComplete (request: T, responseObserver: StreamObserver<T>) {
+        responseObserver.onNext(request)
+        responseObserver.onCompleted()
+    }
 
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.Image?, responseObserver: StreamObserver<ODProto.Status>) {
-            responseObserver.onNext(ODUtils.genStatus(ReturnStatus.Success))
-            responseObserver.onCompleted()
+            genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         // Just send to odService and return
         override fun putResultAsync(request: ODProto.Results?, responseObserver: StreamObserver<ODProto.Status>) {
-            odService.newRemoteResultAvailable(request!!.id, ODUtils.parseResults(request))
-            responseObserver.onNext(ODUtils.genStatus(ReturnStatus.Success))
-            responseObserver.onCompleted()
+            ODService.newRemoteResultAvailable(request!!.id, ODUtils.parseResults(request))
+            genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         // Wait for an answer and send it back
         override fun putJobSync(request: ODProto.Image?, responseObserver: StreamObserver<ODProto.Results>) {
-            class xpto : ODCallback {
-                override fun onNewResult() {
-                    val reply = ODProto.Results.newBuilder().build()
-                    responseObserver.onNext(reply)
-                    responseObserver.onCompleted()
+            class ResultCallback(override var id: Int) : RemoteODCallback {
+                override fun onNewResult(resultList: List<ODUtils.ODDetection?>) {
+                    genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }
             }
-            odService.putRemoteJob(request!!.id, request.data.toByteArray(), xpto())
+            ODService.putJob(request!!.data.toByteArray(), ResultCallback(request.id))
         }
 
-        override fun listModels (request: ODProto.Empty?, responseObserver: StreamObserver<ODProto.Models>) {
+        override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {
 
         }
 
@@ -93,6 +96,11 @@ internal class GRPCServer(private val port: Int = 50051, internal val odService:
 
         override fun configModel (request: ODProto.ModelConfig?, responseObserver: StreamObserver<ODProto.Status>) {
             ODUtils.parseModelConfig(request)
+        }
+
+        override fun ping (request: Empty, responseObserver: StreamObserver<Empty>) {
+            print("pinged")
+            genericComplete(Empty.newBuilder().build(), responseObserver)
         }
     }
 }

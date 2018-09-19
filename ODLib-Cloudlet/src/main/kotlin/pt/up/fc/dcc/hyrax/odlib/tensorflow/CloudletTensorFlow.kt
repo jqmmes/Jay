@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -81,9 +82,10 @@ internal class CloudletTensorFlow : DetectObjects {
                     .fetch("detection_boxes")
                     .run()
         }
-        outputs!![0].expect(Float::class.java).use { scoresT ->
-            outputs!![1].expect(Float::class.java).use { classesT ->
-                outputs!![2].expect(Float::class.java).use { _ ->//boxesT ->
+
+        outputs!![0].expect(Float::class.javaObjectType).use { scoresT ->
+            outputs!![1].expect(Float::class.javaObjectType).use { classesT ->
+                outputs!![2].expect(Float::class.javaObjectType).use { _ ->//boxesT ->
                     // All these tensors have:
                     // - 1 as the first dimension
                     // - maxObjects as the second dimension
@@ -102,7 +104,7 @@ internal class CloudletTensorFlow : DetectObjects {
                             continue
                         }
                         foundSomething = true
-                        System.out.printf("\tFound %-20s (score: %.4f)\n", labels[classes[i].toInt()], scores[i])
+                        System.out.printf("\tFound %-20s (score: %.4f)\n", classes[i].toInt(), scores[i])//labels[classes[i].toInt()], scores[i])
                     }
                     if (!foundSomething) {
                         println("No objects detected with a high enough score.")
@@ -232,7 +234,10 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
     override fun getByteArrayFromImage(imgPath: String) : ByteArray{
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val img = ImageIO.read(File(imgPath))
+        val output = ByteArrayOutputStream()
+        ImageIO.write(img, "jpg", output)
+        return output.toByteArray()
     }
 
     @Throws(IOException::class)

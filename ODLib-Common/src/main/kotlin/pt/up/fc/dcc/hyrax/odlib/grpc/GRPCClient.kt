@@ -1,10 +1,11 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
-import com.google.protobuf.ByteString
+import com.google.protobuf.Empty
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.ODModel
+import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.util.concurrent.TimeUnit
@@ -19,11 +20,8 @@ internal constructor(private val channel: ManagedChannel) {
 
     /** Construct client connecting to HelloWorld server at `host:port`.  */
     constructor(host: String, port: Int) : this(ManagedChannelBuilder.forAddress(host, port)
-    // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
-    // needing certificates.
-    .usePlaintext()
+            .usePlaintext()
             .build())
-
 
     @Throws(InterruptedException::class)
     fun shutdown() {
@@ -32,11 +30,11 @@ internal constructor(private val channel: ManagedChannel) {
 
 
     /** Say hello to server.  */
-    fun putJobAsync(id: Int, data: ByteArray, async : Boolean = false) {
+    fun putJobAsync(id: Int, data: ByteArray) {
         //logger.log(Level.INFO, "Will try to greet {0}...", name)
-        val request = ODProto.Image.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
+        //val request = ODProto.Image.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
         try {
-            blockingStub.putJobAsync(request)
+            blockingStub.putJobAsync(ODUtils.genImageRequest(id, data))
         } catch (e: StatusRuntimeException) {
             println("RPC failed: " + e.status)
             return
@@ -44,29 +42,30 @@ internal constructor(private val channel: ManagedChannel) {
         println("RPC putJobAsync success")
     }
 
+    fun putJobSync(id: Int, data: ByteArray) : ODProto.Results? {
+        try {
+            val result = blockingStub.putJobSync(ODUtils.genImageRequest(id, data))
+            println("RPC putJobSync success")
+            return result
+
+        } catch (e: StatusRuntimeException) {
+            println("RPC failed: " + e.status)
+        }
+        return null
+    }
+
     fun getModels() : HashSet<ODModel> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-
-    /*companion object {
-        private val logger = Logger.getLogger(GRPCClient::class.java.name)
-
-        /**
-         * Greet server. If provided, the first element of `args` is the name to use in the
-         * greeting.
-         */
-        @Throws(Exception::class)
-        @JvmStatic
-        fun main(args: Array<String>) {
-            val client = GRPCClient("localhost", 50051)
-            try {
-                /* Access a service running on the local machine on port 50051 */
-                val user = if (args.size > 0) "world" else "world"
-                client.putJobAsync(user)
-            } finally {
-                client.shutdown()
-            }
+    fun ping() {
+        try {
+            //ODProto.Empty.newBuilder().build()
+            println("will ping")
+            blockingStub.ping(Empty.newBuilder().build())
+            println("pinged")
+        }catch (e: StatusRuntimeException){
+            println("Error pinging")
         }
-    }*/
+    }
 }

@@ -1,17 +1,21 @@
 package pt.up.fc.dcc.hyrax.odlib.interfaces
 
+import pt.up.fc.dcc.hyrax.odlib.ODClient
 import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
-import java.util.*
 
 abstract class AbstractODLib(var localDetector : DetectObjects) {
 
     private var remoteClients : MutableSet<RemoteODClient> = HashSet()
-    private var odService : ODService? = null
+    private var localClient : ODClient = ODClient()
+    //private var odService : ODService? = null
     private var grpcServer : GRPCServer? = null
     private var nextJobId : Int = 0
 
+    init {
+        //localClient.setDetector(localDetector)
+    }
 
     fun setTFModel(modelPath: String) {
         localDetector.setModel(modelPath)
@@ -23,6 +27,14 @@ abstract class AbstractODLib(var localDetector : DetectObjects) {
 
     fun setTFModelMinScore(minimumScore: Float) {
         localDetector.setScore(minimumScore)
+    }
+
+    fun getClient() : ODClient {
+        return localClient
+    }
+
+    fun newRemoteClient(address: String, port : Int) : RemoteODClient {
+        return RemoteODClient(address, port)
     }
 
     fun addRemoteClient(client: RemoteODClient) {
@@ -41,43 +53,21 @@ abstract class AbstractODLib(var localDetector : DetectObjects) {
         remoteClients.remove(client)
     }
 
-    fun detectObjects(imgPath: String) {
-        //localDetector.detectObjects(imgPath)
-        if (odService == null) startODService()
-        odService!!.putJob(imgPath)
-    }
-
-    fun detectObjects(imgPath: String, remoteODClient: RemoteODClient) : Int {
-        val jobId = nextJobId++
-        remoteODClient.sendJob(jobId, localDetector.getByteArrayFromImage(imgPath))
-        return jobId
-    }
-
-    fun asyncDetectObjects(imgPath: String, callback: ODCallback) {
-        if (odService == null) startODService()
-        odService!!.putJob(imgPath, callback)
-    }
-
-    fun asyncDetectObjects(imgPath: String, remoteODClient: RemoteODClient, callback: RemoteODCallback) : Int {
-        if (odService == null) startODService()
-        val jobId = detectObjects(imgPath, remoteODClient)
-        odService!!.waitResultsForTask(jobId, callback)
-        return jobId
-    }
-
     fun startODService() {
-        odService = ODService(localDetector).startService()
+        //odService = ODService(localDetector).startService()
+        ODService.startService(localDetector)
     }
 
     fun stopODService() {
-        odService?.stop()
-        odService = null
+        //odService?.stop()
+        ODService.stop()
+        //odService = null
     }
 
     fun startGRPCServer(port : Int) {
         if (grpcServer == null) {
-            if (odService == null) startODService()
-            grpcServer = GRPCServer(port, odService!!).start()
+            if (!ODService.isRunning()) startODService()
+            grpcServer = GRPCServer(port).startServer()
         }
     }
 

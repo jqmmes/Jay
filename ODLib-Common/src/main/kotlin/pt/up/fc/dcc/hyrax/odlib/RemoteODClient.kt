@@ -1,8 +1,9 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
 
-open class RemoteODClient(private val address: String, private val port: Int) {
+class RemoteODClient(private val address: String, private val port: Int) : ODClient() {
 
     private var models : MutableSet<ODModel> = HashSet()
     private var remoteClient: GRPCClient = GRPCClient(address, port)
@@ -25,7 +26,20 @@ open class RemoteODClient(private val address: String, private val port: Int) {
         return getModels().count()
     }
 
-    fun sendJob(id: Int, image: ByteArray, async: Boolean = false) {
-        remoteClient.putJobAsync(id, image, async)
+    fun ping(){
+        remoteClient.ping()
     }
+
+    override fun configureModel() {
+
+    }
+
+    override fun detectObjects(imgPath: String) : List<ODUtils.ODDetection?>{
+        return ODService.putRemoteJob(remoteClient, imgPath)
+    }
+
+    override fun asyncDetectObjects(imgPath: String, callback: ODCallback) {
+
+    }
+
 }
