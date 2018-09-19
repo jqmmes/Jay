@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="org.codehaus.groovy:groovy-groovydoc:2.4.15" type="repository">
+    <properties maven-id="org.codehaus.groovy:groovy-groovydoc:2.4.15" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.4.15/groovy-groovydoc-2.4.15.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/2.4.15/groovy-2.4.15.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.4.15/groovy-templates-2.4.15.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-xml/2.4.15/groovy-xml-2.4.15.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

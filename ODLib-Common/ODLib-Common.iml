@@ -36,7 +36,7 @@
       </configuration>
     </facet>
   </component>
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_10">
     <output url="file://$MODULE_DIR$/build/classes/java/main" />
     <output-test url="file://$MODULE_DIR$/build/classes/java/test" />
     <exclude-output />
@@ -127,6 +127,5 @@
     <orderEntry type="library" exported="" name="Gradle: netty-common-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" name="Gradle: runtime-1.1.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: common-1.1.0" level="project" />
-    <orderEntry type="library" name="Bundled Protobuf Distribution" level="application" />
   </component>
 </module>
