@@ -6,6 +6,7 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.util.concurrent.TimeUnit
@@ -28,13 +29,19 @@ internal constructor(private val channel: ManagedChannel) {
         channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
     }
 
-
-    /** Say hello to server.  */
-    fun putJobAsync(id: Int, data: ByteArray) {
-        //logger.log(Level.INFO, "Will try to greet {0}...", name)
-        //val request = ODProto.Image.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
+    fun putResults(id: Int, results : List<ODUtils.ODDetection?>){
         try {
-            blockingStub.putJobAsync(ODUtils.genImageRequest(id, data))
+            blockingStub.putResultAsync(ODUtils.genResults(id, results))
+        } catch (e: StatusRuntimeException) {
+            println("RPC failed: " + e.status)
+            return
+        }
+        println("RPC putResults success")
+    }
+
+    fun putJobAsync(id: Int, data: ByteArray, remoteClient: RemoteODClient) {
+        try {
+            blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data, remoteClient))
         } catch (e: StatusRuntimeException) {
             println("RPC failed: " + e.status)
             return

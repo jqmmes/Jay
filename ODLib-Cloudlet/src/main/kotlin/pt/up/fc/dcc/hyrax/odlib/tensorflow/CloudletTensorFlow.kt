@@ -1,12 +1,9 @@
 package pt.up.fc.dcc.hyrax.odlib.tensorflow
 
-//import object_detection.protos.StringIntLabelMapOuterClass.StringIntLabelMap
-//import object_detection.protos.StringIntLabelMapOuterClass.StringIntLabelMapItem
-
-//import com.google.protobuf.TextFormat
 import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
+import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
@@ -15,62 +12,52 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.util.*
 import javax.imageio.ImageIO
 
 /**
  * Java inference for the Object Detection API at:
  * https://github.com/tensorflow/models/blob/master/research/object_detection/
  */
-//class JobObjects(val modelPath: String, val labelPath: String, val imgPath: String, private val minimumScore: Float = 0.5f) {
 internal class CloudletTensorFlow : DetectObjects {
+    override fun close() {
+        if (!::loadedModel.isInitialized) loadedModel.close()
+        modelClosed = true
+    }
+
     override var minimumScore: Float = 0.5f
 
     private lateinit var modelPath: String
-    private lateinit var labelPath: String
     private lateinit var loadedModel : SavedModelBundle
-    private lateinit var labels : Array<String?>
+    private var modelClosed = true
 
 
-    override fun setModel(path: String, label: String, score: Float) {
+    override fun loadModel(path: String, label: String, score: Float) {
         modelPath = path
         loadedModel = SavedModelBundle.load(modelPath, "serve")
-        if (!label.isEmpty()) setLabels(label)
-        if (score != minimumScore) setScore(score)
+        modelClosed = false
+        if (score != minimumScore) setMinAcceptScore(score)
     }
 
-    override fun setLabels(label: String) {
-        labelPath = label
-        labels = loadLabels(labelPath)
-    }
-
-    override fun setScore(score: Float) {
+    override fun setMinAcceptScore(score: Float) {
         if (score in 0.0f..1.0f) minimumScore = score
     }
 
-    override fun detectObjects(imgData: ByteArray) {
-        if (!::loadedModel.isInitialized) {
-            println("Model not loaded.")
-            return
+    override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
+        if (!::loadedModel.isInitialized or modelClosed) {
+            throw (Exception("\"Model not loaded.\""))
         }
-        loadedModel.use { model ->
-            processOutputs(model, makeImageTensor(imgData))
-        }
+        return processOutputs(loadedModel, makeImageTensor(imgData))
     }
 
-    override fun detectObjects(imgPath: String) {
-        if (!::loadedModel.isInitialized) {
-            println("Model not loaded.")
-            return
+    override fun detectObjects(imgPath: String) : List<ODUtils.ODDetection> {
+        if (!::loadedModel.isInitialized or modelClosed) {
+            throw (Exception("\"Model not loaded.\""))
         }
-        loadedModel.use { model ->
-            processOutputs(model, makeImageTensor(imgPath))
-        }
+        return processOutputs(loadedModel, makeImageTensor(imgPath))
     }
 
-    private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>) {
+    private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>) : List<ODUtils.ODDetection>  {
         var outputs: List<Tensor<*>>? = null
         tensor.use { input ->
             outputs = model
@@ -82,6 +69,8 @@ internal class CloudletTensorFlow : DetectObjects {
                     .fetch("detection_boxes")
                     .run()
         }
+
+        val returnList : MutableList<ODUtils.ODDetection> = LinkedList()
 
         outputs!![0].expect(Float::class.javaObjectType).use { scoresT ->
             outputs!![1].expect(Float::class.javaObjectType).use { classesT ->
@@ -95,132 +84,16 @@ internal class CloudletTensorFlow : DetectObjects {
                     val scores = scoresT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
                     val classes = classesT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
                     //val boxes = boxesT.copyTo(Array(1) { Array(maxObjects) { FloatArray(4) } })[0]
-                    // Print all objects whose score is at least 0.5.
-                    //System.out.printf("* %s\n", filename)
-                    //System.out.printf("* %s\n", imgPath)
-                    var foundSomething = false
                     for (i in scores.indices) {
                         if (scores[i] < minimumScore) {
                             continue
                         }
-                        foundSomething = true
-                        System.out.printf("\tFound %-20s (score: %.4f)\n", classes[i].toInt(), scores[i])//labels[classes[i].toInt()], scores[i])
-                    }
-                    if (!foundSomething) {
-                        println("No objects detected with a high enough score.")
+                        returnList.add(ODUtils.ODDetection(scores[i], classes[i].toInt(), ODUtils.Box()))
                     }
                 }
             }
         }
-    }
-
-    /*@Throws(Exception::class)
-    //@JvmStatic
-    fun main(args: Array<String>) {
-        if (args.size < 3) {
-            printUsage(System.err)
-            System.exit(1)
-        }
-        //val labels = loadLabels(args[1])
-//        val labels = loadLabels(labelPath)
-        //SavedModelBundle.load(args[0], "serve").use { model ->
-        //val loadedModel = SavedModelBundle.load(modelPath, "serve")
-        loadedModel.use { model ->
-        //SavedModelBundle.load(modelPath, "serve").use { model ->
-            //printSignature(model)
-            //for (arg in 2 until args.size) {
-                //val filename = args[arg]
-                var outputs: List<Tensor<*>>? = null
-                //makeImageTensor(filename).use { input ->
-            makeImageTensor(imgPath).use { input ->
-                    outputs = model
-                            .session()
-                            .runner()
-                            .feed("image_tensor", input)
-                            .fetch("detection_scores")
-                            .fetch("detection_classes")
-                            .fetch("detection_boxes")
-                            .run()
-                }
-                outputs!![0].expect(Float::class.java).use { scoresT ->
-                    outputs!![1].expect(Float::class.java).use { classesT ->
-                        outputs!![2].expect(Float::class.java).use { boxesT ->
-                            // All these tensors have:
-                            // - 1 as the first dimension
-                            // - maxObjects as the second dimension
-                            // While boxesT will have 4 as the third dimension (2 sets of (x, y) coordinates).
-                            // This can be verified by looking at scoresT.shape() etc.
-                            val maxObjects = scoresT.shape()[1].toInt()
-                            val scores = scoresT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
-                            val classes = classesT.copyTo(Array(1) { FloatArray(maxObjects) })[0]
-                            //val boxes = boxesT.copyTo(Array(1) { Array(maxObjects) { FloatArray(4) } })[0]
-                            // Print all objects whose score is at least 0.5.
-                            //System.out.printf("* %s\n", filename)
-                            System.out.printf("* %s\n", imgPath)
-                            var foundSomething = false
-                            for (i in scores.indices) {
-                                if (scores[i] < minimumScore) {
-                                    continue
-                                }
-                                foundSomething = true
-                                System.out.printf("\tFound %-20s (score: %.4f)\n", labels[classes[i].toInt()], scores[i])
-                            }
-                            if (!foundSomething) {
-                                println("No objects detected with a high enough score.")
-                            }
-                        }
-                    }
-                //}
-            }
-        }
-    }*/
-
-    /*@Throws(Exception::class)
-    private fun printSignature(model: SavedModelBundle) {
-        val m = MetaGraphDef.parseFrom(model.metaGraphDef())
-        val sig = m.getSignatureDefOrThrow("serving_default")
-        //val numInputs = sig.getInputsCount()
-        //var i = 1
-        println("MODEL SIGNATURE")
-        println("Inputs:")
-        /*for (entry in sig.getInputsMap().entrySet()) {ByteArray(1)
-            val t = entry.value
-            System.out.printf(
-                    "%d of %d: %-20s (Node name in graph: %-20s, type: %s)\n",
-                    i++, numInputs, entry.key, t.getName(), t.getDtype())
-        }*/
-        val numOutputs = sig.getOutputsCount()
-        i = 1
-        println("Outputs:")
-        /*for (entry in sig.getOutputsMap().entrySet()) {
-            val t = entry.value
-            System.out.printf(
-                    "%d of %d: %-20s (Node name in graph: %-20s, type: %s)\n",
-                    i++, numOutputs, entry.key, t.getName(), t.getDtype())
-        }*/
-        println("-----------------------------------------------")
-    }*/
-
-    @Throws(Exception::class) // Protobuf
-    // TODO: Load Labels
-    private fun loadLabels(filename: String): Array<String?> {
-        val text = String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8)
-        /*val builder = StringIntLabelMap.newBuilder()
-        TextFormat.merge(text, builder)
-        val proto = builder.build()*/
-        //var maxId = 0
-        val maxId = 0
-        /*for (item in proto.getItemList()) {
-            if (item.getId() > maxId) {
-                maxId = item.getId()
-            }
-        }*/
-        //val ret = arrayOfNulls<String>(maxId + 1)
-        /*for (item in proto.getItemList()) {
-            ret[item.getId()] = item.getDisplayName()
-        }*/
-        //return ret
-        return arrayOfNulls(maxId + 1)
+        return returnList
     }
 
     private fun bgr2rgb(data: ByteArray) {

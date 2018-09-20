@@ -27,10 +27,8 @@ internal class GRPCServer(private val port: Int = 50051) {
                 .addService(ODCommunicationImpl())
                 .build()
                 .start()
-        //logger.log(Level.INFO, "Server started, listening on {0}", port)
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
-                // Use stderr here since the logger may have been reset by its JVM shutdown hook.
                 System.err.println("*** shutting down gRPC server since JVM is shutting down")
                 this@GRPCServer.stop()
                 System.err.println("*** server shut down")
@@ -66,7 +64,8 @@ internal class GRPCServer(private val port: Int = 50051) {
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
         // Just send to odService and return
-        override fun putJobAsync(req: ODProto.Image?, responseObserver: StreamObserver<ODProto.Status>) {
+        override fun putJobAsync(req: ODProto.AsyncRequest?, responseObserver: StreamObserver<ODProto.Status>) {
+            ODService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results-> ODUtils.parseAsyncRequestRemoteClient(req)!!.putResults(req!!.image.id, results)}
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
@@ -83,12 +82,10 @@ internal class GRPCServer(private val port: Int = 50051) {
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }
             }
-            ODService.putJob(request!!.data.toByteArray(), ResultCallback(request.id))
+            ODService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult)
         }
 
-        override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {
-
-        }
+        override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {}
 
         override fun selectModel (request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>) {
             ODUtils.parseModel(request)
@@ -99,7 +96,6 @@ internal class GRPCServer(private val port: Int = 50051) {
         }
 
         override fun ping (request: Empty, responseObserver: StreamObserver<Empty>) {
-            print("pinged")
             genericComplete(Empty.newBuilder().build(), responseObserver)
         }
     }

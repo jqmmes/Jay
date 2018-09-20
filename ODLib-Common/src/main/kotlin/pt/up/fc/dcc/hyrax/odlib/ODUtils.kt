@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import com.google.protobuf.ByteString
+import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 
@@ -20,10 +21,18 @@ class ODUtils {
             return detections.asList()
         }
 
+        private fun genDetection(detection: ODUtils.ODDetection?) : ODProto.Detection{
+            return ODProto.Detection.newBuilder()
+                    .setClass_(detection!!.class_)
+                    .setScore(detection.score)
+                    .build()
+        }
+
         internal fun genResults(id: Int, results: List<ODUtils.ODDetection?>) : ODProto.Results {
             val builder = ODProto.Results.newBuilder()
+                    .setId(id)
             for (detection in results) {
-
+                builder.addDetections(genDetection(detection))
             }
             return builder.build()
         }
@@ -54,6 +63,14 @@ class ODUtils {
             return Pair(parseModel(modelConfig!!.model), HashMap(modelConfig.configsMap))
         }
 
+        internal fun parseAsyncRequestImageByteArray(asyncRequest: ODProto.AsyncRequest?) : ByteArray {
+            return asyncRequest!!.image.data.toByteArray()
+        }
+
+        internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
+            return AbstractODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
+        }
+
         internal fun genModelConfig(model: ODModel, configs: Map<String, String>) : ODProto.ModelConfig {
             return ODProto.ModelConfig.newBuilder()
                     .putAllConfigs(configs)
@@ -61,8 +78,19 @@ class ODUtils {
                     .build()
         }
 
-        /*internal fun genEmpty() : ODProto.Empty? {
-            return ODProto.Empty.getDefaultInstance()
-        }*/
+        private fun genRemoteClient(remoteODClient: RemoteODClient) : ODProto.RemoteClient{
+            return ODProto.RemoteClient.newBuilder()
+                    .setAddress(remoteODClient.getAdress())
+                    .setPort(remoteODClient.getPort())
+                    .build()
+
+        }
+
+        fun genAsyncRequest(id: Int, data: ByteArray, remoteClient: RemoteODClient): ODProto.AsyncRequest? {
+            return  ODProto.AsyncRequest.newBuilder()
+                    .setImage(genImageRequest(id, data))
+                    .setRemoteClient(genRemoteClient(remoteClient))
+                    .build()
+        }
     }
 }

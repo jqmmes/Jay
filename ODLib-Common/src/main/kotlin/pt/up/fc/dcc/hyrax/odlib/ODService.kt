@@ -2,12 +2,11 @@ package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
-import pt.up.fc.dcc.hyrax.odlib.interfaces.RemoteODCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 
@@ -19,11 +18,12 @@ import kotlin.concurrent.thread
 
     companion object {
         private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
-        private var requestId = 0
+        var requestId : AtomicInteger = AtomicInteger(0)
         private var running = false
         private var executor = Executors.newFixedThreadPool(5)
-        private var waitingResultsMap : HashMap<Int, RemoteODCallback> = HashMap()
-        private lateinit var localDetect: DetectObjects
+        private var waitingResultsMap : HashMap<Int, (List<ODUtils.ODDetection?>) -> Unit> = HashMap()
+        private var runningJobs : AtomicInteger = AtomicInteger(0)
+        lateinit var localDetect: DetectObjects
 
         fun isRunning() : Boolean{
             return running
@@ -31,40 +31,30 @@ import kotlin.concurrent.thread
 
         internal fun putJobAndWait(imgPath: String) : List<ODUtils.ODDetection?> {
             if (!running) throw Exception("ODService not running")
-            //localDetect.detectObjects(imgPath)
-            //return emptyList()
             val future = executor.submit(CallableJobObjects(localDetect, imageData = localDetect.getByteArrayFromImage(imgPath)))
             return future.get() //wait termination
         }
 
-        internal fun putJob(imgPath: String, callback: ODCallback? = null) : ReturnStatus {
+
+        internal fun putJob(imgPath: String, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus {
             return putJob(localDetect.getByteArrayFromImage(imgPath), callback)
         }
 
-        internal fun putJob(imgData: ByteArray, callback: ODCallback?) : ReturnStatus{
+        internal fun putJob(imgData: ByteArray, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus{
             if (!running) throw Exception("ODService not running")
             jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback))
             if (callback == null) return ReturnStatus.Success
             return ReturnStatus.Waiting
         }
 
-        internal fun putRemoteJob(remoteClient: GRPCClient, imgPath: String) : List<ODUtils.ODDetection?>{
-            return ODUtils.parseResults(remoteClient.putJobSync(requestId++, localDetect.getByteArrayFromImage(imgPath)))
-        }
-
-        /*internal fun putRemoteJob(remoteClient: GRPCClient, imgPath: String, callback: ODCallback?) : ReturnStatus {
-
-            return ReturnStatus.Waiting
-        }*/
-
         internal fun newRemoteResultAvailable(jobId: Int, detections: List<ODUtils.ODDetection?>) {
             if (waitingResultsMap.containsKey(jobId)) {
-                waitingResultsMap[jobId]!!.onNewResult(detections)
+                waitingResultsMap[jobId]!!(detections)
                 waitingResultsMap.remove(jobId)
             }
         }
 
-        fun waitResultsForTask(jobId: Int, callback: RemoteODCallback) {
+        fun waitResultsForTask(jobId: Int, callback: (List<ODUtils.ODDetection?>) -> Unit) {
             waitingResultsMap[jobId] = callback
         }
 
@@ -89,19 +79,36 @@ import kotlin.concurrent.thread
             jobQueue.clear()
             executor.shutdown()
         }
-    }
 
-    private class CallableJobObjects(val localDetect: DetectObjects, var jobId: Int? = null, var imageData: ByteArray, var callback: ODCallback? = null) : Callable<List<ODUtils.ODDetection>> {
-        override fun call(): List<ODUtils.ODDetection> {
-            localDetect.detectObjects(imageData)
-            return emptyList()
+        fun getJobsRunningCount() : Int {
+            return runningJobs.get()
+        }
+
+        fun getPenindingJobsCount() : Int {
+            return jobQueue.count()
+        }
+
+        fun putRemoteJobAsync(remoteODClient: RemoteODClient, remoteClient: GRPCClient, imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+            val reqId = requestId.incrementAndGet()
+            remoteClient.putJobAsync(reqId, localDetect.getByteArrayFromImage(imgPath), remoteODClient)
+            waitResultsForTask(reqId, callback)
         }
     }
 
-    private class RunnableJobObjects(val localDetect: DetectObjects, var jobId: Int? = null, var imageData: ByteArray, var callback: ODCallback? = null) : Runnable {
+    private class CallableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray) : Callable<List<ODUtils.ODDetection>> {
+        override fun call(): List<ODUtils.ODDetection> {
+            runningJobs.incrementAndGet()
+            val result = localDetect.detectObjects(imageData)
+            runningJobs.decrementAndGet()
+            return result
+        }
+    }
+
+    private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: ((List<ODUtils.ODDetection>) -> Unit)?) : Runnable {
         override fun run() {
-            localDetect.detectObjects(imageData)
-            if (callback != null) callback!!.onNewResult(emptyList())
+            runningJobs.incrementAndGet()
+            if (callback != null) callback!!(localDetect.detectObjects(imageData))
+            runningJobs.decrementAndGet()
         }
     }
 }

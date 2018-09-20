@@ -1,15 +1,9 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODCallback
-
 open class ODClient {
 
 
-    //private lateinit var localDetector: DetectObjects
-
-
     open fun configureModel() {
-
 
     }
 
@@ -17,7 +11,7 @@ open class ODClient {
         return ODService.putJobAndWait(imgPath)
     }
 
-    open fun asyncDetectObjects(imgPath: String, callback: ODCallback) {
+    open fun asyncDetectObjects(imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
         ODService.putJob(imgPath, callback)
     }
 }

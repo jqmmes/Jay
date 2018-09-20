@@ -5,28 +5,39 @@ import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 
-abstract class AbstractODLib(var localDetector : DetectObjects) {
+abstract class AbstractODLib (val localDetector : DetectObjects) {
 
-    private var remoteClients : MutableSet<RemoteODClient> = HashSet()
+    companion object {
+        private var remoteClients : MutableSet<RemoteODClient> = HashSet()
+
+        fun getClient(address: String, port: Int): RemoteODClient? {
+            for (client in remoteClients) {
+                if (client.getAdress() == address && client.getPort() == port)
+                    return client
+            }
+            return null
+        }
+    }
+
     private var localClient : ODClient = ODClient()
     //private var odService : ODService? = null
     private var grpcServer : GRPCServer? = null
     private var nextJobId : Int = 0
+
+    /*abstract fun setDetector(localDetector : DetectObjects) {
+        this.localDetector = localDetector
+    }*/
 
     init {
         //localClient.setDetector(localDetector)
     }
 
     fun setTFModel(modelPath: String) {
-        localDetector.setModel(modelPath)
-    }
-
-    fun setTFLabels(labelPath: String) {
-        localDetector.setLabels(labelPath)
+        localDetector.loadModel(modelPath)
     }
 
     fun setTFModelMinScore(minimumScore: Float) {
-        localDetector.setScore(minimumScore)
+        localDetector.setMinAcceptScore(minimumScore)
     }
 
     fun getClient() : ODClient {
@@ -81,4 +92,5 @@ abstract class AbstractODLib(var localDetector : DetectObjects) {
         stopGRPCServer()
         remoteClients.clear()
     }
+
 }

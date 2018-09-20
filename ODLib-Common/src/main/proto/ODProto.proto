@@ -43,13 +43,23 @@ message Model {
     string name = 2;
 }
 
+message RemoteClient {
+    string address = 1;
+    int32 port = 2;
+}
+
 message ModelConfig {
     Model model = 1;
     map<string, string> configs = 2;
 }
 
+message AsyncRequest {
+    Image image = 1;
+    RemoteClient remoteClient = 2;
+}
+
 service ODCommunication {
-    rpc putJobAsync (Image) returns (Status) {};
+    rpc putJobAsync (AsyncRequest) returns (Status) {};
     rpc putResultAsync (Results) returns (Status) {};
     rpc putJobSync (Image) returns (Results) {};
     rpc listModels (google.protobuf.Empty) returns (Models) {};

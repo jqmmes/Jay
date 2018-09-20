@@ -60,23 +60,23 @@
     <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-common-1.2.70" level="project" />
     <orderEntry type="library" exported="" name="Gradle: annotations-13.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-sdk27-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-appcompat-v7-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-android-0.23.4" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-core-0.26.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-sqlite-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-sdk27-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-sdk27-coroutines-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-appcompat-v7-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-support-v4-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-appcompat-v7-coroutines-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-appcompat-v7-commons-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-support-v4-commons-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-commons-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-coroutines-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: sqlite-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: platform-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: appcompatV7-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supportV4-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: commons-base-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-android-0.23.4" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-core-0.23.4" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: tensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: libtensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto-1.10.0" level="project" />
@@ -85,8 +85,8 @@
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-netty-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-stub-1.15.0" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-core-common-0.23.4" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: atomicfu-common-0.10.3" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-core-common-0.26.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: atomicfu-common-0.11.5" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: libtensorflow_jni-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: protobuf-java-3.5.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-combine-3.3.0" level="project" />
@@ -128,23 +128,23 @@
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: runtime-1.1.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: common-1.1.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sdk27-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-appcompat-v7-coroutines-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-android-0.23.4" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-core-0.26.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sqlite-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sdk27-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sdk27-coroutines-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-appcompat-v7-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-support-v4-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-appcompat-v7-coroutines-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-appcompat-v7-commons-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-support-v4-commons-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-commons-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-coroutines-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: sqlite-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: platform-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: appcompatV7-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: supportV4-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: commons-base-0.10.6" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-android-0.23.4" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-core-0.23.4" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: tensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: libtensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto-1.10.0" level="project" />
@@ -153,8 +153,8 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-netty-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-stub-1.15.0" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-core-common-0.23.4" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: atomicfu-common-0.10.3" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-core-common-0.26.1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: atomicfu-common-0.11.5" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: libtensorflow_jni-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: protobuf-java-3.5.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-combine-3.3.0" level="project" />
