@@ -11,7 +11,7 @@
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/ODLib-Common/build/generated-sources/release/javalite" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ODLib-Common/build/generated-sources/release/java" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.gradle" />
     </content>
     <orderEntry type="inheritedJdk" />

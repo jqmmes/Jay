@@ -8,7 +8,7 @@ sourceSets {
             srcDirs += 'src/main/proto/'
         }
         java {
-            srcDirs += ['build/generated/source/proto/main/javalite/', 'build/generated/source/proto/main/grpc/']
+            srcDirs += ['build/generated/source/proto/main/java/', 'build/generated/source/proto/main/grpc/']
         }
     }
 }
@@ -66,7 +66,7 @@ protobuf {
 
 idea {
     module {
-        sourceDirs += file("$buildDir/generated-sources/release/javalite");
+        sourceDirs += file("$buildDir/generated-sources/release/java");
     }
 }
 
