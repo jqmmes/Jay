@@ -1,13 +1,12 @@
 package pt.up.fc.dcc.hyrax.odlib.tensorflow
 
+import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import java.io.IOException
-import android.content.res.Resources
-import android.graphics.*
-import java.util.LinkedList
-import android.graphics.Bitmap
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 
 
 internal class DroidTensorFlow : DetectObjects {
@@ -37,7 +36,7 @@ internal class DroidTensorFlow : DetectObjects {
 
     fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
         val results : List<Classifier.Recognition> = localDetector.recognizeImage(imgData)
-        val mappedRecognitions : MutableList<ODUtils.ODDetection> =  LinkedList()
+        val mappedRecognitions : MutableList<ODUtils.ODDetection> = ArrayList()
         for (result : Classifier.Recognition in results) {
             if (result.confidence!! >= minimumConfidence) {
                 mappedRecognitions.add(ODUtils.ODDetection(score = result.confidence, class_ = result.title!!.toInt(), box = ODUtils.Box()))
