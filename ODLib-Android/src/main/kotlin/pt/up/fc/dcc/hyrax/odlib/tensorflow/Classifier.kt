@@ -21,7 +21,7 @@ import android.graphics.RectF
 /**
  * Generic interface for interacting with different recognition engines.
  */
-internal interface Classifier {
+interface Classifier {
 
     val statString: String
 
