@@ -6,6 +6,8 @@ import io.grpc.ServerBuilder
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
+import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.RemoteODCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
@@ -23,6 +25,7 @@ internal class GRPCServer(private val port: Int = 50051) {
 
     @Throws(IOException::class)
     fun start() : GRPCServer{
+        println("will start server on port " + port)
         server = ServerBuilder.forPort(port)
                 .addService(ODCommunicationImpl())
                 .build()
@@ -49,11 +52,13 @@ internal class GRPCServer(private val port: Int = 50051) {
         server?.awaitTermination()
     }
 
-    fun startServer() : GRPCServer {
-        val server = GRPCServer()
-        server.start()
-        server.blockUntilShutdown()
-        return server
+    companion object {
+        fun startServer(port : Int) : GRPCServer {
+            val server = GRPCServer(port)
+            server.start()
+            server.blockUntilShutdown()
+            return server
+        }
     }
 
     private fun <T>genericComplete (request: T, responseObserver: StreamObserver<T>) {
@@ -63,9 +68,14 @@ internal class GRPCServer(private val port: Int = 50051) {
 
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
+        override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
+            AbstractODLib.addRemoteClient(RemoteODClient(request!!.getAddress(), request.getPort()))
+            genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)
+        }
+
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.AsyncRequest?, responseObserver: StreamObserver<ODProto.Status>) {
-            ODService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results-> ODUtils.parseAsyncRequestRemoteClient(req)!!.putResults(req!!.image.id, results)}
+            ODService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results-> println(req); ODUtils.parseAsyncRequestRemoteClient(req)!!.putResults(req!!.image.id, results)}
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 

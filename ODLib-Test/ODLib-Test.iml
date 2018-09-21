@@ -17,7 +17,7 @@
         <compilerSettings />
         <compilerArguments>
           <option name="destination" value="$MODULE_DIR$/build/classes/kotlin/main" />
-          <option name="classpath" value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.2.70/17bdfaa19afad44a641a778a1cacc53b0e95dddc/kotlin-stdlib-jdk8-1.2.70.jar:/home/joaquim/IdeaProjects/ODLib/ODLib-Cloudlet/build/classes/kotlin/main:/home/joaquim/IdeaProjects/ODLib/ODLib-Common/build/libs/ODLib-Common.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.2.70/9318bb9dadaa56534ac8b0728a1ffa2bd0e48b28/kotlin-stdlib-jdk7-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.2.70/b5b9449f73ce7bf312e89a7560cb3c209a0fa13e/kotlin-stdlib-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.2.70/6ea722d7d0b9451293e739076ddb6a4108d57b6b/kotlin-stdlib-common-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
+          <option name="classpath" value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.2.70/17bdfaa19afad44a641a778a1cacc53b0e95dddc/kotlin-stdlib-jdk8-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.2.70/9318bb9dadaa56534ac8b0728a1ffa2bd0e48b28/kotlin-stdlib-jdk7-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.2.70/b5b9449f73ce7bf312e89a7560cb3c209a0fa13e/kotlin-stdlib-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.2.70/6ea722d7d0b9451293e739076ddb6a4108d57b6b/kotlin-stdlib-common-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
           <option name="noStdlib" value="true" />
           <option name="noReflect" value="true" />
           <option name="moduleName" value="ODLib-Test" />
@@ -81,9 +81,9 @@
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: libtensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: javax.annotation-api-1.3.2" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-protobuf-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto-google-common-protos-1.12.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-netty-1.15.0" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-stub-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kotlinx-coroutines-core-common-0.26.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: atomicfu-common-0.11.5" level="project" />
@@ -93,10 +93,10 @@
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-functional-3.3.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-jvm-3.3.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: kovenant-core-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-core-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-codec-http2-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-handler-proxy-4.1.27.Final" level="project" />
-    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: protobuf-lite-3.0.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: guava-20.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: appcompat-v7-27.1.1" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: grpc-context-1.15.0" level="project" />
@@ -149,9 +149,9 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: libtensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: javax.annotation-api-1.3.2" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-protobuf-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto-google-common-protos-1.12.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-netty-1.15.0" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-stub-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: kotlinx-coroutines-core-common-0.26.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: atomicfu-common-0.11.5" level="project" />
@@ -161,10 +161,10 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-functional-3.3.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-jvm-3.3.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: kovenant-core-3.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-protobuf-lite-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-core-1.15.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-codec-http2-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-handler-proxy-4.1.27.Final" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="Gradle: protobuf-lite-3.0.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: guava-20.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: appcompat-v7-27.1.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: grpc-context-1.15.0" level="project" />

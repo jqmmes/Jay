@@ -4,9 +4,11 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
+import pt.up.fc.dcc.hyrax.odlib.ODClient
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
+import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.util.concurrent.TimeUnit
@@ -39,7 +41,7 @@ internal constructor(private val channel: ManagedChannel) {
         println("RPC putResults success")
     }
 
-    fun putJobAsync(id: Int, data: ByteArray, remoteClient: RemoteODClient) {
+    fun putJobAsync(id: Int, data: ByteArray, remoteClient: ODClient) {
         try {
             blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data, remoteClient))
         } catch (e: StatusRuntimeException) {
@@ -59,6 +61,16 @@ internal constructor(private val channel: ManagedChannel) {
             println("RPC failed: " + e.status)
         }
         return null
+    }
+
+    fun sayHello() {
+        try {
+            println("will ping")
+            blockingStub.sayHello(ODUtils.genRemoteClient(ODClient()))
+            println("pinged")
+        }catch (e: StatusRuntimeException){
+            println("Error pinging")
+        }
     }
 
     fun getModels() : HashSet<ODModel> {

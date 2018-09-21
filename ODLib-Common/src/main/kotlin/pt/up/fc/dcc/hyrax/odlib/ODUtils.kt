@@ -78,7 +78,7 @@ class ODUtils {
                     .build()
         }
 
-        private fun genRemoteClient(remoteODClient: RemoteODClient) : ODProto.RemoteClient{
+        internal fun genRemoteClient(remoteODClient: ODClient) : ODProto.RemoteClient{
             return ODProto.RemoteClient.newBuilder()
                     .setAddress(remoteODClient.getAdress())
                     .setPort(remoteODClient.getPort())
@@ -86,7 +86,7 @@ class ODUtils {
 
         }
 
-        fun genAsyncRequest(id: Int, data: ByteArray, remoteClient: RemoteODClient): ODProto.AsyncRequest? {
+        fun genAsyncRequest(id: Int, data: ByteArray, remoteClient: ODClient): ODProto.AsyncRequest? {
             return  ODProto.AsyncRequest.newBuilder()
                     .setImage(genImageRequest(id, data))
                     .setRemoteClient(genRemoteClient(remoteClient))

@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-//package odlib;
-
 option java_package = "pt.up.fc.dcc.hyrax.odlib.protoc";
 option java_outer_classname = "ODProto";
 import "google/protobuf/empty.proto";
@@ -66,4 +64,5 @@ service ODCommunication {
     rpc selectModel (Model) returns (Status) {};
     rpc configModel (ModelConfig) returns (Status) {};
     rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
+    rpc sayHello(RemoteClient) returns (Status) {};
 }

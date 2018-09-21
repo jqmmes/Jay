@@ -8,11 +8,11 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
     private var remoteClient: GRPCClient = GRPCClient(address, port)
 
 
-    fun getAdress() : String {
+    override fun getAdress() : String {
         return address
     }
 
-    fun getPort() : Int {
+    override fun getPort() : Int {
         return port
     }
 
@@ -40,6 +40,10 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
     }
 
     override fun asyncDetectObjects(imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-        ODService.putRemoteJobAsync(this, remoteClient, imgPath, callback)
+        ODService.putRemoteJobAsync(ODClient(), remoteClient, imgPath, callback)
+    }
+
+    fun sayHello() {
+        remoteClient.sayHello()
     }
 }

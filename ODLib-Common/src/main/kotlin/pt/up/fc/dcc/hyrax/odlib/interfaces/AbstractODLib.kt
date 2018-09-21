@@ -10,13 +10,31 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
     companion object {
         private var remoteClients : MutableSet<RemoteODClient> = HashSet()
 
+        private var serverPort : Int = 0
+
+        fun getServerPort() : Int{
+            return serverPort
+        }
+
         fun getClient(address: String, port: Int): RemoteODClient? {
+            println("Searching for client $port")
             for (client in remoteClients) {
+                println(client.getPort())
                 if (client.getAdress() == address && client.getPort() == port)
                     return client
             }
             return null
         }
+
+        fun addRemoteClient(client: RemoteODClient) {
+            println("add remote Client " + client.getPort())
+            remoteClients.add(client)
+        }
+
+        fun addRemoteClients(clients: List<RemoteODClient>) {
+            remoteClients.addAll(clients)
+        }
+
     }
 
     private var localClient : ODClient = ODClient()
@@ -45,16 +63,11 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
     }
 
     fun newRemoteClient(address: String, port : Int) : RemoteODClient {
-        return RemoteODClient(address, port)
+        val remoteODClient = RemoteODClient(address, port)
+        addRemoteClient(remoteODClient)
+        return remoteODClient
     }
 
-    fun addRemoteClient(client: RemoteODClient) {
-        remoteClients.add(client)
-    }
-
-    fun addRemoteClients(clients: List<RemoteODClient>) {
-        remoteClients.addAll(clients)
-    }
 
     fun getRemoteClients() : List<RemoteODClient> {
         return remoteClients.toList()
@@ -76,11 +89,21 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
     }
 
     fun startGRPCServer(port : Int) {
+        serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()
-            grpcServer = GRPCServer(port).startServer()
+            grpcServer = GRPCServer.startServer(port)
         }
     }
+
+    fun startGRPCServerService(port : Int) {
+        serverPort = port
+        if (grpcServer == null) {
+            if (!ODService.isRunning()) startODService()
+            grpcServer = GRPCServer(port).start()
+        }
+    }
+
 
     fun stopGRPCServer() {
         grpcServer?.stop()

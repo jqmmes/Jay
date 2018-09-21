@@ -88,7 +88,7 @@ import kotlin.concurrent.thread
             return jobQueue.count()
         }
 
-        fun putRemoteJobAsync(remoteODClient: RemoteODClient, remoteClient: GRPCClient, imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+        fun putRemoteJobAsync(remoteODClient: ODClient, remoteClient: GRPCClient, imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
             val reqId = requestId.incrementAndGet()
             remoteClient.putJobAsync(reqId, localDetect.getByteArrayFromImage(imgPath), remoteODClient)
             waitResultsForTask(reqId, callback)
