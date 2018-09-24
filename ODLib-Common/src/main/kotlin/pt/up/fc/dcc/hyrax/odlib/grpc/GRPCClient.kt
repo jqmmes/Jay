@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit
 class GRPCClient
     /** Construct client for accessing RouteGuide server using the existing channel.  */
 internal constructor(private val channel: ManagedChannel) {
-    //private val logger = Logger.getLogger(GRPCClient::class.java.name)
     private val blockingStub: ODCommunicationGrpc.ODCommunicationBlockingStub = ODCommunicationGrpc.newBlockingStub(channel)
 
 
@@ -73,8 +72,15 @@ internal constructor(private val channel: ManagedChannel) {
         }
     }
 
-    fun getModels() : HashSet<ODModel> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    fun getModels() : Set<ODModel> {
+        val result : ODProto.Models
+        try {
+            result = blockingStub.listModels(Empty.getDefaultInstance())
+        }catch (e: StatusRuntimeException) {
+            println("RPC Failed: " + e.status)
+            return emptySet()
+        }
+        return ODUtils.parseModels(result)
     }
 
     fun ping() {

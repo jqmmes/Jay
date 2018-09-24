@@ -1,18 +1,22 @@
 package pt.up.fc.dcc.hyrax.odlib.tensorflow
 
+import org.kamranzafar.jtar.TarEntry
+import org.kamranzafar.jtar.TarInputStream
 import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
+import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.IOException
+import java.io.*
+import java.net.URL
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
+import java.nio.file.Files
 import java.util.*
+import java.util.zip.GZIPInputStream
 import javax.imageio.ImageIO
 
 /**
@@ -32,7 +36,8 @@ internal class CloudletTensorFlow : DetectObjects {
     private var modelClosed = true
 
 
-    override fun loadModel(path: String, label: String, score: Float) {
+    //override fun loadModel(path: String, label: String, score: Float) {
+    private fun loadModel(path: String, label: String? = null, score: Float = minimumScore) {
         modelPath = path
         loadedModel = SavedModelBundle.load(modelPath, "serve")
         modelClosed = false
@@ -148,4 +153,126 @@ internal class CloudletTensorFlow : DetectObjects {
         val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
         return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
     }
+
+
+
+        private var cacheDir : String = "/tmp/ODLib/Models/"
+
+        override fun checkDownloadedModel(name: String): Boolean {
+            val cacheDir = File(cacheDir)
+            if (!cacheDir.exists()) return false
+            for (file in cacheDir.listFiles())
+                if (file.isDirectory && file.name == name)
+                    return true
+            return false
+        }
+
+        override fun downloadModel(model: ODModel) {
+            println("Downloading model from " + model.remoteUrl)
+            if (!File(cacheDir).exists()) File(cacheDir).mkdirs()
+            val modelUrl = URL(model.remoteUrl)
+            val rbc = Channels.newChannel(modelUrl.openStream())
+            val fos = FileOutputStream(cacheDir+model.modelName+".tar.gz")
+            fos.channel.transferFrom(rbc, 0, java.lang.Long.MAX_VALUE)
+            model.downloaded = true
+            model.graphLocation = cacheDir + model.modelName + "/"
+        }
+
+        override fun extractModel(model: ODModel) {
+            if (checkDownloadedModel(model.modelName)) return
+            val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(cacheDir+model.modelName+".tar.gz"))))
+
+            var entry : TarEntry? = tis.nextEntry
+            if (entry!= null && entry.isDirectory) {
+                File(cacheDir + entry.name).mkdirs()
+                model.graphLocation = cacheDir + entry.name
+                entry = tis.nextEntry
+            }
+            while (entry != null) {
+                if (entry.isDirectory) {
+                    File(cacheDir + entry.name).mkdirs()
+                    entry = tis.nextEntry
+                    continue
+                }
+                var count: Int
+                val data = ByteArray(2048)
+                val fos = FileOutputStream(cacheDir + entry.name)
+
+                val dest = BufferedOutputStream(fos)
+
+                count = tis.read(data)
+                while (count != -1) {
+                    dest.write(data, 0, count)
+                    count = tis.read(data)
+                }
+
+                dest.flush()
+                dest.close()
+
+                entry = tis.nextEntry
+            }
+        }
+
+    override fun loadModel(model: ODModel) {
+        if (!checkDownloadedModel(model.modelName)) downloadModel(model)
+        println("Extraction Model....")
+        extractModel(model)
+        println("Extracted... Loading model")
+        loadModel(model.graphLocation + "saved_model/")
+        Files.delete(File(cacheDir+model.modelName+".tar.gz").toPath())
+    }
+
+
+    override val models: List<ODModel>
+        get() = listOf(
+                ODModel(0,
+                        "ssd_mobilenet_v1_fpn_coco",
+                        "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
+                        checkDownloadedModel("ssd_mobilenet_v1_fpn_coco")
+
+                ),
+                ODModel(1,
+                        "ssd_mobilenet_v1_coco",
+                        "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz",
+                        checkDownloadedModel("ssd_mobilenet_v1_coco")
+                ),
+                ODModel(2,
+                        "ssd_mobilenet_v2_coco",
+                        "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz",
+                        checkDownloadedModel("ssd_mobilenet_v2_coco")
+                ),
+                ODModel(3,
+                        "ssdlite_mobilenet_v2_coco",
+                        "http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz",
+                        checkDownloadedModel("ssdlite_mobilenet_v2_coco")
+                ),
+                ODModel(4,
+                        "faster_rcnn_resnet101_coco",
+                        "http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz",
+                        checkDownloadedModel("faster_rcnn_resnet101_coco")
+                ),
+                ODModel(5,
+                        "ssd_resnet_50_fpn_coco",
+                        "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
+                        checkDownloadedModel("ssd_resnet_50_fpn_coco")
+                ),
+                ODModel(
+                        6,
+                        "faster_rcnn_inception_resnet_v2_atrous_coco",
+                        "http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28.tar.gz",
+                        checkDownloadedModel("faster_rcnn_inception_resnet_v2_atrous_coco")
+                ),
+                ODModel(
+                        7,
+                        "faster_rcnn_nas",
+                        "http://download.tensorflow.org/models/object_detection/faster_rcnn_nas_coco_2018_01_28.tar.gz",
+                        checkDownloadedModel("faster_rcnn_nas")
+                ),
+                ODModel(
+                        8,
+                        "faster_rcnn_nas_lowproposals_coco",
+                        "http://download.tensorflow.org/models/object_detection/faster_rcnn_nas_lowproposals_coco_2018_01_28.tar.gz",
+                        checkDownloadedModel("faster_rcnn_nas_lowproposals_coco")
+                )
+        )
 }

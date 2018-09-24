@@ -2,13 +2,15 @@ package pt.up.fc.dcc.hyrax.odlib
 
 private var odClient = ODLib()
 fun main(args: Array<String>) {
-    odClient.startGRPCServerService(50000)
+    odClient.startGRPCServerService(odClient, 50000)
     val localClient  = odClient.getClient()
     val remoteClient = odClient.newRemoteClient("localhost", 50051)
     remoteClient.sayHello()
     remoteClient.ping()
+    //odClient.listModels(false).first()
     //odClient.setTFModel("/home/joaquim/Downloads/faster_rcnn_nas_coco_2018_01_28/saved_model/")
-    odClient.setTFModel("/home/joaquim/Downloads/ssd/saved_model/")
+    odClient.setTFModel(odClient.listModels(false).last())
+    //odClient.setTFModel("/home/joaquim/Downloads/ssd/saved_model/")
     //odClient.setTFModel("/home/joaquim/Downloads/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28/saved_model/")
 
     remoteClient.asyncDetectObjects("/home/joaquim/000001.jpg", ::callbackFun)

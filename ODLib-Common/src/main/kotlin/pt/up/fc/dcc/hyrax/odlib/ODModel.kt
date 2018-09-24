@@ -1,7 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-open class ODModel {
+open class ODModel(val modelId: Int, val modelName: String, val remoteUrl: String? = null, var downloaded : Boolean = false) {
+
     lateinit var graphLocation: String
-    lateinit var modelName : String
-    var modelId : Int = 0
 }

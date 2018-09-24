@@ -9,6 +9,8 @@ shadowJar {
 }
 
 dependencies {
+    implementation 'org.kamranzafar:jtar:2.3'
+
     implementation "org.tensorflow:tensorflow:${TENSORFLOW_VERSION}"
     implementation "org.tensorflow:libtensorflow:${TENSORFLOW_VERSION}"
     implementation "org.tensorflow:proto:${TENSORFLOW_VERSION}"

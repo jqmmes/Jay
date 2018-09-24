@@ -19,7 +19,7 @@ import java.io.IOException
  *
  * Note: this file was automatically converted from Java
  */
-internal class GRPCServer(private val port: Int = 50051) {
+internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 50051) {
 
     private var server: Server? = null
 
@@ -53,8 +53,8 @@ internal class GRPCServer(private val port: Int = 50051) {
     }
 
     companion object {
-        fun startServer(port : Int) : GRPCServer {
-            val server = GRPCServer(port)
+        fun startServer(odLib: AbstractODLib, port : Int) : GRPCServer {
+            val server = GRPCServer(odLib, port)
             server.start()
             server.blockUntilShutdown()
             return server
@@ -95,7 +95,9 @@ internal class GRPCServer(private val port: Int = 50051) {
             ODService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult)
         }
 
-        override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {}
+        override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {
+            genericComplete(ODUtils.genModels(odLib.listModels()), responseObserver)
+        }
 
         override fun selectModel (request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>) {
             ODUtils.parseModel(request)

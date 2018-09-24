@@ -1,6 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib
 
+import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
+import java.lang.NullPointerException
 
 class RemoteODClient(private val address: String, private val port: Int) : ODClient() {
 
@@ -16,13 +18,16 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
         return port
     }
 
-    fun getModels() : List<ODModel> {
-        models = remoteClient.getModels()
-        return models.toList()
+    fun getModels(refresh: Boolean = true) : Set<ODModel> {
+        if (refresh) {
+            models.clear()
+            models.addAll(remoteClient.getModels())
+        }
+        return models.toSet()
     }
 
-    fun getModelCount() : Int {
-        return getModels().count()
+    fun getModelCount(refresh : Boolean = false) : Int {
+        return getModels(refresh).count()
     }
 
     fun ping(){

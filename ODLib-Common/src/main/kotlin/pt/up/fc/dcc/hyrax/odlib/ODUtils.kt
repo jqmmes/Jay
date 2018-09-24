@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import java.lang.NullPointerException
 
 class ODUtils {
 
@@ -13,12 +14,19 @@ class ODUtils {
 
     companion object {
         internal fun parseResults(results: ODProto.Results?): List<ODDetection?> {
-            val detections : Array<ODDetection?> = arrayOfNulls(results!!.detectionsCount)
-            var i = 0
-            for (detection in results.detectionsList) {
-                detections[i++] = ODDetection(detection.score, detection.class_, Box())
+            try {
+                val detections: Array<ODDetection?> = arrayOfNulls(results!!.detectionsCount)
+                var i = 0
+                for (detection in results.detectionsList) {
+                    detections[i++] = ODDetection(detection.score, detection.class_, Box())
+                }
+                return detections.asList()
+            } catch (e: NullPointerException) {
+                println("parseResults Exception: (${e.message})")
+                for (message in e.stackTrace) println(message)
+                println("==========================")
             }
-            return detections.asList()
+            return emptyList()
         }
 
         private fun genDetection(detection: ODUtils.ODDetection?) : ODProto.Detection{
@@ -49,10 +57,7 @@ class ODUtils {
         }
 
         internal fun parseModel(model: ODProto.Model?) : ODModel {
-            val odModel = ODModel()
-            odModel.modelId = model!!.id
-            odModel.modelName = model.name
-            return odModel
+            return ODModel(model!!.id, model.name)
         }
 
         internal fun genImageRequest(imgId: Int, imgData : ByteArray) : ODProto.Image {
@@ -91,6 +96,23 @@ class ODUtils {
                     .setImage(genImageRequest(id, data))
                     .setRemoteClient(genRemoteClient(remoteClient))
                     .build()
+        }
+
+        fun parseModels(result: ODProto.Models?): Set<ODModel> {
+            val parsedResults : HashSet<ODModel> = HashSet()
+            var model : ODModel
+            for (x in 0..result!!.modelsCount) {
+                model = parseModel(result.getModels(x))
+                parsedResults.add(ODModel(model.modelId, model.modelName))
+            }
+            return parsedResults.toSet()
+        }
+
+        fun genModels(listModels: Set<ODModel>): ODProto.Models {
+            val builder = ODProto.Models.newBuilder()
+            for (iterator in listModels)
+                builder.addModels(genModel(iterator))
+            return builder.build()
         }
     }
 }

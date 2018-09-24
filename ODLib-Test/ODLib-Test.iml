@@ -77,6 +77,7 @@
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: appcompatV7-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supportV4-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: commons-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: jtar-2.3" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: tensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: libtensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto-1.10.0" level="project" />
@@ -145,6 +146,7 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: appcompatV7-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: supportV4-base-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: commons-base-0.10.6" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: jtar-2.3" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: tensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: libtensorflow-1.10.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto-1.10.0" level="project" />

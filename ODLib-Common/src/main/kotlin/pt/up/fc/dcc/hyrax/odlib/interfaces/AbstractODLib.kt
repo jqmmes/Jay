@@ -1,11 +1,17 @@
 package pt.up.fc.dcc.hyrax.odlib.interfaces
 
 import pt.up.fc.dcc.hyrax.odlib.ODClient
+import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 
 abstract class AbstractODLib (val localDetector : DetectObjects) {
+
+
+    private var localClient : ODClient = ODClient()
+    private var grpcServer : GRPCServer? = null
+    private var nextJobId : Int = 0
 
     companion object {
         private var remoteClients : MutableSet<RemoteODClient> = HashSet()
@@ -34,24 +40,19 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         fun addRemoteClients(clients: List<RemoteODClient>) {
             remoteClients.addAll(clients)
         }
-
     }
 
-    private var localClient : ODClient = ODClient()
-    //private var odService : ODService? = null
-    private var grpcServer : GRPCServer? = null
-    private var nextJobId : Int = 0
-
-    /*abstract fun setDetector(localDetector : DetectObjects) {
-        this.localDetector = localDetector
-    }*/
-
-    init {
-        //localClient.setDetector(localDetector)
+    fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
+        if (!onlyLoaded) return localDetector.models.toSet()
+        val result = HashSet<ODModel>()
+        for (model in localDetector.models)
+            if (model.downloaded) result.add(model)
+        return result
     }
 
-    fun setTFModel(modelPath: String) {
-        localDetector.loadModel(modelPath)
+
+    fun setTFModel(model: ODModel) {
+        localDetector.loadModel(model)
     }
 
     fun setTFModelMinScore(minimumScore: Float) {
@@ -88,19 +89,19 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         //odService = null
     }
 
-    fun startGRPCServer(port : Int) {
+    fun startGRPCServer(odLib: AbstractODLib, port : Int) {
         serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()
-            grpcServer = GRPCServer.startServer(port)
+            grpcServer = GRPCServer.startServer(odLib, port)
         }
     }
 
-    fun startGRPCServerService(port : Int) {
+    fun startGRPCServerService(odLib: AbstractODLib, port : Int) {
         serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()
-            grpcServer = GRPCServer(port).start()
+            grpcServer = GRPCServer(odLib, port).start()
         }
     }
 
