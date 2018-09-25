@@ -17,7 +17,7 @@
         <compilerSettings />
         <compilerArguments>
           <option name="destination" value="$MODULE_DIR$/build/classes/kotlin/main" />
-          <option name="classpath" value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.2.70/17bdfaa19afad44a641a778a1cacc53b0e95dddc/kotlin-stdlib-jdk8-1.2.70.jar:/home/joaquim/IdeaProjects/ODLib/ODLib-Cloudlet/build/classes/kotlin/main:/home/joaquim/IdeaProjects/ODLib/ODLib-Common/build/libs/ODLib-Common.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.2.70/9318bb9dadaa56534ac8b0728a1ffa2bd0e48b28/kotlin-stdlib-jdk7-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.2.70/b5b9449f73ce7bf312e89a7560cb3c209a0fa13e/kotlin-stdlib-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.2.70/6ea722d7d0b9451293e739076ddb6a4108d57b6b/kotlin-stdlib-common-1.2.70.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
+          <option name="classpath" value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.2.71/5470d1f752cd342edb77e1062bac07e838d2cea4/kotlin-stdlib-jdk8-1.2.71.jar:/home/joaquim/IdeaProjects/ODLib/ODLib-Cloudlet/build/classes/kotlin/main:/home/joaquim/IdeaProjects/ODLib/ODLib-Common/build/libs/ODLib-Common.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.2.71/4ce93f539e2133f172f1167291a911f83400a5d0/kotlin-stdlib-jdk7-1.2.71.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.2.71/d9717625bb3c731561251f8dd2c67a1011d6764c/kotlin-stdlib-1.2.71.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.2.71/ba18ca1aa0e40eb6f1865b324af2f4cbb691c1ec/kotlin-stdlib-common-1.2.71.jar:/home/joaquim/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
           <option name="noStdlib" value="true" />
           <option name="noReflect" value="true" />
           <option name="moduleName" value="ODLib-Test" />
@@ -36,7 +36,7 @@
       </configuration>
     </facet>
   </component>
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_10">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/build/classes/java/main" />
     <output-test url="file://$MODULE_DIR$/build/classes/java/test" />
     <exclude-output />
@@ -54,10 +54,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ODLib-Cloudlet" exported="" />
     <orderEntry type="module" module-name="ODLib-Common" exported="" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-jdk8-1.2.70" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-jdk7-1.2.70" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-1.2.70" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-common-1.2.70" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-jdk8-1.2.71" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-jdk7-1.2.71" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-1.2.71" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-common-1.2.71" level="project" />
     <orderEntry type="library" exported="" name="Gradle: annotations-13.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: anko-coroutines-0.10.6" level="project" />
@@ -128,6 +128,205 @@
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: netty-common-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: runtime-1.1.0" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: common-1.1.0" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODLib-Common" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: build" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODModel" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODUtils" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: Listener" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: Advertiser" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODService" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: RemoteODClient" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODClient" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCServer" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCClient" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ReturnStatus" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: DetectObjects" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODLib" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: RemoteODCallback" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Image$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$ODCommunicationBaseDescriptorSupplier" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ModelConfig$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$AsyncRequestOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Results$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$ODCommunicationFutureStub" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ModelConfig$ConfigsDefaultEntryHolder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$AsyncRequest$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Detection$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ResultsOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ImageOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ModelOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ModelConfigOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$RemoteClient$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Models$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Detection" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ModelConfig" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$ODCommunicationMethodDescriptorSupplier" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Detection$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Box" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Model" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$RemoteClientOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$StatusOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Box$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Results" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$DetectionOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$AsyncRequest" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$MethodHandlers" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$AsyncRequest$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Image" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Status$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Models$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$BoxOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Models" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ModelConfig$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Box$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Status$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Status" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$ModelsOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Image$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$ODCommunicationFileDescriptorSupplier" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$ODCommunicationImplBase" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Model$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$RemoteClient" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$RemoteClient$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$ODCommunicationStub" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Model$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODProto$Results$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODCommunicationGrpc$ODCommunicationBlockingStub" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODUtils$Box" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODService$CallableJobObjects" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODService$Companion$startService$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODService$RunnableJobObjects" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODUtils$ODDetection" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCServer$ODCommunicationImpl" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCServer$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCServer$ODCommunicationImpl$putJobSync$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCServer$ODCommunicationImpl$putJobSync$ResultCallback" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCServer$start$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: GRPCServer$ODCommunicationImpl$putJobAsync$1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODService$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODUtils$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODLib$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: endpoint" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: consumer" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: log" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: billing" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: monitoring" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: quota" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: backend" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: annotations" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source_info" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: http" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: service" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: logging" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: auth" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: control" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: distribution" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: metric" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: monitored_resource" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: usage" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: authorization_config" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: experimental" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: context" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: httpbody" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: config_change" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: documentation" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: system_parameter" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: label" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: date" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: color" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: dayofweek" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: postal_address" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: money" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: timeofday" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: latlng" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: audit_log" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: code" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: status" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: error_details" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: timestamp" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: empty" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: any" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: field_mask" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: descriptor" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: duration" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: api" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: wrappers" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: type" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source_context" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: struct" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: plugin" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: operations" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: log_severity" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: http_request" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: MANIFEST" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODLib-Common-Fat" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: build-history" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: last-build" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supertypes.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: internal-name-to-source.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-classes.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: java-sources-proto-map" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: subtypes.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supertypes" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: internal-name-to-source.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-classes" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: java-sources-proto-map.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-classes.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supertypes.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-classes.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: class-fq-name-to-source.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: internal-name-to-source.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: subtypes.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: class-fq-name-to-source.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: internal-name-to-source.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: java-sources-proto-map.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: class-fq-name-to-source.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: subtypes.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supertypes.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: proto.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: class-fq-name-to-source" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: subtypes.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: subtypes" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: class-fq-name-to-source.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-classes.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: java-sources-proto-map.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: internal-name-to-source" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: supertypes.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: java-sources-proto-map.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: file-to-id.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: lookups.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: id-to-file.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: file-to-id" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: file-to-id.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: counters" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: id-to-file.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: id-to-file" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: id-to-file.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: file-to-id.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: lookups.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: lookups.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: lookups" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: lookups.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: id-to-file.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: file-to-id.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-output.tab" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-output" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-output.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-output.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: source-to-output.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: format-version" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: gradle-format-version" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: data-container-format-version" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Gradle: ODLibCommonjar-classes" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-coroutines-0.10.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: anko-sdk27-coroutines-0.10.6" level="project" />
@@ -197,5 +396,204 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: netty-common-4.1.27.Final" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: runtime-1.1.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: common-1.1.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODLib-Common" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: build" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODModel" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODUtils" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: Listener" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: Advertiser" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODService" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: RemoteODClient" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODClient" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCServer" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCClient" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ReturnStatus" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: DetectObjects" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODLib" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: RemoteODCallback" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Image$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$ODCommunicationBaseDescriptorSupplier" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ModelConfig$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$AsyncRequestOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Results$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$ODCommunicationFutureStub" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ModelConfig$ConfigsDefaultEntryHolder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$AsyncRequest$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Detection$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ResultsOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ImageOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ModelOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ModelConfigOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$RemoteClient$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Models$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Detection" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ModelConfig" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$ODCommunicationMethodDescriptorSupplier" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Detection$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Box" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Model" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$RemoteClientOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$StatusOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Box$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Results" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$DetectionOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$AsyncRequest" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$MethodHandlers" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$AsyncRequest$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Image" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Status$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Models$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$BoxOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Models" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ModelConfig$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Box$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Status$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Status" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$ModelsOrBuilder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Image$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$ODCommunicationFileDescriptorSupplier" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$ODCommunicationImplBase" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Model$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$RemoteClient" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$RemoteClient$Builder" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$ODCommunicationStub" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Model$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODProto$Results$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODCommunicationGrpc$ODCommunicationBlockingStub" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODUtils$Box" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODService$CallableJobObjects" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODService$Companion$startService$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODService$RunnableJobObjects" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODUtils$ODDetection" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCServer$ODCommunicationImpl" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCServer$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCServer$ODCommunicationImpl$putJobSync$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCServer$ODCommunicationImpl$putJobSync$ResultCallback" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCServer$start$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: GRPCServer$ODCommunicationImpl$putJobAsync$1" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODService$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODUtils$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODLib$Companion" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: endpoint" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: consumer" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: log" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: billing" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: monitoring" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: quota" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: backend" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: annotations" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source_info" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: http" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: service" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: logging" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: auth" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: control" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: distribution" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: metric" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: monitored_resource" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: usage" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: authorization_config" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: experimental" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: context" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: httpbody" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: config_change" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: documentation" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: system_parameter" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: label" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: date" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: color" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: dayofweek" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: postal_address" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: money" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: timeofday" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: latlng" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: audit_log" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: code" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: status" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: error_details" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: timestamp" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: empty" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: any" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: field_mask" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: descriptor" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: duration" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: api" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: wrappers" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: type" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source_context" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: struct" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: plugin" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: operations" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: log_severity" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: http_request" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: MANIFEST" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODLib-Common-Fat" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: build-history" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: last-build" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: supertypes.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: internal-name-to-source.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-classes.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: java-sources-proto-map" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: subtypes.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: supertypes" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: internal-name-to-source.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-classes" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: java-sources-proto-map.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-classes.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: supertypes.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-classes.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: class-fq-name-to-source.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: internal-name-to-source.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: subtypes.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: class-fq-name-to-source.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: internal-name-to-source.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: java-sources-proto-map.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: class-fq-name-to-source.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: subtypes.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: supertypes.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: proto.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: class-fq-name-to-source" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: subtypes.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: subtypes" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: class-fq-name-to-source.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-classes.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: java-sources-proto-map.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: internal-name-to-source" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: supertypes.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: java-sources-proto-map.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: file-to-id.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: lookups.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: id-to-file.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: file-to-id" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: file-to-id.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: counters" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: id-to-file.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: id-to-file" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: id-to-file.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: file-to-id.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: lookups.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: lookups.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: lookups" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: lookups.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: id-to-file.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: file-to-id.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-output.tab" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-output" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-output.tab_i" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-output.tab.values" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: source-to-output.tab.keystream" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: format-version" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: gradle-format-version" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: data-container-format-version" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: ODLibCommonjar-classes" level="project" />
   </component>
 </module>

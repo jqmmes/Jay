@@ -6,7 +6,7 @@ import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 
-abstract class AbstractODLib (val localDetector : DetectObjects) {
+abstract class ODLib (val localDetector : DetectObjects) {
 
 
     private var localClient : ODClient = ODClient()
@@ -89,7 +89,7 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         //odService = null
     }
 
-    fun startGRPCServer(odLib: AbstractODLib, port : Int) {
+    fun startGRPCServer(odLib: ODLib, port : Int) {
         serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()
@@ -97,7 +97,7 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         }
     }
 
-    fun startGRPCServerService(odLib: AbstractODLib, port : Int) {
+    fun startGRPCServerService(odLib: ODLib, port : Int) {
         serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()

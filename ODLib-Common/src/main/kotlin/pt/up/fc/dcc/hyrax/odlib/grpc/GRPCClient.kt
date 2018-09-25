@@ -7,8 +7,6 @@ import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.ODClient
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
-import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.util.concurrent.TimeUnit

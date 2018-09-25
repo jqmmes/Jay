@@ -7,7 +7,7 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.RemoteODCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
@@ -19,7 +19,7 @@ import java.io.IOException
  *
  * Note: this file was automatically converted from Java
  */
-internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 50051) {
+internal class GRPCServer(var odLib: ODLib, private val port: Int = 50051) {
 
     private var server: Server? = null
 
@@ -53,7 +53,7 @@ internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 5005
     }
 
     companion object {
-        fun startServer(odLib: AbstractODLib, port : Int) : GRPCServer {
+        fun startServer(odLib: ODLib, port : Int) : GRPCServer {
             val server = GRPCServer(odLib, port)
             server.start()
             server.blockUntilShutdown()
@@ -69,7 +69,7 @@ internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 5005
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
         override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
-            AbstractODLib.addRemoteClient(RemoteODClient(request!!.getAddress(), request.getPort()))
+            ODLib.addRemoteClient(RemoteODClient(request!!.getAddress(), request.getPort()))
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)
         }
 

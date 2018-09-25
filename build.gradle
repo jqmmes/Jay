@@ -1,4 +1,12 @@
 buildscript {
+    ext {
+        KOTLIN_VERSION = '1.2.71'
+        ANKO_VERSION  = '0.10.6'
+        GRADLE_VERSION = '3.1.4'
+        GRPC_VERSION = '1.15.0'
+        TENSORFLOW_VERSION = '1.10.0'
+    }
+
     repositories {
         google()
         jcenter()
@@ -6,8 +14,8 @@ buildscript {
     }
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.70"
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KOTLIN_VERSION}"
+        classpath 'com.android.tools.build:gradle:3.2.0'
         classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
     }
 }
@@ -22,10 +30,8 @@ allprojects {
     }
 }
 
-ext {
-    KOTLIN_VERSION = '1.2.70'
-    ANKO_VERSION  = '0.10.6'
-    GRADLE_VERSION = '3.1.4'
-    GRPC_VERSION = '1.15.0'
-    TENSORFLOW_VERSION = '1.10.0'
-}
+
+
+/*task clean(type: Delete) {
+    delete rootProject.buildDir
+}*/

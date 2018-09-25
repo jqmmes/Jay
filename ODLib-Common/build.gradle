@@ -1,6 +1,7 @@
 apply plugin: 'kotlin'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.protobuf'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceSets {
     main {
@@ -64,9 +65,20 @@ protobuf {
     }
 }
 
+
+shadowJar {
+    dependencies{
+        exclude("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}")
+    }
+
+    baseName = 'ODLib-Common-Fat'
+    classifier = null
+    version = null
+}
+
 idea {
     module {
-        sourceDirs += file("$buildDir/generated-sources/release/java");
+        sourceDirs += file("$buildDir/generated-sources/release/java")
     }
 }
 

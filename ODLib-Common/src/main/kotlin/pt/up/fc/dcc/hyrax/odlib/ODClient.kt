@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.interfaces.AbstractODLib
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLib
 
 open class ODClient {
 
@@ -18,7 +18,7 @@ open class ODClient {
     }
 
     open fun getPort() : Int{
-        return AbstractODLib.getServerPort()
+        return ODLib.getServerPort()
     }
 
     open fun getAdress() : String {

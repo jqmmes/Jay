@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/ODLib-Cloudlet/ODLib-Cloudlet.iml" filepath="$PROJECT_DIR$/ODLib-Cloudlet/ODLib-Cloudlet.iml" />
       <module fileurl="file://$PROJECT_DIR$/ODLib-Common/ODLib-Common.iml" filepath="$PROJECT_DIR$/ODLib-Common/ODLib-Common.iml" />
       <module fileurl="file://$PROJECT_DIR$/ODLib-Test/ODLib-Test.iml" filepath="$PROJECT_DIR$/ODLib-Test/ODLib-Test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ODLibDemo/ODLibDemo.iml" filepath="$PROJECT_DIR$/ODLibDemo/ODLibDemo.iml" />
     </modules>
   </component>
 </project>
