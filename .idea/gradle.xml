@@ -14,7 +14,6 @@
             <option value="$PROJECT_DIR$/ODLib-Test" />
           </set>
         </option>
-        <option name="resolveModulePerSourceSet" value="false" />
         <option name="useAutoImport" value="true" />
       </GradleProjectSettings>
     </option>

@@ -1,13 +1,17 @@
 apply plugin: 'kotlin'
-apply plugin: 'java-library'
+//apply plugin: 'java-library'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 buildscript {}
 
 shadowJar {
-    baseName = 'ODLibCloudlet'
+    baseName = 'ODLib-Cloudlet'
     classifier = null
     version = null
+}
+
+artifacts {
+    archives shadowJar
 }
 
 /*jar {
@@ -24,6 +28,6 @@ dependencies {
     //noinspection DifferentStdlibGradleVersion
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
     //implementation project(path: ':ODLib-Common', configuration: 'shadow')
-    //implementation project(path: ':ODLib-Common')
-    implementation fileTree(dir: '../ODLib-Common')
+    implementation project(path: ':ODLib-Common')
+    //implementation fileTree(dir: '../ODLib-Common')
 }

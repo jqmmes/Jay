@@ -1,8 +1,10 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'me.lucas.fat-aar'
 
-sourceCompatibility = "8"
-targetCompatibility = "8"
+//sourceCompatibility = "8"
+//targetCompatibility = "8"
 
 android {
     compileSdkVersion 28
@@ -32,6 +34,7 @@ android {
 
     dependencies {
     }
+
 }
 
 tasks.whenTaskAdded { task ->
@@ -40,9 +43,10 @@ tasks.whenTaskAdded { task ->
     }
 }
 
+//fatLibraryExt.enable=true
 
 dependencies {
-    implementation 'org.kamranzafar:jtar:2.3'
+    embed 'org.kamranzafar:jtar:2.3'
     implementation "org.tensorflow:tensorflow-android:${TENSORFLOW_VERSION}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
     implementation project(':ODLib-Common')

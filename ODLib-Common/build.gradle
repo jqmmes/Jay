@@ -67,13 +67,17 @@ protobuf {
 
 
 shadowJar {
-    dependencies{
+    /*dependencies{
         exclude("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}")
-    }
+    }*/
 
-    baseName = 'ODLib-Common-Fat'
+    baseName = 'ODLib-Common'
     classifier = null
     version = null
+}
+
+artifacts {
+    archives shadowJar
 }
 
 idea {

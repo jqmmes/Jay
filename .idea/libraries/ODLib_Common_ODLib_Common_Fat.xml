@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="ODLib-Common.ODLib-Common-Fat">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/ODLib-Common/build/libs/ODLib-Common-Fat.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
