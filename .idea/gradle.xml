@@ -8,9 +8,10 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/ODLib-Android" />
+            <option value="$PROJECT_DIR$/ODLib-AndroidDemo" />
             <option value="$PROJECT_DIR$/ODLib-Cloudlet" />
             <option value="$PROJECT_DIR$/ODLib-Common" />
+            <option value="$PROJECT_DIR$/ODLib-Droid" />
             <option value="$PROJECT_DIR$/ODLib-Test" />
           </set>
         </option>
