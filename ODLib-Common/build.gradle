@@ -15,11 +15,6 @@ sourceSets {
 }
 
 dependencies {
-    //Tensorflow --> Move to other place
-    //implementation "org.tensorflow:tensorflow:${TENSORFLOW_VERSION}"
-    //implementation "org.tensorflow:libtensorflow:${TENSORFLOW_VERSION}"
-    //implementation "org.tensorflow:proto:${TENSORFLOW_VERSION}"
-    //implementation 'javax.annotation:javax.annotation-api:1.3.2'
     // Kotlin
     //noinspection DifferentStdlibGradleVersion
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
@@ -67,10 +62,6 @@ protobuf {
 
 
 shadowJar {
-    /*dependencies{
-        exclude("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}")
-    }*/
-
     baseName = 'ODLib-Common'
     classifier = null
     version = null
