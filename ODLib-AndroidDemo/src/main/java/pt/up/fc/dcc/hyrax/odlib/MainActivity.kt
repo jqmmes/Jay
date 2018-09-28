@@ -5,7 +5,6 @@ import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.TextView
 import android.widget.ToggleButton
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -13,23 +12,36 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     private lateinit var odClient : ODLib
+    private lateinit var loggingConsole : Logger
 
-    fun serviceToggleListener(target : View) {
-        runOnUiThread {
-            findViewById<TextView>(R.id.loggingConsole).text = "Toggling Service"
+    companion object {
+        fun updateIface(){
+
         }
-        if ((target as ToggleButton).isChecked) odClient.startODService()
+    }
+
+    private fun toggleServer(start : Boolean) {
+        loggingConsole.log("Toggle Server $start")
+
+        if (start) {
+            findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
+            toggleService(true)
+            odClient.startGRPCServerService(odClient, 50001, true)
+        }
+        else odClient.stopGRPCServer()
+    }
+    private fun toggleService(start : Boolean) {
+        loggingConsole.log("Toggle Service $start")
+        if (start) odClient.startODService()
         else odClient.stopODService()
     }
 
+    fun serviceToggleListener(target : View) {
+        toggleService((target as ToggleButton).isChecked)
+    }
+
     fun serverToggleListener(target : View) {
-        runOnUiThread {
-            findViewById<TextView>(R.id.loggingConsole).text = "Toggling Server"
-        }
-        if ((target as ToggleButton).isChecked) {
-            findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
-        }
-        else odClient.stopGRPCServer()
+        toggleServer((target as ToggleButton).isChecked)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +49,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
+        loggingConsole = Logger(this, findViewById(R.id.loggingConsole))
         odClient = ODLib(this)
+        odClient.enableLogs(loggingConsole)
 
         /*fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)

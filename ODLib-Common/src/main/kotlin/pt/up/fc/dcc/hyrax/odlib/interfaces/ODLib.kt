@@ -14,6 +14,13 @@ abstract class ODLib (val localDetector : DetectObjects) {
     private var nextJobId : Int = 0
 
     companion object {
+        var log : Boolean = false
+        lateinit var loggingConsole : ODLog
+
+        fun log(message : String) {
+            if (log) loggingConsole.log(message)
+        }
+
         private var remoteClients : MutableSet<RemoteODClient> = HashSet()
 
         private var serverPort : Int = 0
@@ -40,6 +47,11 @@ abstract class ODLib (val localDetector : DetectObjects) {
         fun addRemoteClients(clients: List<RemoteODClient>) {
             remoteClients.addAll(clients)
         }
+    }
+
+    fun enableLogs(loggingInterface : ODLog){
+        log = true
+        loggingConsole = loggingInterface
     }
 
     fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
@@ -79,14 +91,11 @@ abstract class ODLib (val localDetector : DetectObjects) {
     }
 
     fun startODService() {
-        //odService = ODService(localDetector).startService()
         ODService.startService(localDetector)
     }
 
     fun stopODService() {
-        //odService?.stop()
         ODService.stop()
-        //odService = null
     }
 
     fun startGRPCServer(odLib: ODLib, port : Int) {
