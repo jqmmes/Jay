@@ -97,11 +97,11 @@ abstract class ODLib (val localDetector : DetectObjects) {
         }
     }
 
-    fun startGRPCServerService(odLib: ODLib, port : Int) {
+    fun startGRPCServerService(odLib: ODLib, port : Int, useNettyServer : Boolean = false) {
         serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()
-            grpcServer = GRPCServer(odLib, port).start()
+            grpcServer = GRPCServer(odLib, port, useNettyServer).start()
         }
     }
 

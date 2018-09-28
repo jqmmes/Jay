@@ -31,10 +31,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
     }
 
 }
@@ -49,5 +53,9 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
+    implementation 'io.grpc:grpc-okhttp:1.15.0'
+    implementation 'io.grpc:grpc-netty-shaded:1.15.0'
+    //  implementation 'io.grpc:grpc-protobuf-lite:1.15.0'
+    implementation 'io.grpc:grpc-stub:1.15.0'
     implementation project(':ODLib-Droid')
 }

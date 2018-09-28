@@ -43,5 +43,6 @@ dependencies {
     implementation 'org.kamranzafar:jtar:2.3'
     implementation "org.tensorflow:tensorflow-android:${TENSORFLOW_VERSION}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
+    implementation 'com.google.api.grpc:proto-google-common-protos:1.12.0'
     api project(':ODLib-Common')
 }

@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.grpc
 import com.google.protobuf.Empty
 import io.grpc.Server
 import io.grpc.ServerBuilder
+import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.ODService
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
@@ -18,18 +19,29 @@ import java.io.IOException
  * Server that manages startup/shutdown of a `Greeter` server.
  *
  * Note: this file was automatically converted from Java
+ *
+ *
+ * TODO: Criar um servidor com OKHTTP para usar nos Android
  */
-internal class GRPCServer(var odLib: ODLib, private val port: Int = 50051) {
+internal class GRPCServer(var odLib: ODLib, private val port: Int = 50051, private val useNettyServer : Boolean = false) {
 
     private var server: Server? = null
+
 
     @Throws(IOException::class)
     fun start() : GRPCServer{
         println("will start server on port " + port)
-        server = ServerBuilder.forPort(port)
-                .addService(ODCommunicationImpl())
-                .build()
-                .start()
+        server = if (useNettyServer){
+            NettyServerBuilder.forPort(port)
+                    .addService(ODCommunicationImpl())
+                    .build()
+                    .start()
+        } else {
+            ServerBuilder.forPort(port)
+                    .addService(ODCommunicationImpl())
+                    .build()
+                    .start()
+        }
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
                 System.err.println("*** shutting down gRPC server since JVM is shutting down")
