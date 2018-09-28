@@ -6,4 +6,8 @@
     <string name="service_off">Service Off</string>
     <string name="server_off">Server Off</string>
     <string name="server_on">Server On</string>
+    <string name="advertise_off">Advertise Off</string>
+    <string name="advertise_on">Advertise On</string>
+    <string name="discover_off">Discover Off</string>
+    <string name="discover_on">Discover On</string>
 </resources>

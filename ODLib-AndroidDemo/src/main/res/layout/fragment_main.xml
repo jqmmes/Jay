@@ -49,10 +49,23 @@
                     android:onClick="serverToggleListener"
                     android:textOff="@string/server_off"
                     android:textOn="@string/server_on"/>
-            <Button
-                    android:text="@string/service"
+            <ToggleButton
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:id="@+id/button" android:layout_weight="1"/>
+                    android:layout_height="wrap_content"
+                    android:id="@+id/discoverToggleButton"
+                    android:layout_weight="1"
+                    android:onClick="discoverToggleListener"
+                    android:textOff="@string/discover_off"
+                    android:textOn="@string/discover_on"/>
+
+            <ToggleButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/advertiseToggleButton"
+                    android:layout_weight="1"
+                    android:onClick="advertiseToggleListener"
+                    android:textOff="@string/advertise_off"
+                    android:textOn="@string/advertise_on"/>
         </LinearLayout>
     </LinearLayout>
 

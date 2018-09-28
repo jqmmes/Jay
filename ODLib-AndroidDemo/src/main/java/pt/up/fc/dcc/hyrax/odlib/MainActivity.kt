@@ -8,6 +8,9 @@ import android.view.View
 import android.widget.ToggleButton
 
 import kotlinx.android.synthetic.main.activity_main.*
+import pt.up.fc.dcc.hyrax.odlib.discover.MulticastAdvertiser
+import pt.up.fc.dcc.hyrax.odlib.discover.MulticastListener
+import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,6 +46,26 @@ class MainActivity : AppCompatActivity() {
     fun serverToggleListener(target : View) {
         toggleServer((target as ToggleButton).isChecked)
     }
+
+    fun advertiseToggleListener(target : View) {
+        if ((target as ToggleButton).isChecked) MulticastAdvertiser.advertise()
+        else MulticastAdvertiser.stop()
+        //toggleService((target as ToggleButton).isChecked)
+    }
+
+    inner class DiscoveredClient : DiscoverInterface {
+        override fun onNewClientFound(remoteClient: RemoteODClient) {
+            loggingConsole.log("Discovered new client")
+        }
+
+    }
+
+    fun discoverToggleListener(target : View) {
+        if ((target as ToggleButton).isChecked) MulticastListener.listen(DiscoveredClient())
+        else MulticastListener.stop()
+        //toggleServer((target as ToggleButton).isChecked)
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
