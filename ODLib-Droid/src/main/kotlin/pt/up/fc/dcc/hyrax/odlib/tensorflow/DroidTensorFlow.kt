@@ -16,13 +16,13 @@ import java.net.URL
 import java.net.URLConnection
 import kotlin.concurrent.thread
 import kotlin.math.floor
-
+import kotlin.math.max
 
 internal class DroidTensorFlow(private val context: Context) : DetectObjects {
     override var minimumScore: Float = 0f
 
-    private lateinit var localDetector : Classifier
-    private val tfOdApiInputSize : Long = 3300L
+    private var localDetector : Classifier? = null
+    private val tfOdApiInputSize : Long = 300L
     private var minimumConfidence : Float = 0.0f
     override val models: List<ODModel>
         get() = listOf(
@@ -60,7 +60,7 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
         )
 
     override fun close() {
-        localDetector.close()
+        if (localDetector != null) localDetector!!.close()
     }
 
     override fun getByteArrayFromImage(imgPath: String): ByteArray {
@@ -70,15 +70,26 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
-        //Verificar como funciona o decodeByteArray
-        val data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
-        //Bitmap.createScaledBitmap(data, floor(data.width*0.3).toInt(), floor(data.height*0.3).toInt(), false)
-        //return detectObjects(Bitmap.createScaledBitmap(data, 300, 300, false))
-        return detectObjects(data)
+        droidLog("Processing image....")
+        var data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
+        val scale = 300f/max(data.width, data.height)
+        data = Bitmap.createScaledBitmap(data, floor(data.width*scale).toInt(), floor(data.height*scale).toInt(), false)
+        val scaledData = Bitmap.createBitmap(300,300, data.config)
+        val pixels = IntArray(data.width * data.height)
+        data.getPixels(pixels, 0, data.width, 0, 0, data.width, data.height)
+        scaledData.setPixels(pixels, 0, 300, 0, 0, data.width, data.height)
+        println("${scaledData.width}\t${scaledData.height}")
+        droidLog("Detecting Objects....")
+        return detectObjects(scaledData)
     }
 
-    fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
-        val results : List<Classifier.Recognition> = localDetector.recognizeImage(imgData)
+    private fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
+        if (localDetector == null) {
+            droidLog("No model has been loaded yet")
+            return emptyList()
+        }
+
+        val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(imgData)
         val mappedRecognitions : MutableList<ODUtils.ODDetection> = ArrayList()
         for (result : Classifier.Recognition in results) {
             /*if (result.confidence == null) continue
@@ -90,27 +101,20 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
         return mappedRecognitions
     }
 
-    private fun loadModel(path: String, label: String) { //, score: Float
+    private fun loadModel(path: String) { //, score: Float
         droidLog("Loading Model from: $path")
         try {
             localDetector = TensorFlowObjectDetectionAPIModel.create(
-                    Resources.getSystem().assets, path, label, tfOdApiInputSize)
+                    Resources.getSystem().assets, path, tfOdApiInputSize)
             droidLog("Model loaded successfully")
-            //cropSize = tfOdApiInputSize
         } catch (e: IOException) {
             droidLog("Error loading model")
-            //LOGGER.e("Exception initializing classifier!", e)
-            //val toast = Toast.makeText(
-            //        getApplicationContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT)
-            //toast.show()
-            //finish()
         }
 
     }
 
     override fun loadModel(model: ODModel) {
         thread {
-            //listDir(context.cacheDir.absolutePath)
             var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
             if (!checkDownloadedModel(model.modelName)) {
                 val tmpFile = downloadModel(model)
@@ -125,8 +129,7 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
                 }
                 else droidLog("model Download Failed")
             }
-            loadModel(File(modelPath, "frozen_inference_graph.pb").absolutePath, "")
-            //listDir(context.cacheDir.absolutePath)
+            loadModel(File(modelPath, "frozen_inference_graph.pb").absolutePath)
         }
     }
 
@@ -206,12 +209,12 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
         return tmpFile
     }
 
-    private fun listDir(dir : String) {
+    /*private fun listDir(dir : String) {
         if (!File(dir).isDirectory) return
         for (d in File(dir).listFiles())
             if (d.isDirectory) listDir(d.absolutePath)
             else droidLog("${d.absolutePath}\t${d.length()}")
-    }
+    }*/
 
     override fun extractModel(modelFile: File) : String {
         droidLog("extracting model: ${modelFile.path}")

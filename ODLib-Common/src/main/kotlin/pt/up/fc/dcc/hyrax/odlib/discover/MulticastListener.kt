@@ -20,15 +20,15 @@ class MulticastListener {
             }
             thread(isDaemon = true) {
                 val mcPort = 50000
-                //val mcIPStr = "224.0.1.0"
+                val mcIPStr = "224.0.0.0"
                 //ffxe::/16
-                val mcIPStr = "FF7E:230::1234"
+                //val mcIPStr = "FF7E:230::1234"
                 //mcIPAddress = Inet4Address.getByName(mcIPStr)
-                mcIPAddress = Inet6Address.getByName(mcIPStr)
+                mcIPAddress = Inet4Address.getByName(mcIPStr)
                 listeningSocket = MulticastSocket(mcPort)
                 ODLib.log("Multicast Receiver running at:" + listeningSocket.localSocketAddress)
                 println("Multicast Receiver running at:" + listeningSocket.localSocketAddress)
-                listeningSocket.joinGroup(mcIPAddress!!)
+                listeningSocket.joinGroup(mcIPAddress)
 
                 running = true
                 var packet : DatagramPacket?

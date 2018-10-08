@@ -74,7 +74,6 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         fun create (
                 assetManager : AssetManager,
                 modelFilename : String,
-                labelFilename : String,
                 inputSize : Long) : Classifier {
             val d = TensorFlowObjectDetectionAPIModel()
 
@@ -200,7 +199,8 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                             outputLocations[4 * i + 2] * inputSize)
             pq.add(Classifier.Recognition("" + i, outputClasses[i].toString(), outputScores[i], detection))
             if (outputScores[i] >= 0.3f)
-                droidLog("Detection #$i\n\t\tClass: ${outputClasses[i]}\n\t\tScore: ${outputScores[i]}")
+                droidLog("Detection #$i\n\t\tClass: ${COCODataLabels.label(outputClasses[i].toInt())}\n\t\tScore: " +
+                        "${outputScores[i]}")
         }
 
         val recognitions : ArrayList<Classifier.Recognition> = ArrayList<Classifier.Recognition>()

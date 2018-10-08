@@ -2,10 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.discover
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLib
 import java.lang.Thread.sleep
-import java.net.DatagramPacket
-import java.net.Inet6Address
-import java.net.InetAddress
-import java.net.MulticastSocket
+import java.net.*
 import kotlin.concurrent.thread
 
 class MulticastAdvertiser {
@@ -22,13 +19,13 @@ class MulticastAdvertiser {
 
             thread(isDaemon=true) {
                 val mcPort = 50000
-                //val mcIPStr = "224.0.1.0"
-                val mcIPStr = "FF7E:230::1234"
+                val mcIPStr = "224.0.0.0"
+                //val mcIPStr = "FF7E:230::1234"
                 running = true
                 mcSocket = MulticastSocket()
                 mcSocket.loopbackMode = true
                 val msg = ByteArray(1)
-                mcIPAddress = Inet6Address.getByName(mcIPStr)
+                mcIPAddress = Inet4Address.getByName(mcIPStr)
                 println(mcIPAddress)
                 mcSocket.joinGroup(mcIPAddress)
 
