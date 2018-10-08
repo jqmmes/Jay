@@ -2,13 +2,14 @@ package pt.up.fc.dcc.hyrax.odlib.interfaces
 
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import java.io.File
 
 interface DetectObjects {
     var minimumScore: Float
     val models: List<ODModel>
 
-    fun extractModel(model: ODModel)
-    fun downloadModel(model: ODModel)
+    fun extractModel(modelFile: File) : String
+    fun downloadModel(model: ODModel): File?
     fun checkDownloadedModel(name: String): Boolean
 
     //fun loadModel(path: String, label: String = String(), score: Float = minimumScore)

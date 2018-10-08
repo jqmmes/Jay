@@ -10,4 +10,8 @@
     <string name="advertise_on">Advertise On</string>
     <string name="discover_off">Discover Off</string>
     <string name="discover_on">Discover On</string>
+    <string name="download">Download</string>
+    <string name="chooseImage">Choose Image</string>
+    <string name="loadModel">Load Model</string>
+    <string name="selectModel">Select Model</string>
 </resources>

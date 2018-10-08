@@ -4,6 +4,10 @@ import pt.up.fc.dcc.hyrax.odlib.discover.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.discover.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
 import java.lang.Thread.sleep
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.util.*
+
 class xpto : DiscoverInterface {
     override fun onNewClientFound(remoteClient: RemoteODClient) {
         println("xpto")
@@ -13,17 +17,37 @@ class xpto : DiscoverInterface {
 
 private var odClient = ODLib()
 fun main(args: Array<String>) {
-    /*odClient.startGRPCServerService(odClient, 50000)
-    val localClient  = odClient.getClient()
+    //odClient.startGRPCServerService(odClient, 50000)
+    //val localClient  = odClient.getClient()
     //val remoteClient = odClient.newRemoteClient("192.168.1.27", 50001)
-    val remoteClient = odClient.newRemoteClient("192.168.1.40", 50001)
-    remoteClient.sayHello()
-    remoteClient.ping()*/
-    MulticastAdvertiser.advertise()
+    //val remoteClient = odClient.newRemoteClient("192.168.1.40", 50001)
+    //remoteClient.sayHello()
+    //remoteClient.ping()
+    //MulticastAdvertiser.advertise()
     //MulticastListener.listen(xpto())
     //odClient.listModels(false).first()
     //odClient.setTFModel("/home/joaquim/Downloads/faster_rcnn_nas_coco_2018_01_28/saved_model/")
-    sleep(10000)
+    //sleep(10000)
+
+    //Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+    val nets = NetworkInterface.getNetworkInterfaces()
+    for (netint in nets) {
+        // displayInterfaceInformation(netint);
+        // ignore: "awdl0"; "utun0"; "lo0"
+        println(netint)
+        /*println(netint.isLoopback)
+        println(netint.supportsMulticast())
+        println(netint.isUp)
+        println(netint.isVirtual)
+        println(netint.isPointToPoint)*/
+        println(InetAddress.getByName("224.0.1.0").isMulticastAddress)
+        println(InetAddress.getByName("FF7E:230::1234").isMulticastAddress)
+        for (addr in netint.interfaceAddresses) {
+            println(addr.address.isMulticastAddress)
+            println(addr.broadcast)
+        }
+    }
+
     return
     /*odClient.setTFModel(odClient.listModels(false).last())
     //odClient.setTFModel("/home/joaquim/Downloads/ssd/saved_model/")

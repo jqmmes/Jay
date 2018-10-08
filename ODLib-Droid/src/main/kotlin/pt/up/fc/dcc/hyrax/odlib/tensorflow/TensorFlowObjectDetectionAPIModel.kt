@@ -19,6 +19,7 @@ import android.os.Trace
 import org.tensorflow.Graph
 import org.tensorflow.Operation
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
+import pt.up.fc.dcc.hyrax.odlib.ODLib.Companion.droidLog
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
@@ -77,7 +78,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 inputSize : Long) : Classifier {
             val d = TensorFlowObjectDetectionAPIModel()
 
-            val labelsInput: InputStream?
+            /*val labelsInput: InputStream?
             val actualFilename : String = labelFilename.split("file:///android_asset/")[1]
             labelsInput = assetManager.open(actualFilename)
             val br: BufferedReader?
@@ -88,7 +89,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 d.labels.add(line)
                 line = br.readLine()
             }
-            br.close()
+            br.close()*/
 
 
             d.inferenceInterface = TensorFlowInferenceInterface(assetManager, modelFilename)
@@ -141,33 +142,36 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
 
     override fun recognizeImage(bitmap : Bitmap) : List<Classifier.Recognition>{
         // Log this method so that it can be analyzed with systrace.
-        Trace.beginSection("recognizeImage")
+        //Trace.beginSection("recognizeImage")
 
-        Trace.beginSection("preprocessBitmap")
+        //Trace.beginSection("preprocessBitmap")
         //Preprocess the image data to extract R, G and B bytes from int of form 0x00RRGGBB
         //on the provided parameters.
-        bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight())
+        println("${intValues.size}\t${bitmap.width}\t${bitmap.height}")
+        bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
-        for (i : Int  in 0..intValues.size) {
+        println("${intValues.size*3}\t\t${byteValues.size}")
+        for (i : Int  in 0..(intValues.size-1)) {
+            //println("$i\t${i*3}\t${intValues.size}\t${byteValues.size}")
             byteValues[i * 3 + 2] = intValues[i].and(0xFF).toByte()
             byteValues[i * 3 + 1] = (intValues[i].shr(8)).and(0xFF).toByte()
             byteValues[i * 3 + 0] = (intValues[i].shr(16)).and(0xFF).toByte()
         }
-        Trace.endSection() //preprocessBitmap
+        //Trace.endSection() //preprocessBitmap
 
         //Copy the input data into TensorFlow.
-        Trace.beginSection("feed")
+        //Trace.beginSection("feed")
         //inputName: String!, src: ByteArray!, vararg dims: Long
         inferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
-        Trace.endSection()
+        //Trace.endSection()
 
         //Run the inference call.
-        Trace.beginSection("run")
+        //Trace.beginSection("run")
         inferenceInterface.run(outputNames, logStats)
-        Trace.endSection()
+        //Trace.endSection()
 
         //Copy the output Tensor back into the output array.
-        Trace.beginSection("fetch")
+        //Trace.beginSection("fetch")
         val outputLocations = FloatArray(MAX_RESULTS * 4)
         val outputScores = FloatArray(MAX_RESULTS)
         val outputClasses = FloatArray(MAX_RESULTS)
@@ -176,24 +180,27 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         inferenceInterface.fetch(outputNames[1], outputScores)
         inferenceInterface.fetch(outputNames[2], outputClasses)
         inferenceInterface.fetch(outputNames[3], outputNumDetections)
-        Trace.endSection()
+        //Trace.endSection()
 
 
 
         //Find the best detections.
         val  pq : PriorityQueue<Classifier.Recognition> =
-                PriorityQueue<Classifier.Recognition>(
+                PriorityQueue(
                         1, kotlin.Comparator<Classifier.Recognition> { lhs, rhs -> compareValues(rhs.confidence, lhs.confidence) })
 
+        droidLog("Detection Complete. Checking results...")
         //Scale them back to the input size.
-        for (i : Int in 0..outputScores.size) {
+        for (i : Int in 0..(outputScores.size-1)) {
             val detection =
                     RectF(
                             outputLocations[4 * i + 1] * inputSize,
                             outputLocations[4 * i] * inputSize,
                             outputLocations[4 * i + 3] * inputSize,
                             outputLocations[4 * i + 2] * inputSize)
-            pq.add(Classifier.Recognition("" + i, labels.get(outputClasses[i].toInt()), outputScores[i], detection))
+            pq.add(Classifier.Recognition("" + i, outputClasses[i].toString(), outputScores[i], detection))
+            if (outputScores[i] >= 0.3f)
+                droidLog("Detection #$i\n\t\tClass: ${outputClasses[i]}\n\t\tScore: ${outputScores[i]}")
         }
 
         val recognitions : ArrayList<Classifier.Recognition> = ArrayList<Classifier.Recognition>()

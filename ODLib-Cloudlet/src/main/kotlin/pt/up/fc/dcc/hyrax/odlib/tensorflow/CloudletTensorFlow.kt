@@ -167,28 +167,33 @@ internal class CloudletTensorFlow : DetectObjects {
             return false
         }
 
-        override fun downloadModel(model: ODModel) {
+        override fun downloadModel(model: ODModel) : File? {
             println("Downloading model from " + model.remoteUrl)
             if (!File(cacheDir).exists()) File(cacheDir).mkdirs()
             val modelUrl = URL(model.remoteUrl)
             val rbc = Channels.newChannel(modelUrl.openStream())
-            val fos = FileOutputStream(cacheDir+model.modelName+".tar.gz")
+            val tmpFile = File.createTempFile(cacheDir+model.modelName, ".tar.gz")
+            val fos = FileOutputStream(tmpFile)
             fos.channel.transferFrom(rbc, 0, java.lang.Long.MAX_VALUE)
             model.downloaded = true
-            model.graphLocation = cacheDir + model.modelName + "/"
+            return tmpFile
+            //model.graphLocation = cacheDir + model.modelName + "/"
         }
 
-        override fun extractModel(model: ODModel) {
-            if (checkDownloadedModel(model.modelName)) return
-            val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(cacheDir+model.modelName+".tar.gz"))))
+        override fun extractModel(modelFile: File) : String {
+            var basePath = cacheDir
+            val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
 
             var entry : TarEntry? = tis.nextEntry
             if (entry!= null && entry.isDirectory) {
                 File(cacheDir + entry.name).mkdirs()
-                model.graphLocation = cacheDir + entry.name
                 entry = tis.nextEntry
             }
             while (entry != null) {
+                if (entry.name.contains("PaxHeader")) {
+                    entry = tis.nextEntry
+                    continue
+                }
                 if (entry.isDirectory) {
                     File(cacheDir + entry.name).mkdirs()
                     entry = tis.nextEntry
@@ -196,6 +201,13 @@ internal class CloudletTensorFlow : DetectObjects {
                 }
                 var count: Int
                 val data = ByteArray(2048)
+
+                if (entry.name.contains("frozen_inference_graph.pb")) {
+                    basePath = File(cacheDir, entry.name.substring(0, entry.name.indexOf
+                    ("frozen_inference_graph.pb"))).absolutePath
+                }
+                File(cacheDir, entry.name).mkdirs()
+                File(cacheDir, entry.name).delete()
                 val fos = FileOutputStream(cacheDir + entry.name)
 
                 val dest = BufferedOutputStream(fos)
@@ -211,13 +223,16 @@ internal class CloudletTensorFlow : DetectObjects {
 
                 entry = tis.nextEntry
             }
+            return basePath
         }
 
     override fun loadModel(model: ODModel) {
-        if (!checkDownloadedModel(model.modelName)) downloadModel(model)
-        println("Extraction Model....")
-        extractModel(model)
-        println("Extracted... Loading model")
+        if (!checkDownloadedModel(model.modelName)) {
+            val tmpFile = downloadModel(model)
+            println("Extraction Model....")
+            if (tmpFile != null) extractModel(tmpFile)
+            println("Extracted... Loading model")
+        }
         loadModel(model.graphLocation + "saved_model/")
         Files.delete(File(cacheDir+model.modelName+".tar.gz").toPath())
     }

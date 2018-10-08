@@ -20,7 +20,7 @@
             app:layout_constraintVertical_bias="0.0" android:id="@+id/loggingConsole" android:padding="10dp"
             android:scrollbars="vertical"/>
     <LinearLayout
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/linearLayout" app:layout_constraintStart_toStartOf="parent"
@@ -29,8 +29,9 @@
             android:layout_marginBottom="8dp">
         <LinearLayout
                 android:orientation="horizontal"
-                android:layout_width="0dp"
-                android:layout_height="match_parent" android:layout_weight="1">
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
 
             <ToggleButton
                     android:layout_width="wrap_content"
@@ -67,6 +68,32 @@
                     android:textOff="@string/advertise_off"
                     android:textOn="@string/advertise_on"/>
         </LinearLayout>
+        <Spinner
+                android:text="@string/selectModel"
+                android:id="@+id/select_model"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" />
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+            <Button android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/download"
+                    android:layout_weight="1"
+                    android:onClick="downloadModel"/>
+            <Button android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loadModel"
+                    android:layout_weight="1"
+                    android:onClick="loadModel"/>
+        </LinearLayout>
+
+        <Button android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/chooseImage"
+                android:onClick="chooseImage"/>
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

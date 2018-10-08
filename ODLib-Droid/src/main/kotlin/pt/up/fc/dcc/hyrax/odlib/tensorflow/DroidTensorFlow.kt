@@ -1,28 +1,28 @@
 package pt.up.fc.dcc.hyrax.odlib.tensorflow
 
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
+import pt.up.fc.dcc.hyrax.odlib.ODLib.Companion.droidLog
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.io.*
 import java.util.zip.GZIPInputStream
+import java.net.URL
+import java.net.URLConnection
+import kotlin.concurrent.thread
+import kotlin.math.floor
 
 
 internal class DroidTensorFlow(private val context: Context) : DetectObjects {
     override var minimumScore: Float = 0f
 
     private lateinit var localDetector : Classifier
-    private val TF_OD_API_INPUT_SIZE : Long = 300L
+    private val tfOdApiInputSize : Long = 3300L
     private var minimumConfidence : Float = 0.0f
     override val models: List<ODModel>
         get() = listOf(
@@ -46,11 +46,12 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
                         "http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz",
                         checkDownloadedModel("ssdlite_mobilenet_v2_coco")
                 ),
-                ODModel(4,
+                // This model crashes on load android
+                /*ODModel(4,
                         "faster_rcnn_resnet101_coco",
                         "http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz",
                         checkDownloadedModel("faster_rcnn_resnet101_coco")
-                ),
+                ),*/
                 ODModel(5,
                         "ssd_resnet_50_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
@@ -70,26 +71,34 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
 
     override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
         //Verificar como funciona o decodeByteArray
-        return detectObjects(BitmapFactory.decodeByteArray(imgData, 10, 10))
+        val data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
+        //Bitmap.createScaledBitmap(data, floor(data.width*0.3).toInt(), floor(data.height*0.3).toInt(), false)
+        //return detectObjects(Bitmap.createScaledBitmap(data, 300, 300, false))
+        return detectObjects(data)
     }
 
     fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
         val results : List<Classifier.Recognition> = localDetector.recognizeImage(imgData)
         val mappedRecognitions : MutableList<ODUtils.ODDetection> = ArrayList()
         for (result : Classifier.Recognition in results) {
-            if (result.confidence!! >= minimumConfidence) {
-                mappedRecognitions.add(ODUtils.ODDetection(score = result.confidence, class_ = result.title!!.toInt(), box = ODUtils.Box()))
-            }
+            /*if (result.confidence == null) continue
+            if (result.confidence >= minimumConfidence) {
+                mappedRecognitions.add(ODUtils.ODDetection(score = result.confidence, class_ = result.title!!.toFloat
+                ().toInt(), box = ODUtils.Box()))
+            }*/
         }
         return mappedRecognitions
     }
 
-    private fun loadModel(path: String, label: String, score: Float) {
+    private fun loadModel(path: String, label: String) { //, score: Float
+        droidLog("Loading Model from: $path")
         try {
             localDetector = TensorFlowObjectDetectionAPIModel.create(
-                    Resources.getSystem().assets, path, label, TF_OD_API_INPUT_SIZE)
-            //cropSize = TF_OD_API_INPUT_SIZE
+                    Resources.getSystem().assets, path, label, tfOdApiInputSize)
+            droidLog("Model loaded successfully")
+            //cropSize = tfOdApiInputSize
         } catch (e: IOException) {
+            droidLog("Error loading model")
             //LOGGER.e("Exception initializing classifier!", e)
             //val toast = Toast.makeText(
             //        getApplicationContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT)
@@ -100,8 +109,27 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun loadModel(model: ODModel) {
-        context.cacheDir
+        thread {
+            //listDir(context.cacheDir.absolutePath)
+            var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
+            if (!checkDownloadedModel(model.modelName)) {
+                val tmpFile = downloadModel(model)
+                if (tmpFile != null) {
+                    modelPath = extractModel(tmpFile)
+                    if (File(modelPath) != File(context.cacheDir, "Models/${model.modelName}")) {
+                        File(modelPath).renameTo(File(context.cacheDir, "Models/${model.modelName}"))
+                        droidLog("Renaming model dir to: ${File(context.cacheDir, "Models/${model.modelName}").absolutePath}")
+                        modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
+                    }
+                    tmpFile.delete()
+                }
+                else droidLog("model Download Failed")
+            }
+            loadModel(File(modelPath, "frozen_inference_graph.pb").absolutePath, "")
+            //listDir(context.cacheDir.absolutePath)
+        }
     }
+
 
     override fun setMinAcceptScore(score: Float) {
         minimumConfidence = score
@@ -112,70 +140,130 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun checkDownloadedModel(name: String): Boolean {
-        val modelCache = File(context.cacheDir.toURI().path + "Models/")
+        val modelCache = File(context.cacheDir, "Models")
         if (!modelCache.exists()) return false
         for (file in modelCache.listFiles())
             if (file.isDirectory && file.name == name) return true
         return false
     }
 
-    override fun downloadModel(model: ODModel) {
-        val request = DownloadManager.Request(Uri.parse(model.remoteUrl))
-        //request.setDescription("Some descrition")
-        request.setTitle(model.modelName)
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-        //request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "name-of-the-file.ext")
-        request.setDestinationInExternalFilesDir(context, null, context.cacheDir.toURI().path+"Models/")
+    override fun downloadModel(model: ODModel): File? {
+        droidLog("Downloading model: ${model.modelName}")
+        var count: Int
+        if (File(context.cacheDir, "Models").exists() || !File(context.cacheDir, "Models").isDirectory) File(context
+                .cacheDir, "Models").mkdirs()
+        val tmpFile  = File.createTempFile(model.modelName + "-",".tar.gz",File(context
+                .cacheDir, "Models"))
+        try {
+            val url = URL(model.remoteUrl)
+            droidLog("downloading from: $url\t${model.remoteUrl}")
+            val connection : URLConnection = url.openConnection()
+            connection.connect()
 
-        // get download service and enqueue file
-        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        manager.enqueue(request)
+            // this will be useful so that you can show a tipical 0-100%
+            // progress bar
+            val lengthOfFile = connection.contentLength
 
-        class onComplete : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                //val path = context.getFilesDir().getPath() +"/" + model.modelName
-                //val f = File(path)
-                /*val myIntent = Intent(Intent.ACTION_VIEW);
+            // download the file
+            val input = BufferedInputStream(url.openStream(),
+                    //8192)
+                    8192)
+            droidLog("total size: $lengthOfFile")
 
-                myIntent.setData(Uri.fromFile(f));
-                startActivity(myIntent);*/
+            // Output stream
+            val output = FileOutputStream(tmpFile)
+
+            val data = ByteArray(1024)
+
+            var total: Long = 0
+
+            count = input.read(data)
+            while (count != -1) {
+                total += count.toLong()
+                // publishing the progress....
+                // After this onProgressUpdate will be called
+                //publishProgress("" + (total * 100 / lenghtOfFile).toInt())
+                println(total)
+                //println((total * 100 / lenghtOfFile).toInt())
+
+                // writing data to file
+                output.write(data, 0, count)
+                count = input.read(data)
             }
+
+            // flushing output
+            output.flush()
+
+            // closing streams
+            output.close()
+            input.close()
+
+        } catch (e: Exception) {
+            println(e.message)
         }
-        context.registerReceiver(onComplete(), IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        droidLog("Download Complete")
+
+        return tmpFile
     }
 
-    override fun extractModel(model: ODModel) {
-        if (checkDownloadedModel(model.modelName)) return
-        val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(context.cacheDir.path+model.modelName+".tar.gz"))))
+    private fun listDir(dir : String) {
+        if (!File(dir).isDirectory) return
+        for (d in File(dir).listFiles())
+            if (d.isDirectory) listDir(d.absolutePath)
+            else droidLog("${d.absolutePath}\t${d.length()}")
+    }
 
+    override fun extractModel(modelFile: File) : String {
+        droidLog("extracting model: ${modelFile.path}")
+        val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
+
+        var basePath = File(context.cacheDir.path, "Models/").absolutePath
         var entry : TarEntry? = tis.nextEntry
         if (entry!= null && entry.isDirectory) {
-            File(context.cacheDir.path + entry.name).mkdirs()
-            model.graphLocation = context.cacheDir.path + entry.name
+            droidLog("mkdir\t${File(context.cacheDir.path, "Models/${entry.name}").path}")
+            File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
+            basePath = File(context.cacheDir.path, "Models/${entry.name}").absolutePath
             entry = tis.nextEntry
         }
         while (entry != null) {
-            if (entry.isDirectory) {
-                File(context.cacheDir.path + entry.name).mkdirs()
+            if (entry.name.contains("PaxHeader")) {
                 entry = tis.nextEntry
                 continue
             }
+            if (entry.isDirectory) {
+                droidLog("mkdir\t${File(context.cacheDir.path, entry.name).path}")
+                File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
+                entry = tis.nextEntry
+                continue
+            }
+            if (entry.name.contains("frozen_inference_graph.pb")) {
+                basePath = File(context.cacheDir, "Models/${entry.name.substring(0, entry.name.indexOf
+                ("frozen_inference_graph.pb"))}").absolutePath
+            }
             var count: Int
             val data = ByteArray(2048)
-            val fos = FileOutputStream(context.cacheDir.path + entry.name)
+            droidLog("extract\t${File(context.cacheDir.path, entry.name).path}")
+            try {
+                File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
+                File(context.cacheDir.path, "Models/${entry.name}").delete()
+                val fos = FileOutputStream(File(context.cacheDir.path, "Models/${entry.name}"))
 
-            val dest = BufferedOutputStream(fos)
+                val dest = BufferedOutputStream(fos)
 
-            count = tis.read(data)
-            while (count != -1) {
-                dest.write(data, 0, count)
                 count = tis.read(data)
-            }
+                while (count != -1) {
+                    dest.write(data, 0, count)
+                    count = tis.read(data)
+                }
 
-            dest.flush()
-            dest.close()
+                dest.flush()
+                dest.close()
+            } catch (ignore : Exception) {
+                droidLog("Failed extract of ${File(context.cacheDir.path, entry.name).path}")
+            }
 
             entry = tis.nextEntry
         }
+        return basePath
     }
 }

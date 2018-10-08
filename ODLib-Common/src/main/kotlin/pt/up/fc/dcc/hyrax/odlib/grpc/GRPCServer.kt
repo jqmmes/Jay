@@ -19,9 +19,6 @@ import java.io.IOException
  * Server that manages startup/shutdown of a `Greeter` server.
  *
  * Note: this file was automatically converted from Java
- *
- *
- * TODO: Criar um servidor com OKHTTP para usar nos Android
  */
 internal class GRPCServer(var odLib: ODLib, private val port: Int = 50051, private val useNettyServer : Boolean = false) {
 
