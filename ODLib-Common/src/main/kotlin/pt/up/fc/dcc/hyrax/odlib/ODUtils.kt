@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import com.google.protobuf.ByteString
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
+import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.lang.NullPointerException
 
@@ -21,9 +21,8 @@ class ODUtils {
                 }
                 return detections.asList()
             } catch (e: NullPointerException) {
-                println("parseResults Exception: (${e.message})")
-                for (message in e.stackTrace) println(message)
-                println("==========================")
+                ODLogger.logError("parseResults Exception: (${e.message})")
+                for (message in e.stackTrace) ODLogger.logError(message.toString())
             }
             return emptyList()
         }

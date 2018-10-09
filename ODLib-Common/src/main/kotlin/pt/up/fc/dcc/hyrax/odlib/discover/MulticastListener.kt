@@ -4,6 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.discover.NetworkUtils.Companion.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
+import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import java.net.*
 import kotlin.concurrent.thread
 
@@ -16,7 +17,7 @@ class MulticastListener {
 
         fun listen(callback : DiscoverInterface, networkInterface: NetworkInterface? = null) {
             if (running) {
-                AbstractODLib.log("Multicast MulticastListener already running")
+                ODLogger.logInfo("Multicast MulticastListener already running")
                 return
             }
             thread(isDaemon = true) {
@@ -29,15 +30,14 @@ class MulticastListener {
                 } else {
                     val interfaces = NetworkUtils.getCompatibleInterfaces<Inet4Address>()
                     if (!interfaces.isEmpty()) {
-                        AbstractODLib.log("Using default interface (${interfaces[0]}) to advertise")
+                        ODLogger.logInfo("Using default interface (${interfaces[0]}) to advertise")
                         listeningSocket.networkInterface = interfaces[0]
                     } else {
-                        AbstractODLib.log("Not suitable Multicast interface found")
+                        ODLogger.logWarn("Not suitable Multicast interface found")
                         return@thread
                     }
                 }
-                println(listeningSocket.networkInterface.name)
-                AbstractODLib.log("Multicast Receiver running at:" + listeningSocket.localSocketAddress)
+                ODLogger.logInfo("Multicast Receiver running at:" + listeningSocket.localSocketAddress)
                 listeningSocket.joinGroup(mcIPAddress)
 
                 running = true
@@ -45,17 +45,17 @@ class MulticastListener {
                 do {
                     packet = DatagramPacket(ByteArray(1024), 1024)
 
-                    AbstractODLib.log("Waiting for a  multicast message...")
+                    ODLogger.logInfo("Waiting for a  multicast message...")
                     try {
                         listeningSocket.receive(packet)
                     }catch (e: SocketException) {
-                        AbstractODLib.log("Socket error")
+                        ODLogger.logWarn("Socket error")
                         running = false
                         continue
                     }
                     if (newClient(packet.address.hostAddress)) {
                         callback.onMulticastReceived(packet) // getHostAddressFromPacket(packet)
-                        AbstractODLib.log("Packet received from ${getHostAddressFromPacket(packet)}")
+                        ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
                     }
                 } while (running)
                 if (!listeningSocket.isClosed) {

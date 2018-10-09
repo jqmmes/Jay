@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.discover
 
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
+import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import java.net.DatagramPacket
 import java.net.NetworkInterface
 
@@ -12,7 +13,7 @@ class NetworkUtils {
                 if (!netInt.isLoopback && !netInt.isPointToPoint && netInt.isUp && netInt.supportsMulticast()) {
                     for (address in netInt.inetAddresses)
                         if (address is T) {
-                            AbstractODLib.log("Available Multicast interface: ${netInt.name}")
+                            ODLogger.logInfo("Available Multicast interface: ${netInt.name}")
                             interfaceList.add(netInt)
                         }
                 }

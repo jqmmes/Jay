@@ -8,10 +8,4 @@ class ODLib(context : Context) : AbstractODLib(DroidTensorFlow(context)) {
     override fun getDetector() : DroidTensorFlow {
         return (localDetector as DroidTensorFlow)
     }
-
-    companion object {
-        fun droidLog(message : String) {
-            AbstractODLib.log(message)
-        }
-    }
 }

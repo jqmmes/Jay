@@ -2,11 +2,12 @@ package pt.up.fc.dcc.hyrax.odlib
 
 import android.app.Activity
 import android.widget.TextView
+import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import java.util.Calendar
 
 class Logger(private val activity : Activity, private val loggingConsole : TextView) : ODLog {
-    override fun log(message : String) {
+    override fun log(message : String, LogLevel: LogLevel) {
         activity.runOnUiThread {
             val cal = Calendar.getInstance()
             loggingConsole.text = String.format(

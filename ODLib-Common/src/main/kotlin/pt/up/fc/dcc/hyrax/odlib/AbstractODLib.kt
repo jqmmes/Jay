@@ -2,7 +2,6 @@ package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 
 abstract class AbstractODLib (val localDetector : DetectObjects) {
 
@@ -12,15 +11,7 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
     private var nextJobId : Int = 0
 
     companion object {
-        var log : Boolean = false
-        lateinit var loggingConsole : ODLog
-
-        fun log(message : String) {
-            if (log) loggingConsole.log(message)
-        }
-
         private var remoteClients : MutableSet<RemoteODClient> = HashSet()
-
         private var serverPort : Int = 0
 
         fun getServerPort() : Int{
@@ -28,9 +19,9 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         }
 
         fun getClient(address: String, port: Int): RemoteODClient? {
-            println("Searching for client $port")
+            ODLogger.logInfo("Searching for client $port")
             for (client in remoteClients) {
-                println(client.getPort())
+                ODLogger.logInfo(client.getPort().toString())
                 if (client.getAdress() == address && client.getPort() == port)
                     return client
             }
@@ -38,7 +29,7 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         }
 
         fun addRemoteClient(client: RemoteODClient) {
-            println("add remote Client " + client.getPort())
+            ODLogger.logInfo("add remote Client " + client.getPort())
             remoteClients.add(client)
         }
 
@@ -48,11 +39,6 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
     }
 
     abstract fun getDetector() : DetectObjects
-
-    fun enableLogs(loggingInterface : ODLog){
-        log = true
-        loggingConsole = loggingInterface
-    }
 
     fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
         if (!onlyLoaded) return localDetector.models.toSet()

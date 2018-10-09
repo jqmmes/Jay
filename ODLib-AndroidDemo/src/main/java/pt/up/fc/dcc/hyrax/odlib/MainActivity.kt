@@ -16,8 +16,8 @@ import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
 import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.ODLib.Companion.droidLog
 import pt.up.fc.dcc.hyrax.odlib.discover.NetworkUtils
+import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import java.net.DatagramPacket
 import kotlin.concurrent.thread
 
@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun toggleServer(start : Boolean) {
-        loggingConsole.log("Toggle Server $start")
+        ODLogger.logInfo("Toggle Server $start")
 
         if (start) {
             findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         else odClient.stopGRPCServer()
     }
     private fun toggleService(start : Boolean) {
-        loggingConsole.log("Toggle Service $start")
+        ODLogger.logInfo("Toggle Service $start")
         if (start) odClient.startODService()
         else odClient.stopODService()
     }
@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         for (model in odClient.listModels(false)) {
             if (model.modelName == spinner.selectedItem) {
                 if (!model.downloaded) odClient.setTFModel(model)
-                loggingConsole.log("${model.modelName}\t\tloaded: ${model.downloaded}")
+                ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
                 return
             }
         }
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         val spinner = findViewById<Spinner>(R.id.select_model)
         for (model in odClient.listModels(false)) {
             if (model.modelName == spinner.selectedItem) {
-                loggingConsole.log("${model.modelName}\tloaded: ${model.downloaded}")
+                ODLogger.logInfo("${model.modelName}\tloaded: ${model.downloaded}")
                 odClient.setTFModel(model)
                 return
             }
@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
 
     inner class DiscoveredClient : DiscoverInterface {
         override fun onMulticastReceived(packet : DatagramPacket) {
-            droidLog("Datagram received from ${NetworkUtils.getHostAddressFromPacket(packet)}")
+            ODLogger.logInfo("Datagram received from ${NetworkUtils.getHostAddressFromPacket(packet)}")
         }
     }
 
@@ -112,7 +112,8 @@ class MainActivity : AppCompatActivity() {
 
         loggingConsole = Logger(this, findViewById(R.id.loggingConsole))
         odClient = ODLib(this)
-        odClient.enableLogs(loggingConsole)
+        ODLogger.enableLogs(loggingConsole, LogLevel.Info)
+        ODLogger.startBackgroundLoggingService()
         val spinner = findViewById<Spinner>(R.id.select_model)
 
         //Sample String ArrayList

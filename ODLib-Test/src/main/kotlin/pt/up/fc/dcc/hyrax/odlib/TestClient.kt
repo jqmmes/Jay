@@ -1,7 +1,11 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.discover.MulticastAdvertiser
+import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import java.lang.Thread.sleep
+
+
 
 private var odClient = ODLib()
 fun main(args: Array<String>) {
@@ -16,9 +20,10 @@ fun main(args: Array<String>) {
     //odClient.listModels(false).first()
     //odClient.setTFModel("/home/joaquim/Downloads/faster_rcnn_nas_coco_2018_01_28/saved_model/")
     //sleep(10000)
+    ODLogger.enableLogs(Logging(), LogLevel.Info)
 
     MulticastAdvertiser.advertise()
-    MulticastAdvertiser.multicastFrequency = 10
+    MulticastAdvertiser.multicastFrequency = 100
     sleep(10000)
     return
     /*odClient.setTFModel(odClient.listModels(false).last())
@@ -37,9 +42,10 @@ fun main(args: Array<String>) {
     remoteClient.asyncDetectObjects("/home/joaquim/000001.jpg", ::callbackFun)
     remoteClient.asyncDetectObjects("/home/joaquim/000001.jpg", ::callbackFun)
     remoteClient.asyncDetectObjects("/home/joaquim/000001.jpg", ::callbackFun)
-    for (detection in remoteClient.detectObjects("/home/joaquim/000001.jpg")) println(String.format("%d\t%f", detection!!.class_, detection.score))
+    for (detection in remoteClient.detectObjects("/home/joaquim/000001.jpg")) ODLogger.logInfo(String.format("%d\t%f", detection!!.class_, detection.score))
     localClient.asyncDetectObjects("/home/joaquim/000001.jpg", ::callbackFun)
-    for (detection in localClient.detectObjects("/home/joaquim/000001.jpg")) println(String.format("%d\t%f", detection!!.class_, detection.score))
+    for (detection in localClient.detectObjects("/home/joaquim/000001.jpg")) ODLogger.logInfo(String.format("%d\t%f",
+    detection!!.class_, detection.score))
 
     localClient.detectObjects("/home/joaquim/000001.jpg")
     localClient.asyncDetectObjects("/home/joaquim/000001.jpg", ::callbackFun)
@@ -53,8 +59,13 @@ fun main(args: Array<String>) {
     }
     odClient.clean()*/
 }
+class Logging : ODLog {
+    override fun log(message: String, LogLevel: LogLevel) {
+        println(message)
+    }
+}
 
 fun callbackFun (resultList : List<ODUtils.ODDetection?>) {
-    for (detection in resultList) println(String.format("%d\t%f", detection!!.class_, detection.score))
-    println("=============")
+    for (detection in resultList) ODLogger.logInfo(String.format("%d\t%f", detection!!.class_, detection.score))
+    ODLogger.logInfo("=============")
 }

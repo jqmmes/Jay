@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.ODClient
+import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
@@ -32,41 +33,41 @@ internal constructor(private val channel: ManagedChannel) {
         try {
             blockingStub.putResultAsync(ODUtils.genResults(id, results))
         } catch (e: StatusRuntimeException) {
-            println("RPC failed: " + e.status)
+            ODLogger.logError("RPC failed: " + e.status)
             return
         }
-        println("RPC putResults success")
+        ODLogger.logInfo("RPC putResults success")
     }
 
     fun putJobAsync(id: Int, data: ByteArray, remoteClient: ODClient) {
         try {
             blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data, remoteClient))
         } catch (e: StatusRuntimeException) {
-            println("RPC failed: " + e.status)
+            ODLogger.logError("RPC failed: " + e.status)
             return
         }
-        println("RPC putJobAsync success")
+        ODLogger.logInfo("RPC putJobAsync success")
     }
 
     fun putJobSync(id: Int, data: ByteArray) : ODProto.Results? {
         try {
             val result = blockingStub.putJobSync(ODUtils.genImageRequest(id, data))
-            println("RPC putJobSync success")
+            ODLogger.logInfo("RPC putJobSync success")
             return result
 
         } catch (e: StatusRuntimeException) {
-            println("RPC failed: " + e.status)
+            ODLogger.logError("RPC failed: " + e.status)
         }
         return null
     }
 
     fun sayHello() {
         try {
-            println("will ping")
+            ODLogger.logInfo("will say Hello")
             blockingStub.sayHello(ODUtils.genRemoteClient(ODClient()))
-            println("pinged")
+            ODLogger.logInfo("said Hello")
         }catch (e: StatusRuntimeException){
-            println("Error pinging")
+            ODLogger.logError("Error pinging")
         }
     }
 
@@ -75,7 +76,7 @@ internal constructor(private val channel: ManagedChannel) {
         try {
             result = blockingStub.listModels(Empty.getDefaultInstance())
         }catch (e: StatusRuntimeException) {
-            println("RPC Failed: " + e.status)
+            ODLogger.logError("RPC Failed: " + e.status)
             return emptySet()
         }
         return ODUtils.parseModels(result)
@@ -84,11 +85,11 @@ internal constructor(private val channel: ManagedChannel) {
     fun ping() {
         try {
             //ODProto.Empty.newBuilder().build()
-            println("will ping")
+            ODLogger.logInfo("will ping")
             blockingStub.ping(Empty.newBuilder().build())
-            println("pinged")
+            ODLogger.logInfo("pinged")
         }catch (e: StatusRuntimeException){
-            println("Error pinging")
+            ODLogger.logError("Error pinging")
         }
     }
 }

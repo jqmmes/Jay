@@ -2,7 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
+import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -40,7 +40,7 @@ import kotlin.concurrent.thread
             return putJob(localDetect.getByteArrayFromImage(imgPath), callback)
         }
 
-        internal fun putJob(imgData: ByteArray, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus{
+        internal fun putJob(imgData: ByteArray, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus {
             if (!running) throw Exception("ODService not running")
             jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback))
             if (callback == null) return ReturnStatus.Success

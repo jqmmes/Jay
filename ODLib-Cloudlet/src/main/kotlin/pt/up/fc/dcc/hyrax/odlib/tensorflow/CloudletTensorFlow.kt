@@ -5,6 +5,7 @@ import org.kamranzafar.jtar.TarInputStream
 import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
+import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
@@ -37,7 +38,7 @@ internal class CloudletTensorFlow : DetectObjects {
 
 
     //override fun loadModel(path: String, label: String, score: Float) {
-    private fun loadModel(path: String, label: String? = null, score: Float = minimumScore) {
+    private fun loadModel(path: String, score: Float = minimumScore) {
         modelPath = path
         loadedModel = SavedModelBundle.load(modelPath, "serve")
         modelClosed = false
@@ -168,7 +169,7 @@ internal class CloudletTensorFlow : DetectObjects {
         }
 
         override fun downloadModel(model: ODModel) : File? {
-            println("Downloading model from " + model.remoteUrl)
+            ODLogger.logInfo("Downloading model from " + model.remoteUrl)
             if (!File(cacheDir).exists()) File(cacheDir).mkdirs()
             val modelUrl = URL(model.remoteUrl)
             val rbc = Channels.newChannel(modelUrl.openStream())
@@ -229,9 +230,9 @@ internal class CloudletTensorFlow : DetectObjects {
     override fun loadModel(model: ODModel) {
         if (!checkDownloadedModel(model.modelName)) {
             val tmpFile = downloadModel(model)
-            println("Extraction Model....")
+            ODLogger.logInfo("Extraction Model....")
             if (tmpFile != null) extractModel(tmpFile)
-            println("Extracted... Loading model")
+            ODLogger.logInfo("Extracted... Loading model")
         }
         loadModel(model.graphLocation + "saved_model/")
         Files.delete(File(cacheDir+model.modelName+".tar.gz").toPath())

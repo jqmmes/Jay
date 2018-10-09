@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.discover
 
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
+import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import java.lang.Thread.sleep
 import java.net.*
 import kotlin.concurrent.thread
@@ -14,7 +15,7 @@ class MulticastAdvertiser {
 
         fun advertise(networkInterface: NetworkInterface? = null) {
             if (running) {
-                AbstractODLib.log("MulticastServer already running")
+                ODLogger.logWarn("MulticastServer already running")
                 return
             }
 
@@ -28,10 +29,10 @@ class MulticastAdvertiser {
                 } else {
                     val interfaces = NetworkUtils.getCompatibleInterfaces<Inet4Address>()
                     if (!interfaces.isEmpty()) {
-                        AbstractODLib.log("Using default interface (${interfaces[0]}) to advertise")
+                        ODLogger.logInfo("Using default interface (${interfaces[0]}) to advertise")
                         mcSocket.networkInterface = interfaces[0]
                     } else {
-                        AbstractODLib.log("Not suitable Multicast interface found")
+                        ODLogger.logWarn("Not suitable Multicast interface found")
                         return@thread
                     }
                 }
@@ -42,7 +43,7 @@ class MulticastAdvertiser {
                 val packet = DatagramPacket(msg, 1, mcIPAddress, mcPort)
 
                 do {
-                    AbstractODLib.log("Sending Multicast packet")
+                    ODLogger.logInfo("Sending Multicast packet")
                     mcSocket.send(packet)
                     sleep(multicastFrequency)
                 } while (running)

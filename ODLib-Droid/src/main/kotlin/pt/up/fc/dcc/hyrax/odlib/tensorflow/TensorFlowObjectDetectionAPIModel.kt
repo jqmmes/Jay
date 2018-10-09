@@ -18,7 +18,7 @@ import android.graphics.RectF
 import org.tensorflow.Graph
 import org.tensorflow.Operation
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
-import pt.up.fc.dcc.hyrax.odlib.ODLib.Companion.droidLog
+import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import java.io.IOException
 import java.util.*
 
@@ -142,12 +142,9 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         //Trace.beginSection("preprocessBitmap")
         //Preprocess the image data to extract R, G and B bytes from int of form 0x00RRGGBB
         //on the provided parameters.
-        println("${intValues.size}\t${bitmap.width}\t${bitmap.height}")
         bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
-        println("${intValues.size*3}\t\t${byteValues.size}")
         for (i : Int  in 0..(intValues.size-1)) {
-            //println("$i\t${i*3}\t${intValues.size}\t${byteValues.size}")
             byteValues[i * 3 + 2] = intValues[i].and(0xFF).toByte()
             byteValues[i * 3 + 1] = (intValues[i].shr(8)).and(0xFF).toByte()
             byteValues[i * 3 + 0] = (intValues[i].shr(16)).and(0xFF).toByte()
@@ -184,7 +181,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 PriorityQueue(
                         1, kotlin.Comparator<Classifier.Recognition> { lhs, rhs -> compareValues(rhs.confidence, lhs.confidence) })
 
-        droidLog("Detection Complete. Checking results...")
+        ODLogger.logInfo("Detection Complete. Checking results...")
         //Scale them back to the input size.
         for (i : Int in 0..(outputScores.size-1)) {
             val detection =
@@ -195,7 +192,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                             outputLocations[4 * i + 2] * inputSize)
             pq.add(Classifier.Recognition("" + i, outputClasses[i].toString(), outputScores[i], detection))
             if (outputScores[i] >= 0.3f)
-                droidLog("Detection #$i\n\t\tClass: ${COCODataLabels.label(outputClasses[i].toInt())}\n\t\tScore: " +
+                ODLogger.logInfo("Detection #$i\n\t\tClass: ${COCODataLabels.label(outputClasses[i].toInt())}\n\t\tScore: " +
                         "${outputScores[i]}")
         }
 
