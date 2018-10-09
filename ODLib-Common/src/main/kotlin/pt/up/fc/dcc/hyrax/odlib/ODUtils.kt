@@ -1,7 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import com.google.protobuf.ByteString
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.lang.NullPointerException
@@ -73,7 +72,7 @@ class ODUtils {
         }
 
         internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
-            return ODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
+            return AbstractODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
         }
 
         internal fun genModelConfig(model: ODModel, configs: Map<String, String>) : ODProto.ModelConfig {

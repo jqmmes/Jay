@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.discover
 
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLib
+import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import java.lang.Thread.sleep
 import java.net.*
 import kotlin.concurrent.thread
@@ -10,31 +10,41 @@ class MulticastAdvertiser {
         private var running = false
         private lateinit var mcSocket : MulticastSocket
         private lateinit var mcIPAddress : InetAddress
+        var multicastFrequency = 1000L
 
-        fun advertise() {
+        fun advertise(networkInterface: NetworkInterface? = null) {
             if (running) {
-                ODLib.log("MulticastServer already running")
+                AbstractODLib.log("MulticastServer already running")
                 return
             }
 
             thread(isDaemon=true) {
                 val mcPort = 50000
-                val mcIPStr = "224.0.0.0"
-                //val mcIPStr = "FF7E:230::1234"
+                val mcIPStr = "224.0.0.1"
                 running = true
                 mcSocket = MulticastSocket()
+                if (networkInterface != null) {
+                    mcSocket.networkInterface = networkInterface
+                } else {
+                    val interfaces = NetworkUtils.getCompatibleInterfaces<Inet4Address>()
+                    if (!interfaces.isEmpty()) {
+                        AbstractODLib.log("Using default interface (${interfaces[0]}) to advertise")
+                        mcSocket.networkInterface = interfaces[0]
+                    } else {
+                        AbstractODLib.log("Not suitable Multicast interface found")
+                        return@thread
+                    }
+                }
                 mcSocket.loopbackMode = true
                 val msg = ByteArray(1)
                 mcIPAddress = Inet4Address.getByName(mcIPStr)
-                println(mcIPAddress)
                 mcSocket.joinGroup(mcIPAddress)
-
                 val packet = DatagramPacket(msg, 1, mcIPAddress, mcPort)
 
                 do {
-                    ODLib.log("Sending Multicast packet")
+                    AbstractODLib.log("Sending Multicast packet")
                     mcSocket.send(packet)
-                    sleep(1000)
+                    sleep(multicastFrequency)
                 } while (running)
 
                 mcSocket.leaveGroup(mcIPAddress)

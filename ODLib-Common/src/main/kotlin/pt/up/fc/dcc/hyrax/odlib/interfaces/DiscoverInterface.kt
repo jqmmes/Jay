@@ -1,7 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.interfaces
 
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
+import java.net.DatagramPacket
 
 interface DiscoverInterface {
-    fun onNewClientFound(remoteClient: RemoteODClient)
+    fun onMulticastReceived(packet: DatagramPacket)
 }

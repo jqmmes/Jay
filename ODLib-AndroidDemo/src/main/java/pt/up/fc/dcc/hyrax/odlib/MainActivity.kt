@@ -11,20 +11,23 @@ import kotlinx.android.synthetic.main.activity_main.*
 import pt.up.fc.dcc.hyrax.odlib.discover.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.discover.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
-import android.graphics.BitmapFactory
 import java.io.File
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
 import android.widget.*
+import pt.up.fc.dcc.hyrax.odlib.ODLib.Companion.droidLog
+import pt.up.fc.dcc.hyrax.odlib.discover.NetworkUtils
+import java.net.DatagramPacket
 import kotlin.concurrent.thread
 
+@Suppress("UNUSED_PARAMETER")
 class MainActivity : AppCompatActivity() {
 
     private lateinit var odClient : ODLib
     private lateinit var loggingConsole : Logger
-    private val REQUEST_EXTERNAL_STORAGE = 1
-    private val PERMISSIONS_STORAGE = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    private val requestExternalStorage = 1
+    private val permissionsStorage = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
 
     private fun toggleServer(start : Boolean) {
@@ -78,23 +81,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun chooseImage(target: View) {
+    fun chooseImage(target : View) {
         thread{
-            //val bitmap = BitmapFactory.decodeFile(File("/storage/emulated/0/img.png").absolutePath)
-            //println(bitmap)
-            val byteArray =odClient.localDetector.
-                    getByteArrayFromImage(File("/storage/emulated/0/img.png").absolutePath)
-            /*println(byteArray.size)
-            println(BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size))*/
-            odClient.localDetector.detectObjects(byteArray)
+            odClient.getDetector().detectObjects(
+                    odClient.getDetector().scaleImage(
+                            odClient.getDetector().getImageBitmapFromFile(
+                                File("/storage/emulated/0/img.png")
+                            )!!, 300f
+                    )
+            )
         }
     }
 
     inner class DiscoveredClient : DiscoverInterface {
-        override fun onNewClientFound(remoteClient: RemoteODClient) {
-            loggingConsole.log("Discovered new client")
+        override fun onMulticastReceived(packet : DatagramPacket) {
+            droidLog("Datagram received from ${NetworkUtils.getHostAddressFromPacket(packet)}")
         }
-
     }
 
     fun discoverToggleListener(target : View) {
@@ -142,7 +144,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun verifyStoragePermissions(activity: Activity) {
+    private fun verifyStoragePermissions(activity: Activity) {
         // Check if we have write permission
         val permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
@@ -150,8 +152,8 @@ class MainActivity : AppCompatActivity() {
             // We don't have permission so prompt the user
             ActivityCompat.requestPermissions(
                     activity,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
+                    permissionsStorage,
+                    requestExternalStorage
             )
         }
     }

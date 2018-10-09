@@ -1,12 +1,10 @@
-package pt.up.fc.dcc.hyrax.odlib.interfaces
+package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.ODClient
-import pt.up.fc.dcc.hyrax.odlib.ODModel
-import pt.up.fc.dcc.hyrax.odlib.ODService
-import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
+import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 
-abstract class ODLib (val localDetector : DetectObjects) {
+abstract class AbstractODLib (val localDetector : DetectObjects) {
 
 
     private var localClient : ODClient = ODClient()
@@ -48,6 +46,8 @@ abstract class ODLib (val localDetector : DetectObjects) {
             remoteClients.addAll(clients)
         }
     }
+
+    abstract fun getDetector() : DetectObjects
 
     fun enableLogs(loggingInterface : ODLog){
         log = true
@@ -98,7 +98,7 @@ abstract class ODLib (val localDetector : DetectObjects) {
         ODService.stop()
     }
 
-    fun startGRPCServer(odLib: ODLib, port : Int) {
+    fun startGRPCServer(odLib: AbstractODLib, port : Int) {
         serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()
@@ -106,7 +106,7 @@ abstract class ODLib (val localDetector : DetectObjects) {
         }
     }
 
-    fun startGRPCServerService(odLib: ODLib, port : Int, useNettyServer : Boolean = false) {
+    fun startGRPCServerService(odLib: AbstractODLib, port : Int, useNettyServer : Boolean = false) {
         serverPort = port
         if (grpcServer == null) {
             if (!ODService.isRunning()) startODService()

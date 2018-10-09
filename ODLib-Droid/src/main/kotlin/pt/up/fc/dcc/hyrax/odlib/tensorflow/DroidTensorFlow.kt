@@ -18,7 +18,7 @@ import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.max
 
-internal class DroidTensorFlow(private val context: Context) : DetectObjects {
+class DroidTensorFlow(private val context: Context) : DetectObjects {
     override var minimumScore: Float = 0f
 
     private var localDetector : Classifier? = null
@@ -69,8 +69,42 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
         return stream.toByteArray()
     }
 
-    override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
+    fun getByteArrayFromBitmap(imgBitmap: Bitmap): ByteArray {
+        val stream = ByteArrayOutputStream()
+        imgBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
+    }
+
+    fun getImageBitmapFromFile(imgPath: File): Bitmap? {
+        return BitmapFactory.decodeFile(imgPath.absolutePath)
+    }
+
+
+    fun scaleImage(image : Bitmap, maxSize : Float) : Bitmap {
+        //var data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
         droidLog("Processing image....")
+        val scale = maxSize/max(image.width, image.height)
+        val scaledImage = Bitmap.createScaledBitmap(image, floor(image.width*scale).toInt(), floor(image
+                .height*scale).toInt(), false)
+        val scaledData = Bitmap.createBitmap(300,300, scaledImage.config)
+        val pixels = IntArray(scaledImage.width * scaledImage.height)
+        scaledImage.getPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
+        scaledData.setPixels(pixels, 0, 300, 0, 0, scaledImage.width, scaledImage.height)
+        scaledImage.recycle()
+        return  scaledData
+    }
+
+    fun scaleImage(imgData: ByteArray, maxSize: Float) : Bitmap {
+        return scaleImage(getBitmapFromByteArray(imgData), maxSize)
+    }
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun getBitmapFromByteArray(imgData: ByteArray) : Bitmap{
+        return BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
+    }
+
+    override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
+        /*droidLog("Processing image....")
         var data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
         val scale = 300f/max(data.width, data.height)
         data = Bitmap.createScaledBitmap(data, floor(data.width*scale).toInt(), floor(data.height*scale).toInt(), false)
@@ -79,11 +113,12 @@ internal class DroidTensorFlow(private val context: Context) : DetectObjects {
         data.getPixels(pixels, 0, data.width, 0, 0, data.width, data.height)
         scaledData.setPixels(pixels, 0, 300, 0, 0, data.width, data.height)
         println("${scaledData.width}\t${scaledData.height}")
-        droidLog("Detecting Objects....")
-        return detectObjects(scaledData)
+        droidLog("Detecting Objects....")*/
+        //return detectObjects(scaledData)
+        return detectObjects(getBitmapFromByteArray(imgData))
     }
 
-    private fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
+    fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
         if (localDetector == null) {
             droidLog("No model has been loaded yet")
             return emptyList()

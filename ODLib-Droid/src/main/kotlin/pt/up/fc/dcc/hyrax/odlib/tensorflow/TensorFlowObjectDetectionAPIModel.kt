@@ -15,15 +15,11 @@ package pt.up.fc.dcc.hyrax.odlib.tensorflow
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.RectF
-import android.os.Trace
 import org.tensorflow.Graph
 import org.tensorflow.Operation
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
 import pt.up.fc.dcc.hyrax.odlib.ODLib.Companion.droidLog
-import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
 import java.util.*
 
 @Suppress("KDocUnresolvedReference")
@@ -207,7 +203,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         for (i : Int in 0..Math.min(pq.size, MAX_RESULTS)) {
             recognitions.add(pq.poll())
         }
-        Trace.endSection() //"recognizeImage"
+        //Trace.endSection() //"recognizeImage"
         return recognitions
     }
 
