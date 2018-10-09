@@ -1,16 +1,15 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
-import java.lang.NullPointerException
 
+@Suppress("unused")
 class RemoteODClient(private val address: String, private val port: Int) : ODClient() {
 
     private var models : MutableSet<ODModel> = HashSet()
     private var remoteClient: GRPCClient = GRPCClient(address, port)
 
 
-    override fun getAdress() : String {
+    override fun getAddress() : String {
         return address
     }
 
@@ -18,7 +17,7 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
         return port
     }
 
-    fun getModels(refresh: Boolean = true) : Set<ODModel> {
+    private fun getModels(refresh: Boolean = true) : Set<ODModel> {
         if (refresh) {
             models.clear()
             models.addAll(remoteClient.getModels())

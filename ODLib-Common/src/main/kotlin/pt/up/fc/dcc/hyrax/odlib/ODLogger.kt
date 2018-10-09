@@ -27,7 +27,7 @@ object ODLogger{
         log(message, LogLevel.Warn)
     }
 
-    fun log(message : String, logLevel: LogLevel) {
+    private fun log(message : String, logLevel: LogLevel) {
         if (logLevel <= this.logLevel) {
             if (running) {
                 logQueue.offer(message to logLevel)

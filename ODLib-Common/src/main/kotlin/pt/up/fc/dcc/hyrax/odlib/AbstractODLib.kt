@@ -22,7 +22,7 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
             ODLogger.logInfo("Searching for client $port")
             for (client in remoteClients) {
                 ODLogger.logInfo(client.getPort().toString())
-                if (client.getAdress() == address && client.getPort() == port)
+                if (client.getAddress() == address && client.getPort() == port)
                     return client
             }
             return null
@@ -33,6 +33,7 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
             remoteClients.add(client)
         }
 
+        @Suppress("unused")
         fun addRemoteClients(clients: List<RemoteODClient>) {
             remoteClients.addAll(clients)
         }

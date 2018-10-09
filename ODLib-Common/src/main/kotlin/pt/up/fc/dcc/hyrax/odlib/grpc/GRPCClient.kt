@@ -13,6 +13,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.util.concurrent.TimeUnit
 
 
+@Suppress("unused")
 class GRPCClient
     /** Construct client for accessing RouteGuide server using the existing channel.  */
 internal constructor(private val channel: ManagedChannel) {

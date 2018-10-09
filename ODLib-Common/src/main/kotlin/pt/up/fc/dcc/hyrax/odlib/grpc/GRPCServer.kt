@@ -76,7 +76,7 @@ internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 5005
 
         override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            AbstractODLib.addRemoteClient(RemoteODClient(request!!.getAddress(), request.getPort()))
+            AbstractODLib.addRemoteClient(RemoteODClient(request!!.address, request.port))
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)
         }
 

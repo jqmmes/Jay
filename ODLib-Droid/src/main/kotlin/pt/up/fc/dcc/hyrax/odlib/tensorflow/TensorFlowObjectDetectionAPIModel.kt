@@ -16,7 +16,6 @@ import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.RectF
 import org.tensorflow.Graph
-import org.tensorflow.Operation
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
 import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import java.io.IOException
@@ -37,14 +36,12 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
     }
 
     //Only return this many results.
-    private val MAX_RESULTS : Int = 100
+    private val maxResults : Int = 100
 
     //Config values.
     private lateinit var inputName : String
     private var inputSize : Long = 0
 
-    //Pre-allocated buffers.
-    private var labels : Vector<String> = Vector()
     private lateinit var intValues : IntArray
     private lateinit var byteValues : ByteArray
     private lateinit var outputLocations : FloatArray
@@ -96,25 +93,13 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             // N is the batch size
             // H = W are the height and width
             //        C is the number of channels (3 for our purposes - RGB)
-            val inputOp : Operation? = g.operation(d.inputName)
-            if (inputOp == null) {
-                throw RuntimeException("Failed to find input Node '" + d.inputName + "'")
-            }
+            g.operation(d.inputName) ?: throw RuntimeException("Failed to find input Node '" + d.inputName + "'")
             d.inputSize = inputSize
             // The outputScoresName node has a shape of [N, NumLocations], where N
             // is the batch size.
-            val outputOp1 : Operation? = g.operation("detection_scores")
-            if (outputOp1 == null) {
-                throw RuntimeException("Failed to find output Node 'detection_scores'")
-            }
-            val outputOp2 : Operation? = g.operation("detection_boxes")
-            if (outputOp2 == null) {
-                throw RuntimeException("Failed to find output Node 'detection_boxes'")
-            }
-            val outputOp3 : Operation? = g.operation("detection_classes")
-            if (outputOp3 == null) {
-                throw RuntimeException("Failed to find output Node 'detection_classes'")
-            }
+            g.operation("detection_scores") ?: throw RuntimeException("Failed to find output Node 'detection_scores'")
+            g.operation("detection_boxes") ?: throw RuntimeException("Failed to find output Node 'detection_boxes'")
+            g.operation("detection_classes") ?: throw RuntimeException("Failed to find output Node 'detection_classes'")
 
             //Pre-allocate buffers.
             d.outputNames = arrayOf("detection_boxes", "detection_scores",
@@ -164,9 +149,9 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
 
         //Copy the output Tensor back into the output array.
         //Trace.beginSection("fetch")
-        val outputLocations = FloatArray(MAX_RESULTS * 4)
-        val outputScores = FloatArray(MAX_RESULTS)
-        val outputClasses = FloatArray(MAX_RESULTS)
+        val outputLocations = FloatArray(maxResults * 4)
+        val outputScores = FloatArray(maxResults)
+        val outputClasses = FloatArray(maxResults)
         val outputNumDetections = FloatArray(1)
         inferenceInterface.fetch(outputNames[0], outputLocations)
         inferenceInterface.fetch(outputNames[1], outputScores)
@@ -196,8 +181,8 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                         "${outputScores[i]}")
         }
 
-        val recognitions : ArrayList<Classifier.Recognition> = ArrayList<Classifier.Recognition>()
-        for (i : Int in 0..Math.min(pq.size, MAX_RESULTS)) {
+        val recognitions : ArrayList<Classifier.Recognition> = ArrayList()
+        for (i : Int in 0..Math.min(pq.size, maxResults)) {
             recognitions.add(pq.poll())
         }
         //Trace.endSection() //"recognizeImage"

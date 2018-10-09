@@ -19,7 +19,7 @@ open class ODClient {
         return AbstractODLib.getServerPort()
     }
 
-    open fun getAdress() : String {
+    open fun getAddress() : String {
         return "localhost"
     }
 }

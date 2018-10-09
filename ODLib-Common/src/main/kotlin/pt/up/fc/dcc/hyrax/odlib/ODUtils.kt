@@ -7,9 +7,10 @@ import java.lang.NullPointerException
 
 class ODUtils {
 
-    class ODDetection(val score : Float, val class_: Int, val box : Box) {}
+    @Suppress("unused")
+    class ODDetection(val score : Float, val class_: Int, val box : Box)
 
-    class Box(){}
+    class Box
 
     companion object {
         internal fun parseResults(results: ODProto.Results?): List<ODDetection?> {
@@ -47,7 +48,7 @@ class ODUtils {
             return ODProto.Status.newBuilder().setCode(status.code).build()
         }
 
-        internal fun genModel(model : ODModel) : ODProto.Model {
+        private fun genModel(model : ODModel) : ODProto.Model {
             return ODProto.Model.newBuilder()
                     .setId(model.modelId)
                     .setName(model.modelName)
@@ -74,6 +75,7 @@ class ODUtils {
             return AbstractODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
         }
 
+        @Suppress("unused")
         internal fun genModelConfig(model: ODModel, configs: Map<String, String>) : ODProto.ModelConfig {
             return ODProto.ModelConfig.newBuilder()
                     .putAllConfigs(configs)
@@ -83,7 +85,7 @@ class ODUtils {
 
         internal fun genRemoteClient(remoteODClient: ODClient) : ODProto.RemoteClient{
             return ODProto.RemoteClient.newBuilder()
-                    .setAddress(remoteODClient.getAdress())
+                    .setAddress(remoteODClient.getAddress())
                     .setPort(remoteODClient.getPort())
                     .build()
 

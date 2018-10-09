@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib.discover
 
-import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import java.net.DatagramPacket
 import java.net.NetworkInterface

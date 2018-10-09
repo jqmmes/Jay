@@ -45,14 +45,6 @@ interface Classifier {
             /** Optional location within the source image for the location of the recognized object.  */
             private var location: RectF?) {
 
-        fun getLocation(): RectF {
-            return RectF(location)
-        }
-
-        fun setLocation(location: RectF) {
-            this.location = location
-        }
-
         override fun toString(): String {
             var resultString = ""
             if (id != null) {

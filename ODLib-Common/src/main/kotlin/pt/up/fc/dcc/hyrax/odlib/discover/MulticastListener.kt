@@ -3,7 +3,6 @@ package pt.up.fc.dcc.hyrax.odlib.discover
 import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.discover.NetworkUtils.Companion.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
-import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import java.net.*
 import kotlin.concurrent.thread
@@ -73,7 +72,7 @@ class MulticastListener {
 
         private fun newClient(address: String): Boolean {
             for (remoteDevice in devicesKnown) {
-                if (remoteDevice.getAdress() == address) return false
+                if (remoteDevice.getAddress() == address) return false
             }
             return true
         }

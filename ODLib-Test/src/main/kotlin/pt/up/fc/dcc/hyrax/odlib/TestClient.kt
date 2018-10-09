@@ -60,11 +60,12 @@ fun main(args: Array<String>) {
     odClient.clean()*/
 }
 class Logging : ODLog {
-    override fun log(message: String, LogLevel: LogLevel) {
+    override fun log(message: String, logLevel: LogLevel) {
         println(message)
     }
 }
 
+@Suppress("unused")
 fun callbackFun (resultList : List<ODUtils.ODDetection?>) {
     for (detection in resultList) ODLogger.logInfo(String.format("%d\t%f", detection!!.class_, detection.score))
     ODLogger.logInfo("=============")
