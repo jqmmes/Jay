@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package pt.up.fc.dcc.hyrax.odlib
+package pt.up.fc.dcc.hyrax.odlib.utils
 
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
@@ -28,7 +28,7 @@ object ODLogger{
     }
 
     private fun log(message : String, logLevel: LogLevel) {
-        if (logLevel <= this.logLevel) {
+        if (logLevel <= ODLogger.logLevel) {
             if (running) {
                 logQueue.offer(message to logLevel)
             } else {
@@ -38,12 +38,12 @@ object ODLogger{
     }
 
     fun enableLogs(loggingInterface : ODLog, logLevel: LogLevel = LogLevel.Error){
-        this.logLevel = logLevel
+        ODLogger.logLevel = logLevel
         loggingConsole = loggingInterface
     }
 
     fun setLogLevel(logLevel: LogLevel) {
-        this.logLevel = logLevel
+        ODLogger.logLevel = logLevel
     }
 
     fun stopBackgroundLoggingService() {

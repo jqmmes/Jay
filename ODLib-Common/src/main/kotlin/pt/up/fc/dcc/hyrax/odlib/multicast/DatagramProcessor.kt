@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.discover
+package pt.up.fc.dcc.hyrax.odlib.multicast
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient

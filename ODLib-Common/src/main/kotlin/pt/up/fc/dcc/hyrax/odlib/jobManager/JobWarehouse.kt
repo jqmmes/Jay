@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.jobManager
 
-import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.concurrent.thread

@@ -1,6 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-    private var odClient = ODLib()
+import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+
+private var odClient = ODLib()
     fun main(args: Array<String>) {
         odClient.startODService()
         //odClient.setTFModel("/home/joaquim/Downloads/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28/saved_model/")

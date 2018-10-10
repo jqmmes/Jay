@@ -3,6 +3,9 @@ package pt.up.fc.dcc.hyrax.odlib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
+import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 
 abstract class AbstractODLib (private val localDetector : DetectObjects) {
 

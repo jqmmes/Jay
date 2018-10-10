@@ -1,8 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
-import pt.up.fc.dcc.hyrax.odlib.ODModel
-import pt.up.fc.dcc.hyrax.odlib.ODComputingService
-import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 

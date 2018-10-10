@@ -1,7 +1,6 @@
-package pt.up.fc.dcc.hyrax.odlib.discover
+package pt.up.fc.dcc.hyrax.odlib.multicast
 
-import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
-import pt.up.fc.dcc.hyrax.odlib.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.lang.Thread.sleep
 import java.net.*
 import kotlin.concurrent.thread

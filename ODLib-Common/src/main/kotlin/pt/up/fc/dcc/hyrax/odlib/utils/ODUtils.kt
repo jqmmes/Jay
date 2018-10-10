@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib
+package pt.up.fc.dcc.hyrax.odlib.utils
 
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
@@ -31,14 +31,14 @@ class ODUtils {
             return emptyList()
         }
 
-        private fun genDetection(detection: ODUtils.ODDetection?) : ODProto.Detection{
+        private fun genDetection(detection: ODDetection?) : ODProto.Detection{
             return ODProto.Detection.newBuilder()
                     .setClass_(detection!!.class_)
                     .setScore(detection.score)
                     .build()
         }
 
-        internal fun genResults(id: Long, results: List<ODUtils.ODDetection?>) : ODProto.JobResults {
+        internal fun genResults(id: Long, results: List<ODDetection?>) : ODProto.JobResults {
             val builder = ODProto.JobResults.newBuilder()
                     .setId(id)
             for (detection in results) {

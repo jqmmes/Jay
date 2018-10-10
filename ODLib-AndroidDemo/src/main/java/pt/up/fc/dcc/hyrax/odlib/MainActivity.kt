@@ -8,16 +8,16 @@ import android.view.MenuItem
 import android.view.View
 
 import kotlinx.android.synthetic.main.activity_main.*
-import pt.up.fc.dcc.hyrax.odlib.discover.MulticastAdvertiser
-import pt.up.fc.dcc.hyrax.odlib.discover.MulticastListener
+import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
+import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
-import java.io.File
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
 import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.discover.NetworkUtils
+import pt.up.fc.dcc.hyrax.odlib.multicast.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.net.DatagramPacket
 import kotlin.concurrent.thread
 

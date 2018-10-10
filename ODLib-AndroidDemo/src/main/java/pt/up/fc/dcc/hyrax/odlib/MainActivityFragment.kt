@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 
 /**
  * A placeholder fragment containing a simple view.

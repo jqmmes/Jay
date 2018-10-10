@@ -5,9 +5,9 @@ import org.kamranzafar.jtar.TarInputStream
 import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
-import pt.up.fc.dcc.hyrax.odlib.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.ODModel
-import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte

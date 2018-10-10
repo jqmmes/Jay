@@ -6,9 +6,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
-import pt.up.fc.dcc.hyrax.odlib.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.ODModel
-import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.io.*
 import java.util.zip.GZIPInputStream
@@ -30,7 +30,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 ODModel(0,
                         "ssd_mobilenet_v1_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
-                        checkDownloadedModel( "ssd_mobilenet_v1_fpn_coco")
+                        checkDownloadedModel("ssd_mobilenet_v1_fpn_coco")
                 ),
                 ODModel(1,
                         "ssd_mobilenet_v1_coco",

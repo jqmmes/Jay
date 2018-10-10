@@ -1,9 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
-import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
-import pt.up.fc.dcc.hyrax.odlib.ODComputingService
-import pt.up.fc.dcc.hyrax.odlib.ODSettings
-import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 
 open class ODClient {

@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.interfaces
 
-import pt.up.fc.dcc.hyrax.odlib.ODModel
-import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.io.File
 
 interface DetectObjects {

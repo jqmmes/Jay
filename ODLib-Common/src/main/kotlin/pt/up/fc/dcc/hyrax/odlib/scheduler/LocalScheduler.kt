@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.scheduler
 
-import pt.up.fc.dcc.hyrax.odlib.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 
