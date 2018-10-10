@@ -5,7 +5,7 @@ import android.content.Context
 
 class ODLib(context : Context) : AbstractODLib(DroidTensorFlow(context)) {
 
-    override fun getDetector() : DroidTensorFlow {
+    /*override fun getDetector() : DroidTensorFlow {
         return (localDetector as DroidTensorFlow)
-    }
+    }*/
 }

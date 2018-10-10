@@ -1,6 +1,9 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import com.google.protobuf.ByteString
+import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
+import pt.up.fc.dcc.hyrax.odlib.clients.ODClient
+import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.lang.NullPointerException
@@ -13,7 +16,7 @@ class ODUtils {
     class Box
 
     companion object {
-        internal fun parseResults(results: ODProto.Results?): List<ODDetection?> {
+        internal fun parseResults(results: ODProto.JobResults?): List<ODDetection?> {
             try {
                 val detections: Array<ODDetection?> = arrayOfNulls(results!!.detectionsCount)
                 var i = 0
@@ -35,8 +38,8 @@ class ODUtils {
                     .build()
         }
 
-        internal fun genResults(id: Int, results: List<ODUtils.ODDetection?>) : ODProto.Results {
-            val builder = ODProto.Results.newBuilder()
+        internal fun genResults(id: Long, results: List<ODUtils.ODDetection?>) : ODProto.JobResults {
+            val builder = ODProto.JobResults.newBuilder()
                     .setId(id)
             for (detection in results) {
                 builder.addDetections(genDetection(detection))
@@ -59,8 +62,8 @@ class ODUtils {
             return ODModel(model!!.id, model.name)
         }
 
-        internal fun genImageRequest(imgId: Int, imgData : ByteArray) : ODProto.Image {
-            return ODProto.Image.newBuilder().setId(imgId).setData(ByteString.copyFrom(imgData)).build()
+        internal fun genJobRequest(imgId: Long, imgData : ByteArray) : ODProto.Job {
+            return ODProto.Job.newBuilder().setId(imgId).setData(ByteString.copyFrom(imgData)).build()
         }
 
         internal fun parseModelConfig(modelConfig: ODProto.ModelConfig?) : Pair<ODModel, HashMap<String, String>> {
@@ -68,11 +71,12 @@ class ODUtils {
         }
 
         internal fun parseAsyncRequestImageByteArray(asyncRequest: ODProto.AsyncRequest?) : ByteArray {
-            return asyncRequest!!.image.data.toByteArray()
+            return asyncRequest!!.job.data.toByteArray()
         }
 
         internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
-            return AbstractODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
+            return ClientManager.getRemoteODClient(asyncRequest!!.remoteClient.id)
+            //return AbstractODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
         }
 
         @Suppress("unused")
@@ -91,9 +95,9 @@ class ODUtils {
 
         }
 
-        fun genAsyncRequest(id: Int, data: ByteArray, remoteClient: ODClient): ODProto.AsyncRequest? {
+        fun genAsyncRequest(id: Long, data: ByteArray, remoteClient: ODClient): ODProto.AsyncRequest? {
             return  ODProto.AsyncRequest.newBuilder()
-                    .setImage(genImageRequest(id, data))
+                    .setJob(genJobRequest(id, data))
                     .setRemoteClient(genRemoteClient(remoteClient))
                     .build()
         }

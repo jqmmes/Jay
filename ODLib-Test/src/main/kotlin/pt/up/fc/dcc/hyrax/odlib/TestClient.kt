@@ -54,7 +54,7 @@ fun main(args: Array<String>) {
     localClient.asyncDetectObjects("/home/joaquim/000004.jpg", ::callbackFun)
     localClient.asyncDetectObjects("/home/joaquim/000006.jpg", ::callbackFun)
     localClient.asyncDetectObjects("/home/joaquim/000008.jpg", ::callbackFun)
-    while (ODService.getJobsRunningCount() > 0) {
+    while (ODComputingService.getJobsRunningCount() > 0) {
         Thread.sleep(10)
     }
     odClient.clean()*/

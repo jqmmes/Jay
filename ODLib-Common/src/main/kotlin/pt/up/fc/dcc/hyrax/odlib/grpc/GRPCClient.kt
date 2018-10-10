@@ -4,7 +4,7 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
-import pt.up.fc.dcc.hyrax.odlib.ODClient
+import pt.up.fc.dcc.hyrax.odlib.clients.ODClient
 import pt.up.fc.dcc.hyrax.odlib.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.ODModel
 import pt.up.fc.dcc.hyrax.odlib.ODUtils
@@ -30,7 +30,7 @@ internal constructor(private val channel: ManagedChannel) {
         channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
     }
 
-    fun putResults(id: Int, results : List<ODUtils.ODDetection?>){
+    fun putResults(id: Long, results : List<ODUtils.ODDetection?>){
         try {
             blockingStub.putResultAsync(ODUtils.genResults(id, results))
         } catch (e: StatusRuntimeException) {
@@ -40,7 +40,7 @@ internal constructor(private val channel: ManagedChannel) {
         ODLogger.logInfo("RPC putResults success")
     }
 
-    fun putJobAsync(id: Int, data: ByteArray, remoteClient: ODClient) {
+    fun putJobAsync(id: Long, data: ByteArray, remoteClient: ODClient) {
         try {
             blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data, remoteClient))
         } catch (e: StatusRuntimeException) {
@@ -50,9 +50,9 @@ internal constructor(private val channel: ManagedChannel) {
         ODLogger.logInfo("RPC putJobAsync success")
     }
 
-    fun putJobSync(id: Int, data: ByteArray) : ODProto.Results? {
+    fun putJobSync(id: Int, data: ByteArray) : ODProto.JobResults? {
         try {
-            val result = blockingStub.putJobSync(ODUtils.genImageRequest(id, data))
+            val result = blockingStub.putJobSync(ODUtils.genJobRequest(id.toLong(), data))
             ODLogger.logInfo("RPC putJobSync success")
             return result
 

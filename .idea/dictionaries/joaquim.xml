@@ -1,6 +1,11 @@
 <component name="ProjectDictionaryState">
   <dictionary name="joaquim">
     <words>
+      <w>grpc</w>
+      <w>hyrax</w>
+      <w>odlib</w>
+      <w>protobuf</w>
+      <w>protoc</w>
       <w>tensorflow</w>
     </words>
   </dictionary>

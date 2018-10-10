@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import java.util.concurrent.Callable
@@ -9,12 +8,24 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
+ class ODComputingService {
 
-/**
- *
- */
+    private class CallableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray) : Callable<List<ODUtils.ODDetection>> {
+        override fun call(): List<ODUtils.ODDetection> {
+            runningJobs.incrementAndGet()
+            val result = localDetect.detectObjects(imageData)
+            runningJobs.decrementAndGet()
+            return result
+        }
+    }
 
- class ODService {
+    private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: ((List<ODUtils.ODDetection>) -> Unit)?) : Runnable {
+        override fun run() {
+            runningJobs.incrementAndGet()
+            if (callback != null) callback!!(localDetect.detectObjects(imageData))
+            runningJobs.decrementAndGet()
+        }
+    }
 
     companion object {
         private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
@@ -30,7 +41,7 @@ import kotlin.concurrent.thread
         }
 
         internal fun putJobAndWait(imgPath: String) : List<ODUtils.ODDetection?> {
-            if (!running) throw Exception("ODService not running")
+            if (!running) throw Exception("ODComputingService not running")
             val future = executor.submit(CallableJobObjects(localDetect, imageData = localDetect.getByteArrayFromImage(imgPath)))
             return future.get() //wait termination
         }
@@ -41,21 +52,10 @@ import kotlin.concurrent.thread
         }
 
         internal fun putJob(imgData: ByteArray, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus {
-            if (!running) throw Exception("ODService not running")
+            if (!running) throw Exception("ODComputingService not running")
             jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback))
             if (callback == null) return ReturnStatus.Success
             return ReturnStatus.Waiting
-        }
-
-        internal fun newRemoteResultAvailable(jobId: Int, detections: List<ODUtils.ODDetection?>) {
-            if (waitingResultsMap.containsKey(jobId)) {
-                waitingResultsMap[jobId]!!(detections)
-                waitingResultsMap.remove(jobId)
-            }
-        }
-
-        fun waitResultsForTask(jobId: Int, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-            waitingResultsMap[jobId] = callback
         }
 
         fun startService(localDetect: DetectObjects) {
@@ -84,31 +84,8 @@ import kotlin.concurrent.thread
             return runningJobs.get()
         }
 
-        fun getPenindingJobsCount() : Int {
+        fun getPendingJobsCount() : Int {
             return jobQueue.count()
-        }
-
-        fun putRemoteJobAsync(remoteODClient: ODClient, remoteClient: GRPCClient, imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-            val reqId = requestId.incrementAndGet()
-            remoteClient.putJobAsync(reqId, localDetect.getByteArrayFromImage(imgPath), remoteODClient)
-            waitResultsForTask(reqId, callback)
-        }
-    }
-
-    private class CallableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray) : Callable<List<ODUtils.ODDetection>> {
-        override fun call(): List<ODUtils.ODDetection> {
-            runningJobs.incrementAndGet()
-            val result = localDetect.detectObjects(imageData)
-            runningJobs.decrementAndGet()
-            return result
-        }
-    }
-
-    private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: ((List<ODUtils.ODDetection>) -> Unit)?) : Runnable {
-        override fun run() {
-            runningJobs.incrementAndGet()
-            if (callback != null) callback!!(localDetect.detectObjects(imageData))
-            runningJobs.decrementAndGet()
         }
     }
 }

@@ -18,8 +18,9 @@ class MainActivityFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        var lib = ODLib(context!!)
-        lib.startODService()
-        lib.getClient()
+        ODLogger.logInfo("Fragment onCreateView")
+        //var lib = ODLib(context!!)
+        //lib.startODService()
+        //lib.getClient()
     }
 }

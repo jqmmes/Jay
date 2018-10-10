@@ -7,8 +7,8 @@ package pt.up.fc.dcc.hyrax.odlib
         odClient.listModels(false).first()
         odClient.startGRPCServerService(odClient,50051)
         Thread.sleep(20000)
-        while (ODService.getJobsRunningCount() > 0) {
+        while (ODComputingService.getJobsRunningCount() > 0) {
             Thread.sleep(10)
         }
-        odClient.stopODService() // ODService bloqueia até concluido ou fazer um clean()
+        odClient.stopODService() // ODComputingService bloqueia até concluido ou fazer um clean()
     }

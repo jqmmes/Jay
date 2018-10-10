@@ -6,8 +6,11 @@ import io.grpc.ServerBuilder
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.*
+import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
+import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.RemoteODCallback
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
+import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.io.IOException
@@ -76,33 +79,35 @@ internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 5005
 
         override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            AbstractODLib.addRemoteClient(RemoteODClient(request!!.address, request.port))
+            ClientManager.addOrIgnoreClient(RemoteODClient(request!!.address, request.port))
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)
         }
 
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.AsyncRequest?, responseObserver: StreamObserver<ODProto.Status>) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            ODService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results-> ODUtils.parseAsyncRequestRemoteClient(req)!!.putResults(req!!.image.id, results)}
+            ODComputingService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results-> ODUtils
+                    .parseAsyncRequestRemoteClient(req)!!.putResults(req!!.job.id, results)}
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         // Just send to odService and return
-        override fun putResultAsync(request: ODProto.Results?, responseObserver: StreamObserver<ODProto.Status>) {
+        override fun putResultAsync(request: ODProto.JobResults?, responseObserver: StreamObserver<ODProto.Status>) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            ODService.newRemoteResultAvailable(request!!.id, ODUtils.parseResults(request))
+            //ODComputingService.newRemoteResultAvailable(request!!.id, ODUtils.parseResults(request))
+            JobManager.addResults(request!!.id, ODUtils.parseResults(request))
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         // Wait for an answer and send it back
-        override fun putJobSync(request: ODProto.Image?, responseObserver: StreamObserver<ODProto.Results>) {
+        override fun putJobSync(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            class ResultCallback(override var id: Int) : RemoteODCallback {
+            class ResultCallback(override var id: Long) : RemoteODCallback {
                 override fun onNewResult(resultList: List<ODUtils.ODDetection?>) {
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }
             }
-            ODService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult)
+            ODComputingService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult)
         }
 
         override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {

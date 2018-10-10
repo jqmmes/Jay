@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.discover
 
-import pt.up.fc.dcc.hyrax.odlib.RemoteODClient
+import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.discover.NetworkUtils.Companion.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
 import pt.up.fc.dcc.hyrax.odlib.ODLogger
@@ -14,7 +14,7 @@ class MulticastListener {
         private lateinit var listeningSocket : MulticastSocket
         private lateinit var mcIPAddress: InetAddress
 
-        fun listen(callback : DiscoverInterface, networkInterface: NetworkInterface? = null) {
+        fun listen(networkInterface: NetworkInterface? = null) {
             if (running) {
                 ODLogger.logInfo("Multicast MulticastListener already running")
                 return
@@ -52,10 +52,12 @@ class MulticastListener {
                         running = false
                         continue
                     }
-                    if (newClient(packet.address.hostAddress)) {
+                    ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
+                    DatagramProcessor.process(packet)
+                    /*if (newClient(packet.address.hostAddress)) {
                         callback.onMulticastReceived(packet) // getHostAddressFromPacket(packet)
                         ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
-                    }
+                    }*/
                 } while (running)
                 if (!listeningSocket.isClosed) {
                     listeningSocket.leaveGroup(mcIPAddress)

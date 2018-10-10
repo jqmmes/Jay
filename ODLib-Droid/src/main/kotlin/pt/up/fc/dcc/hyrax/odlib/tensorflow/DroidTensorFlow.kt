@@ -83,7 +83,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
 
     fun scaleImage(image : Bitmap, maxSize : Float) : Bitmap {
         //var data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
-        ODLogger.logInfo("Scaling Image...")
+        ODLogger.logInfo("Scaling Job...")
         val scale = maxSize/max(image.width, image.height)
         val scaledImage = Bitmap.createScaledBitmap(image, floor(image.width*scale).toInt(), floor(image
                 .height*scale).toInt(), false)
@@ -92,7 +92,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
         scaledImage.getPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
         scaledData.setPixels(pixels, 0, 300, 0, 0, scaledImage.width, scaledImage.height)
         scaledImage.recycle()
-        ODLogger.logInfo("Scaling Image... done")
+        ODLogger.logInfo("Scaling Job... done")
         return  scaledData
     }
 

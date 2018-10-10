@@ -12,6 +12,17 @@ class MulticastAdvertiser {
         private lateinit var mcSocket : MulticastSocket
         private lateinit var mcIPAddress : InetAddress
         var multicastFrequency = 1000L
+        private var advertisingData = ByteArray(1)
+        private val MESSAGE_LOCK = Object()
+        private const val mcPort = 50000
+        private const val mcIPStr = "224.0.0.1"
+        private var packet = DatagramPacket(advertisingData, 1, mcIPAddress, mcPort)
+
+        fun setAdvertiseData(data: ByteArray) {
+            synchronized(MESSAGE_LOCK) {
+                packet = DatagramPacket(data, data.size, mcIPAddress, mcPort)
+            }
+        }
 
         fun advertise(networkInterface: NetworkInterface? = null) {
             if (running) {
@@ -20,8 +31,6 @@ class MulticastAdvertiser {
             }
 
             thread(isDaemon=true) {
-                val mcPort = 50000
-                val mcIPStr = "224.0.0.1"
                 running = true
                 mcSocket = MulticastSocket()
                 if (networkInterface != null) {
@@ -37,14 +46,11 @@ class MulticastAdvertiser {
                     }
                 }
                 mcSocket.loopbackMode = true
-                val msg = ByteArray(1)
                 mcIPAddress = Inet4Address.getByName(mcIPStr)
                 mcSocket.joinGroup(mcIPAddress)
-                val packet = DatagramPacket(msg, 1, mcIPAddress, mcPort)
-
                 do {
                     ODLogger.logInfo("Sending Multicast packet")
-                    mcSocket.send(packet)
+                    synchronized(MESSAGE_LOCK) { mcSocket.send(packet) }
                     sleep(multicastFrequency)
                 } while (running)
 

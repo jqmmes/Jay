@@ -2,44 +2,17 @@ package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 
-abstract class AbstractODLib (val localDetector : DetectObjects) {
+abstract class AbstractODLib (private val localDetector : DetectObjects) {
 
-
-    private var localClient : ODClient = ODClient()
     private var grpcServer : GRPCServer? = null
     private var nextJobId : Int = 0
+    private var jobManager : JobManager? = null
 
-    companion object {
-        private var remoteClients : MutableSet<RemoteODClient> = HashSet()
-        private var serverPort : Int = 0
-
-        fun getServerPort() : Int{
-            return serverPort
-        }
-
-        fun getClient(address: String, port: Int): RemoteODClient? {
-            ODLogger.logInfo("Searching for client $port")
-            for (client in remoteClients) {
-                ODLogger.logInfo(client.getPort().toString())
-                if (client.getAddress() == address && client.getPort() == port)
-                    return client
-            }
-            return null
-        }
-
-        fun addRemoteClient(client: RemoteODClient) {
-            ODLogger.logInfo("add remote Client " + client.getPort())
-            remoteClients.add(client)
-        }
-
-        @Suppress("unused")
-        fun addRemoteClients(clients: List<RemoteODClient>) {
-            remoteClients.addAll(clients)
-        }
+    fun getJobManager() : JobManager? {
+        return jobManager
     }
-
-    abstract fun getDetector() : DetectObjects
 
     fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
         if (!onlyLoaded) return localDetector.models.toSet()
@@ -49,7 +22,6 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         return result
     }
 
-
     fun setTFModel(model: ODModel) {
         localDetector.loadModel(model)
     }
@@ -58,49 +30,29 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
         localDetector.setMinAcceptScore(minimumScore)
     }
 
-    fun getClient() : ODClient {
-        return localClient
-    }
-
-    fun newRemoteClient(address: String, port : Int) : RemoteODClient {
-        val remoteODClient = RemoteODClient(address, port)
-        addRemoteClient(remoteODClient)
-        return remoteODClient
-    }
-
-
-    fun getRemoteClients() : List<RemoteODClient> {
-        return remoteClients.toList()
-    }
-
-    fun removeRemoteClient(client: RemoteODClient) {
-        remoteClients.remove(client)
-    }
-
     fun startODService() {
-        ODService.startService(localDetector)
+        ODComputingService.startService(localDetector)
     }
 
     fun stopODService() {
-        ODService.stop()
+        ODComputingService.stop()
     }
 
     fun startGRPCServer(odLib: AbstractODLib, port : Int) {
-        serverPort = port
+        ODSettings.serverPort = port
         if (grpcServer == null) {
-            if (!ODService.isRunning()) startODService()
+            if (!ODComputingService.isRunning()) startODService()
             grpcServer = GRPCServer.startServer(odLib, port)
         }
     }
 
     fun startGRPCServerService(odLib: AbstractODLib, port : Int, useNettyServer : Boolean = false) {
-        serverPort = port
+        ODSettings.serverPort = port
         if (grpcServer == null) {
-            if (!ODService.isRunning()) startODService()
+            if (!ODComputingService.isRunning()) startODService()
             grpcServer = GRPCServer(odLib, port, useNettyServer).start()
         }
     }
-
 
     fun stopGRPCServer() {
         grpcServer?.stop()
@@ -110,7 +62,5 @@ abstract class AbstractODLib (val localDetector : DetectObjects) {
     fun clean() {
         stopODService()
         stopGRPCServer()
-        remoteClients.clear()
     }
-
 }

@@ -83,13 +83,15 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target : View) {
         thread{
+            odClient.getJobManager()
+            /*
             odClient.getDetector().detectObjects(
                     odClient.getDetector().scaleImage(
                             odClient.getDetector().getImageBitmapFromFile(
                                 File("/storage/emulated/0/img.png")
                             )!!, 300f
                     )
-            )
+            )*/
         }
     }
 
@@ -100,7 +102,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun discoverToggleListener(target : View) {
-        if ((target as ToggleButton).isChecked) MulticastListener.listen(DiscoveredClient())
+        //DiscoveredClient()
+        if ((target as ToggleButton).isChecked) MulticastListener.listen()
         else MulticastListener.stop()
     }
 
