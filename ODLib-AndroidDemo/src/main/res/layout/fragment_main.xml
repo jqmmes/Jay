@@ -13,6 +13,7 @@
             android:layout_height="0dp"
             android:textColor="@color/consoleFont"
             android:background="@color/consoleBackground"
+            android:textSize="10sp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" android:layout_marginBottom="16dp"
@@ -92,8 +93,8 @@
 
         <Button android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/chooseImage"
-                android:onClick="chooseImage"/>
+                android:id="@+id/chooseImage"
+                android:text="@string/chooseImage"/>
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

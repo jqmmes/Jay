@@ -16,7 +16,7 @@ import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.RectF
 import org.tensorflow.Graph
-import org.tensorflow.contrib.android.TensorFlowInferenceInterface
+//import org.tensorflow.contrib.android.TensorFlowInferenceInterface
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.io.IOException
 import java.util.*
@@ -51,7 +51,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
     private lateinit var outputNames : Array<String>
     private var logStats : Boolean = false
 
-    private lateinit var inferenceInterface : TensorFlowInferenceInterface
+    private lateinit var inferenceInterface : MyTensorFlowInferenceInterface
 
     /**
      * Initializes a native TensorFlow session for classifying images.
@@ -62,6 +62,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
      */
     companion object {
         private const val MAX_RESULTS = 100
+        private lateinit var loadedGraph : Graph
 
         @Throws(IOException::class)
         fun create (
@@ -84,22 +85,24 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             br.close()*/
 
 
-            d.inferenceInterface = TensorFlowInferenceInterface(assetManager, modelFilename)
+            d.inferenceInterface = MyTensorFlowInferenceInterface(assetManager, modelFilename)
 
-            val g : Graph = d.inferenceInterface.graph()
+            loadedGraph = d.inferenceInterface.graph()
+
+            //TensorFlowInferenceInterface(loadedGraph) //create new session
 
             d.inputName = "image_tensor"
             // The inputName node has a shape of [N, H, W, C], where
             // N is the batch size
             // H = W are the height and width
             //        C is the number of channels (3 for our purposes - RGB)
-            g.operation(d.inputName) ?: throw RuntimeException("Failed to find input Node '" + d.inputName + "'")
+            loadedGraph.operation(d.inputName) ?: throw RuntimeException("Failed to find input Node '" + d.inputName + "'")
             d.inputSize = inputSize
             // The outputScoresName node has a shape of [N, NumLocations], where N
             // is the batch size.
-            g.operation("detection_scores") ?: throw RuntimeException("Failed to find output Node 'detection_scores'")
-            g.operation("detection_boxes") ?: throw RuntimeException("Failed to find output Node 'detection_boxes'")
-            g.operation("detection_classes") ?: throw RuntimeException("Failed to find output Node 'detection_classes'")
+            loadedGraph.operation("detection_scores") ?: throw RuntimeException("Failed to find output Node 'detection_scores'")
+            loadedGraph.operation("detection_boxes") ?: throw RuntimeException("Failed to find output Node 'detection_boxes'")
+            loadedGraph.operation("detection_classes") ?: throw RuntimeException("Failed to find output Node 'detection_classes'")
 
             //Pre-allocate buffers.
             d.outputNames = arrayOf("detection_boxes", "detection_scores",
@@ -139,12 +142,21 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         //Copy the input data into TensorFlow.
         //Trace.beginSection("feed")
         //inputName: String!, src: ByteArray!, vararg dims: Long
-        inferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel creating new session...")
+        val sessionInferenceInterface = MyTensorFlowInferenceInterface(loadedGraph)
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel session created")
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel feeding interface...")
+        sessionInferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel interface fed...")
+        //inferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
         //Trace.endSection()
 
         //Run the inference call.
         //Trace.beginSection("run")
-        inferenceInterface.run(outputNames, logStats)
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel running...")
+        sessionInferenceInterface.run(outputNames, logStats)
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel complete")
+        //inferenceInterface.run(outputNames, logStats)
         //Trace.endSection()
 
         //Copy the output Tensor back into the output array.
@@ -153,10 +165,14 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         val outputScores = FloatArray(maxResults)
         val outputClasses = FloatArray(maxResults)
         val outputNumDetections = FloatArray(1)
-        inferenceInterface.fetch(outputNames[0], outputLocations)
+        /*inferenceInterface.fetch(outputNames[0], outputLocations)
         inferenceInterface.fetch(outputNames[1], outputScores)
         inferenceInterface.fetch(outputNames[2], outputClasses)
-        inferenceInterface.fetch(outputNames[3], outputNumDetections)
+        inferenceInterface.fetch(outputNames[3], outputNumDetections)*/
+        sessionInferenceInterface.fetch(outputNames[0], outputLocations)
+        sessionInferenceInterface.fetch(outputNames[1], outputScores)
+        sessionInferenceInterface.fetch(outputNames[2], outputClasses)
+        sessionInferenceInterface.fetch(outputNames[3], outputNumDetections)
         //Trace.endSection()
 
 
@@ -166,7 +182,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 PriorityQueue(
                         1, kotlin.Comparator<Classifier.Recognition> { lhs, rhs -> compareValues(rhs.confidence, lhs.confidence) })
 
-        ODLogger.logInfo("Detection Complete. Checking results...")
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel Checking results...")
         //Scale them back to the input size.
         for (i : Int in 0..(outputScores.size-1)) {
             val detection =
@@ -186,6 +202,10 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             recognitions.add(pq.poll())
         }
         //Trace.endSection() //"recognizeImage"
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel closing session...")
+        //sessionInferenceInterface.close()
+        sessionInferenceInterface.closeSession()
+        ODLogger.logInfo("TensorflowObjectDetectionAPIModel closing session... Closed")
         return recognitions
     }
 

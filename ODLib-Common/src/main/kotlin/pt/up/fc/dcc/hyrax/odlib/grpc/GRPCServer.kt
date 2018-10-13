@@ -8,7 +8,7 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.*
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.interfaces.RemoteODCallback
+import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
@@ -105,7 +105,7 @@ internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 5005
         // Wait for an answer and send it back
         override fun putJobSync(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            class ResultCallback(override var id: Long) : RemoteODCallback {
+            class ResultCallback(override var id: Long) : JobResultCallback {
                 override fun onNewResult(resultList: List<ODUtils.ODDetection?>) {
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }

@@ -3,9 +3,12 @@
     <words>
       <w>grpc</w>
       <w>hyrax</w>
+      <w>mobilenet</w>
       <w>odlib</w>
       <w>protobuf</w>
       <w>protoc</w>
+      <w>resnet</w>
+      <w>ssdlite</w>
       <w>tensorflow</w>
     </words>
   </dictionary>

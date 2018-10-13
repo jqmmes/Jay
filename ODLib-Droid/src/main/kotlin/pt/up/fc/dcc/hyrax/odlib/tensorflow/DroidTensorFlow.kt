@@ -4,12 +4,14 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.Image
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import java.io.*
 import java.util.zip.GZIPInputStream
 import java.net.URL
@@ -47,13 +49,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                         "http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz",
                         checkDownloadedModel("ssdlite_mobilenet_v2_coco")
                 ),
-                // This model crashes on load android
-                /*ODModel(4,
-                        "faster_rcnn_resnet101_coco",
-                        "http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz",
-                        checkDownloadedModel("faster_rcnn_resnet101_coco")
-                ),*/
-                ODModel(5,
+                ODModel(4,
                         "ssd_resnet_50_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
                         checkDownloadedModel("ssd_resnet_50_fpn_coco")
@@ -65,58 +61,11 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun getByteArrayFromImage(imgPath: String): ByteArray {
-        val stream = ByteArrayOutputStream()
-        BitmapFactory.decodeFile(imgPath).compress(Bitmap.CompressFormat.PNG, 100, stream)
-        return stream.toByteArray()
-    }
-
-    fun getByteArrayFromBitmap(imgBitmap: Bitmap): ByteArray {
-        val stream = ByteArrayOutputStream()
-        imgBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-        return stream.toByteArray()
-    }
-
-    fun getImageBitmapFromFile(imgPath: File): Bitmap? {
-        return BitmapFactory.decodeFile(imgPath.absolutePath)
-    }
-
-
-    fun scaleImage(image : Bitmap, maxSize : Float) : Bitmap {
-        //var data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
-        ODLogger.logInfo("Scaling Job...")
-        val scale = maxSize/max(image.width, image.height)
-        val scaledImage = Bitmap.createScaledBitmap(image, floor(image.width*scale).toInt(), floor(image
-                .height*scale).toInt(), false)
-        val scaledData = Bitmap.createBitmap(300,300, scaledImage.config)
-        val pixels = IntArray(scaledImage.width * scaledImage.height)
-        scaledImage.getPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
-        scaledData.setPixels(pixels, 0, 300, 0, 0, scaledImage.width, scaledImage.height)
-        scaledImage.recycle()
-        ODLogger.logInfo("Scaling Job... done")
-        return  scaledData
-    }
-
-    fun scaleImage(imgData: ByteArray, maxSize: Float) : Bitmap {
-        return scaleImage(getBitmapFromByteArray(imgData), maxSize)
-    }
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun getBitmapFromByteArray(imgData: ByteArray) : Bitmap{
-        return BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
+        return ImageUtils.getByteArrayFromImage(imgPath)
     }
 
     override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
-        /*droidLog("Processing image....")
-        var data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
-        val scale = 300f/max(data.width, data.height)
-        data = Bitmap.createScaledBitmap(data, floor(data.width*scale).toInt(), floor(data.height*scale).toInt(), false)
-        val scaledData = Bitmap.createBitmap(300,300, data.config)
-        val pixels = IntArray(data.width * data.height)
-        data.getPixels(pixels, 0, data.width, 0, 0, data.width, data.height)
-        scaledData.setPixels(pixels, 0, 300, 0, 0, data.width, data.height)
-        droidLog("Detecting Objects....")*/
-        //return detectObjects(scaledData)
-        return detectObjects(getBitmapFromByteArray(imgData))
+        return detectObjects(ImageUtils.getBitmapFromByteArray(imgData))
     }
 
     fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
@@ -124,16 +73,18 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             ODLogger.logWarn("No model has been loaded yet")
             return emptyList()
         }
-
+        ODLogger.logInfo("DroidTensorFlow detecting objects...")
         val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(imgData)
         val mappedRecognitions : MutableList<ODUtils.ODDetection> = ArrayList()
         for (result : Classifier.Recognition in results) {
+            // TODO: Return mapped recognitions
             /*if (result.confidence == null) continue
             if (result.confidence >= minimumConfidence) {
                 mappedRecognitions.add(ODUtils.ODDetection(score = result.confidence, class_ = result.title!!.toFloat
                 ().toInt(), box = ODUtils.Box()))
             }*/
         }
+        ODLogger.logInfo("DroidTensorFlow detecting objects... Complete")
         return mappedRecognitions
     }
 
@@ -243,13 +194,6 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
 
         return tmpFile
     }
-
-    /*private fun listDir(dir : String) {
-        if (!File(dir).isDirectory) return
-        for (d in File(dir).listFiles())
-            if (d.isDirectory) listDir(d.absolutePath)
-            else droidLog("${d.absolutePath}\t${d.length()}")
-    }*/
 
     override fun extractModel(modelFile: File) : String {
         ODLogger.logInfo("extracting model: ${modelFile.path}")

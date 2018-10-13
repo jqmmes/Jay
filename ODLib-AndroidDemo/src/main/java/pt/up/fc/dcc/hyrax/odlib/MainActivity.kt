@@ -14,10 +14,20 @@ import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
+import android.content.Intent
+import android.graphics.Bitmap
+import android.provider.MediaStore
 import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.multicast.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
+import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
+import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
+import java.io.File
 import java.net.DatagramPacket
 import kotlin.concurrent.thread
 
@@ -42,8 +52,23 @@ class MainActivity : AppCompatActivity() {
     }
     private fun toggleService(start : Boolean) {
         ODLogger.logInfo("Toggle Service $start")
-        if (start) odClient.startODService()
+        if (start) {
+            ODLogger.logInfo("CPU Cores: ${SystemStats.getCpuCount()}")
+            ODLogger.logInfo("Battery Status ${SystemStats.getBatteryPercentage(this)}\nCharging? ${SystemStats
+                    .getBatteryCharging(this)}")
+            ODComputingService.setWorkingThreads(SystemStats.getCpuCount())
+            odClient.startODService()
+            JobManager.getScheduler().setJobCompleteCallback(Callback(0))
+        }
         else odClient.stopODService()
+    }
+
+    inner class Callback(override var id: Long) : JobResultCallback {
+        override fun onNewResult(resultList: List<ODUtils.ODDetection?>) {
+            runOnUiThread {
+                findViewById<TextView>(R.id.loggingConsole).append(resultList.toString())
+            }
+        }
     }
 
     fun serviceToggleListener(target : View) {
@@ -58,6 +83,10 @@ class MainActivity : AppCompatActivity() {
         if ((target as ToggleButton).isChecked) MulticastAdvertiser.advertise()
         else MulticastAdvertiser.stop()
     }
+
+
+
+
 
     fun downloadModel(target : View) {
         val spinner = findViewById<Spinner>(R.id.select_model)
@@ -83,15 +112,16 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target : View) {
         thread{
-            odClient.getJobManager()
-            /*
-            odClient.getDetector().detectObjects(
-                    odClient.getDetector().scaleImage(
-                            odClient.getDetector().getImageBitmapFromFile(
-                                File("/storage/emulated/0/img.png")
-                            )!!, 300f
+            //odClient.getJobManager()
+            val job = JobManager.createJob(
+                ImageUtils.getByteArrayFromBitmap(
+                    ImageUtils.scaleImage(
+                        ImageUtils.getImageBitmapFromFile(File("/storage/emulated/0/img.png"))!!,
+                        300f
                     )
-            )*/
+                )
+            )
+            JobManager.addJob(job)
         }
     }
 
@@ -161,5 +191,4 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-
 }
