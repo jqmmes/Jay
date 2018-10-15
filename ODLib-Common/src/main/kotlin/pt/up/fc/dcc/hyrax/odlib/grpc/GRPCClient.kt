@@ -4,7 +4,6 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
-import pt.up.fc.dcc.hyrax.odlib.clients.ODClient
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.*
@@ -38,10 +37,12 @@ internal constructor(private val channel: ManagedChannel) {
         ODLogger.logInfo("RPC putResults success")
     }
 
-    fun putJobAsync(id: Long, data: ByteArray) {
+    fun putJobAsync(id: Long, data: ByteArray, callback: (List<ODUtils.ODDetection?>) -> Unit) {
         try {
+            GRPCServer.addAsyncResultsCallback(id, callback)
             blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data))
         } catch (e: StatusRuntimeException) {
+            GRPCServer.removeAsyncResultsCallback(id)
             ODLogger.logError("RPC failed: " + e.status)
             return
         }

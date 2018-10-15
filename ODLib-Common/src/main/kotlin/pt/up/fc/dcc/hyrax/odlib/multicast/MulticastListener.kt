@@ -19,7 +19,7 @@ class MulticastListener {
                 ODLogger.logInfo("Multicast MulticastListener already running")
                 return
             }
-            thread(isDaemon = true) {
+            thread(isDaemon = true, name="Multicast Listener") {
                 val mcPort = 50000
                 val mcIPStr = "224.0.0.1"
                 mcIPAddress = Inet4Address.getByName(mcIPStr)

@@ -30,7 +30,7 @@ class MulticastAdvertiser {
                 return
             }
 
-            thread(isDaemon=true) {
+            thread(isDaemon=true, name="Multicast Advertiser") {
                 running = true
                 mcSocket = MulticastSocket()
                 if (networkInterface != null) {
@@ -53,8 +53,10 @@ class MulticastAdvertiser {
                     sleep(multicastFrequency)
                 } while (running)
 
-                mcSocket.leaveGroup(mcIPAddress)
-                mcSocket.close()
+                if (!mcSocket.isClosed) {
+                    mcSocket.leaveGroup(mcIPAddress)
+                    mcSocket.close()
+                }
             }
         }
 

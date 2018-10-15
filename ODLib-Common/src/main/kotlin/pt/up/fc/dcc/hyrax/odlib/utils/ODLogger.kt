@@ -55,7 +55,7 @@ object ODLogger{
 
     fun startBackgroundLoggingService() {
         if (running) return
-        thread(isDaemon = true) {
+        thread(isDaemon = true, name="ODLogger") {
             running = true
             while (running) {
                 try {

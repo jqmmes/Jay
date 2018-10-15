@@ -9,7 +9,7 @@ import java.net.DatagramPacket
 object DatagramProcessor {
 
     fun process(packet: DatagramPacket) {
-        ClientManager.addOrIgnoreClient(RemoteODClient(NetworkUtils.getHostAddressFromPacket(packet),
-                ODSettings.serverPort))
+        ClientManager.addOrIgnoreClient(NetworkUtils.getHostAddressFromPacket(packet),
+                ODSettings.serverPort, true)
     }
 }

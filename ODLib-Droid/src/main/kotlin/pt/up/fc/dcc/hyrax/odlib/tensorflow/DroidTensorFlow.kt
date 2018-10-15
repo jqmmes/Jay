@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.Image
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -17,8 +16,6 @@ import java.util.zip.GZIPInputStream
 import java.net.URL
 import java.net.URLConnection
 import kotlin.concurrent.thread
-import kotlin.math.floor
-import kotlin.math.max
 
 @Suppress("unused")
 class DroidTensorFlow(private val context: Context) : DetectObjects {
@@ -26,7 +23,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
 
     private var localDetector : Classifier? = null
     private val tfOdApiInputSize : Long = 300L
-    private var minimumConfidence : Float = 0.0f
+    private var minimumConfidence : Float = 0.1f
     override val models: List<ODModel>
         get() = listOf(
                 ODModel(0,
@@ -76,13 +73,13 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
         ODLogger.logInfo("DroidTensorFlow detecting objects...")
         val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(imgData)
         val mappedRecognitions : MutableList<ODUtils.ODDetection> = ArrayList()
-        for (result : Classifier.Recognition in results) {
-            // TODO: Return mapped recognitions
-            /*if (result.confidence == null) continue
+        for (result : Classifier.Recognition? in results) {
+            if (result == null) continue
+            if (result.confidence == null) continue
             if (result.confidence >= minimumConfidence) {
                 mappedRecognitions.add(ODUtils.ODDetection(score = result.confidence, class_ = result.title!!.toFloat
                 ().toInt(), box = ODUtils.Box()))
-            }*/
+            }
         }
         ODLogger.logInfo("DroidTensorFlow detecting objects... Complete")
         return mappedRecognitions
@@ -101,7 +98,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun loadModel(model: ODModel) {
-        thread {
+        thread(name="DroidTensorflow loadModel") {
             var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
             if (!checkDownloadedModel(model.modelName)) {
                 val tmpFile = downloadModel(model)

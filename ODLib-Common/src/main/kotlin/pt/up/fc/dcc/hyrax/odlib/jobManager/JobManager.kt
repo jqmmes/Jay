@@ -9,9 +9,14 @@ object JobManager {
     private lateinit var jobWarehouse : JobWarehouse
     private var init = false
     private var jobId = 0L
+    private var jobResultsCallback : ((Long, List<ODUtils.ODDetection?>) -> Unit)? = null
 
     fun createJob(data: ByteArray) : ODJob {
         return ODJob(jobId++, data)
+    }
+
+    fun addResultsCallback(callback: (Long, List<ODUtils.ODDetection?>) -> Unit) {
+        jobResultsCallback = callback
     }
 
     internal fun createWarehouse(scheduler: Scheduler = LocalScheduler()) {
@@ -39,6 +44,7 @@ object JobManager {
     }
 
     internal fun addResults(jobId: Long, results: List<ODUtils.ODDetection?>) {
-        jobWarehouse.addResults(jobId, results)
+        //jobWarehouse.addResults(jobId, results)
+        if (jobResultsCallback != null) jobResultsCallback!!(jobId, results)
     }
 }

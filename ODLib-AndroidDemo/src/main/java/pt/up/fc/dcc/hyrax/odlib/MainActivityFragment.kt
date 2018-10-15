@@ -52,6 +52,6 @@ class MainActivityFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         ODLogger.logInfo("Fragment onCreateView")
-        view.findViewById<Button>(R.id.chooseImage).setOnClickListener { _ -> takePhoto()}
+        view.findViewById<Button>(R.id.takePhoto).setOnClickListener { _ -> takePhoto()}
     }
 }

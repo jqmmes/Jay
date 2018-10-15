@@ -15,4 +15,5 @@
     <string name="loadModel">Load Model</string>
     <string name="selectModel">Select Model</string>
     <string name="selectScheduler">Select Scheduler</string>
+    <string name="takePhoto">Take Photo</string>
 </resources>

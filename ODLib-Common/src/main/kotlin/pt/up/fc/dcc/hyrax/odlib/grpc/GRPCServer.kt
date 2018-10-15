@@ -7,7 +7,6 @@ import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.*
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
@@ -67,6 +66,16 @@ Boolean = false) {
     }
 
     companion object {
+        private val resultCallbacks = HashMap<Long, (List<ODUtils.ODDetection?>) -> Unit>()
+
+        internal fun addAsyncResultsCallback(id: Long, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+            resultCallbacks[id] = callback
+        }
+
+        internal fun removeAsyncResultsCallback(id: Long) {
+            if (resultCallbacks.containsKey(id)) resultCallbacks.remove(id)
+        }
+
         fun startServer(odLib: AbstractODLib, port : Int) : GRPCServer {
             val server = GRPCServer(odLib, port)
             server.start()
@@ -84,7 +93,7 @@ Boolean = false) {
 
         override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            ClientManager.addOrIgnoreClient(RemoteODClient(request!!.address, request.port))
+            ClientManager.addOrIgnoreClient(request!!.address, request.port)
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)
         }
 
@@ -99,7 +108,12 @@ Boolean = false) {
         // Just send to odService and return
         override fun putResultAsync(request: ODProto.JobResults?, responseObserver: StreamObserver<ODProto.Status>) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            JobManager.addResults(request!!.id, ODUtils.parseResults(request))
+            if (resultCallbacks.containsKey(request!!.id)) {
+                resultCallbacks[request.id]!!(ODUtils.parseResults(request))
+                removeAsyncResultsCallback(request.id)
+            } else {
+                JobManager.addResults(request!!.id, ODUtils.parseResults(request))
+            }
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 

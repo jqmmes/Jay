@@ -11,11 +11,12 @@ internal class JobWarehouse (private val scheduler: Scheduler){
     private var running: Boolean = false
 
     init {
-        thread (isDaemon = true) {
+        thread (isDaemon = true, name="JobWarehouse") {
             ODLogger.logInfo("JobWarehouse starting thread...")
             var job: ODJob
             running = true
             while(running) {
+                ODLogger.logInfo("JobWarehouse waiting for jobs..")
                 job = pendingJobs.takeFirst()
                 if (running) {
                     scheduler.scheduleJob(job)
@@ -28,13 +29,10 @@ internal class JobWarehouse (private val scheduler: Scheduler){
         return scheduler
     }
 
-    internal fun addResults(jobId: Long, results: List<ODUtils.ODDetection?>) {
-        scheduler.jobCompleted(jobId, results)
-    }
-
     internal fun addJob(job: ODJob) {
         ODLogger.logInfo("JobWarehouse addJob ${job.getId()}")
         pendingJobs.putLast(job)
+        ODLogger.logInfo("JobWarehouse addJob ${job.getId()}... added")
     }
 
     internal fun stop() {

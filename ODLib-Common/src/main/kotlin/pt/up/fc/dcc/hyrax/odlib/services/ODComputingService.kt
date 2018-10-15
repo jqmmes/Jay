@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
+import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.Callable
@@ -19,7 +20,9 @@ object ODComputingService {
     private var executor : ExecutorService = Executors.newSingleThreadExecutor()
     private var waitingResultsMap : HashMap<Int, (List<ODUtils.ODDetection?>) -> Unit> = HashMap()
     private var runningJobs : AtomicInteger = AtomicInteger(0)
+    private var totalJobs : AtomicInteger = AtomicInteger(0)
     lateinit var localDetect: DetectObjects
+    private val JOBS_LOCK = Object()
 
     init {
         executor.shutdown()
@@ -39,6 +42,7 @@ object ODComputingService {
         ODLogger.logInfo("ODComputingService put job and wait..")
         if (!running) throw Exception("ODComputingService not running")
         val future = executor.submit(CallableJobObjects(localDetect, imageData = localDetect.getByteArrayFromImage(imgPath)))
+        totalJobs.incrementAndGet()
         return future.get() //wait termination
     }
 
@@ -50,22 +54,26 @@ object ODComputingService {
         ODLogger.logInfo("ODComputingService put job into Job Queue...")
         if (!running) throw Exception("ODComputingService not running")
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback))
+        totalJobs.incrementAndGet()
         if (callback == null) return ReturnStatus.Success
         return ReturnStatus.Waiting
     }
 
     fun startService(localDetect: DetectObjects) {
         if (running) return
-        if (executor.isShutdown) executor = Executors.newFixedThreadPool(workingThreads)
+        if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)
         ODComputingService.localDetect = localDetect
         thread(start = true, isDaemon = true, name = "ODComputingService") {
             running = true
             while (running) {
                 try {
                     ODLogger.logInfo("ODComputingService waiting for job...")
-                    executor.execute(jobQueue.take())
+                    val task = jobQueue.take()
+                    if (!(executor.isShutdown || executor.isTerminated) && running) executor.execute(task)
+                    else running = false
                     ODLogger.logInfo("ODComputingService job submitted to thread pool")
-                } catch (e: InterruptedException) {
+                } catch (e: Exception) {
+                    ODLogger.logWarn("ODComputingService error")
                     running = false
                 }
             }
@@ -77,7 +85,8 @@ object ODComputingService {
         running = false
         waitingResultsMap.clear()
         jobQueue.clear()
-        executor.shutdown()
+        jobQueue.offer(RunnableJobObjects(localDetect, ByteArray(0)) {})
+        executor.shutdownNow()
     }
 
     fun getJobsRunningCount() : Int {
@@ -85,7 +94,9 @@ object ODComputingService {
     }
 
     fun getPendingJobsCount() : Int {
-        return jobQueue.count()
+        synchronized(JOBS_LOCK) {
+            return totalJobs.get() - runningJobs.get()
+        }
     }
 
     fun getWorkingThreads() : Int {
@@ -107,7 +118,10 @@ object ODComputingService {
             runningJobs.incrementAndGet()
             if (callback != null) callback!!(localDetect.detectObjects(imageData))
             ODLogger.logInfo("ODComputingService waiting to decrement and get")
-            runningJobs.decrementAndGet()
+            synchronized(JOBS_LOCK) {
+                runningJobs.decrementAndGet()
+                totalJobs.decrementAndGet()
+            }
             ODLogger.logInfo("ODComputingService finished executing a job")
         }
     }

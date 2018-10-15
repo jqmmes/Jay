@@ -53,11 +53,11 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
     }
 
     override fun asyncDetectObjects(job: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-        remoteClient.putJobAsync(job.getId(), job.getData())
+        remoteClient.putJobAsync(job.getId(), job.getData(), callback)
     }
 
     override fun asyncDetectObjects(imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-        remoteClient.putJobAsync(0, ODComputingService.localDetect.getByteArrayFromImage(imgPath))
+        remoteClient.putJobAsync(0, ODComputingService.localDetect.getByteArrayFromImage(imgPath), callback)
     }
 
     fun sayHello() {

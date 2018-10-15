@@ -10,25 +10,24 @@ import android.view.View
 import kotlinx.android.synthetic.main.activity_main.*
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
-import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
 import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.scheduler.*
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
 import java.io.File
-import java.net.DatagramPacket
 import kotlin.concurrent.thread
+import kotlin.math.max
 
 @Suppress("UNUSED_PARAMETER")
 class MainActivity : AppCompatActivity() {
@@ -55,12 +54,21 @@ class MainActivity : AppCompatActivity() {
             ODLogger.logInfo("CPU Cores: ${SystemStats.getCpuCount()}")
             ODLogger.logInfo("Battery Status ${SystemStats.getBatteryPercentage(this)}\nCharging? ${SystemStats
                     .getBatteryCharging(this)}")
-            ODComputingService.setWorkingThreads(SystemStats.getCpuCount())
+            ODComputingService.setWorkingThreads(max(SystemStats.getCpuCount()/2, 1))
             odClient.setScheduler(getScheduler())
             odClient.startODService()
-            JobManager.getScheduler().setJobCompleteCallback(Callback(0))
+            //JobManager.getScheduler().setJobCompleteCallback(Callback(0))
+            JobManager.addResultsCallback(){id, results -> resultsCallback(id, results)}
+
         }
         else odClient.stopODService()
+    }
+
+    private fun resultsCallback(id: Long, results: List<ODUtils.ODDetection?>) {
+        ODLogger.logInfo("Received results for Job $id")
+        for (result in results) {
+            if (result != null) ODLogger.logInfo("\t\t${COCODataLabels.label(result.class_)}\t${result.score*100.0}%")
+        }
     }
 
     private fun getScheduler() : Scheduler {
@@ -122,7 +130,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun chooseImage(target : View) {
-        thread{
+        thread (name="chooseImage CreateJob"){
             //odClient.getJobManager()
             val job = JobManager.createJob(
                 ImageUtils.getByteArrayFromBitmap(
@@ -136,14 +144,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    inner class DiscoveredClient : DiscoverInterface {
-        override fun onMulticastReceived(packet : DatagramPacket) {
-            ODLogger.logInfo("Datagram received from ${NetworkUtils.getHostAddressFromPacket(packet)}")
-        }
-    }
-
     fun discoverToggleListener(target : View) {
-        //DiscoveredClient()
         if ((target as ToggleButton).isChecked) MulticastListener.listen()
         else MulticastListener.stop()
     }

@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -8,13 +9,22 @@ object ClientManager {
 
     private val me: ODClient = ODClient()
     private val remoteODClients = ConcurrentHashMap<Long, ODClient>()
+    private val NEW_CLIENT_LOCK = Object()
 
-    fun addOrIgnoreClient(remoteODClient: RemoteODClient) {
-        if (!remoteODClients.containsKey(remoteODClient.id)) {
-            ODLogger.logInfo("new Client found ${remoteODClient.id}")
-            remoteODClients[remoteODClient.id] = remoteODClient
-            remoteODClient.sayHello()
+
+    fun addOrIgnoreClient(Ip: String, port: Int, sayHello: Boolean = false) {
+        val clientId = ODUtils.genClientId(Ip)
+        var isNewClient = false
+        var newClient : RemoteODClient? = null
+        synchronized(NEW_CLIENT_LOCK) {
+            if (!remoteODClients.containsKey(clientId)) {
+                ODLogger.logInfo("new Client found $clientId")
+                newClient = RemoteODClient(Ip, port)
+                remoteODClients[clientId] = newClient!!
+                isNewClient = true
+            }
         }
+        if (sayHello && isNewClient) newClient!!.sayHello()
     }
 
     fun getLocalODClient(): ODClient {

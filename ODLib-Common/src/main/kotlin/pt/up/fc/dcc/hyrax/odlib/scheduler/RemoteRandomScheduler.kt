@@ -4,6 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -11,19 +12,12 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 
 @Suppress("unused")
-class RemoteRandomScheduler : Scheduler {
-    override var jobResultCallback: JobResultCallback? = null
+class RemoteRandomScheduler : Scheduler() {
     private var nextRemote = 0
     private val jobBookkeeping = HashMap<Long, Long>()
 
     init {
         ODLogger.logInfo("RemoteRandomScheduler starting")
-    }
-
-    constructor()
-
-    constructor(jobResultCallback: JobResultCallback) {
-        this.jobResultCallback = jobResultCallback
     }
 
     private fun getNextRemoteRandom() : RemoteODClient? {
@@ -32,20 +26,19 @@ class RemoteRandomScheduler : Scheduler {
         return clients[Random().nextInt(clients.size)] as RemoteODClient
     }
 
-    override fun setJobCompleteCallback(callback: JobResultCallback) {
-        jobResultCallback = callback
-    }
-
     override fun jobCompleted(id: Long, results: List<ODUtils.ODDetection?>) {
-        ODLogger.logInfo("Job $id completed\n\t\t$results")
+        super.jobCompleted(id, results)
         jobBookkeeping.remove(id)
-        if (jobResultCallback != null) jobResultCallback!!.onNewResult(results)
     }
 
     override fun scheduleJob(job: ODJob) {
-        // TODO: Nao esta a escalonar nada, porque nao executa localmente
-        if (ODComputingService.getJobsRunningCount() > ODComputingService.getWorkingThreads()
-                && ODComputingService.getPendingJobsCount() > ODComputingService.getWorkingThreads()) {
+        ODLogger.logInfo("RemoteRandomScheduler scheduleJob ${ODComputingService.getWorkingThreads()}; ${ODComputingService
+                .getJobsRunningCount()}; ${ODComputingService.getPendingJobsCount()}\t\t${ODComputingService
+                .getJobsRunningCount() >= ODComputingService.getWorkingThreads()}\t\t${ODComputingService
+                .getPendingJobsCount() > ODComputingService.getWorkingThreads()}")
+        if (ODComputingService.getJobsRunningCount() >= ODComputingService.getWorkingThreads()
+                && ODComputingService.getPendingJobsCount() >= ODComputingService.getWorkingThreads()) {
+            ODLogger.logInfo("RemoteRandomScheduler will send to remote, maybe")
             val nextClient = getNextRemoteRandom()
             if (nextClient != null) {
                 jobBookkeeping[job.getId()] = nextClient.id
@@ -53,6 +46,8 @@ class RemoteRandomScheduler : Scheduler {
             } else {
                 ClientManager.getLocalODClient().asyncDetectObjects(job) { R -> jobCompleted(job.getId(), R)}
             }
+        } else {
+            ClientManager.getLocalODClient().asyncDetectObjects(job) { R -> jobCompleted(job.getId(), R)}
         }
     }
 }

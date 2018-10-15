@@ -10,34 +10,21 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 
 @Suppress("unused")
-class JustRemoteRandomScheduler : Scheduler {
-    override var jobResultCallback: JobResultCallback? = null
+class JustRemoteRandomScheduler : Scheduler() {
     private var nextRemote = 0
     private val jobBookkeeping = HashMap<Long, Long>()
     init {
         ODLogger.logInfo("JustRemoteRandomScheduler starting")
     }
-
-    constructor()
-
-    constructor(jobResultCallback: JobResultCallback) {
-        this.jobResultCallback = jobResultCallback
-    }
-
     private fun getNextRemoteRandom() : RemoteODClient? {
         val clients = Collections.list(ClientManager.getRemoteODClients())
         if (clients.isEmpty()) return null
         return clients[Random().nextInt(clients.size)] as RemoteODClient
     }
 
-    override fun setJobCompleteCallback(callback: JobResultCallback) {
-        jobResultCallback = callback
-    }
-
     override fun jobCompleted(id: Long, results: List<ODUtils.ODDetection?>) {
-        ODLogger.logInfo("Job $id completed\n\t\t$results")
+        super.jobCompleted(id, results)
         jobBookkeeping.remove(id)
-        if (jobResultCallback != null) jobResultCallback!!.onNewResult(results)
     }
 
     override fun scheduleJob(job: ODJob) {
