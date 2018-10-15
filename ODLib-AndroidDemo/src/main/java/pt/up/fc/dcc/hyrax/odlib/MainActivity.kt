@@ -15,7 +15,6 @@ import android.content.pm.PackageManager
 import android.app.Activity
 import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.scheduler.*
@@ -76,17 +75,9 @@ class MainActivity : AppCompatActivity() {
         return when(schedulerSpinnerValue) {
             "RemoteRandomScheduler" -> RemoteRandomScheduler()
             "RemoteRoundRobinScheduler" -> RemoteRoundRobinScheduler()
-            "JustRemoteRoundRobinScheduler" -> JustRemoteRandomScheduler()
-            "JustRemoteRandomScheduler" -> JustRemoteRoundRobinScheduler()
+            "JustRemoteRoundRobinScheduler" -> JustRemoteRoundRobinScheduler()
+            "JustRemoteRandomScheduler" -> JustRemoteRandomScheduler()
             else -> LocalScheduler()
-        }
-    }
-
-    inner class Callback(override var id: Long) : JobResultCallback {
-        override fun onNewResult(resultList: List<ODUtils.ODDetection?>) {
-            runOnUiThread {
-                findViewById<TextView>(R.id.loggingConsole).append(resultList.toString())
-            }
         }
     }
 
@@ -102,10 +93,6 @@ class MainActivity : AppCompatActivity() {
         if ((target as ToggleButton).isChecked) MulticastAdvertiser.advertise()
         else MulticastAdvertiser.stop()
     }
-
-
-
-
 
     fun downloadModel(target : View) {
         val spinner = findViewById<Spinner>(R.id.select_model)
@@ -131,7 +118,6 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target : View) {
         thread (name="chooseImage CreateJob"){
-            //odClient.getJobManager()
             val job = JobManager.createJob(
                 ImageUtils.getByteArrayFromBitmap(
                     ImageUtils.scaleImage(

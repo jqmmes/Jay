@@ -9,6 +9,10 @@ import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 
 class LocalScheduler : Scheduler() {
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     private val executingJobs = HashMap<Long, ODJob>()
 
     init {

@@ -12,11 +12,19 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
     private var models : MutableSet<ODModel> = HashSet()
     private var remoteClient: GRPCClient = GRPCClient(address, port)
     override var id : Long = 0
+    private val deviceInformation = DeviceInformation()
 
     init {
         id = ODUtils.genClientId(address)
     }
 
+    fun getDeviceInformation() : DeviceInformation {
+        return deviceInformation
+    }
+
+    fun destroy() {
+        remoteClient
+    }
 
     override fun getAddress() : String {
         return address
@@ -38,8 +46,8 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
         return getModels(refresh).count()
     }
 
-    fun ping(){
-        remoteClient.ping()
+    fun ping() : Boolean {
+        return remoteClient.ping()
     }
 
     override fun configureModel() {}

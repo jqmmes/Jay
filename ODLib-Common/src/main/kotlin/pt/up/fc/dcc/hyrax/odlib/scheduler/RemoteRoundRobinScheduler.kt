@@ -15,7 +15,11 @@ import kotlin.collections.HashMap
 
 @Suppress("unused")
 class RemoteRoundRobinScheduler : Scheduler() {
-    private var nextRemote = 0
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private var nextRemote: Int = 0
     private val jobBookkeeping = HashMap<Long, Long>()
 
     init {
@@ -25,7 +29,8 @@ class RemoteRoundRobinScheduler : Scheduler() {
     private fun getNextRemoteRoundRobin() : RemoteODClient? {
         val clients = Collections.list(ClientManager.getRemoteODClients())
         if (clients.isEmpty()) return null
-        return clients[nextRemote++ % clients.size] as RemoteODClient
+        nextRemote %= clients.size
+        return clients[nextRemote++] as RemoteODClient
     }
 
     override fun jobCompleted(id: Long, results: List<ODUtils.ODDetection?>) {
@@ -40,11 +45,9 @@ class RemoteRoundRobinScheduler : Scheduler() {
             if (nextClient != null) {
                 jobBookkeeping[job.getId()] = nextClient.id
                 nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
-            } else {
-                ClientManager.getLocalODClient().asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
+                return
             }
-        } else {
-            ClientManager.getLocalODClient().asyncDetectObjects(job) { R -> jobCompleted(job.getId(), R)}
         }
+        ClientManager.getLocalODClient().asyncDetectObjects(job) { R -> jobCompleted(job.getId(), R)}
     }
 }

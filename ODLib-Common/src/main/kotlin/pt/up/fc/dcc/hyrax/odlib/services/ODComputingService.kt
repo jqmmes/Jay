@@ -21,6 +21,7 @@ object ODComputingService {
     private var waitingResultsMap : HashMap<Int, (List<ODUtils.ODDetection?>) -> Unit> = HashMap()
     private var runningJobs : AtomicInteger = AtomicInteger(0)
     private var totalJobs : AtomicInteger = AtomicInteger(0)
+    private var queueSize : Int = Int.MAX_VALUE
     lateinit var localDetect: DetectObjects
     private val JOBS_LOCK = Object()
 
@@ -101,6 +102,10 @@ object ODComputingService {
 
     fun getWorkingThreads() : Int {
         return workingThreads
+    }
+
+    fun getQueueSize(): Int {
+        return queueSize
     }
 
     private class CallableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray) : Callable<List<ODUtils.ODDetection>> {

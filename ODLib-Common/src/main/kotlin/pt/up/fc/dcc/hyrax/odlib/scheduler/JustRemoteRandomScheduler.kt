@@ -11,6 +11,10 @@ import java.util.*
 
 @Suppress("unused")
 class JustRemoteRandomScheduler : Scheduler() {
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     private var nextRemote = 0
     private val jobBookkeeping = HashMap<Long, Long>()
     init {

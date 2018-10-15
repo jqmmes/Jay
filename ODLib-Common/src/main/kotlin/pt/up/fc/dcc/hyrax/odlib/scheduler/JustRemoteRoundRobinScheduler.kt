@@ -14,6 +14,10 @@ import kotlin.collections.HashMap
 
 @Suppress("unused")
 class JustRemoteRoundRobinScheduler : Scheduler() {
+    override fun destroy() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     private var nextRemote = 0
     private val jobBookkeeping = HashMap<Long, Long>()
 
@@ -24,7 +28,8 @@ class JustRemoteRoundRobinScheduler : Scheduler() {
     private fun getNextRemoteRoundRobin() : RemoteODClient? {
         val clients = Collections.list(ClientManager.getRemoteODClients())
         if (clients.isEmpty()) return null
-        return clients[nextRemote++ % clients.size] as RemoteODClient
+        nextRemote %= clients.size
+        return clients[nextRemote++] as RemoteODClient
     }
 
     override fun jobCompleted(id: Long, results: List<ODUtils.ODDetection?>) {

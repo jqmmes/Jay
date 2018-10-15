@@ -20,8 +20,12 @@ object ClientManager {
             if (!remoteODClients.containsKey(clientId)) {
                 ODLogger.logInfo("new Client found $clientId")
                 newClient = RemoteODClient(Ip, port)
-                remoteODClients[clientId] = newClient!!
-                isNewClient = true
+                if (newClient!!.ping()) {
+                    remoteODClients[clientId] = newClient!!
+                    isNewClient = true
+                } else {
+                    newClient!!.destroy()
+                }
             }
         }
         if (sayHello && isNewClient) newClient!!.sayHello()
@@ -32,7 +36,6 @@ object ClientManager {
     }
 
     fun getRemoteODClient(id: Long): RemoteODClient? {
-        println("getRemoteClient $id")
         return remoteODClients[id] as RemoteODClient
     }
 
