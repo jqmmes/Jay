@@ -74,6 +74,12 @@
                 android:id="@+id/select_model"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" />
+
+        <Spinner
+                android:text="@string/selectScheduler"
+                android:id="@+id/select_scheduler"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" />
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"

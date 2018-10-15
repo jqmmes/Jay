@@ -15,6 +15,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.io.IOException
 
@@ -23,7 +24,8 @@ import java.io.IOException
  *
  * Note: this file was automatically converted from Java
  */
-internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 50051, private val useNettyServer : Boolean = false) {
+internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = ODSettings.serverPort, private val useNettyServer :
+Boolean = false) {
 
     private var server: Server? = null
 
@@ -97,7 +99,6 @@ internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = 5005
         // Just send to odService and return
         override fun putResultAsync(request: ODProto.JobResults?, responseObserver: StreamObserver<ODProto.Status>) {
             ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            //ODComputingService.newRemoteResultAvailable(request!!.id, ODUtils.parseResults(request))
             JobManager.addResults(request!!.id, ODUtils.parseResults(request))
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }

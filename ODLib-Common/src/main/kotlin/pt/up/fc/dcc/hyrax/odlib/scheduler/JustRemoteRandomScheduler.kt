@@ -5,19 +5,17 @@ import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
-import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 
 @Suppress("unused")
-class RemoteRandomScheduler : Scheduler {
+class JustRemoteRandomScheduler : Scheduler {
     override var jobResultCallback: JobResultCallback? = null
     private var nextRemote = 0
     private val jobBookkeeping = HashMap<Long, Long>()
-
     init {
-        ODLogger.logInfo("RemoteRandomScheduler starting")
+        ODLogger.logInfo("JustRemoteRandomScheduler starting")
     }
 
     constructor()
@@ -43,16 +41,10 @@ class RemoteRandomScheduler : Scheduler {
     }
 
     override fun scheduleJob(job: ODJob) {
-        // TODO: Nao esta a escalonar nada, porque nao executa localmente
-        if (ODComputingService.getJobsRunningCount() > ODComputingService.getWorkingThreads()
-                && ODComputingService.getPendingJobsCount() > ODComputingService.getWorkingThreads()) {
             val nextClient = getNextRemoteRandom()
             if (nextClient != null) {
                 jobBookkeeping[job.getId()] = nextClient.id
                 nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
-            } else {
-                ClientManager.getLocalODClient().asyncDetectObjects(job) { R -> jobCompleted(job.getId(), R)}
-            }
         }
     }
 }

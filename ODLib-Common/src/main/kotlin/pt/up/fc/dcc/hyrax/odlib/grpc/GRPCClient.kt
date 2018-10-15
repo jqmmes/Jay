@@ -5,11 +5,9 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.clients.ODClient
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.util.concurrent.TimeUnit
 
 
@@ -40,9 +38,9 @@ internal constructor(private val channel: ManagedChannel) {
         ODLogger.logInfo("RPC putResults success")
     }
 
-    fun putJobAsync(id: Long, data: ByteArray, remoteClient: ODClient) {
+    fun putJobAsync(id: Long, data: ByteArray) {
         try {
-            blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data, remoteClient))
+            blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data))
         } catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC failed: " + e.status)
             return
@@ -65,10 +63,11 @@ internal constructor(private val channel: ManagedChannel) {
     fun sayHello() {
         try {
             ODLogger.logInfo("will say Hello")
-            blockingStub.sayHello(ODUtils.genRemoteClient(ODClient()))
+            //blockingStub.sayHello(ODUtils.genRemoteClient(ClientManager.getLocalODClient()))
+            blockingStub.sayHello(ODUtils.genLocalClient())
             ODLogger.logInfo("said Hello")
         }catch (e: StatusRuntimeException){
-            ODLogger.logError("Error pinging")
+            ODLogger.logError("Say Hello failed")
         }
     }
 

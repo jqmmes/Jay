@@ -18,6 +18,11 @@ class RemoteRoundRobinScheduler : Scheduler {
     private var nextRemote = 0
     private val jobBookkeeping = HashMap<Long, Long>()
 
+    init {
+        ODLogger.logInfo("RemoteRoundRobinScheduler starting")
+    }
+
+
     constructor()
 
     constructor(jobResultCallback: JobResultCallback) {

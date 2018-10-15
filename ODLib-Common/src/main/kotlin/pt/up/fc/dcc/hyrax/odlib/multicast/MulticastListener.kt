@@ -1,7 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.multicast
 
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.multicast.NetworkUtils.Companion.getHostAddressFromPacket
+import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.Companion.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.net.*
 import kotlin.concurrent.thread

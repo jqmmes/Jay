@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.multicast
 
+import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.lang.Thread.sleep
 import java.net.*

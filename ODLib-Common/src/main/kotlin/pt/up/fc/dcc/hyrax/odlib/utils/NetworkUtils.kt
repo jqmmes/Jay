@@ -1,7 +1,7 @@
-package pt.up.fc.dcc.hyrax.odlib.multicast
+package pt.up.fc.dcc.hyrax.odlib.utils
 
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.net.DatagramPacket
+import java.net.Inet4Address
 import java.net.NetworkInterface
 
 class NetworkUtils {
@@ -18,6 +18,15 @@ class NetworkUtils {
                 }
             }
             return interfaceList
+        }
+
+        fun getLocalIpV4() : String {
+            val interfaces = getCompatibleInterfaces<Inet4Address>()
+            if (interfaces.isEmpty()) return ""
+            for (ip in interfaces[0].inetAddresses) {
+                if (ip is Inet4Address) return ip.toString().trim('/')
+            }
+            return ""
         }
 
         fun getHostAddressFromPacket(packet: DatagramPacket) : String {

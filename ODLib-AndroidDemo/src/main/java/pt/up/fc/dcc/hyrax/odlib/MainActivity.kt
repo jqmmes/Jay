@@ -14,14 +14,13 @@ import pt.up.fc.dcc.hyrax.odlib.interfaces.DiscoverInterface
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
-import android.content.Intent
-import android.graphics.Bitmap
-import android.provider.MediaStore
 import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.multicast.NetworkUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
+import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
+import pt.up.fc.dcc.hyrax.odlib.scheduler.*
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -57,10 +56,22 @@ class MainActivity : AppCompatActivity() {
             ODLogger.logInfo("Battery Status ${SystemStats.getBatteryPercentage(this)}\nCharging? ${SystemStats
                     .getBatteryCharging(this)}")
             ODComputingService.setWorkingThreads(SystemStats.getCpuCount())
+            odClient.setScheduler(getScheduler())
             odClient.startODService()
             JobManager.getScheduler().setJobCompleteCallback(Callback(0))
         }
         else odClient.stopODService()
+    }
+
+    private fun getScheduler() : Scheduler {
+        val schedulerSpinnerValue = findViewById<Spinner>(R.id.select_scheduler).selectedItem
+        return when(schedulerSpinnerValue) {
+            "RemoteRandomScheduler" -> RemoteRandomScheduler()
+            "RemoteRoundRobinScheduler" -> RemoteRoundRobinScheduler()
+            "JustRemoteRoundRobinScheduler" -> JustRemoteRandomScheduler()
+            "JustRemoteRandomScheduler" -> JustRemoteRoundRobinScheduler()
+            else -> LocalScheduler()
+        }
     }
 
     inner class Callback(override var id: Long) : JobResultCallback {
@@ -147,16 +158,20 @@ class MainActivity : AppCompatActivity() {
         odClient = ODLib(this)
         ODLogger.enableLogs(loggingConsole, LogLevel.Info)
         ODLogger.startBackgroundLoggingService()
-        val spinner = findViewById<Spinner>(R.id.select_model)
+        val modelSpinner = findViewById<Spinner>(R.id.select_model)
+        val schedulerSpinner = findViewById<Spinner>(R.id.select_scheduler)
+        val schedulerAdapter = arrayOf("LocalScheduler", "RemoteRandomScheduler", "RemoteRoundRobinScheduler",
+                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler")
 
-        //Sample String ArrayList
+        schedulerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulerAdapter)
+
         val arrayList1 = ArrayList<String>()
         for (model in odClient.listModels(false)) {
             arrayList1.add(model.modelName)
         }
 
         val adp = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayList1)
-        spinner.adapter = adp
+        modelSpinner.adapter = adp
 
         verifyStoragePermissions(this)
     }

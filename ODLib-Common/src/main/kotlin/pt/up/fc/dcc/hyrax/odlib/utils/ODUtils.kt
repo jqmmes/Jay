@@ -87,18 +87,36 @@ class ODUtils {
                     .build()
         }
 
+        internal fun genLocalClient(): ODProto.RemoteClient? {
+            return ODProto.RemoteClient.newBuilder()
+                    .setAddress(NetworkUtils.getLocalIpV4())
+                    .setPort(ODSettings.serverPort)
+                    .setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4()))
+                    .build()
+        }
+
+        internal fun genClientId(ipV4: String): Long {
+            try {
+                return ipV4.replace(".", "").toLong()
+            } catch (e: Exception ) {
+                ODLogger.logWarn("failed to gen id from $ipV4")
+            }
+            return 0
+        }
+
         internal fun genRemoteClient(remoteODClient: ODClient) : ODProto.RemoteClient{
             return ODProto.RemoteClient.newBuilder()
                     .setAddress(remoteODClient.getAddress())
                     .setPort(remoteODClient.getPort())
+                    .setId(remoteODClient.id)
                     .build()
 
         }
 
-        fun genAsyncRequest(id: Long, data: ByteArray, remoteClient: ODClient): ODProto.AsyncRequest? {
+        fun genAsyncRequest(id: Long, data: ByteArray): ODProto.AsyncRequest? {
             return  ODProto.AsyncRequest.newBuilder()
                     .setJob(genJobRequest(id, data))
-                    .setRemoteClient(genRemoteClient(remoteClient))
+                    .setRemoteClient(genLocalClient())
                     .build()
         }
 
