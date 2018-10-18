@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Class-Path: proto-1.10.0.jar netty-transport-4.1.27.Final.jar guava-20
+ .0.jar grpc-core-1.15.0.jar error_prone_annotations-2.2.0.jar animal-
+ sniffer-annotations-1.17.jar kotlinx-coroutines-core-0.26.1.jar koven
+ ant-core-3.3.0.jar grpc-stub-1.15.0.jar kotlin-stdlib-1.2.71.jar kove
+ nant-combine-3.3.0.jar grpc-context-1.15.0.jar jtar-2.3.jar gson-2.7.
+ jar common-1.1.0.jar proto-google-common-protos-1.12.0.jar netty-reso
+ lver-4.1.27.Final.jar kotlin-stdlib-common-1.2.71.jar netty-codec-4.1
+ .27.Final.jar libtensorflow-1.10.0.jar atomicfu-common-0.11.5.jar ten
+ sorflow-1.10.0.jar netty-codec-socks-4.1.27.Final.jar opencensus-cont
+ rib-grpc-metrics-0.12.3.jar opencensus-api-0.12.3.jar support-annotat
+ ions-27.1.1.jar kotlinx-coroutines-core-common-0.26.1.jar kotlin-stdl
+ ib-jdk8-1.2.71.jar kovenant-functional-3.3.0.jar kovenant-jvm-3.3.0.j
+ ar netty-handler-4.1.27.Final.jar grpc-netty-1.15.0.jar netty-buffer-
+ 4.1.27.Final.jar kotlinx-coroutines-android-0.23.4.jar netty-codec-ht
+ tp-4.1.27.Final.jar protobuf-java-3.5.1.jar netty-common-4.1.27.Final
+ .jar netty-handler-proxy-4.1.27.Final.jar kotlin-stdlib-jdk7-1.2.71.j
+ ar jsr305-3.0.0.jar annotations-13.0.jar grpc-protobuf-lite-1.15.0.ja
+ r libtensorflow_jni-1.10.0.jar netty-codec-http2-4.1.27.Final.jar grp
+ c-protobuf-1.15.0.jar
+Main-Class: pt.up.fc.dcc.hyrax.odlib.ODCloud
+

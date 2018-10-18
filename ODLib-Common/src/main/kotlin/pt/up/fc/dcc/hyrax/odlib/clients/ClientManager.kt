@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 object ClientManager {
 
     private val me: ODClient = ODClient()
+    private var cloud: CloudODClient = CloudODClient()
     private val remoteODClients = ConcurrentHashMap<Long, ODClient>()
     private val NEW_CLIENT_LOCK = Object()
 
@@ -33,6 +34,14 @@ object ClientManager {
 
     fun getLocalODClient(): ODClient {
         return me
+    }
+
+    fun changeCloudClient(cloudODClient: CloudODClient) {
+        cloud = cloudODClient
+    }
+
+    fun getCloudClient(): CloudODClient {
+        return cloud
     }
 
     fun getRemoteODClient(id: Long): RemoteODClient? {

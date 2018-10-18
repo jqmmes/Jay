@@ -112,7 +112,7 @@ Boolean = false) {
                 resultCallbacks[request.id]!!(ODUtils.parseResults(request))
                 removeAsyncResultsCallback(request.id)
             } else {
-                JobManager.addResults(request!!.id, ODUtils.parseResults(request))
+                JobManager.addResults(request.id, ODUtils.parseResults(request))
             }
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }

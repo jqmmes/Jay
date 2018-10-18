@@ -1,0 +1,86 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ODCloudlet:jar">
+    <output-path>$PROJECT_DIR$/out/</output-path>
+    <root id="archive" name="ODCloudlet.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/ODCloudlet/src/main/kotlin/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="ODCloudlet" />
+      <element id="module-output" name="ODLib-Cloudlet" />
+      <element id="module-output" name="ODLib-Common" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.tensorflow/proto/1.10.0/c5c2353c890eb64f0560f9336cb5dc50cef45b45/proto-1.10.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: support-fragment-27.1.1" />
+      <element id="library" level="project" name="Gradle: anko-commons-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.1.27.Final/b5c2da3ea89dd67320925f1504c9eb3615241b7c/netty-transport-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/20.0/89507701249388e1ed5ddcf8c41f4ce1be7831ef/guava-20.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-core/1.15.0/85863284e3c56a7f7c2cf7a01963c7f4519a5295/grpc-core-1.15.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: platform-base-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.errorprone/error_prone_annotations/2.2.0/88e3c593e9b3586e1c6177f89267da6fc6986f0c/error_prone_annotations-2.2.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: support-media-compat-27.1.1" />
+      <element id="library" level="project" name="Gradle: anko-sdk27-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.mojo/animal-sniffer-annotations/1.17/f97ce6decaea32b36101e37979f8b647f00681fb/animal-sniffer-annotations-1.17.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core/0.26.1/d5aada103e0f4d8add78ec657183101c93d61289/kotlinx-coroutines-core-0.26.1.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: appcompat-v7-27.1.1" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/nl.komponents.kovenant/kovenant-core/3.3.0/52326e409512569abb6b52099ab1ace21f886013/kovenant-core-3.3.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: anko-support-v4-commons-0.10.6" />
+      <element id="library" level="project" name="Gradle: supportV4-base-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-stub/1.15.0/17ac6d74d9bef3dec6eddbd0772fede89865261c/grpc-stub-1.15.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.2.71/d9717625bb3c731561251f8dd2c67a1011d6764c/kotlin-stdlib-1.2.71.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/nl.komponents.kovenant/kovenant-combine/3.3.0/ab727c25bffa365b7efa1f8a47076baae3863395/kovenant-combine-3.3.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-context/1.15.0/bdfb1d0c90d83fa998a9f25976a71019aebe7bcc/grpc-context-1.15.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.kamranzafar/jtar/2.3/f71797e55ed9a0c1655f0b8df706b2d716f4d93b/jtar-2.3.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: anko-appcompat-v7-coroutines-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.7/751f548c85fa49f330cecbb1875893f971b33c4e/gson-2.7.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: commons-base-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/android.arch.lifecycle/common/1.1.0/edf3f7bfb84a7521d0599efa3b0113a0ee90f85/common-1.1.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.api.grpc/proto-google-common-protos/1.12.0/1140cc74df039deb044ed0e320035e674dc13062/proto-google-common-protos-1.12.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: anko-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.1.27.Final/2536447ef9605ccb2b5203aa22392c6514484ea9/netty-resolver-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.2.71/ba18ca1aa0e40eb6f1865b324af2f4cbb691c1ec/kotlin-stdlib-common-1.2.71.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: support-core-utils-27.1.1" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec/4.1.27.Final/d2653d78ebaa650064768fb26b10051f5c8efb2c/netty-codec-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.tensorflow/libtensorflow/1.10.0/bde7684a8972a0c6eaffbb1133a3cdd2fface2d6/libtensorflow-1.10.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/atomicfu-common/0.11.5/a14c4e4a2c0232878dcdf592b48bc3e50decfddf/atomicfu-common-0.11.5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.tensorflow/tensorflow/1.10.0/f9289bf479ffaca47dc5c226affa47f6002e59ef/tensorflow-1.10.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-socks/4.1.27.Final/285b09af98764cf02e4b77b3d95af188469a7133/netty-codec-socks-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: anko-sdk27-coroutines-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.opencensus/opencensus-contrib-grpc-metrics/0.12.3/a4c7ff238a91b901c8b459889b6d0d7a9d889b4d/opencensus-contrib-grpc-metrics-0.12.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.opencensus/opencensus-api/0.12.3/743f074095f29aa985517299545e72cc99c87de0/opencensus-api-0.12.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.android.support/support-annotations/27.1.1/39ded76b5e1ce1c5b2688e1d25cdc20ecee32007/support-annotations-27.1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-common/0.26.1/c8a336ccf0fc5a907e4dba4ef98bcfbc9f58af53/kotlinx-coroutines-core-common-0.26.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.2.71/5470d1f752cd342edb77e1062bac07e838d2cea4/kotlin-stdlib-jdk8-1.2.71.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/nl.komponents.kovenant/kovenant-functional/3.3.0/eca255c1dd58dbd7e1fe1dbd59b3deb810adcbf6/kovenant-functional-3.3.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/nl.komponents.kovenant/kovenant-jvm/3.3.0/9b1c431992980b81e52db47ac3e1e6171a2ea9eb/kovenant-jvm-3.3.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.1.27.Final/21bd9cf565390a8d72579b8664303e3c175dfc6a/netty-handler-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-netty/1.15.0/91d3d80801917e34fcbfa0a7efbd8ded61bb704/grpc-netty-1.15.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: sqlite-base-0.10.6" />
+      <element id="library" level="project" name="Gradle: livedata-core-1.1.0" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.27.Final/aafe2b9fb0d8f3b200cf10b9fd6486c6a722d7a1/netty-buffer-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-android/0.23.4/7900bc8c2ca75cfbd1eac1eb403db5a22ac3d334/kotlinx-coroutines-android-0.23.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.1.27.Final/a1722d6bcbbef1c4c7877e8bf38b07a3db5ed07f/netty-codec-http-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: runtime-1.1.0" />
+      <element id="library" level="project" name="Gradle: anko-support-v4-0.10.6" />
+      <element id="library" level="project" name="Gradle: support-compat-27.1.1" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.protobuf/protobuf-java/3.5.1/8c3492f7662fa1cbf8ca76a0f5eb1146f7725acd/protobuf-java-3.5.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.1.27.Final/6a12a969c27fb37b230c4bde5a67bd822fa6b7a4/netty-common-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler-proxy/4.1.27.Final/1a822ce7760bc6eb4937b7e448c9e081fedcc807/netty-handler-proxy-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.2.71/4ce93f539e2133f172f1167291a911f83400a5d0/kotlin-stdlib-jdk7-1.2.71.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: animated-vector-drawable-27.1.1" />
+      <element id="library" level="project" name="Gradle: viewmodel-1.1.0" />
+      <element id="library" level="project" name="Gradle: anko-appcompat-v7-commons-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.code.findbugs/jsr305/3.0.0/5871fb60dc68d67da54a663c3fd636a10a532948/jsr305-3.0.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: support-vector-drawable-27.1.1" />
+      <element id="library" level="project" name="Gradle: support-core-ui-27.1.1" />
+      <element id="library" level="project" name="Gradle: support-v4-27.1.1" />
+      <element id="library" level="project" name="Gradle: anko-sqlite-0.10.6" />
+      <element id="library" level="project" name="Gradle: anko-coroutines-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-protobuf-lite/1.15.0/aa410544171ac19ce9c7a764a492e4d34d84c8e7/grpc-protobuf-lite-1.15.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.tensorflow/libtensorflow_jni/1.10.0/cb541f54a3a616a9be2cd0a7bfbbdae33f71f723/libtensorflow_jni-1.10.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: appcompatV7-base-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http2/4.1.27.Final/3769790a2033667d663f9a526d5b63cfecdbdf4e/netty-codec-http2-4.1.27.Final.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gradle: anko-appcompat-v7-0.10.6" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-protobuf/1.15.0/3fd81064ee583fc7613f14323f79edb43c29643b/grpc-protobuf-1.15.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

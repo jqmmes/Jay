@@ -1,7 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
@@ -52,20 +51,16 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
 
     override fun configureModel() {}
 
-    override fun detectObjects(imgPath: String) : List<ODUtils.ODDetection?>{
-        return ODUtils.parseResults(remoteClient.putJobSync(ODComputingService.requestId.incrementAndGet(), ODComputingService.localDetect.getByteArrayFromImage(imgPath)))
+    override fun detectObjects(odJob: ODJob) : List<ODUtils.ODDetection?>{
+        return ODUtils.parseResults(remoteClient.putJobSync(odJob.getId(), odJob.getData()))
     }
 
     fun putResults(id: Long, results : List<ODUtils.ODDetection?>) {
         remoteClient.putResults(id, results)
     }
 
-    override fun asyncDetectObjects(job: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-        remoteClient.putJobAsync(job.getId(), job.getData(), callback)
-    }
-
-    override fun asyncDetectObjects(imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-        remoteClient.putJobAsync(0, ODComputingService.localDetect.getByteArrayFromImage(imgPath), callback)
+    override fun asyncDetectObjects(odJob: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+        remoteClient.putJobAsync(odJob.getId(), odJob.getData(), callback)
     }
 
     fun sayHello() {

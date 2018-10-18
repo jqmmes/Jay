@@ -14,7 +14,6 @@ import kotlin.concurrent.thread
 
 object ODComputingService {
     private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
-    var requestId : AtomicInteger = AtomicInteger(0)
     private var running = false
     private var workingThreads = 1
     private var executor : ExecutorService = Executors.newSingleThreadExecutor()
@@ -39,16 +38,12 @@ object ODComputingService {
         return running
     }
 
-    internal fun putJobAndWait(imgPath: String) : List<ODUtils.ODDetection?> {
+    internal fun putJobAndWait(odJob: ODJob) : List<ODUtils.ODDetection?> {
         ODLogger.logInfo("ODComputingService put job and wait..")
         if (!running) throw Exception("ODComputingService not running")
-        val future = executor.submit(CallableJobObjects(localDetect, imageData = localDetect.getByteArrayFromImage(imgPath)))
+        val future = executor.submit(CallableJobObjects(localDetect, odJob))
         totalJobs.incrementAndGet()
         return future.get() //wait termination
-    }
-
-    internal fun putJob(imgPath: String, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus {
-        return putJob(localDetect.getByteArrayFromImage(imgPath), callback)
     }
 
     internal fun putJob(imgData: ByteArray, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus {
@@ -108,10 +103,10 @@ object ODComputingService {
         return queueSize
     }
 
-    private class CallableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray) : Callable<List<ODUtils.ODDetection>> {
+    private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODUtils.ODDetection>> {
         override fun call(): List<ODUtils.ODDetection> {
             runningJobs.incrementAndGet()
-            val result = localDetect.detectObjects(imageData)
+            val result = localDetect.detectObjects(odJob.getData())
             runningJobs.decrementAndGet()
             return result
         }

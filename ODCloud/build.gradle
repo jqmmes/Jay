@@ -1,0 +1,49 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
+apply plugin: 'kotlin'
+apply plugin: 'application'
+apply plugin: "com.github.johnrengelman.shadow"
+
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //noinspection DifferentStdlibGradleVersion
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    implementation project(':ODLib-Cloudlet')
+    implementation project(':ODLib-Common')
+}
+
+shadowJar {
+    baseName = 'ODCloud'
+    classifier = null
+    version = null
+}
+
+mainClassName = 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
+    }
+}
+
+artifacts {
+    archives shadowJar
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}

@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Main-Class: pt.up.fc.dcc.hyrax.odlib.ODCloudlet
+

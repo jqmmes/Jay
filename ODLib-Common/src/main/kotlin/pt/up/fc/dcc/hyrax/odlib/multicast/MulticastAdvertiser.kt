@@ -31,6 +31,7 @@ class MulticastAdvertiser {
             }
 
             thread(isDaemon=true, name="Multicast Advertiser") {
+                ODLogger.logInfo("Starting Multicast Advertiser")
                 running = true
                 mcSocket = MulticastSocket()
                 if (networkInterface != null) {

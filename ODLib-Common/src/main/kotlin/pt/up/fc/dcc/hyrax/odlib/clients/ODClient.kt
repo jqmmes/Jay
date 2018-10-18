@@ -13,16 +13,12 @@ open class ODClient {
 
     }
 
-    open fun detectObjects(imgPath: String) : List<ODUtils.ODDetection?>{
-        return ODComputingService.putJobAndWait(imgPath)
+    open fun detectObjects(odJob: ODJob) : List<ODUtils.ODDetection?>{
+        return ODComputingService.putJobAndWait(odJob)
     }
 
-    open fun asyncDetectObjects(job: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-        ODComputingService.putJob(job.getData(), callback)
-    }
-
-    open fun asyncDetectObjects(imgPath: String, callback: (List<ODUtils.ODDetection?>) -> Unit) {
-        ODComputingService.putJob(imgPath, callback)
+    open fun asyncDetectObjects(odJob: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+        ODComputingService.putJob(odJob.getData(), callback)
     }
 
     open fun getPort() : Int{

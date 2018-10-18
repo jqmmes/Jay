@@ -14,17 +14,16 @@ import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
 import android.widget.*
+import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.scheduler.*
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
-import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
+import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.io.File
+import java.lang.Thread.sleep
 import kotlin.concurrent.thread
 import kotlin.math.max
 
@@ -43,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         if (start) {
             findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
             toggleService(true)
-            odClient.startGRPCServerService(odClient, 50001, true)
+            odClient.startGRPCServerService(odClient, ODSettings.serverPort, true)
         }
         else odClient.stopGRPCServer()
     }
@@ -77,6 +76,7 @@ class MainActivity : AppCompatActivity() {
             "RemoteRoundRobinScheduler" -> RemoteRoundRobinScheduler()
             "JustRemoteRoundRobinScheduler" -> JustRemoteRoundRobinScheduler()
             "JustRemoteRandomScheduler" -> JustRemoteRandomScheduler()
+            "CloudScheduler" -> CloudScheduler()
             else -> LocalScheduler()
         }
     }
@@ -126,6 +126,15 @@ class MainActivity : AppCompatActivity() {
                     )
                 )
             )
+            //ClientManager.getCloudClient().sayHello()
+            /*ClientManager.getCloudClient().asyncDetectObjects(job) {R ->
+                for (res in R)
+                    ODLogger.logInfo(COCODataLabels.label(res!!.class_))
+            }*/
+
+            //ClientManager.addOrIgnoreClient("35.211.99.112", 50051, true)
+            //for (res in ClientManager.getRemoteODClient(3521199112)!!.detectObjects(job))
+
             JobManager.addJob(job)
         }
     }
@@ -148,7 +157,7 @@ class MainActivity : AppCompatActivity() {
         val modelSpinner = findViewById<Spinner>(R.id.select_model)
         val schedulerSpinner = findViewById<Spinner>(R.id.select_scheduler)
         val schedulerAdapter = arrayOf("LocalScheduler", "RemoteRandomScheduler", "RemoteRoundRobinScheduler",
-                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler")
+                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler", "CloudScheduler")
 
         schedulerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulerAdapter)
 
