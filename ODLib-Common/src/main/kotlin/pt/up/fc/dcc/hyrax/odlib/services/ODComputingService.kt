@@ -21,7 +21,7 @@ object ODComputingService {
     private var runningJobs : AtomicInteger = AtomicInteger(0)
     private var totalJobs : AtomicInteger = AtomicInteger(0)
     private var queueSize : Int = Int.MAX_VALUE
-    lateinit var localDetect: DetectObjects
+    private lateinit var localDetect: DetectObjects
     private val JOBS_LOCK = Object()
 
     init {
@@ -106,7 +106,12 @@ object ODComputingService {
     private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODUtils.ODDetection>> {
         override fun call(): List<ODUtils.ODDetection> {
             runningJobs.incrementAndGet()
-            val result = localDetect.detectObjects(odJob.getData())
+            var result = emptyList<ODUtils.ODDetection>()
+            try {
+                result = localDetect.detectObjects(odJob.getData())
+            } catch (e: Exception) {
+                ODLogger.logError("Execution failed ${e.stackTrace}")
+            }
             runningJobs.decrementAndGet()
             return result
         }
@@ -116,7 +121,12 @@ object ODComputingService {
         override fun run() {
             ODLogger.logInfo("ODComputingService executing a job")
             runningJobs.incrementAndGet()
-            if (callback != null) callback!!(localDetect.detectObjects(imageData))
+            try {
+                if (callback != null) callback!!(localDetect.detectObjects(imageData))
+            } catch (e: Exception) {
+                ODLogger.logError("Execution failed ${e.stackTrace}")
+                if (callback != null) callback!!(emptyList())
+            }
             ODLogger.logInfo("ODComputingService waiting to decrement and get")
             synchronized(JOBS_LOCK) {
                 runningJobs.decrementAndGet()

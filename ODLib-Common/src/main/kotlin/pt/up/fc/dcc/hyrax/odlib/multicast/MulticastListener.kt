@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.multicast
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.Companion.getHostAddressFromPacket
+import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.Companion.getLocalIpV4
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.net.*
 import kotlin.concurrent.thread
@@ -20,6 +21,7 @@ class MulticastListener {
                 return
             }
             thread(isDaemon = true, name="Multicast Listener") {
+                val localIp = getLocalIpV4()
                 val mcPort = 50000
                 val mcIPStr = "224.0.0.1"
                 mcIPAddress = Inet4Address.getByName(mcIPStr)
@@ -52,8 +54,10 @@ class MulticastListener {
                         running = false
                         continue
                     }
-                    ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
-                    DatagramProcessor.process(packet)
+                    if (listeningSocket.`interface`.isLoopbackAddress || getHostAddressFromPacket(packet) != localIp) {
+                        ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
+                        DatagramProcessor.process(packet)
+                    }
                     /*if (newClient(packet.address.hostAddress)) {
                         callback.onMulticastReceived(packet) // getHostAddressFromPacket(packet)
                         ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")

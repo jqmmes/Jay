@@ -43,7 +43,7 @@ class RemoteRoundRobinScheduler : Scheduler() {
         && ODComputingService.getPendingJobsCount() >= ODComputingService.getWorkingThreads()) {
             val nextClient = getNextRemoteRoundRobin()
             if (nextClient != null) {
-                jobBookkeeping[job.getId()] = nextClient.id
+                jobBookkeeping[job.getId()] = nextClient.getId()
                 nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
                 return
             }

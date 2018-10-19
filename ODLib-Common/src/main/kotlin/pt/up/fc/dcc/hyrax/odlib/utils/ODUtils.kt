@@ -2,7 +2,6 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.clients.ODClient
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -75,7 +74,8 @@ class ODUtils {
         }
 
         internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
-            return ClientManager.getRemoteODClient(asyncRequest!!.remoteClient.id)
+            val clientId = if (NetworkUtils.getLocalIpV4() == asyncRequest!!.remoteClient.address) 0 else asyncRequest.remoteClient.id
+            return ClientManager.getRemoteODClient(clientId)
             //return AbstractODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
         }
 
@@ -97,20 +97,20 @@ class ODUtils {
 
         internal fun genClientId(ipV4: String): Long {
             try {
-                return ipV4.replace(".", "").toLong()
+                return if (NetworkUtils.getLocalIpV4() == ipV4 || ipV4 == "localhost") 0 else ipV4.replace(".", "")
+                        .toLong()
             } catch (e: Exception ) {
                 ODLogger.logWarn("failed to gen id from $ipV4")
             }
             return 0
         }
 
-        internal fun genRemoteClient(remoteODClient: ODClient) : ODProto.RemoteClient{
+        internal fun genRemoteClient(remoteODClient: RemoteODClient) : ODProto.RemoteClient{
             return ODProto.RemoteClient.newBuilder()
                     .setAddress(remoteODClient.getAddress())
                     .setPort(remoteODClient.getPort())
-                    .setId(remoteODClient.id)
+                    .setId(remoteODClient.getId())
                     .build()
-
         }
 
         fun genAsyncRequest(id: Long, data: ByteArray): ODProto.AsyncRequest? {

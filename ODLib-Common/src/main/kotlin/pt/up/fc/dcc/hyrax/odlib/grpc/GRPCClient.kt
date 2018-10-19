@@ -14,13 +14,16 @@ import java.util.concurrent.*
 class GRPCClient
     /** Construct client for accessing RouteGuide server using the existing channel.  */
 internal constructor(private var channel: ManagedChannel) {
-    private var blockingStub: ODCommunicationGrpc.ODCommunicationBlockingStub =
-            ODCommunicationGrpc.newBlockingStub(channel).withDeadlineAfter(ODSettings.grpcTimeout, TimeUnit.SECONDS)
+    private var blockingStub: ODCommunicationGrpc.ODCommunicationBlockingStub
     private var futureStub: ODCommunicationGrpc.ODCommunicationFutureStub = ODCommunicationGrpc.newFutureStub(channel)
     private var host: String = ""
     private var port: Int = 0
     private var futureExecutor: Executor? = null
     private val threadPool = Executors.newSingleThreadExecutor()!!
+
+    init {
+        blockingStub = ODCommunicationGrpc.newBlockingStub(channel)
+    }
 
     private class FutureExecutor : Executor {
         val threadPool = Executors.newSingleThreadExecutor()!!
@@ -28,11 +31,11 @@ internal constructor(private var channel: ManagedChannel) {
         override fun execute(command: Runnable?) {
             threadPool.submit(command)
         }
-
     }
 
     constructor(host: String, port: Int) : this(ManagedChannelBuilder.forAddress(host, port)
             .usePlaintext()
+            .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
             .build()) {
         this.host = host
         this.port = port
@@ -55,21 +58,25 @@ internal constructor(private var channel: ManagedChannel) {
         channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
     }
 
-    fun putResults(id: Long, results : List<ODUtils.ODDetection?>){
+    fun putResults(id: Long, results : List<ODUtils.ODDetection?>) : Boolean {
         try {
             blockingStub.putResultAsync(ODUtils.genResults(id, results))
         } catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC failed: " + e.status)
-            return
+            return false
         }
         ODLogger.logInfo("RPC putResults success")
+        return true
     }
 
     fun putJobAsync(id: Long, data: ByteArray, callback: (List<ODUtils.ODDetection?>) -> Unit) : Boolean {
         try {
             GRPCServer.addAsyncResultsCallback(id, callback)
-            blockingStub.putJobAsync(ODUtils.genAsyncRequest(id, data))
-            ODLogger.logInfo("RPC putJobAsync success")
+            //blockingStub.withDeadlineAfter(ODSettings.grpcTimeout, TimeUnit.SECONDS).putJobAsync(ODUtils
+            blockingStub.putJobAsync(ODUtils
+                    .genAsyncRequest
+            (id, data))
+            ODLogger.logInfo("RPC putJobAsync , success")
             return true
         } catch (e: StatusRuntimeException) {
             GRPCServer.removeAsyncResultsCallback(id)
@@ -78,26 +85,27 @@ internal constructor(private var channel: ManagedChannel) {
         return false
     }
 
-    fun putJobCloudSync(id: Long, data: ByteArray) : List<ODUtils.ODDetection?> {
+    fun putJobCloudSync(id: Long, data: ByteArray) : Pair<Boolean, List<ODUtils.ODDetection?>> {
         try {
             val futureJob = futureStub.putJobSync(ODUtils.genJobRequest(id, data))
             ODLogger.logInfo("RPC putJobCloudSync success")
-            return ODUtils.parseResults(futureJob.get())
+            return Pair(true, ODUtils.parseResults(futureJob.get()))
         } catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC failed: " + e.status)
-
         }
-        return emptyList()
+        return Pair(false, emptyList())
     }
 
-    fun putJobCloudAsync(id: Long, data: ByteArray, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+    fun putJobCloudAsync(id: Long, data: ByteArray, callback: (List<ODUtils.ODDetection?>) -> Unit) : Boolean {
         try {
             val futureJob = futureStub.putJobSync(ODUtils.genJobRequest(id, data))
             futureJob.addListener({ callback(ODUtils.parseResults(futureJob.get())) }, { R -> threadPool.submit(R) })
             ODLogger.logInfo("RPC putJobCloudAsync success")
         } catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC failed: " + e.status)
+            return false
         }
+        return true
     }
 
     fun putJobSync(id: Long, data: ByteArray) : ODProto.JobResults? {
@@ -105,68 +113,46 @@ internal constructor(private var channel: ManagedChannel) {
             val result = blockingStub.putJobSync(ODUtils.genJobRequest(id, data))
             ODLogger.logInfo("RPC putJobSync success")
             return result
-
         } catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC failed: " + e.status)
         }
         return null
     }
 
-    fun sayHello() {
+    fun sayHello() : Boolean {
         try {
-            blockingStub.sayHello(ODUtils.genLocalClient())
+            //blockingStub.withDeadlineAfter(ODSettings.grpcTimeout, TimeUnit.SECONDS)
+            blockingStub.sayHello(ODUtils
+                    .genLocalClient())
             ODLogger.logInfo("said Hello")
         }catch (e: StatusRuntimeException){
             ODLogger.logError("Say Hello failed " + e.status)
+            return false
         }
+        return true
     }
 
-    fun getModels() : Set<ODModel> {
+    fun getModels() : Pair<Boolean, Set<ODModel>> {
         val result : ODProto.Models
         try {
-            result = blockingStub.listModels(Empty.getDefaultInstance())
+            result = blockingStub.withDeadlineAfter(ODSettings.grpcTimeout, TimeUnit.SECONDS).listModels(Empty.getDefaultInstance())
         }catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC Failed: " + e.status)
-            return emptySet()
+            return Pair(false, emptySet())
         }
-        return ODUtils.parseModels(result)
+        return Pair(true, ODUtils.parseModels(result))
     }
 
-    fun ping() : Boolean{
+    fun ping() : Boolean {
         try {
-            blockingStub.ping(Empty.newBuilder().build())
+            //.withDeadlineAfter(ODSettings.grpcShortTimeout, TimeUnit.MILLISECONDS)
+            blockingStub.ping(Empty.newBuilder()
+                    .build())
             ODLogger.logInfo("pinged")
             return true
-        }catch (e: StatusRuntimeException){
+        } catch (e: StatusRuntimeException){
             ODLogger.logError("Error pinging " + e.status)
         }
         return false
-    }
-
-    inner class CloudResultFuture : Future<(List<ODUtils.ODDetection?>)> {
-        private lateinit var results: List<ODUtils.ODDetection?>
-        private val latch = CountDownLatch(1)
-
-        fun putResults(results: List<ODUtils.ODDetection?>) {
-            this.results = results
-            latch.countDown()
-        }
-
-        override fun isDone(): Boolean {
-            return latch.count == 0L
-        }
-
-        override fun get(): List<ODUtils.ODDetection?> {
-            latch.await()
-            return results
-        }
-
-        override fun get(timeout: Long, unit: TimeUnit?): List<ODUtils.ODDetection?> {
-            if (latch.await(timeout, unit)) { return results } else { throw TimeoutException() }
-        }
-
-        override fun cancel(mayInterruptIfRunning: Boolean): Boolean { return false }
-
-        override fun isCancelled(): Boolean { return false }
     }
 }

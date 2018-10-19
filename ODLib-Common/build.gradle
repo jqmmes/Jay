@@ -26,6 +26,8 @@ dependencies {
     implementation "io.grpc:grpc-netty:${GRPC_VERSION}"
     implementation "io.grpc:grpc-protobuf:${GRPC_VERSION}"
     implementation "io.grpc:grpc-stub:${GRPC_VERSION}"
+    // Circular FIFO
+    implementation 'org.apache.commons:commons-collections4:4.2'
 }
 
 

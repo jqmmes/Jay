@@ -4,17 +4,33 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
+import pt.up.fc.dcc.hyrax.odlib.status.network.LatencyMovingAverage
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 
 @Suppress("unused")
-class RemoteODClient(private val address: String, private val port: Int) : ODClient() {
-
+open class RemoteODClient {
+    private var address: String
+    private var port: Int = ODSettings.serverPort
     private var models : MutableSet<ODModel> = HashSet()
-    private var remoteClient: GRPCClient = GRPCClient(address, port)
-    override var id : Long = 0
+    private lateinit var remoteClient: GRPCClient
+    private var id : Long = 0
     private val deviceInformation = DeviceInformation()
+    private var latencyMovingAverage: LatencyMovingAverage = LatencyMovingAverage()
 
-    init {
+    constructor() {
+        this.address = "localhost"
+        setLocalVars()
+    }
+
+    constructor(address: String, port: Int = ODSettings.serverPort) {
+        this.address = address
+        this.port = port
+        setLocalVars()
+    }
+
+    private fun setLocalVars() {
         id = ODUtils.genClientId(address)
+        remoteClient = GRPCClient(address, port)
     }
 
     fun getDeviceInformation() : DeviceInformation {
@@ -25,18 +41,21 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
         remoteClient
     }
 
-    override fun getAddress() : String {
+    fun getAddress() : String {
         return address
     }
 
-    override fun getPort() : Int {
+    fun getPort() : Int {
         return port
     }
 
     private fun getModels(refresh: Boolean = true) : Set<ODModel> {
         if (refresh) {
-            models.clear()
-            models.addAll(remoteClient.getModels())
+            val newModels = remoteClient.getModels()
+            if (newModels.first) {
+                models.clear()
+                models.addAll(newModels.second)
+            }
         }
         return models.toSet()
     }
@@ -49,9 +68,9 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
         return remoteClient.ping()
     }
 
-    override fun configureModel() {}
+    fun configureModel() {}
 
-    override fun detectObjects(odJob: ODJob) : List<ODUtils.ODDetection?>{
+    open fun detectObjects(odJob: ODJob) : List<ODUtils.ODDetection?>{
         return ODUtils.parseResults(remoteClient.putJobSync(odJob.getId(), odJob.getData()))
     }
 
@@ -59,11 +78,19 @@ class RemoteODClient(private val address: String, private val port: Int) : ODCli
         remoteClient.putResults(id, results)
     }
 
-    override fun asyncDetectObjects(odJob: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+    open fun asyncDetectObjects(odJob: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
         remoteClient.putJobAsync(odJob.getId(), odJob.getData(), callback)
     }
 
     fun sayHello() {
         remoteClient.sayHello()
+    }
+
+    fun getId(): Long {
+        return id
+    }
+
+    fun getLatencyMovingAverage(): LatencyMovingAverage {
+        return latencyMovingAverage
     }
 }

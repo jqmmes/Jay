@@ -13,8 +13,8 @@ import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
+import android.graphics.BitmapFactory
 import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
@@ -23,7 +23,6 @@ import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.io.File
-import java.lang.Thread.sleep
 import kotlin.concurrent.thread
 import kotlin.math.max
 
@@ -42,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         if (start) {
             findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
             toggleService(true)
-            odClient.startGRPCServerService(odClient, ODSettings.serverPort, true)
+            odClient.startGRPCServerService(odClient, useNettyServer = true)
         }
         else odClient.stopGRPCServer()
     }
@@ -118,23 +117,14 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target : View) {
         thread (name="chooseImage CreateJob"){
-            val job = JobManager.createJob(
-                ImageUtils.getByteArrayFromBitmap(
-                    ImageUtils.scaleImage(
-                        ImageUtils.getImageBitmapFromFile(File("/storage/emulated/0/img.png"))!!,
-                        300f
-                    )
+            println("making job")
+            /*val job = JobManager.createJob(
+                ImageUtils.getByteArrayFromBitmapFast(
+                        ImageUtils.getImageBitmapFromFile(File("/storage/emulated/0/img.png"))!!
                 )
-            )
-            //ClientManager.getCloudClient().sayHello()
-            /*ClientManager.getCloudClient().asyncDetectObjects(job) {R ->
-                for (res in R)
-                    ODLogger.logInfo(COCODataLabels.label(res!!.class_))
-            }*/
-
-            //ClientManager.addOrIgnoreClient("35.211.99.112", 50051, true)
-            //for (res in ClientManager.getRemoteODClient(3521199112)!!.detectObjects(job))
-
+            )*/
+            val job = JobManager.createJob(File("/storage/emulated/0/img.png").readBytes())
+            println("job made")
             JobManager.addJob(job)
         }
     }

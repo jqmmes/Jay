@@ -40,7 +40,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
 
     //Config values.
     private lateinit var inputName : String
-    private var inputSize : Long = 0
+    private var inputSize : Int = 0
 
     private lateinit var intValues : IntArray
     private lateinit var byteValues : ByteArray
@@ -68,7 +68,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         fun create (
                 assetManager : AssetManager,
                 modelFilename : String,
-                inputSize : Long) : Classifier {
+                inputSize : Int) : Classifier {
             val d = TensorFlowObjectDetectionAPIModel()
 
             /*val labelsInput: InputStream?
@@ -107,8 +107,8 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             //Pre-allocate buffers.
             d.outputNames = arrayOf("detection_boxes", "detection_scores",
                     "detection_classes", "num_detections")
-            d.intValues = IntArray(d.inputSize.toInt() * d.inputSize.toInt())
-            d.byteValues = ByteArray(d.inputSize.toInt() * d.inputSize.toInt() * 3)
+            d.intValues = IntArray(d.inputSize * d.inputSize)
+            d.byteValues = ByteArray(d.inputSize * d.inputSize * 3)
             d.outputScores = FloatArray(MAX_RESULTS)
             d.outputLocations = FloatArray(MAX_RESULTS * 4)
             d.outputClasses = FloatArray(MAX_RESULTS)
@@ -146,7 +146,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         val sessionInferenceInterface = MyTensorFlowInferenceInterface(loadedGraph)
         ODLogger.logInfo("TensorflowObjectDetectionAPIModel session created")
         ODLogger.logInfo("TensorflowObjectDetectionAPIModel feeding interface...")
-        sessionInferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
+        sessionInferenceInterface.feed(inputName, byteValues, 1L, inputSize.toLong(), inputSize.toLong(), 3L)
         ODLogger.logInfo("TensorflowObjectDetectionAPIModel interface fed...")
         //inferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
         //Trace.endSection()

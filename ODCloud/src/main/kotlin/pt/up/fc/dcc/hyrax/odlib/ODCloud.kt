@@ -5,6 +5,7 @@ import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 
@@ -15,8 +16,9 @@ class ODCloud {
         @JvmStatic
         fun main(args: Array<String>) {
             ODLogger.enableLogs(LoggingInterface(), LogLevel.Info)
+            ODComputingService.setWorkingThreads(StatusManager.cpuDetails.getAvailableCores())
             odClient.startODService()
-            odClient.startGRPCServerService(odClient, ODSettings.serverPort)
+            odClient.startGRPCServerService(odClient)
             odClient.setTFModel(odClient.listModels(false).toList()[0])
 
             Runtime.getRuntime().addShutdownHook(object : Thread() {

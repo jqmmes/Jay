@@ -4,8 +4,8 @@ import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
-import pt.up.fc.dcc.hyrax.odlib.status.rtt.RTTClient
-import pt.up.fc.dcc.hyrax.odlib.status.rtt.RTTServer
+import pt.up.fc.dcc.hyrax.odlib.status.network.rtt.RTTClient
+import pt.up.fc.dcc.hyrax.odlib.status.network.rtt.RTTServer
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.*
 

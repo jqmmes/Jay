@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib
 
+import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
@@ -9,6 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import java.lang.Thread.sleep
 
 abstract class AbstractODLib (private val localDetector : DetectObjects) {
 
@@ -64,12 +66,14 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
         }
     }
 
-    fun startGRPCServerService(odLib: AbstractODLib, port : Int, useNettyServer : Boolean = false) {
+    fun startGRPCServerService(odLib: AbstractODLib, port : Int = ODSettings.serverPort, useNettyServer : Boolean = false) {
         ODSettings.serverPort = port
         if (grpcServer == null) {
             if (!ODComputingService.isRunning()) startODService()
             grpcServer = GRPCServer(odLib, port, useNettyServer).start()
         }
+        sleep(500)
+        ClientManager.getLocalODClient().sayHello()
     }
 
     fun stopGRPCServer() {

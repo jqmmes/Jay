@@ -7,9 +7,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 object ClientManager {
 
-    private val me: ODClient = ODClient()
+    private val me: RemoteODClient = RemoteODClient()
     private var cloud: CloudODClient = CloudODClient()
-    private val remoteODClients = ConcurrentHashMap<Long, ODClient>()
+    private val remoteODClients = ConcurrentHashMap<Long, RemoteODClient>()
     private val NEW_CLIENT_LOCK = Object()
 
 
@@ -20,7 +20,7 @@ object ClientManager {
         synchronized(NEW_CLIENT_LOCK) {
             if (!remoteODClients.containsKey(clientId)) {
                 ODLogger.logInfo("new Client found $clientId")
-                newClient = RemoteODClient(Ip, port)
+                newClient = RemoteODClient(if (clientId != 0L) Ip else "localhost", port)
                 if (newClient!!.ping()) {
                     remoteODClients[clientId] = newClient!!
                     isNewClient = true
@@ -32,7 +32,7 @@ object ClientManager {
         if (sayHello && isNewClient) newClient!!.sayHello()
     }
 
-    fun getLocalODClient(): ODClient {
+    fun getLocalODClient(): RemoteODClient {
         return me
     }
 
@@ -48,7 +48,7 @@ object ClientManager {
         return remoteODClients[id] as RemoteODClient
     }
 
-    fun getRemoteODClients() : Enumeration<ODClient>? {
+    fun getRemoteODClients() : Enumeration<RemoteODClient>? {
         return remoteODClients.elements()
     }
 }

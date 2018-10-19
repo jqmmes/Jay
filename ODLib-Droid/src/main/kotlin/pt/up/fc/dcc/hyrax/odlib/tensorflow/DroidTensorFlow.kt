@@ -22,7 +22,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     override var minimumScore: Float = 0f
 
     private var localDetector : Classifier? = null
-    private val tfOdApiInputSize : Long = 300L
+    private val tfOdApiInputSize : Int = 300
     private var minimumConfidence : Float = 0.1f
     override val models: List<ODModel>
         get() = listOf(
@@ -65,13 +65,13 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
         return detectObjects(ImageUtils.getBitmapFromByteArray(imgData))
     }
 
-    fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
+    private fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
         if (localDetector == null) {
             ODLogger.logWarn("No model has been loaded yet")
             return emptyList()
         }
         ODLogger.logInfo("DroidTensorFlow detecting objects...")
-        val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(imgData)
+        val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(ImageUtils.scaleImage(imgData, tfOdApiInputSize))
         val mappedRecognitions : MutableList<ODUtils.ODDetection> = ArrayList()
         for (result : Classifier.Recognition? in results) {
             if (result == null) continue

@@ -35,8 +35,7 @@ class MainActivityFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == AppCompatActivity.RESULT_OK) {
             val imageBitmap = data.extras!!.get("data") as Bitmap
-            val newJob = JobManager.createJob(ImageUtils.getByteArrayFromBitmap(ImageUtils.scaleImage(imageBitmap,
-                    300f)))
+            val newJob = JobManager.createJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
             JobManager.addJob(newJob)
         }
     }

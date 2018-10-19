@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
 import com.google.protobuf.Empty
+import io.grpc.Context
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.netty.NettyServerBuilder
@@ -35,11 +36,13 @@ Boolean = false) {
         server = if (useNettyServer){
             NettyServerBuilder.forPort(port)
                     .addService(ODCommunicationImpl())
+                    .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                     .build()
                     .start()
         } else {
             ServerBuilder.forPort(port)
                     .addService(ODCommunicationImpl())
+                    .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                     .build()
                     .start()
         }
@@ -85,8 +88,12 @@ Boolean = false) {
     }
 
     private fun <T>genericComplete (request: T, responseObserver: StreamObserver<T>) {
-        responseObserver.onNext(request)
-        responseObserver.onCompleted()
+        if (!Context.current().isCancelled) {
+            responseObserver.onNext(request)
+            responseObserver.onCompleted()
+        } else {
+            ODLogger.logError("GRPCServer context canceled")
+        }
     }
 
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {

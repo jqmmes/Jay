@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.status.rtt
+package pt.up.fc.dcc.hyrax.odlib.status.network.rtt
 
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
