@@ -3,7 +3,9 @@ package pt.up.fc.dcc.hyrax.odlib.services
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
+import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -26,11 +28,14 @@ object ODComputingService {
 
     init {
         executor.shutdown()
+        StatusManager.setCpuWorkers(workingThreads)
+        StatusManager.setQueueSize(queueSize)
         ODLogger.logInfo("ODComputingService init")
     }
 
     fun setWorkingThreads(threadCount: Int) {
         this.workingThreads = threadCount
+        StatusManager.setCpuWorkers(workingThreads)
         ODLogger.logInfo("Set new threadPool thread number $threadCount. Will take effect next time service is started")
     }
 
@@ -42,7 +47,10 @@ object ODComputingService {
         ODLogger.logInfo("ODComputingService put job and wait..")
         if (!running) throw Exception("ODComputingService not running")
         val future = executor.submit(CallableJobObjects(localDetect, odJob))
-        totalJobs.incrementAndGet()
+        synchronized(JOBS_LOCK) {
+            totalJobs.incrementAndGet()
+            StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
+        }
         return future.get() //wait termination
     }
 
@@ -50,7 +58,10 @@ object ODComputingService {
         ODLogger.logInfo("ODComputingService put job into Job Queue...")
         if (!running) throw Exception("ODComputingService not running")
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback))
-        totalJobs.incrementAndGet()
+        synchronized(JOBS_LOCK) {
+            totalJobs.incrementAndGet()
+            StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
+        }
         if (callback == null) return ReturnStatus.Success
         return ReturnStatus.Waiting
     }
@@ -103,16 +114,40 @@ object ODComputingService {
         return queueSize
     }
 
+    fun loadModel(odModel: ODModel) {
+        if(running) localDetect.loadModel(odModel)
+    }
+
+    fun configTFModel(configRequest: Pair<ODModel, HashMap<String, String>>) {
+        for (key in configRequest.second.keys) {
+            when (key) {
+                "minScore" -> localDetect.minimumScore = configRequest.second[key]!!.toFloat()
+            }
+        }
+    }
+
+    fun listModels() : Set<ODModel> {
+        return localDetect.models.toSet()
+    }
+
     private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODUtils.ODDetection>> {
         override fun call(): List<ODUtils.ODDetection> {
-            runningJobs.incrementAndGet()
+            synchronized(JOBS_LOCK) {
+                runningJobs.incrementAndGet()
+                StatusManager.setRunningJobs(runningJobs.get())
+            }
             var result = emptyList<ODUtils.ODDetection>()
             try {
                 result = localDetect.detectObjects(odJob.getData())
             } catch (e: Exception) {
                 ODLogger.logError("Execution failed ${e.stackTrace}")
             }
-            runningJobs.decrementAndGet()
+            synchronized(JOBS_LOCK) {
+                runningJobs.decrementAndGet()
+                totalJobs.decrementAndGet()
+                StatusManager.setRunningJobs(runningJobs.get())
+                StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
+            }
             return result
         }
     }
@@ -120,7 +155,10 @@ object ODComputingService {
     private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: ((List<ODUtils.ODDetection>) -> Unit)?) : Runnable {
         override fun run() {
             ODLogger.logInfo("ODComputingService executing a job")
-            runningJobs.incrementAndGet()
+            synchronized(JOBS_LOCK) {
+                runningJobs.incrementAndGet()
+                StatusManager.setRunningJobs(runningJobs.get())
+            }
             try {
                 if (callback != null) callback!!(localDetect.detectObjects(imageData))
             } catch (e: Exception) {
@@ -131,6 +169,8 @@ object ODComputingService {
             synchronized(JOBS_LOCK) {
                 runningJobs.decrementAndGet()
                 totalJobs.decrementAndGet()
+                StatusManager.setRunningJobs(runningJobs.get())
+                StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
             }
             ODLogger.logInfo("ODComputingService finished executing a job")
         }

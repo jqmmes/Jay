@@ -10,12 +10,10 @@ import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import java.lang.Thread.sleep
 
 abstract class AbstractODLib (private val localDetector : DetectObjects) {
 
     private var grpcServer : GRPCServer? = null
-    private var nextJobId : Int = 0
     private var jobManager : JobManager? = null
     private var scheduler : Scheduler = LocalScheduler()
 
@@ -24,19 +22,15 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
     }
 
     fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
-        if (!onlyLoaded) return localDetector.models.toSet()
-        val result = HashSet<ODModel>()
-        for (model in localDetector.models)
-            if (model.downloaded) result.add(model)
-        return result
+        return ClientManager.getLocalODClient().getModels(onlyLoaded, true)
     }
 
     fun setTFModel(model: ODModel) {
-        localDetector.loadModel(model)
+        ClientManager.getLocalODClient().selectModel(model)
     }
 
     fun setTFModelMinScore(minimumScore: Float) {
-        localDetector.setMinAcceptScore(minimumScore)
+        ClientManager.getLocalODClient().configureModel(minimumScore)
     }
 
     fun setScheduler(scheduler: Scheduler) {
@@ -49,13 +43,13 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
     }
 
     fun startODService() {
-        JobManager.createWarehouse(scheduler)
+        JobManager.startService(scheduler)
         ODComputingService.startService(localDetector)
     }
 
     fun stopODService() {
         ODComputingService.stop()
-        JobManager.destroyWarehouse()
+        JobManager.stopService()
     }
 
     fun startGRPCServer(odLib: AbstractODLib, port : Int) {
@@ -72,8 +66,6 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
             if (!ODComputingService.isRunning()) startODService()
             grpcServer = GRPCServer(odLib, port, useNettyServer).start()
         }
-        sleep(500)
-        ClientManager.getLocalODClient().sayHello()
     }
 
     fun stopGRPCServer() {

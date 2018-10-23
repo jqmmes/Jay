@@ -14,6 +14,7 @@ import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
@@ -99,22 +100,23 @@ Boolean = false) {
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
         override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
+            ODLogger.logInfo("Received seyHello")
             ClientManager.addOrIgnoreClient(request!!.address, request.port)
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)
         }
 
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.AsyncRequest?, responseObserver: StreamObserver<ODProto.Status>) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            ODComputingService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results-> ODUtils
+            ODLogger.logInfo("Received putJobAsync")
+            println("${req!!.remoteClient.address}")
+            ODComputingService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results -> ODUtils
                     .parseAsyncRequestRemoteClient(req)!!.putResults(req!!.job.id, results)}
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         // Just send to odService and return
         override fun putResultAsync(request: ODProto.JobResults?, responseObserver: StreamObserver<ODProto.Status>) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
+            ODLogger.logInfo("Received putResultAsync")
             if (resultCallbacks.containsKey(request!!.id)) {
                 resultCallbacks[request.id]!!(ODUtils.parseResults(request))
                 removeAsyncResultsCallback(request.id)
@@ -126,7 +128,7 @@ Boolean = false) {
 
         // Wait for an answer and send it back
         override fun putJobSync(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
+            ODLogger.logInfo("Received putJobSync")
             class ResultCallback(override var id: Long) : JobResultCallback {
                 override fun onNewResult(resultList: List<ODUtils.ODDetection?>) {
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
@@ -136,22 +138,25 @@ Boolean = false) {
         }
 
         override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            genericComplete(ODUtils.genModels(odLib.listModels()), responseObserver)
+            ODLogger.logInfo("Received listModels")
+            genericComplete(ODUtils.genModels(ODComputingService.listModels()), responseObserver)
         }
 
         override fun selectModel (request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            ODUtils.parseModel(request)
+            ODLogger.logInfo("Received selectModel")
+            ODComputingService.loadModel(ODUtils.parseModel(request))
+            genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         override fun configModel (request: ODProto.ModelConfig?, responseObserver: StreamObserver<ODProto.Status>) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
-            ODUtils.parseModelConfig(request)
+            ODLogger.logInfo("Received configModel")
+            val configRequest = ODUtils.parseModelConfig(request)
+            ODComputingService.configTFModel(configRequest)
+            genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         override fun ping (request: Empty, responseObserver: StreamObserver<Empty>) {
-            ODLogger.logInfo("Received ${object{}.javaClass.enclosingMethod.name}")
+            ODLogger.logInfo("Received ping")
             genericComplete(Empty.newBuilder().build(), responseObserver)
         }
     }

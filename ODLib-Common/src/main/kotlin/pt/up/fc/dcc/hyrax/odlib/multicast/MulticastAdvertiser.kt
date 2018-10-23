@@ -2,6 +2,8 @@ package pt.up.fc.dcc.hyrax.odlib.multicast
 
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import java.io.ByteArrayOutputStream
+import java.io.ObjectOutputStream
 import java.lang.Thread.sleep
 import java.net.*
 import kotlin.concurrent.thread
@@ -11,17 +13,26 @@ class MulticastAdvertiser {
         private var running = false
         private lateinit var mcSocket : MulticastSocket
         var multicastFrequency = 1000L
-        private var advertisingData = ByteArray(1)
         private val MESSAGE_LOCK = Object()
         private const val mcPort = 50000
         private const val mcIPStr = "224.0.0.1"
         private var mcIPAddress : InetAddress = Inet4Address.getByName(mcIPStr)
-        private var packet = DatagramPacket(advertisingData, 1, mcIPAddress, mcPort)
+        private var packet: DatagramPacket? = null
+        private var currentAdvertiseType = 0
 
-        fun setAdvertiseData(data: ByteArray) {
+        init { setAdvertiseData() }
+
+        fun setAdvertiseData(msgType: Int = 0, data: ByteArray = ByteArray(0)) {
             synchronized(MESSAGE_LOCK) {
-                packet = DatagramPacket(data, data.size, mcIPAddress, mcPort)
+                val baos = ByteArrayOutputStream()
+                ObjectOutputStream(baos).writeObject(AdvertisingMessage(msgType, data))
+                packet = DatagramPacket(baos.toByteArray(), baos.size(), mcIPAddress, mcPort)
+                currentAdvertiseType = msgType
             }
+        }
+
+        fun getCurrentAdvertiseType(): Int {
+            return currentAdvertiseType
         }
 
         fun advertise(networkInterface: NetworkInterface? = null) {
@@ -49,7 +60,7 @@ class MulticastAdvertiser {
                 mcSocket.loopbackMode = true
                 mcSocket.joinGroup(mcIPAddress)
                 do {
-                    ODLogger.logInfo("Sending Multicast packet")
+                    //ODLogger.logInfo("Sending Multicast packet")
                     synchronized(MESSAGE_LOCK) { mcSocket.send(packet) }
                     sleep(multicastFrequency)
                 } while (running)

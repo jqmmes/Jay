@@ -1,13 +1,16 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
+import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
+import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 object ClientManager {
 
-    private val me: RemoteODClient = RemoteODClient()
+    private var clientInfoCallback: ClientInfoInterface? = null
     private var cloud: CloudODClient = CloudODClient()
     private val remoteODClients = ConcurrentHashMap<Long, RemoteODClient>()
     private val NEW_CLIENT_LOCK = Object()
@@ -24,16 +27,23 @@ object ClientManager {
                 if (newClient!!.ping()) {
                     remoteODClients[clientId] = newClient!!
                     isNewClient = true
+                    StatusManager.setConnections(remoteODClients.minus(0).size)
                 } else {
                     newClient!!.destroy()
                 }
             }
         }
         if (sayHello && isNewClient) newClient!!.sayHello()
+        if (isNewClient && clientInfoCallback != null && newClient != null) { clientInfoCallback!!.onNewClient(newClient!!) }
+    }
+
+    fun setClientInfoCallback(clientInfoCallback: ClientInfoInterface) {
+        this.clientInfoCallback = clientInfoCallback
     }
 
     fun getLocalODClient(): RemoteODClient {
-        return me
+        if (!remoteODClients.contains(0)) addOrIgnoreClient("localhost", ODSettings.serverPort)
+        return remoteODClients[0]!!
     }
 
     fun changeCloudClient(cloudODClient: CloudODClient) {
@@ -45,10 +55,17 @@ object ClientManager {
     }
 
     fun getRemoteODClient(id: Long): RemoteODClient? {
-        return remoteODClients[id] as RemoteODClient
+        if (id == 0L) return getLocalODClient()
+        if (remoteODClients.contains(id)) return remoteODClients[id]
+        return null
     }
 
-    fun getRemoteODClients() : Enumeration<RemoteODClient>? {
+    fun getRemoteODClients(includeLocal: Boolean = false) : Enumeration<RemoteODClient>? {
+        if (!includeLocal && remoteODClients.contains(0)) return (remoteODClients.minus(0) as ConcurrentHashMap).elements()
         return remoteODClients.elements()
+    }
+
+    fun updateStatus(clientID: Long, deviceInformation: DeviceInformation) {
+        if(clientInfoCallback!=null) clientInfoCallback!!.onNewClientStatus(clientID, deviceInformation)
     }
 }

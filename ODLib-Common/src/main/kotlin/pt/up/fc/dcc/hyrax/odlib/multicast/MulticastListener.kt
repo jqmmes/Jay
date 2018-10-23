@@ -46,7 +46,7 @@ class MulticastListener {
                 do {
                     packet = DatagramPacket(ByteArray(1024), 1024)
 
-                    ODLogger.logInfo("Waiting for a  multicast message...")
+                    //ODLogger.logInfo("Waiting for a  multicast message...")
                     try {
                         listeningSocket.receive(packet)
                     }catch (e: SocketException) {
@@ -55,11 +55,11 @@ class MulticastListener {
                         continue
                     }
                     if (listeningSocket.`interface`.isLoopbackAddress || getHostAddressFromPacket(packet) != localIp) {
-                        ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
+                        //ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
                         DatagramProcessor.process(packet)
                     }
                     /*if (newClient(packet.address.hostAddress)) {
-                        callback.onMulticastReceived(packet) // getHostAddressFromPacket(packet)
+                        callback.onNewClient(packet) // getHostAddressFromPacket(packet)
                         ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
                     }*/
                 } while (running)

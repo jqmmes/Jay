@@ -54,7 +54,6 @@ class MainActivity : AppCompatActivity() {
             ODComputingService.setWorkingThreads(max(SystemStats.getCpuCount()/2, 1))
             odClient.setScheduler(getScheduler())
             odClient.startODService()
-            //JobManager.getScheduler().setJobCompleteCallback(Callback(0))
             JobManager.addResultsCallback(){id, results -> resultsCallback(id, results)}
 
         }
@@ -76,6 +75,7 @@ class MainActivity : AppCompatActivity() {
             "JustRemoteRoundRobinScheduler" -> JustRemoteRoundRobinScheduler()
             "JustRemoteRandomScheduler" -> JustRemoteRandomScheduler()
             "CloudScheduler" -> CloudScheduler()
+            "SmartScheduler" -> SmartScheduler()
             else -> LocalScheduler()
         }
     }
@@ -117,14 +117,7 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target : View) {
         thread (name="chooseImage CreateJob"){
-            println("making job")
-            /*val job = JobManager.createJob(
-                ImageUtils.getByteArrayFromBitmapFast(
-                        ImageUtils.getImageBitmapFromFile(File("/storage/emulated/0/img.png"))!!
-                )
-            )*/
             val job = JobManager.createJob(File("/storage/emulated/0/img.png").readBytes())
-            println("job made")
             JobManager.addJob(job)
         }
     }
@@ -147,9 +140,13 @@ class MainActivity : AppCompatActivity() {
         val modelSpinner = findViewById<Spinner>(R.id.select_model)
         val schedulerSpinner = findViewById<Spinner>(R.id.select_scheduler)
         val schedulerAdapter = arrayOf("LocalScheduler", "RemoteRandomScheduler", "RemoteRoundRobinScheduler",
-                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler", "CloudScheduler")
+                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler", "CloudScheduler", "SmartScheduler")
 
         schedulerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulerAdapter)
+
+        findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
+        findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = true
+        odClient.startGRPCServerService(odClient, useNettyServer = true)
 
         val arrayList1 = ArrayList<String>()
         for (model in odClient.listModels(false)) {

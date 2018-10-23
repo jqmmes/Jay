@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
+import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -9,10 +10,7 @@ import java.lang.NullPointerException
 
 class ODUtils {
 
-    @Suppress("unused")
-    class ODDetection(val score : Float, val class_: Int, val box : Box)
-
-    class Box
+    class ODDetection(val score : Float, val class_: Int)
 
     companion object {
         internal fun parseResults(results: ODProto.JobResults?): List<ODDetection?> {
@@ -20,7 +18,7 @@ class ODUtils {
                 val detections: Array<ODDetection?> = arrayOfNulls(results!!.detectionsCount)
                 var i = 0
                 for (detection in results.detectionsList) {
-                    detections[i++] = ODDetection(detection.score, detection.class_, Box())
+                    detections[i++] = ODDetection(detection.score, detection.class_)
                 }
                 return detections.asList()
             } catch (e: NullPointerException) {
@@ -50,7 +48,7 @@ class ODUtils {
             return ODProto.Status.newBuilder().setCode(status.code).build()
         }
 
-        private fun genModel(model : ODModel) : ODProto.Model {
+        internal fun genModel(model : ODModel) : ODProto.Model {
             return ODProto.Model.newBuilder()
                     .setId(model.modelId)
                     .setName(model.modelName)
@@ -74,16 +72,13 @@ class ODUtils {
         }
 
         internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
-            val clientId = if (NetworkUtils.getLocalIpV4() == asyncRequest!!.remoteClient.address) 0 else asyncRequest.remoteClient.id
+            val clientId = if (NetworkUtils.getLocalIpV4() == asyncRequest!!.remoteClient.address) 0 else ODUtils.genClientId(asyncRequest.remoteClient.address)
             return ClientManager.getRemoteODClient(clientId)
-            //return AbstractODLib.getClient(asyncRequest!!.remoteClient.address, asyncRequest.remoteClient.port)
         }
 
-        @Suppress("unused")
-        internal fun genModelConfig(model: ODModel, configs: Map<String, String>) : ODProto.ModelConfig {
+        internal fun genModelConfig(configs: Map<String, String>) : ODProto.ModelConfig {
             return ODProto.ModelConfig.newBuilder()
                     .putAllConfigs(configs)
-                    .setModel(genModel(model))
                     .build()
         }
 
@@ -105,14 +100,6 @@ class ODUtils {
             return 0
         }
 
-        internal fun genRemoteClient(remoteODClient: RemoteODClient) : ODProto.RemoteClient{
-            return ODProto.RemoteClient.newBuilder()
-                    .setAddress(remoteODClient.getAddress())
-                    .setPort(remoteODClient.getPort())
-                    .setId(remoteODClient.getId())
-                    .build()
-        }
-
         fun genAsyncRequest(id: Long, data: ByteArray): ODProto.AsyncRequest? {
             return  ODProto.AsyncRequest.newBuilder()
                     .setJob(genJobRequest(id, data))
@@ -123,7 +110,7 @@ class ODUtils {
         fun parseModels(result: ODProto.Models?): Set<ODModel> {
             val parsedResults : HashSet<ODModel> = HashSet()
             var model : ODModel
-            for (x in 0..result!!.modelsCount) {
+            for (x in 0 until result!!.modelsCount) {
                 model = parseModel(result.getModels(x))
                 parsedResults.add(ODModel(model.modelId, model.modelName))
             }
@@ -135,6 +122,31 @@ class ODUtils {
             for (iterator in listModels)
                 builder.addModels(genModel(iterator))
             return builder.build()
+        }
+
+        fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.DeviceStatus {
+            val deviceStatus = ODProto.DeviceStatus.newBuilder()
+            deviceStatus.battery = deviceInformation.battery
+            deviceStatus.batteryStatus = deviceInformation.batteryStatus.ordinal
+            deviceStatus.cpuCores = deviceInformation.computationThreads
+            deviceStatus.queueSize = deviceInformation.queueSize
+            deviceStatus.currentJobs = deviceInformation.runningJobs + deviceInformation.pendingJobs
+            deviceStatus.connections = deviceInformation.connections
+            return deviceStatus.build()
+        }
+
+
+        fun parseDeviceStatus(data: ByteArray): DeviceInformation {
+            val deviceStatus = ODProto.DeviceStatus.parseFrom(data)
+            val deviceInformation = DeviceInformation()
+            deviceInformation.battery = deviceStatus.battery
+            //deviceInformation.batteryStatus = BatteryStatus.(deviceStatus.batteryStatus)
+            deviceInformation.computationThreads = deviceStatus.cpuCores
+            deviceInformation.queueSize = deviceStatus.queueSize
+            deviceInformation.runningJobs = Math.max(deviceStatus.currentJobs-deviceStatus.cpuCores, 0)
+            deviceInformation.pendingJobs = Math.max(deviceStatus.currentJobs-deviceInformation.runningJobs, 0)
+            deviceInformation.connections= deviceStatus.connections
+            return deviceInformation
         }
     }
 }

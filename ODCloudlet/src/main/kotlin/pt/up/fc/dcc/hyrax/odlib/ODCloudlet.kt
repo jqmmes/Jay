@@ -17,7 +17,7 @@ class ODCloudlet {
             ODLogger.enableLogs(LoggingInterface(), LogLevel.Info)
             odClient.startODService()
             odClient.startGRPCServerService(odClient)
-            //odClient.setTFModel(odClient.listModels(false).toList()[0])
+            odClient.setTFModel(odClient.listModels(false).toList()[0])
             MulticastAdvertiser.advertise()
             MulticastListener.listen()
             Runtime.getRuntime().addShutdownHook(object : Thread() {

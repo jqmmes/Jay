@@ -49,7 +49,7 @@ open class RemoteODClient {
         return port
     }
 
-    private fun getModels(refresh: Boolean = true) : Set<ODModel> {
+    fun getModels(onlyLoaded: Boolean, refresh: Boolean = true) : Set<ODModel> {
         if (refresh) {
             val newModels = remoteClient.getModels()
             if (newModels.first) {
@@ -57,18 +57,26 @@ open class RemoteODClient {
                 models.addAll(newModels.second)
             }
         }
+        if (onlyLoaded) {
+            val result = HashSet<ODModel>()
+            for (model in models)
+                if (model.downloaded) result.add(model)
+            return result
+        }
         return models.toSet()
     }
 
     fun getModelCount(refresh : Boolean = false) : Int {
-        return getModels(refresh).count()
+        return getModels(false, refresh).count()
     }
 
     fun ping() : Boolean {
         return remoteClient.ping()
     }
 
-    fun configureModel() {}
+    fun configureModel(minimumScore: Float = 0.3f) {
+        remoteClient.configureModel(ODUtils.genModelConfig(hashMapOf("minScore" to minimumScore.toString())))
+    }
 
     open fun detectObjects(odJob: ODJob) : List<ODUtils.ODDetection?>{
         return ODUtils.parseResults(remoteClient.putJobSync(odJob.getId(), odJob.getData()))
@@ -92,5 +100,9 @@ open class RemoteODClient {
 
     fun getLatencyMovingAverage(): LatencyMovingAverage {
         return latencyMovingAverage
+    }
+
+    fun selectModel(model: ODModel) {
+        remoteClient.selectModel(model)
     }
 }

@@ -19,7 +19,6 @@ message Detection {
 }
 
 message Job {
-    //int32 id = 1;
     int64 id = 1;
     bytes data = 2;
 }
@@ -56,6 +55,17 @@ message ModelConfig {
 message AsyncRequest {
     Job job = 1;
     RemoteClient remoteClient = 2;
+}
+
+message DeviceStatus {
+    int32 battery = 1;
+    int32 batteryStatus = 2;
+
+    int32 cpuCores = 3;
+    int32 queueSize = 4;
+    int32 currentJobs = 5;
+
+    int32 connections = 6;
 }
 
 service ODCommunication {

@@ -10,7 +10,7 @@ import kotlin.math.max
 
 object ImageUtils {
 
-    fun getBitmapFromByteArray(imgData: ByteArray) : Bitmap{
+    fun getBitmapFromByteArray(imgData: ByteArray) : Bitmap {
         return BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
     }
 
@@ -21,25 +21,19 @@ object ImageUtils {
     }
 
     fun getByteArrayFromBitmap(imgBitmap: Bitmap): ByteArray {
-        println("getByteArrayFromBitmap #0")
         val stream = ByteArrayOutputStream()
         imgBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-        println("getByteArrayFromBitmap #1")
         return stream.toByteArray()
     }
 
     fun getByteArrayFromBitmapFast(imgBitmap: Bitmap) : ByteArray {
-        println("getByteArrayFromBitmapFast #0")
         val byteBuffer = ByteBuffer.allocate(imgBitmap.byteCount)
         imgBitmap.copyPixelsToBuffer(byteBuffer)
-        println("getByteArrayFromBitmapFast #1")
         return byteBuffer.array()
     }
 
     fun getImageBitmapFromFile(imgPath: File): Bitmap? {
-        println("getImageBitmapFromFile #0")
         val img =  BitmapFactory.decodeFile(imgPath.absolutePath)
-        println("getImageBitmapFromFile #1")
         return img
     }
 
@@ -54,6 +48,7 @@ object ImageUtils {
         val pixels = IntArray(scaledImage.width * scaledImage.height)
         scaledImage.getPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
         scaledData.setPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
+        image.recycle()
         scaledImage.recycle()
         ODLogger.logInfo("Resizing Image... done")
         return  scaledData

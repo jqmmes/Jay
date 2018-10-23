@@ -78,7 +78,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             if (result.confidence == null) continue
             if (result.confidence >= minimumConfidence) {
                 mappedRecognitions.add(ODUtils.ODDetection(score = result.confidence, class_ = result.title!!.toFloat
-                ().toInt(), box = ODUtils.Box()))
+                ().toInt()))
             }
         }
         ODLogger.logInfo("DroidTensorFlow detecting objects... Complete")

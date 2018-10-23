@@ -10,7 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.util.concurrent.*
 
 
-@Suppress("unused")
+//@Suppress("unused")
 class GRPCClient
     /** Construct client for accessing RouteGuide server using the existing channel.  */
 internal constructor(private var channel: ManagedChannel) {
@@ -18,19 +18,10 @@ internal constructor(private var channel: ManagedChannel) {
     private var futureStub: ODCommunicationGrpc.ODCommunicationFutureStub = ODCommunicationGrpc.newFutureStub(channel)
     private var host: String = ""
     private var port: Int = 0
-    private var futureExecutor: Executor? = null
     private val threadPool = Executors.newSingleThreadExecutor()!!
 
     init {
         blockingStub = ODCommunicationGrpc.newBlockingStub(channel)
-    }
-
-    private class FutureExecutor : Executor {
-        val threadPool = Executors.newSingleThreadExecutor()!!
-
-        override fun execute(command: Runnable?) {
-            threadPool.submit(command)
-        }
     }
 
     constructor(host: String, port: Int) : this(ManagedChannelBuilder.forAddress(host, port)
@@ -73,9 +64,8 @@ internal constructor(private var channel: ManagedChannel) {
         try {
             GRPCServer.addAsyncResultsCallback(id, callback)
             //blockingStub.withDeadlineAfter(ODSettings.grpcTimeout, TimeUnit.SECONDS).putJobAsync(ODUtils
-            blockingStub.putJobAsync(ODUtils
-                    .genAsyncRequest
-            (id, data))
+            val request = ODUtils.genAsyncRequest(id, data)
+            blockingStub.putJobAsync(request)
             ODLogger.logInfo("RPC putJobAsync , success")
             return true
         } catch (e: StatusRuntimeException) {
@@ -119,19 +109,6 @@ internal constructor(private var channel: ManagedChannel) {
         return null
     }
 
-    fun sayHello() : Boolean {
-        try {
-            //blockingStub.withDeadlineAfter(ODSettings.grpcTimeout, TimeUnit.SECONDS)
-            blockingStub.sayHello(ODUtils
-                    .genLocalClient())
-            ODLogger.logInfo("said Hello")
-        }catch (e: StatusRuntimeException){
-            ODLogger.logError("Say Hello failed " + e.status)
-            return false
-        }
-        return true
-    }
-
     fun getModels() : Pair<Boolean, Set<ODModel>> {
         val result : ODProto.Models
         try {
@@ -141,6 +118,25 @@ internal constructor(private var channel: ManagedChannel) {
             return Pair(false, emptySet())
         }
         return Pair(true, ODUtils.parseModels(result))
+    }
+
+    fun selectModel(model: ODModel) {
+        try {
+            blockingStub.selectModel(ODUtils.genModel(model))
+        } catch (e: StatusRuntimeException) {
+            ODLogger.logError("RPC Failed: " + e.status)
+        }
+    }
+
+    fun sayHello() : Boolean {
+        try {
+            blockingStub.sayHello(ODUtils.genLocalClient())
+            ODLogger.logInfo("said Hello")
+        }catch (e: StatusRuntimeException){
+            ODLogger.logError("Say Hello failed " + e.status)
+            return false
+        }
+        return true
     }
 
     fun ping() : Boolean {
@@ -154,5 +150,13 @@ internal constructor(private var channel: ManagedChannel) {
             ODLogger.logError("Error pinging " + e.status)
         }
         return false
+    }
+
+    fun configureModel(genModelConfig: ODProto.ModelConfig) {
+        try {
+            blockingStub.configModel(genModelConfig)
+        } catch (e: StatusRuntimeException) {
+            ODLogger.logError("RPC Failed: " + e.status)
+        }
     }
 }
