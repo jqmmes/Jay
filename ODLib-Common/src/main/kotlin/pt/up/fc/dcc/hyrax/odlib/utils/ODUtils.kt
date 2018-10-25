@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
+import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.lang.NullPointerException
@@ -52,11 +53,13 @@ class ODUtils {
             return ODProto.Model.newBuilder()
                     .setId(model.modelId)
                     .setName(model.modelName)
+                    .setUrl(model.remoteUrl)
+                    .setDownloaded(model.downloaded)
                     .build()
         }
 
         internal fun parseModel(model: ODProto.Model?) : ODModel {
-            return ODModel(model!!.id, model.name)
+            return ODModel(model!!.id, model.name, model.url, model.downloaded)
         }
 
         internal fun genJobRequest(imgId: Long, imgData : ByteArray) : ODProto.Job {
@@ -109,10 +112,8 @@ class ODUtils {
 
         fun parseModels(result: ODProto.Models?): Set<ODModel> {
             val parsedResults : HashSet<ODModel> = HashSet()
-            var model : ODModel
-            for (x in 0 until result!!.modelsCount) {
-                model = parseModel(result.getModels(x))
-                parsedResults.add(ODModel(model.modelId, model.modelName))
+            for (rawModel in 0 until result!!.modelsCount) {
+                parsedResults.add(parseModel(result.getModels(rawModel)))
             }
             return parsedResults.toSet()
         }
@@ -130,23 +131,27 @@ class ODUtils {
             deviceStatus.batteryStatus = deviceInformation.batteryStatus.ordinal
             deviceStatus.cpuCores = deviceInformation.computationThreads
             deviceStatus.queueSize = deviceInformation.queueSize
-            deviceStatus.currentJobs = deviceInformation.runningJobs + deviceInformation.pendingJobs
+            deviceStatus.runningJobs = deviceInformation.runningJobs
+            deviceStatus.pendingJobs = deviceInformation.pendingJobs
             deviceStatus.connections = deviceInformation.connections
             return deviceStatus.build()
         }
 
+        fun parseDeviceStatus(deviceStatus: ODProto.DeviceStatus) : DeviceInformation {
+            val deviceInformation = DeviceInformation()
+            deviceInformation.battery = deviceStatus.battery
+            deviceInformation.batteryStatus = BatteryStatus.values()[deviceStatus.batteryStatus]
+            deviceInformation.computationThreads = deviceStatus.cpuCores
+            deviceInformation.queueSize = deviceStatus.queueSize
+            deviceInformation.runningJobs = deviceStatus.runningJobs
+            deviceInformation.pendingJobs = deviceStatus.pendingJobs
+            deviceInformation.connections= deviceStatus.connections
+            return deviceInformation
+        }
 
         fun parseDeviceStatus(data: ByteArray): DeviceInformation {
             val deviceStatus = ODProto.DeviceStatus.parseFrom(data)
-            val deviceInformation = DeviceInformation()
-            deviceInformation.battery = deviceStatus.battery
-            //deviceInformation.batteryStatus = BatteryStatus.(deviceStatus.batteryStatus)
-            deviceInformation.computationThreads = deviceStatus.cpuCores
-            deviceInformation.queueSize = deviceStatus.queueSize
-            deviceInformation.runningJobs = Math.max(deviceStatus.currentJobs-deviceStatus.cpuCores, 0)
-            deviceInformation.pendingJobs = Math.max(deviceStatus.currentJobs-deviceInformation.runningJobs, 0)
-            deviceInformation.connections= deviceStatus.connections
-            return deviceInformation
+            return parseDeviceStatus(deviceStatus)
         }
     }
 }

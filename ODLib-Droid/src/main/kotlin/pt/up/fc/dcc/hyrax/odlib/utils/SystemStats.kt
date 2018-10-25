@@ -7,9 +7,12 @@ import java.io.RandomAccessFile
 import android.content.Context.BATTERY_SERVICE
 import android.os.Build
 import android.support.annotation.RequiresApi
+import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
+import kotlin.concurrent.thread
 
 
 object SystemStats {
+
     fun getCpuCount(): Int {
         return Runtime.getRuntime().availableProcessors()
     }

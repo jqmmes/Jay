@@ -31,6 +31,7 @@ object JobManager {
         running = false
         pendingJobs.clear()
         pendingJobs.offerFirst(ODJob(Long.MAX_VALUE,ByteArray(0)))
+        scheduler.destroy()
     }
 
     fun createJob(data: ByteArray) : ODJob {

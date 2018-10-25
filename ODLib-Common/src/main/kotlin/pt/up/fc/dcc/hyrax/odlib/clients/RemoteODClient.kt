@@ -14,8 +14,7 @@ open class RemoteODClient {
     private var models : MutableSet<ODModel> = HashSet()
     private lateinit var remoteClient: GRPCClient
     private var id : Long = 0
-    private val deviceInformation = DeviceInformation()
-    private var latencyMovingAverage: LatencyMovingAverage = LatencyMovingAverage()
+    private var deviceInformation = DeviceInformation()
 
     constructor() {
         this.address = "localhost"
@@ -35,6 +34,10 @@ open class RemoteODClient {
 
     fun getDeviceInformation() : DeviceInformation {
         return deviceInformation
+    }
+
+    fun setDeviceInformation(information: DeviceInformation) {
+        this.deviceInformation = information
     }
 
     fun destroy() {
@@ -98,11 +101,11 @@ open class RemoteODClient {
         return id
     }
 
-    fun getLatencyMovingAverage(): LatencyMovingAverage {
-        return latencyMovingAverage
-    }
-
     fun selectModel(model: ODModel) {
         remoteClient.selectModel(model)
+    }
+
+    fun getDeviceStatus() : DeviceInformation {
+        return remoteClient.getStatus() ?: DeviceInformation()
     }
 }

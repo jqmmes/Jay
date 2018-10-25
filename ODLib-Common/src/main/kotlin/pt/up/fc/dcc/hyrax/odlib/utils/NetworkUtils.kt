@@ -12,7 +12,7 @@ class NetworkUtils {
                 if (!netInt.isLoopback && !netInt.isPointToPoint && netInt.isUp && netInt.supportsMulticast()) {
                     for (address in netInt.inetAddresses)
                         if (address is T) {
-                            ODLogger.logInfo("Available Multicast interface: ${netInt.name}")
+                            //ODLogger.logInfo("Available Multicast interface: ${netInt.name}")
                             interfaceList.add(netInt)
                         }
                 }

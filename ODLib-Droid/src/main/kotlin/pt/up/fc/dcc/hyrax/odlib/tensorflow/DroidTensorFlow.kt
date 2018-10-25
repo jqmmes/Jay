@@ -100,6 +100,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     override fun loadModel(model: ODModel) {
         thread(name="DroidTensorflow loadModel") {
             var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
+            println("${model.modelName}\t${model.remoteUrl}")
             if (!checkDownloadedModel(model.modelName)) {
                 val tmpFile = downloadModel(model)
                 if (tmpFile != null) {

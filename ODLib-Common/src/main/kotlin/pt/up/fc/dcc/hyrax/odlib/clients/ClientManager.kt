@@ -56,8 +56,11 @@ object ClientManager {
 
     fun getRemoteODClient(id: Long): RemoteODClient? {
         if (id == 0L) return getLocalODClient()
-        if (remoteODClients.contains(id)) return remoteODClients[id]
-        return null
+        var client: RemoteODClient? = null
+        synchronized(NEW_CLIENT_LOCK) {
+            client = remoteODClients[id]
+        }
+        return client
     }
 
     fun getRemoteODClients(includeLocal: Boolean = false) : Enumeration<RemoteODClient>? {

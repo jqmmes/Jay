@@ -4,6 +4,7 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
+import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.*
@@ -142,8 +143,7 @@ internal constructor(private var channel: ManagedChannel) {
     fun ping() : Boolean {
         try {
             //.withDeadlineAfter(ODSettings.grpcShortTimeout, TimeUnit.MILLISECONDS)
-            blockingStub.ping(Empty.newBuilder()
-                    .build())
+            blockingStub.ping(Empty.newBuilder().build())
             ODLogger.logInfo("pinged")
             return true
         } catch (e: StatusRuntimeException){
@@ -158,5 +158,15 @@ internal constructor(private var channel: ManagedChannel) {
         } catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC Failed: " + e.status)
         }
+    }
+
+    fun getStatus() : DeviceInformation? {
+        try {
+            val result = blockingStub.getStatus(Empty.newBuilder().build())
+            return ODUtils.parseDeviceStatus(result)
+        } catch (e: StatusRuntimeException) {
+            ODLogger.logError("RªC Failed: " + e.status)
+        }
+        return null
     }
 }

@@ -23,7 +23,7 @@ class Logger(private val activity : Activity, private val loggingConsole : TextV
                     cal.get(Calendar.SECOND),
                     cal.get(Calendar.MILLISECOND),
                     message,
-                    loggingConsole.text
+                    loggingConsole.text.substring(0, Math.min(loggingConsole.text.length,2500))
                 )
         }
     }

@@ -5,7 +5,7 @@ import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
-class CloudODClient(address: String = ODSettings.cloudIp, port: Int = ODSettings.serverPort) : RemoteODClient() {
+class CloudODClient(address: String = ODSettings.cloudIp, port: Int = ODSettings.serverPort) : RemoteODClient(address) {
     private var remoteClient: GRPCClient = GRPCClient(address, port)
 
     override fun detectObjects(odJob: ODJob): List<ODUtils.ODDetection?> {

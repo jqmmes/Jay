@@ -16,7 +16,7 @@ import kotlin.collections.HashMap
 @Suppress("unused")
 class RemoteRoundRobinScheduler : Scheduler() {
     override fun destroy() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        jobBookkeeping.clear()
     }
 
     private var nextRemote: Int = 0

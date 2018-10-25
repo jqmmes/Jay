@@ -1,19 +1,14 @@
 package pt.up.fc.dcc.hyrax.odlib.status
 
 import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
+import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
-import pt.up.fc.dcc.hyrax.odlib.status.battery.BatteryDetails
 import pt.up.fc.dcc.hyrax.odlib.status.cpu.CpuDetails
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
 object StatusManager {
     private val deviceInformation = DeviceInformation()
-    private var batteryDetails: BatteryDetails = BatteryDetails()
     var cpuDetails = CpuDetails
-
-    fun setCustomBatteryDetails(customBatteryDetails: BatteryDetails) {
-        this.batteryDetails = customBatteryDetails
-    }
 
     fun advertiseStatus() {
         MulticastAdvertiser.setAdvertiseData(1, ODUtils.genDeviceStatus(deviceInformation).toByteArray())
@@ -38,7 +33,7 @@ object StatusManager {
     }
 
     fun setIdleJobs(idle: Int) {
-        deviceInformation.pendingJobs
+        deviceInformation.pendingJobs = idle
         updateAnnounceStatus()
     }
 
@@ -49,6 +44,16 @@ object StatusManager {
 
     fun setConnections(connections: Int) {
         deviceInformation.connections = connections
+        updateAnnounceStatus()
+    }
+
+    fun setBatteryPercentage(percentage: Int) {
+        deviceInformation.battery = percentage
+        updateAnnounceStatus()
+    }
+
+    fun setBatteryStatus(status: BatteryStatus) {
+        deviceInformation.batteryStatus = status
         updateAnnounceStatus()
     }
 }

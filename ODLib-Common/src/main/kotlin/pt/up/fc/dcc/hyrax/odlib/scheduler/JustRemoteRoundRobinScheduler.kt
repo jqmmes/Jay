@@ -15,7 +15,7 @@ import kotlin.collections.HashMap
 @Suppress("unused")
 class JustRemoteRoundRobinScheduler : Scheduler() {
     override fun destroy() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        jobBookkeeping.clear()
     }
 
     private var nextRemote = 0
@@ -41,10 +41,10 @@ class JustRemoteRoundRobinScheduler : Scheduler() {
             val nextClient = getNextRemoteRoundRobin()
             if (nextClient != null) {
                 jobBookkeeping[job.getId()] = nextClient.getId()
-                val start = System.currentTimeMillis()
+                //val start = System.currentTimeMillis()
                 nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
-                nextClient.getLatencyMovingAverage().addLatency(System.currentTimeMillis()-start)
-                ODLogger.logInfo(nextClient.getLatencyMovingAverage().getAvgLatency().toString())
+                //nextClient.getLatencyMovingAverage().addLatency(System.currentTimeMillis()-start)
+                //ODLogger.logInfo(nextClient.getLatencyMovingAverage().getAvgLatency().toString())
         }
     }
 }

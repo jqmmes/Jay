@@ -8,7 +8,7 @@ import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 
 class LocalScheduler : Scheduler() {
     override fun destroy() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        executingJobs.clear()
     }
 
     private val executingJobs = HashMap<Long, ODJob>()

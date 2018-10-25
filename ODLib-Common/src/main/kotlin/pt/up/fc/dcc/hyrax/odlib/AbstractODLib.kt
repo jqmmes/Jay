@@ -43,13 +43,11 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
     }
 
     fun startODService() {
-        JobManager.startService(scheduler)
-        ODComputingService.startService(localDetector)
+        ODComputingService.startService(localDetector, scheduler)
     }
 
     fun stopODService() {
         ODComputingService.stop()
-        JobManager.stopService()
     }
 
     fun startGRPCServer(odLib: AbstractODLib, port : Int) {

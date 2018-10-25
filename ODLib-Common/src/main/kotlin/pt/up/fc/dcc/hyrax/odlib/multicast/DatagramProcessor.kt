@@ -12,7 +12,6 @@ object DatagramProcessor {
     fun process(packet: DatagramPacket) {
         val ois = ObjectInputStream(ByteArrayInputStream(packet.data))
         val message = ois.readObject() as AdvertisingMessage
-        println(message.msgType)
         when (message.msgType) {
             0 -> ClientManager.addOrIgnoreClient(NetworkUtils.getHostAddressFromPacket(packet), ODSettings.serverPort,true)
             1 -> {

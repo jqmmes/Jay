@@ -39,6 +39,8 @@ message Models {
 message Model {
     int32 id = 1;
     string name = 2;
+    string url = 3;
+    bool downloaded = 4;
 }
 
 message RemoteClient {
@@ -63,9 +65,10 @@ message DeviceStatus {
 
     int32 cpuCores = 3;
     int32 queueSize = 4;
-    int32 currentJobs = 5;
+    int32 runningJobs = 5;
+    int32 pendingJobs = 6;
 
-    int32 connections = 6;
+    int32 connections = 7;
 }
 
 service ODCommunication {
@@ -77,4 +80,5 @@ service ODCommunication {
     rpc configModel (ModelConfig) returns (Status) {};
     rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
     rpc sayHello (RemoteClient) returns (Status) {};
+    rpc getStatus (google.protobuf.Empty) returns (DeviceStatus);
 }

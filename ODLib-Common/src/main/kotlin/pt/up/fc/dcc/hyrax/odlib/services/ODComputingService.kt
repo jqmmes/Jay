@@ -2,6 +2,8 @@ package pt.up.fc.dcc.hyrax.odlib.services
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
+import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -66,7 +68,8 @@ object ODComputingService {
         return ReturnStatus.Waiting
     }
 
-    fun startService(localDetect: DetectObjects) {
+    fun startService(localDetect: DetectObjects, scheduler: Scheduler) {
+        JobManager.startService(scheduler)
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)
         ODComputingService.localDetect = localDetect
@@ -89,6 +92,7 @@ object ODComputingService {
     }
 
     fun stop() {
+        JobManager.stopService()
         running = false
         waitingResultsMap.clear()
         jobQueue.clear()
