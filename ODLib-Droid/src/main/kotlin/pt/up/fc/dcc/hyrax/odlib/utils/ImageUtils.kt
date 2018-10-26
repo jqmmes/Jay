@@ -33,8 +33,7 @@ object ImageUtils {
     }
 
     fun getImageBitmapFromFile(imgPath: File): Bitmap? {
-        val img =  BitmapFactory.decodeFile(imgPath.absolutePath)
-        return img
+        return BitmapFactory.decodeFile(imgPath.absolutePath)
     }
 
     fun scaleImage(image : Bitmap, maxSize : Int) : Bitmap {

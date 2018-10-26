@@ -4,12 +4,11 @@ import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
-import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.status.network.rtt.RTTClient
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.lang.Thread.sleep
@@ -17,12 +16,14 @@ import java.util.*
 import kotlin.collections.HashMap
 import kotlin.concurrent.thread
 
+
 @Suppress("unused")
 class SmartScheduler : Scheduler(), ClientInfoInterface {
     private val clientList: MutableList<Pair<Float, Long>> = mutableListOf()
     private val jobBooKeeping: HashMap<Long, List<Long>> = HashMap()
     private var running: Boolean = false
     private val sleepDuration: Long = 1000
+    @Suppress("PrivatePropertyName")
     private val SORT_LOCK = Object()
 
     init {

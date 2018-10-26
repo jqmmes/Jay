@@ -1,13 +1,10 @@
 package pt.up.fc.dcc.hyrax.odlib.scheduler
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
-import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.util.*
 import kotlin.collections.HashMap
@@ -33,7 +30,7 @@ class RemoteRoundRobinScheduler : Scheduler() {
         return clients[nextRemote++] as RemoteODClient
     }
 
-    override fun jobCompleted(id: Long, results: List<ODUtils.ODDetection?>) {
+    override fun jobCompleted(id: Long, results: List<ODDetection?>) {
         super.jobCompleted(id, results)
         jobBookkeeping.remove(id)
     }

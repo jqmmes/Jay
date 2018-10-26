@@ -1,10 +1,10 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
+import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
+import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
-import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
-import pt.up.fc.dcc.hyrax.odlib.status.network.LatencyMovingAverage
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 
 @Suppress("unused")
@@ -81,15 +81,15 @@ open class RemoteODClient {
         remoteClient.configureModel(ODUtils.genModelConfig(hashMapOf("minScore" to minimumScore.toString())))
     }
 
-    open fun detectObjects(odJob: ODJob) : List<ODUtils.ODDetection?>{
+    open fun detectObjects(odJob: ODJob) : List<ODDetection?>{
         return ODUtils.parseResults(remoteClient.putJobSync(odJob.getId(), odJob.getData()))
     }
 
-    fun putResults(id: Long, results : List<ODUtils.ODDetection?>) {
+    fun putResults(id: Long, results : List<ODDetection?>) {
         remoteClient.putResults(id, results)
     }
 
-    open fun asyncDetectObjects(odJob: ODJob, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+    open fun asyncDetectObjects(odJob: ODJob, callback: (List<ODDetection?>) -> Unit) {
         remoteClient.putJobAsync(odJob.getId(), odJob.getData(), callback)
     }
 

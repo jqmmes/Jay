@@ -64,10 +64,10 @@ class TensorFlowMultiBoxDetector private constructor() : Classifier {
         // Try to be intelligent about opening from assets or sdcard depending on prefix.
         val assetPrefix = "file:///android_asset/"
         val `is`: InputStream
-        if (locationFilename.startsWith(assetPrefix)) {
-            `is` = assetManager.open(locationFilename.split(assetPrefix.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1])
+        `is` = if (locationFilename.startsWith(assetPrefix)) {
+            assetManager.open(locationFilename.split(assetPrefix.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1])
         } else {
-            `is` = FileInputStream(locationFilename)
+            FileInputStream(locationFilename)
         }
 
         // Read values. Number of values per line doesn't matter, as long as they are separated

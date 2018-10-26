@@ -11,7 +11,6 @@ import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.util.concurrent.*
 
 
-//@Suppress("unused")
 class GRPCClient
     /** Construct client for accessing RouteGuide server using the existing channel.  */
 internal constructor(private var channel: ManagedChannel) {
@@ -50,7 +49,7 @@ internal constructor(private var channel: ManagedChannel) {
         channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
     }
 
-    fun putResults(id: Long, results : List<ODUtils.ODDetection?>) : Boolean {
+    fun putResults(id: Long, results : List<ODDetection?>) : Boolean {
         try {
             blockingStub.putResultAsync(ODUtils.genResults(id, results))
         } catch (e: StatusRuntimeException) {
@@ -61,7 +60,7 @@ internal constructor(private var channel: ManagedChannel) {
         return true
     }
 
-    fun putJobAsync(id: Long, data: ByteArray, callback: (List<ODUtils.ODDetection?>) -> Unit) : Boolean {
+    fun putJobAsync(id: Long, data: ByteArray, callback: (List<ODDetection?>) -> Unit) : Boolean {
         try {
             GRPCServer.addAsyncResultsCallback(id, callback)
             //blockingStub.withDeadlineAfter(ODSettings.grpcTimeout, TimeUnit.SECONDS).putJobAsync(ODUtils
@@ -76,7 +75,7 @@ internal constructor(private var channel: ManagedChannel) {
         return false
     }
 
-    fun putJobCloudSync(id: Long, data: ByteArray) : Pair<Boolean, List<ODUtils.ODDetection?>> {
+    fun putJobCloudSync(id: Long, data: ByteArray) : Pair<Boolean, List<ODDetection?>> {
         try {
             val futureJob = futureStub.putJobSync(ODUtils.genJobRequest(id, data))
             ODLogger.logInfo("RPC putJobCloudSync success")
@@ -87,7 +86,7 @@ internal constructor(private var channel: ManagedChannel) {
         return Pair(false, emptyList())
     }
 
-    fun putJobCloudAsync(id: Long, data: ByteArray, callback: (List<ODUtils.ODDetection?>) -> Unit) : Boolean {
+    fun putJobCloudAsync(id: Long, data: ByteArray, callback: (List<ODDetection?>) -> Unit) : Boolean {
         try {
             val futureJob = futureStub.putJobSync(ODUtils.genJobRequest(id, data))
             futureJob.addListener({ callback(ODUtils.parseResults(futureJob.get())) }, { R -> threadPool.submit(R) })

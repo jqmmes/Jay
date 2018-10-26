@@ -8,6 +8,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+@Suppress("unused")
 object ClientManager {
 
     private var clientInfoCallback: ClientInfoInterface? = null

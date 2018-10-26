@@ -13,11 +13,9 @@ import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.app.Activity
-import android.graphics.BitmapFactory
 import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
+import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.scheduler.*
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
@@ -41,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         if (start) {
             findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
             toggleService(true)
-            odClient.startGRPCServerService(odClient, useNettyServer = true)
+            odClient.startGRPCServerService(useNettyServer = true)
         }
         else odClient.stopGRPCServer()
     }
@@ -54,13 +52,13 @@ class MainActivity : AppCompatActivity() {
             ODComputingService.setWorkingThreads(max(SystemStats.getCpuCount()/2, 1))
             odClient.setScheduler(getScheduler())
             odClient.startODService()
-            JobManager.addResultsCallback(){id, results -> resultsCallback(id, results)}
+            Scheduler.addResultsCallback { id, results -> resultsCallback(id, results)}
 
         }
         else odClient.stopODService()
     }
 
-    private fun resultsCallback(id: Long, results: List<ODUtils.ODDetection?>) {
+    private fun resultsCallback(id: Long, results: List<ODDetection?>) {
         ODLogger.logInfo("Received results for Job $id")
         for (result in results) {
             if (result != null) ODLogger.logInfo("\t\t${COCODataLabels.label(result.class_)}\t${result.score*100.0}%")
@@ -117,8 +115,8 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target : View) {
         thread (name="chooseImage CreateJob"){
-            val job = JobManager.createJob(File("/storage/emulated/0/img.png").readBytes())
-            JobManager.addJob(job)
+            val job = Scheduler.createJob(File("/storage/emulated/0/img.png").readBytes())
+            Scheduler.addJob(job)
         }
     }
 
@@ -146,7 +144,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
         findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = true
-        odClient.startGRPCServerService(odClient, useNettyServer = true)
+        odClient.startGRPCServerService(useNettyServer = true)
 
         val arrayList1 = ArrayList<String>()
         for (model in odClient.listModels(false)) {

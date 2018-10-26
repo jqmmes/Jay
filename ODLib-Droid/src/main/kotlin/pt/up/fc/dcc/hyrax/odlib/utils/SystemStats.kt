@@ -1,14 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.utils
 
 import android.content.Context
-import android.os.BatteryManager
-import java.io.IOException
-import java.io.RandomAccessFile
 import android.content.Context.BATTERY_SERVICE
-import android.os.Build
-import android.support.annotation.RequiresApi
-import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
-import kotlin.concurrent.thread
+import android.os.BatteryManager
 
 
 object SystemStats {
@@ -30,7 +24,7 @@ object SystemStats {
         }
     }*/
 
-    fun getBatteryCharging(context: Context): Boolean {
+    fun getBatteryCharging(@Suppress("UNUSED_PARAMETER") context: Context): Boolean {
         /*val bm = context.getSystemService(BATTERY_SERVICE) as BatteryManager?
         ODLogger.logInfo(bm!!.getIntProperty(BatteryManager.BATTERY_STATUS_CHARGING).toString())
         ODLogger.logInfo(bm!!.getIntProperty(BatteryManager.BATTERY_PLUGGED_USB).toString())

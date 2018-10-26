@@ -6,16 +6,15 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
-import pt.up.fc.dcc.hyrax.odlib.*
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
-import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
+import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
-import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
@@ -26,8 +25,7 @@ import java.io.IOException
  *
  * Note: this file was automatically converted from Java
  */
-internal class GRPCServer(var odLib: AbstractODLib, private val port: Int = ODSettings.serverPort, private val useNettyServer :
-Boolean = false) {
+internal class GRPCServer(private val port: Int = ODSettings.serverPort, private val useNettyServer : Boolean = false) {
 
     private var server: Server? = null
 
@@ -71,9 +69,9 @@ Boolean = false) {
     }
 
     companion object {
-        private val resultCallbacks = HashMap<Long, (List<ODUtils.ODDetection?>) -> Unit>()
+        private val resultCallbacks = HashMap<Long, (List<ODDetection?>) -> Unit>()
 
-        internal fun addAsyncResultsCallback(id: Long, callback: (List<ODUtils.ODDetection?>) -> Unit) {
+        internal fun addAsyncResultsCallback(id: Long, callback: (List<ODDetection?>) -> Unit) {
             resultCallbacks[id] = callback
         }
 
@@ -81,8 +79,8 @@ Boolean = false) {
             if (resultCallbacks.containsKey(id)) resultCallbacks.remove(id)
         }
 
-        fun startServer(odLib: AbstractODLib, port : Int) : GRPCServer {
-            val server = GRPCServer(odLib, port)
+        fun startServer(port : Int) : GRPCServer {
+            val server = GRPCServer(port)
             server.start()
             server.blockUntilShutdown()
             return server
@@ -121,7 +119,7 @@ Boolean = false) {
                 resultCallbacks[request.id]!!(ODUtils.parseResults(request))
                 removeAsyncResultsCallback(request.id)
             } else {
-                JobManager.addResults(request.id, ODUtils.parseResults(request))
+                Scheduler.addResults(request.id, ODUtils.parseResults(request))
             }
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
@@ -130,7 +128,7 @@ Boolean = false) {
         override fun putJobSync(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>) {
             //ODLogger.logInfo("Received putJobSync")
             class ResultCallback(override var id: Long) : JobResultCallback {
-                override fun onNewResult(resultList: List<ODUtils.ODDetection?>) {
+                override fun onNewResult(resultList: List<ODDetection?>) {
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }
             }

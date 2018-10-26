@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.status.network
+package pt.up.fc.dcc.hyrax.odlib.utils
 
 import org.apache.commons.collections4.queue.CircularFifoQueue
 

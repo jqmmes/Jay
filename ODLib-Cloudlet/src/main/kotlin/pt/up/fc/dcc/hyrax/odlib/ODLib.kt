@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.CloudletTensorFlow
 
 

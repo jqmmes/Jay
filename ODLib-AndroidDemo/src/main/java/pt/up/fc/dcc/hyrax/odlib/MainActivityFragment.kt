@@ -1,7 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.support.v4.app.Fragment
 import android.os.Bundle
@@ -11,12 +10,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.TextView
-import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
-import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
+import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
 /**
  * A placeholder fragment containing a simple view.
@@ -35,8 +31,8 @@ class MainActivityFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == AppCompatActivity.RESULT_OK) {
             val imageBitmap = data.extras!!.get("data") as Bitmap
-            val newJob = JobManager.createJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
-            JobManager.addJob(newJob)
+            val newJob = Scheduler.createJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
+            Scheduler.addJob(newJob)
         }
     }
 

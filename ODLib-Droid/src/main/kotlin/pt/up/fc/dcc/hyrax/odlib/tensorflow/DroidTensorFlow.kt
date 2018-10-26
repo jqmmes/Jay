@@ -6,11 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.io.*
 import java.util.zip.GZIPInputStream
 import java.net.URL
@@ -61,23 +58,23 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
         return ImageUtils.getByteArrayFromImage(imgPath)
     }
 
-    override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
+    override fun detectObjects(imgData: ByteArray) : List<ODDetection> {
         return detectObjects(ImageUtils.getBitmapFromByteArray(imgData))
     }
 
-    private fun detectObjects(imgData: Bitmap) : List<ODUtils.ODDetection> {
+    private fun detectObjects(imgData: Bitmap) : List<ODDetection> {
         if (localDetector == null) {
             ODLogger.logWarn("No model has been loaded yet")
             return emptyList()
         }
         ODLogger.logInfo("DroidTensorFlow detecting objects...")
         val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(ImageUtils.scaleImage(imgData, tfOdApiInputSize))
-        val mappedRecognitions : MutableList<ODUtils.ODDetection> = ArrayList()
+        val mappedRecognitions : MutableList<ODDetection> = ArrayList()
         for (result : Classifier.Recognition? in results) {
             if (result == null) continue
             if (result.confidence == null) continue
             if (result.confidence >= minimumConfidence) {
-                mappedRecognitions.add(ODUtils.ODDetection(score = result.confidence, class_ = result.title!!.toFloat
+                mappedRecognitions.add(ODDetection(score = result.confidence, class_ = result.title!!.toFloat
                 ().toInt()))
             }
         }
@@ -124,7 +121,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
         minimumConfidence = score
     }
 
-    override fun detectObjects(imgPath: String) : List<ODUtils.ODDetection> {
+    override fun detectObjects(imgPath: String) : List<ODDetection> {
         return detectObjects(BitmapFactory.decodeFile(imgPath))
     }
 
@@ -149,7 +146,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             val connection : URLConnection = url.openConnection()
             connection.connect()
 
-            // this will be useful so that you can show a tipical 0-100%
+            // this will be useful so that you can show a typical 0-100%
             // progress bar
             val lengthOfFile = connection.contentLength
 
@@ -171,7 +168,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 total += count.toLong()
                 // publishing the progress....
                 // After this onProgressUpdate will be called
-                //publishProgress("" + (total * 100 / lenghtOfFile).toInt())
+                //publishProgress("" + (total * 100 / lengthOfFile).toInt())
 
                 // writing data to file
                 output.write(data, 0, count)

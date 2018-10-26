@@ -5,10 +5,10 @@ import org.kamranzafar.jtar.TarInputStream
 import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
+import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
 import java.io.*
@@ -18,7 +18,6 @@ import java.nio.channels.Channels
 import java.util.*
 import java.util.zip.GZIPInputStream
 import javax.imageio.ImageIO
-
 
 
 /**
@@ -50,21 +49,21 @@ internal class CloudletTensorFlow : DetectObjects {
         if (score in 0.0f..1.0f) minimumScore = score
     }
 
-    override fun detectObjects(imgData: ByteArray) : List<ODUtils.ODDetection> {
+    override fun detectObjects(imgData: ByteArray) : List<ODDetection> {
         if (!::loadedModel.isInitialized or modelClosed) {
             throw (Exception("\"Model not loaded.\""))
         }
         return processOutputs(loadedModel, makeImageTensor(imgData))
     }
 
-    override fun detectObjects(imgPath: String) : List<ODUtils.ODDetection> {
+    override fun detectObjects(imgPath: String) : List<ODDetection> {
         if (!::loadedModel.isInitialized or modelClosed) {
             throw (Exception("\"Model not loaded.\""))
         }
         return processOutputs(loadedModel, makeImageTensor(imgPath))
     }
 
-    private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>) : List<ODUtils.ODDetection>  {
+    private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>) : List<ODDetection>  {
         var outputs: List<Tensor<*>>? = null
         tensor.use { input ->
             outputs = model
@@ -77,7 +76,7 @@ internal class CloudletTensorFlow : DetectObjects {
                     .run()
         }
 
-        val returnList : MutableList<ODUtils.ODDetection> = LinkedList()
+        val returnList : MutableList<ODDetection> = LinkedList()
 
         outputs!![0].expect(Float::class.javaObjectType).use { scoresT ->
             outputs!![1].expect(Float::class.javaObjectType).use { classesT ->
@@ -95,7 +94,7 @@ internal class CloudletTensorFlow : DetectObjects {
                         if (scores[i] < minimumScore) {
                             continue
                         }
-                        returnList.add(ODUtils.ODDetection(scores[i], classes[i].toInt(), ODUtils.Box()))
+                        returnList.add(ODDetection(scores[i], classes[i].toInt()))
                     }
                 }
             }

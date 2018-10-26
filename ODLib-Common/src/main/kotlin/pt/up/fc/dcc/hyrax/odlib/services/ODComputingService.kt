@@ -1,14 +1,13 @@
 package pt.up.fc.dcc.hyrax.odlib.services
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
-import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
-import pt.up.fc.dcc.hyrax.odlib.jobManager.ODJob
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
+import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -21,7 +20,7 @@ object ODComputingService {
     private var running = false
     private var workingThreads = 1
     private var executor : ExecutorService = Executors.newSingleThreadExecutor()
-    private var waitingResultsMap : HashMap<Int, (List<ODUtils.ODDetection?>) -> Unit> = HashMap()
+    private var waitingResultsMap : HashMap<Int, (List<ODDetection?>) -> Unit> = HashMap()
     private var runningJobs : AtomicInteger = AtomicInteger(0)
     private var totalJobs : AtomicInteger = AtomicInteger(0)
     private var queueSize : Int = Int.MAX_VALUE
@@ -45,7 +44,7 @@ object ODComputingService {
         return running
     }
 
-    internal fun putJobAndWait(odJob: ODJob) : List<ODUtils.ODDetection?> {
+    internal fun putJobAndWait(odJob: ODJob) : List<ODDetection?> {
         ODLogger.logInfo("ODComputingService put job and wait..")
         if (!running) throw Exception("ODComputingService not running")
         val future = executor.submit(CallableJobObjects(localDetect, odJob))
@@ -56,7 +55,7 @@ object ODComputingService {
         return future.get() //wait termination
     }
 
-    internal fun putJob(imgData: ByteArray, callback: ((List<ODUtils.ODDetection>) -> Unit)?) : ReturnStatus {
+    internal fun putJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?) : ReturnStatus {
         ODLogger.logInfo("ODComputingService put job into Job Queue...")
         if (!running) throw Exception("ODComputingService not running")
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback))
@@ -69,7 +68,7 @@ object ODComputingService {
     }
 
     fun startService(localDetect: DetectObjects, scheduler: Scheduler) {
-        JobManager.startService(scheduler)
+        Scheduler.startService(scheduler)
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)
         ODComputingService.localDetect = localDetect
@@ -92,7 +91,7 @@ object ODComputingService {
     }
 
     fun stop() {
-        JobManager.stopService()
+        Scheduler.stopService()
         running = false
         waitingResultsMap.clear()
         jobQueue.clear()
@@ -134,13 +133,13 @@ object ODComputingService {
         return localDetect.models.toSet()
     }
 
-    private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODUtils.ODDetection>> {
-        override fun call(): List<ODUtils.ODDetection> {
+    private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODDetection>> {
+        override fun call(): List<ODDetection> {
             synchronized(JOBS_LOCK) {
                 runningJobs.incrementAndGet()
                 StatusManager.setRunningJobs(runningJobs.get())
             }
-            var result = emptyList<ODUtils.ODDetection>()
+            var result = emptyList<ODDetection>()
             try {
                 result = localDetect.detectObjects(odJob.getData())
             } catch (e: Exception) {
@@ -156,7 +155,7 @@ object ODComputingService {
         }
     }
 
-    private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: ((List<ODUtils.ODDetection>) -> Unit)?) : Runnable {
+    private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: ((List<ODDetection>) -> Unit)?) : Runnable {
         override fun run() {
             ODLogger.logInfo("ODComputingService executing a job")
             synchronized(JOBS_LOCK) {

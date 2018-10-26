@@ -3,8 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.interfaces.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.jobManager.JobManager
+import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.scheduler.LocalScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -14,12 +13,8 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 abstract class AbstractODLib (private val localDetector : DetectObjects) {
 
     private var grpcServer : GRPCServer? = null
-    private var jobManager : JobManager? = null
+    private var jobManager : Scheduler? = null
     private var scheduler : Scheduler = LocalScheduler()
-
-    fun getJobManager() : JobManager? {
-        return jobManager
-    }
 
     fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
         return ClientManager.getLocalODClient().getModels(onlyLoaded, true)
@@ -50,19 +45,19 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
         ODComputingService.stop()
     }
 
-    fun startGRPCServer(odLib: AbstractODLib, port : Int) {
+    fun startGRPCServer(port : Int) {
         ODSettings.serverPort = port
         if (grpcServer == null) {
             if (!ODComputingService.isRunning()) startODService()
-            grpcServer = GRPCServer.startServer(odLib, port)
+            grpcServer = GRPCServer.startServer(port)
         }
     }
 
-    fun startGRPCServerService(odLib: AbstractODLib, port : Int = ODSettings.serverPort, useNettyServer : Boolean = false) {
+    fun startGRPCServerService(port : Int = ODSettings.serverPort, useNettyServer : Boolean = false) {
         ODSettings.serverPort = port
         if (grpcServer == null) {
             if (!ODComputingService.isRunning()) startODService()
-            grpcServer = GRPCServer(odLib, port, useNettyServer).start()
+            grpcServer = GRPCServer(port, useNettyServer).start()
         }
     }
 

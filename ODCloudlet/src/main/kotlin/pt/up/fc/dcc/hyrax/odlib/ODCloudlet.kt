@@ -4,9 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
-import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 
 class ODCloudlet {
     companion object {
@@ -16,7 +14,7 @@ class ODCloudlet {
         fun main(args: Array<String>) {
             ODLogger.enableLogs(LoggingInterface(), LogLevel.Info)
             odClient.startODService()
-            odClient.startGRPCServerService(odClient)
+            odClient.startGRPCServerService()
             odClient.setTFModel(odClient.listModels(false).toList()[0])
             MulticastAdvertiser.advertise()
             MulticastListener.listen()
