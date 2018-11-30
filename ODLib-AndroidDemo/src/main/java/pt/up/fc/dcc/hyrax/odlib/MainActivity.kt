@@ -1,26 +1,32 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import android.widget.ToggleButton
 import kotlinx.android.synthetic.main.activity_main.*
+import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
-import android.support.v4.app.ActivityCompat
-import android.content.pm.PackageManager
-import android.app.Activity
-import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.scheduler.*
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
-import pt.up.fc.dcc.hyrax.odlib.utils.*
+import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.max
 
@@ -118,6 +124,55 @@ class MainActivity : AppCompatActivity() {
             val job = Scheduler.createJob(File("/storage/emulated/0/img.png").readBytes())
             Scheduler.addJob(job)
         }
+    }
+
+    private var startBenchmark = 0L
+
+    fun sequentialBenchmark(target: View) {
+        //for (asset in assets.list())
+        //ODLogger.logInfo(R.drawable.titan)
+        startBenchmark = System.currentTimeMillis()
+        thread { sequentialBenchmark(listAssets()) }
+    }
+
+    private fun sequentialBenchmark(list: List<ByteArray>) {
+        if (list.isEmpty()) {
+            ODLogger.logInfo("Total Duration: ${System.currentTimeMillis() - startBenchmark}ms")
+            return
+        }
+        Scheduler.addResultsCallback { jobID, results -> sequentialBenchmark(list.subList(1, list.size)) }
+        Scheduler.addJob(Scheduler.createJob((list.first())))
+    }
+
+    private var totalJobs = 0
+    fun parallelBenchmark(target: View) {
+        thread {
+            startBenchmark = System.currentTimeMillis()
+            Scheduler.addResultsCallback() { jobID, results -> if (++totalJobs >= assets.list("benchmark").size) ODLogger.logInfo("Total Duration: ${System.currentTimeMillis() - startBenchmark}ms") }
+            for (asset in listAssets()) {
+                Scheduler.addJob(Scheduler.createJob(asset))
+            }
+        }
+    }
+
+    private fun listAssets(): List<ByteArray> {
+        val ret = LinkedList<ByteArray>()
+        for (asset in assets.list("benchmark")) {
+            val stream = ByteArrayOutputStream()
+            BitmapFactory.decodeStream(assets.open("benchmark/$asset")).compress(Bitmap.CompressFormat.PNG, 100, stream)
+            ret.addLast(stream.toByteArray())
+        }
+        //assets.open("benchmark/$asset")
+        //ImageUtils.getByteArrayFromImage()
+
+        //BitmapFactory.decodeFile(imgPath).compress(Bitmap.CompressFormat.PNG, 100, stream)
+        //return
+        //    ODLogger.logInfo(asset)
+        //return listOf(getDrawable(R.drawable.titan), getDrawable(R.drawable.titan))
+        /*val stream = ByteArrayOutputStream()
+        BitmapFactory.decodeStream(assets.open("benchmark/$asset")).compress(Bitmap.CompressFormat.PNG, 100, stream)
+        stream.toByteArray()*/
+        return ret
     }
 
     fun discoverToggleListener(target : View) {

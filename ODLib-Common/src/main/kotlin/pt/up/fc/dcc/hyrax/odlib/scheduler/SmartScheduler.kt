@@ -1,13 +1,13 @@
 package pt.up.fc.dcc.hyrax.odlib.scheduler
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.status.network.rtt.RTTClient
+import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings

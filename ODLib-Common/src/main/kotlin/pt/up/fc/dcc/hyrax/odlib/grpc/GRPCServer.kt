@@ -7,11 +7,11 @@ import io.grpc.ServerBuilder
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
-import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection

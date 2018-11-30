@@ -2,7 +2,6 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto

@@ -4,11 +4,11 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
-import pt.up.fc.dcc.hyrax.odlib.clients.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.*
-import java.util.concurrent.*
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 
 class GRPCClient

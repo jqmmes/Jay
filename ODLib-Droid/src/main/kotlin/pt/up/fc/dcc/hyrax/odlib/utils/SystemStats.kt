@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 import android.content.Context
 import android.content.Context.BATTERY_SERVICE
 import android.os.BatteryManager
+import android.os.BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER
 
 
 object SystemStats {
@@ -43,5 +44,10 @@ object SystemStats {
     fun getBatteryPercentage(context: Context): Int {
         val bm = context.getSystemService(BATTERY_SERVICE) as BatteryManager?
         return bm!!.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+    }
+
+    fun getBatteryEnergyCounter(context: Context): Long {
+        val bm = context.getSystemService(BATTERY_SERVICE) as BatteryManager?
+        return bm!!.getLongProperty(BATTERY_PROPERTY_ENERGY_COUNTER)
     }
 }

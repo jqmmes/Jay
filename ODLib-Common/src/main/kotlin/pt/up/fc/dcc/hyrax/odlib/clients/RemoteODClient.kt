@@ -1,11 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.utils.*
 
 @Suppress("unused")
 open class RemoteODClient {
@@ -90,7 +86,8 @@ open class RemoteODClient {
     }
 
     open fun asyncDetectObjects(odJob: ODJob, callback: (List<ODDetection?>) -> Unit) {
-        remoteClient.putJobAsync(odJob.getId(), odJob.getData(), callback)
+        //remoteClient.putJobAsync(odJob.getId(), odJob.getData(), callback)
+        remoteClient.putJobCloudAsync(odJob.getId(), odJob.getData(), callback)
     }
 
     fun sayHello() {

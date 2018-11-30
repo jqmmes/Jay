@@ -74,10 +74,13 @@ message DeviceStatus {
 service ODCommunication {
     rpc putJobAsync (AsyncRequest) returns (Status) {};
     rpc putResultAsync (JobResults) returns (Status) {};
+
     rpc putJobSync (Job) returns (JobResults) {};
+
     rpc listModels (google.protobuf.Empty) returns (Models) {};
     rpc selectModel (Model) returns (Status) {};
     rpc configModel (ModelConfig) returns (Status) {};
+
     rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
     rpc sayHello (RemoteClient) returns (Status) {};
     rpc getStatus (google.protobuf.Empty) returns (DeviceStatus);

@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
+import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
@@ -34,7 +35,7 @@ object ClientManager {
                 }
             }
         }
-        if (sayHello && isNewClient) newClient!!.sayHello()
+        //if (sayHello && isNewClient) newClient!!.sayHello()
         if (isNewClient && clientInfoCallback != null && newClient != null) { clientInfoCallback!!.onNewClient(newClient!!) }
     }
 

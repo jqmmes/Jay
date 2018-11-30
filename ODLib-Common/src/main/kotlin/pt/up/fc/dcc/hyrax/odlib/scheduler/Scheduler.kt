@@ -49,12 +49,17 @@ abstract class Scheduler {
             return ODJob(jobId++, data)
         }
 
-        fun addResultsCallback(callback: (Long, List<ODDetection?>) -> Unit) {
+        fun addResultsCallback(callback: (jobID: Long, results: List<ODDetection?>) -> Unit) {
             jobResultsCallback = callback
         }
 
-        fun addJob(job: ODJob) {
-            pendingJobs.putLast(job)
+        fun addJob(job: ODJob): Long {
+            return try {
+                pendingJobs.putLast(job)
+                job.getId()
+            } catch (ignore: Exception) {
+                -1L
+            }
         }
 
         internal fun addResults(jobId: Long, results: List<ODDetection?>) {

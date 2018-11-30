@@ -16,4 +16,6 @@
     <string name="selectModel">Select Model</string>
     <string name="selectScheduler">Select Scheduler</string>
     <string name="takePhoto">Take Photo</string>
+    <string name="sequential">Sequential</string>
+    <string name="parallel">Parallel</string>
 </resources>

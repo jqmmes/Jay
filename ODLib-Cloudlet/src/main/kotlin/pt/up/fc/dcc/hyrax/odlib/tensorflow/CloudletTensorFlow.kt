@@ -33,9 +33,9 @@ internal class CloudletTensorFlow : DetectObjects {
     override var minimumScore: Float = 0.3f
 
     private lateinit var modelPath: String
-    private lateinit var loadedModel : SavedModelBundle
+    private lateinit var loadedModel: SavedModelBundle
     private var modelClosed = true
-
+    private var modelCacheDir: String = "/tmp/ODLib/Models/"
 
     //override fun loadModel(path: String, label: String, score: Float) {
     private fun loadModel(path: String, score: Float = minimumScore) {
@@ -49,21 +49,21 @@ internal class CloudletTensorFlow : DetectObjects {
         if (score in 0.0f..1.0f) minimumScore = score
     }
 
-    override fun detectObjects(imgData: ByteArray) : List<ODDetection> {
+    override fun detectObjects(imgData: ByteArray): List<ODDetection> {
         if (!::loadedModel.isInitialized or modelClosed) {
             throw (Exception("\"Model not loaded.\""))
         }
         return processOutputs(loadedModel, makeImageTensor(imgData))
     }
 
-    override fun detectObjects(imgPath: String) : List<ODDetection> {
+    override fun detectObjects(imgPath: String): List<ODDetection> {
         if (!::loadedModel.isInitialized or modelClosed) {
             throw (Exception("\"Model not loaded.\""))
         }
         return processOutputs(loadedModel, makeImageTensor(imgPath))
     }
 
-    private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>) : List<ODDetection>  {
+    private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>): List<ODDetection> {
         var outputs: List<Tensor<*>>? = null
         tensor.use { input ->
             outputs = model
@@ -76,11 +76,12 @@ internal class CloudletTensorFlow : DetectObjects {
                     .run()
         }
 
-        val returnList : MutableList<ODDetection> = LinkedList()
+        val returnList: MutableList<ODDetection> = LinkedList()
 
         outputs!![0].expect(Float::class.javaObjectType).use { scoresT ->
             outputs!![1].expect(Float::class.javaObjectType).use { classesT ->
-                outputs!![2].expect(Float::class.javaObjectType).use { _ ->//boxesT ->
+                outputs!![2].expect(Float::class.javaObjectType).use { _ ->
+                    //boxesT ->
                     // All these tensors have:
                     // - 1 as the first dimension
                     // - maxObjects as the second dimension
@@ -112,11 +113,27 @@ internal class CloudletTensorFlow : DetectObjects {
         }
     }
 
-    override fun getByteArrayFromImage(imgPath: String) : ByteArray{
+    override fun getByteArrayFromImage(imgPath: String): ByteArray {
         val img = ImageIO.read(File(imgPath))
         val output = ByteArrayOutputStream()
         ImageIO.write(img, "jpg", output)
         return output.toByteArray()
+    }
+
+    private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
+        ODLogger.logInfo("Making image tensor")
+        //val img = convertBufferedImageType(ImageIO.read(ByteArrayInputStream(imageData)))
+        val img = ImageIO.read(ByteArrayInputStream(imageData))
+        /*if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
+            throw IOException("Expected 3-byte BGR encoding in BufferedImage, found ${img.type}. This code could be made more robust")
+        }*/
+        val data = (img.data.dataBuffer as DataBufferByte).data
+        // ImageIO.read seems to produce BGR-encoded images, but the model expects RGB.
+        bgr2rgb(data)
+        val batchSize: Long = 1
+        val channels: Long = 3
+        val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
+        return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
     }
 
     @Throws(IOException::class)
@@ -138,7 +155,7 @@ internal class CloudletTensorFlow : DetectObjects {
         return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
     }
 
-    private fun convertBufferedImageType(bufferedImage: BufferedImage) : BufferedImage {
+    private fun convertBufferedImageType(bufferedImage: BufferedImage): BufferedImage {
         ODLogger.logInfo("Checking image format...")
         val converted = BufferedImage(300, 300, BufferedImage.TYPE_3BYTE_BGR)
         if (bufferedImage.type == BufferedImage.TYPE_4BYTE_ABGR) {
@@ -158,99 +175,82 @@ internal class CloudletTensorFlow : DetectObjects {
         return converted
     }
 
-
-    private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
-        ODLogger.logInfo("Making image tensor")
-        val img = convertBufferedImageType(ImageIO.read(ByteArrayInputStream(imageData)))
-        /*if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
-            throw IOException("Expected 3-byte BGR encoding in BufferedImage, found ${img.type}. This code could be made more robust")
-        }*/
-        val data = (img.data.dataBuffer as DataBufferByte).data
-        // ImageIO.read seems to produce BGR-encoded images, but the model expects RGB.
-        bgr2rgb(data)
-        val batchSize: Long = 1
-        val channels: Long = 3
-        val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
-        return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
+    override fun checkDownloadedModel(name: String): Boolean {
+        ODLogger.logInfo("Checking if model has been downloaded...")
+        val cacheDir = File(modelCacheDir)
+        if (!cacheDir.exists()) return false
+        for (file in cacheDir.listFiles())
+            if (file.isDirectory && file.name == name) {
+                ODLogger.logInfo("Model already downloaded")
+                return true
+            }
+        return false
     }
-        private var modelCacheDir : String = "/tmp/ODLib/Models/"
 
-        override fun checkDownloadedModel(name: String): Boolean {
-            ODLogger.logInfo("Checking if model has been downloaded...")
-            val cacheDir = File(modelCacheDir)
-            if (!cacheDir.exists()) return false
-            for (file in cacheDir.listFiles())
-                if (file.isDirectory && file.name == name) {
-                    ODLogger.logInfo("Model already downloaded")
-                    return true
-                }
-            return false
+    override fun downloadModel(model: ODModel): File? {
+        ODLogger.logInfo("Downloading model from " + model.remoteUrl)
+        if (!File(modelCacheDir).exists()) File(modelCacheDir).mkdirs()
+        val modelUrl = URL(model.remoteUrl)
+        val rbc = Channels.newChannel(modelUrl.openStream())
+        ODLogger.logInfo("Downloading from ${model.remoteUrl}")
+        val tmpFile = File.createTempFile(modelCacheDir + model.modelName, ".tar.gz")
+        ODLogger.logInfo("Downloading to... ${tmpFile.absolutePath}")
+        val fos = FileOutputStream(tmpFile)
+        fos.channel.transferFrom(rbc, 0, java.lang.Long.MAX_VALUE)
+        ODLogger.logInfo("Downloaded....")
+        model.downloaded = true
+        return tmpFile
+        //model.graphLocation = modelCacheDir + model.modelName + "/"
+    }
+
+    override fun extractModel(modelFile: File): String {
+        ODLogger.logInfo("Extracting model...")
+        var basePath = modelCacheDir
+        val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
+
+        var entry: TarEntry? = tis.nextEntry
+        if (entry != null && entry.isDirectory) {
+            File(modelCacheDir + entry.name).mkdirs()
+            entry = tis.nextEntry
         }
-
-        override fun downloadModel(model: ODModel) : File? {
-            ODLogger.logInfo("Downloading model from " + model.remoteUrl)
-            if (!File(modelCacheDir).exists()) File(modelCacheDir).mkdirs()
-            val modelUrl = URL(model.remoteUrl)
-            val rbc = Channels.newChannel(modelUrl.openStream())
-            ODLogger.logInfo("Downloading from ${model.remoteUrl}")
-            val tmpFile = File.createTempFile(modelCacheDir+model.modelName, ".tar.gz")
-            ODLogger.logInfo("Downloading to... ${tmpFile.absolutePath}")
-            val fos = FileOutputStream(tmpFile)
-            fos.channel.transferFrom(rbc, 0, java.lang.Long.MAX_VALUE)
-            ODLogger.logInfo("Downloaded....")
-            model.downloaded = true
-            return tmpFile
-            //model.graphLocation = modelCacheDir + model.modelName + "/"
-        }
-
-        override fun extractModel(modelFile: File) : String {
-            ODLogger.logInfo("Extracting model...")
-            var basePath = modelCacheDir
-            val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
-
-            var entry : TarEntry? = tis.nextEntry
-            if (entry!= null && entry.isDirectory) {
+        while (entry != null) {
+            ODLogger.logInfo("Extract ${entry.name}")
+            if (entry.name.contains("PaxHeader")) {
+                entry = tis.nextEntry
+                continue
+            }
+            if (entry.isDirectory) {
                 File(modelCacheDir + entry.name).mkdirs()
                 entry = tis.nextEntry
+                continue
             }
-            while (entry != null) {
-                ODLogger.logInfo("Extract ${entry.name}")
-                if (entry.name.contains("PaxHeader")) {
-                    entry = tis.nextEntry
-                    continue
-                }
-                if (entry.isDirectory) {
-                    File(modelCacheDir + entry.name).mkdirs()
-                    entry = tis.nextEntry
-                    continue
-                }
-                var count: Int
-                val data = ByteArray(2048)
+            var count: Int
+            val data = ByteArray(2048)
 
-                if (entry.name.contains("frozen_inference_graph.pb")) {
-                    basePath = File(modelCacheDir, entry.name.substring(0, entry.name.indexOf
-                    ("frozen_inference_graph.pb"))).absolutePath
-                }
-                File(modelCacheDir, entry.name).mkdirs()
-                File(modelCacheDir, entry.name).delete()
-                val fos = FileOutputStream(modelCacheDir + entry.name)
+            if (entry.name.contains("frozen_inference_graph.pb")) {
+                basePath = File(modelCacheDir, entry.name.substring(0, entry.name.indexOf
+                ("frozen_inference_graph.pb"))).absolutePath
+            }
+            File(modelCacheDir, entry.name).mkdirs()
+            File(modelCacheDir, entry.name).delete()
+            val fos = FileOutputStream(modelCacheDir + entry.name)
 
-                val dest = BufferedOutputStream(fos)
+            val dest = BufferedOutputStream(fos)
 
+            count = tis.read(data)
+            while (count != -1) {
+                dest.write(data, 0, count)
                 count = tis.read(data)
-                while (count != -1) {
-                    dest.write(data, 0, count)
-                    count = tis.read(data)
-                }
-
-                dest.flush()
-                dest.close()
-
-                entry = tis.nextEntry
             }
-            ODLogger.logInfo("Extracting model... Complete")
-            return basePath
+
+            dest.flush()
+            dest.close()
+
+            entry = tis.nextEntry
         }
+        ODLogger.logInfo("Extracting model... Complete")
+        return basePath
+    }
 
     override fun loadModel(model: ODModel) {
         val modelPath = File(modelCacheDir, model.modelName)
