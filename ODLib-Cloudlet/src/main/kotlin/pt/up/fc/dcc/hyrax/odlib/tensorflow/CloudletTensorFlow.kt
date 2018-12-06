@@ -9,6 +9,8 @@ import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import java.awt.Image
+import java.awt.Image.SCALE_FAST
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
 import java.io.*
@@ -18,6 +20,10 @@ import java.nio.channels.Channels
 import java.util.*
 import java.util.zip.GZIPInputStream
 import javax.imageio.ImageIO
+import kotlin.math.floor
+import kotlin.math.max
+
+
 
 
 /**
@@ -40,7 +46,15 @@ internal class CloudletTensorFlow : DetectObjects {
     //override fun loadModel(path: String, label: String, score: Float) {
     private fun loadModel(path: String, score: Float = minimumScore) {
         modelPath = path
+        if (!modelClosed) loadedModel.close()
         loadedModel = SavedModelBundle.load(modelPath, "serve")
+        val tensor = Tensor.create(UInt8::class.java, longArrayOf(1L, 1L, 1L, 3), ByteBuffer.wrap(ByteArray(3)))
+        loadedModel.session().runner()
+                .feed("image_tensor", tensor)
+                .fetch("detection_scores")
+                .fetch("detection_classes")
+                .fetch("detection_boxes")
+                .run()
         modelClosed = false
         if (score != minimumScore) setMinAcceptScore(score)
     }
@@ -53,7 +67,12 @@ internal class CloudletTensorFlow : DetectObjects {
         if (!::loadedModel.isInitialized or modelClosed) {
             throw (Exception("\"Model not loaded.\""))
         }
-        return processOutputs(loadedModel, makeImageTensor(imgData))
+        try {
+            return processOutputs(loadedModel, makeImageTensor(imgData))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return emptyList()
     }
 
     override fun detectObjects(imgPath: String): List<ODDetection> {
@@ -63,7 +82,18 @@ internal class CloudletTensorFlow : DetectObjects {
         return processOutputs(loadedModel, makeImageTensor(imgPath))
     }
 
+    private fun resizeImage(imgData: ByteArray, maxSize: Int = 300): Image {
+        val image = ImageIO.read(ByteArrayInputStream(imgData))
+        if (image.width == maxSize && image.height <= maxSize ||
+                image.width <= maxSize && image.height == maxSize) return image
+        ODLogger.logInfo("Resizing Image...")
+        val scale = maxSize.toFloat() / max(image.width, image.height)
+        return image.getScaledInstance(floor(image.width * scale).toInt(), floor(image.height * scale).toInt(),
+                SCALE_FAST)
+    }
+
     private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>): List<ODDetection> {
+        ODLogger.logInfo("processOutputs\tRUNNING")
         var outputs: List<Tensor<*>>? = null
         tensor.use { input ->
             outputs = model
@@ -75,6 +105,7 @@ internal class CloudletTensorFlow : DetectObjects {
                     .fetch("detection_boxes")
                     .run()
         }
+        ODLogger.logInfo("processOutputs\tDONE")
 
         val returnList: MutableList<ODDetection> = LinkedList()
 
@@ -120,20 +151,41 @@ internal class CloudletTensorFlow : DetectObjects {
         return output.toByteArray()
     }
 
+    private fun toBufferedImage(img: Image): BufferedImage {
+        if (img is BufferedImage) {
+            return img
+        }
+
+        // Create a buffered image with transparency
+        val bimage = BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_3BYTE_BGR)
+
+        // Draw the image on to the buffered image
+        val bGr = bimage.createGraphics()
+        bGr.drawImage(img, 0, 0, null)
+        bGr.dispose()
+
+        // Return the buffered image
+        return bimage
+    }
+
     private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
         ODLogger.logInfo("Making image tensor")
         //val img = convertBufferedImageType(ImageIO.read(ByteArrayInputStream(imageData)))
-        val img = ImageIO.read(ByteArrayInputStream(imageData))
+        //val img = ImageIO.read(ByteArrayInputStream(imageData))
+
+        val img: BufferedImage = toBufferedImage(resizeImage(imageData))
         /*if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
             throw IOException("Expected 3-byte BGR encoding in BufferedImage, found ${img.type}. This code could be made more robust")
         }*/
-        val data = (img.data.dataBuffer as DataBufferByte).data
+        val data = (img.raster.dataBuffer as DataBufferByte).data
         // ImageIO.read seems to produce BGR-encoded images, but the model expects RGB.
         bgr2rgb(data)
         val batchSize: Long = 1
         val channels: Long = 3
         val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
-        return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
+        val tensor = Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
+        ODLogger.logInfo("Making image tensor\tCOMPLETE")
+        return tensor
     }
 
     @Throws(IOException::class)

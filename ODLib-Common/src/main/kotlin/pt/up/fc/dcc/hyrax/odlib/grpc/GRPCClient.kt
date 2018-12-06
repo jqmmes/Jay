@@ -9,6 +9,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 
 class GRPCClient
@@ -120,12 +121,19 @@ internal constructor(private var channel: ManagedChannel) {
         return Pair(true, ODUtils.parseModels(result))
     }
 
-    fun selectModel(model: ODModel) {
+    fun selectModel(model: ODModel, block: Boolean = false): Boolean {
+        ODLogger.logInfo("Selecting Model")
         try {
-            blockingStub.selectModel(ODUtils.genModel(model))
+            if (block) blockingStub.selectModel(ODUtils.genModel(model))
+            else thread {
+                blockingStub.selectModel(ODUtils.genModel(model))
+            }
         } catch (e: StatusRuntimeException) {
             ODLogger.logError("RPC Failed: " + e.status)
+            return false
         }
+        ODLogger.logInfo("Model Selected")
+        return true
     }
 
     fun sayHello() : Boolean {

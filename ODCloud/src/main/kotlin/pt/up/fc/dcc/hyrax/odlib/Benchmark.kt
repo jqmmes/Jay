@@ -10,23 +10,20 @@ import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import javax.imageio.ImageIO
 
-class Benchmark {
+object Benchmark {
 
-    companion object {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            // Benchmark all protocols
-
+    fun run() {
             val client = ClientManager.getLocalODClient()
-            val models = client.getModels(false, true)
+        val models = client.getModels(false, true).reversed()
             Scheduler.startService(LocalScheduler())
             var countDownLatch = CountDownLatch(1)
             for (model in models) {
                 println("Model:\t${model.modelName}")
                 client.selectModel(model)
                 Thread.sleep(5)
-                //for (f in File("./Benchmark/").listFiles()) {
-                for (f in File("/Users/joaquim/IdeaProjects/ODLib/ODLib-AndroidDemo/src/main/assets/benchmark").listFiles()) {
+                //for (f in File("/Users/joaquim/IdeaProjects/ODLib/ODLib-AndroidDemo/src/main/assets/benchmark")
+                for (f in File("./benchmark")
+                        .listFiles()) {
                     if (f.name.startsWith(".")) continue
                     val img = ImageIO.read(f)
                     if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
@@ -37,7 +34,7 @@ class Benchmark {
                     }
                     val output = ByteArrayOutputStream()
                     ImageIO.write(img, "jpg", output)
-                    var start = System.currentTimeMillis()
+                    val start = System.currentTimeMillis()
                     client.asyncDetectObjects(
                             Scheduler.createJob(output.toByteArray())
                     ) {
@@ -51,4 +48,3 @@ class Benchmark {
             }
         }
     }
-}

@@ -18,4 +18,5 @@
     <string name="takePhoto">Take Photo</string>
     <string name="sequential">Sequential</string>
     <string name="parallel">Parallel</string>
+    <string name="changeCloud">Change Cloud</string>
 </resources>

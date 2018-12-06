@@ -13,8 +13,7 @@ repositories {
 
 dependencies {
     //noinspection DifferentStdlibGradleVersion
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     implementation project(':ODLib-Cloudlet')
     implementation project(':ODLib-Common')
 }

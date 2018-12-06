@@ -2,8 +2,8 @@ package pt.up.fc.dcc.hyrax.odlib.scheduler
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.util.*
 
@@ -20,7 +20,7 @@ class JustRemoteRandomScheduler : Scheduler() {
         ODLogger.logInfo("JustRemoteRandomScheduler starting")
     }
     private fun getNextRemoteRandom() : RemoteODClient? {
-        val clients = Collections.list(ClientManager.getRemoteODClients())
+        val clients = Collections.list(ClientManager.getRemoteODClients(false))
         if (clients.isEmpty()) return null
         return clients[Random().nextInt(clients.size)] as RemoteODClient
     }

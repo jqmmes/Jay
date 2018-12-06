@@ -18,7 +18,7 @@ object ClientManager {
     private val NEW_CLIENT_LOCK = Object()
 
 
-    fun addOrIgnoreClient(Ip: String, port: Int, sayHello: Boolean = false) {
+    fun addOrIgnoreClient(Ip: String, port: Int) {
         val clientId = ODUtils.genClientId(Ip)
         var isNewClient = false
         var newClient : RemoteODClient? = null
@@ -53,6 +53,7 @@ object ClientManager {
     }
 
     fun getCloudClient(): CloudODClient {
+        ODLogger.logInfo("getCloudClient\t${cloud.getAddress()}")
         return cloud
     }
 

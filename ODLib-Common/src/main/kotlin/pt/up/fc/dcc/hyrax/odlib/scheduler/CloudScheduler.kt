@@ -10,7 +10,7 @@ class CloudScheduler : Scheduler() {
     }
 
     init {
-        ODLogger.logInfo("Starting LocalScheduler...")
+        ODLogger.logInfo("Starting CloudScheduler...")
     }
 
     override fun scheduleJob(job: ODJob) {

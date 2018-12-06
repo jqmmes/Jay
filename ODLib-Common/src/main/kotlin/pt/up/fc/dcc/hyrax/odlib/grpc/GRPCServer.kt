@@ -107,8 +107,12 @@ internal class GRPCServer(private val port: Int = ODSettings.serverPort, private
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.AsyncRequest?, responseObserver: StreamObserver<ODProto.Status>) {
             //ODLogger.logInfo("Received putJobAsync")
-            ODComputingService.putJob(ODUtils.parseAsyncRequestImageByteArray(req)) { results -> ODUtils
-                    .parseAsyncRequestRemoteClient(req)!!.putResults(req!!.job.id, results)}
+            ODComputingService.putJob(
+                    ODUtils.parseAsyncRequestImageByteArray(req),
+                    { results -> ODUtils.parseAsyncRequestRemoteClient(req)!!.putResults(req!!.job.id, results) },
+                    req!!.job.id
+            )
+
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
@@ -132,7 +136,7 @@ internal class GRPCServer(private val port: Int = ODSettings.serverPort, private
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }
             }
-            ODComputingService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult)
+            ODComputingService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult, request!!.id)
         }
 
         override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {

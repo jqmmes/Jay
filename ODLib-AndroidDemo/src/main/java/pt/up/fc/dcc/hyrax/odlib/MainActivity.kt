@@ -11,10 +11,10 @@ import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import android.widget.ToggleButton
+import android.widget.*
 import kotlinx.android.synthetic.main.activity_main.*
+import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
+import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
@@ -23,10 +23,13 @@ import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
 import java.io.ByteArrayOutputStream
-import java.io.File
+import java.io.InputStream
+import java.lang.Thread.sleep
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 import kotlin.math.max
 
@@ -38,6 +41,10 @@ class MainActivity : AppCompatActivity() {
     private val requestExternalStorage = 1
     private val permissionsStorage = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
+
+    fun changeCloud(target: View) {
+        ClientManager.changeCloudClient(CloudODClient(findViewById<EditText>(R.id.cloudIP).text.toString()))
+    }
 
     private fun toggleServer(start : Boolean) {
         ODLogger.logInfo("Toggle Server $start")
@@ -57,6 +64,14 @@ class MainActivity : AppCompatActivity() {
                     .getBatteryCharging(this)}")
             ODComputingService.setWorkingThreads(max(SystemStats.getCpuCount()/2, 1))
             odClient.setScheduler(getScheduler())
+            if (getScheduler() is CloudScheduler) {
+                thread {
+                    val models = ClientManager.getCloudClient().getModels(false, true)
+                    if (!models.isEmpty()) {
+                        ClientManager.getCloudClient().selectModel(models.first())
+                    }
+                }
+            }
             odClient.startODService()
             Scheduler.addResultsCallback { id, results -> resultsCallback(id, results)}
 
@@ -121,34 +136,62 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target : View) {
         thread (name="chooseImage CreateJob"){
-            val job = Scheduler.createJob(File("/storage/emulated/0/img.png").readBytes())
+            //val job = Scheduler.createJob(File("/storage/emulated/0/img.png").readBytes())
+            val job = Scheduler.createJob(loadAssetImage(assets.open("benchmark/${assets.list("benchmark")!![0]}")))
+
+            /*for (asset in assets.list("benchmark")) {
+
+            }*/
+            ODLogger.logInfo("B:\tBattery_Start\t$${job.getId()}\t${SystemStats.getBatteryEnergyCounter(this)}")
+            Scheduler.addResultsCallback { _, _ ->
+                ODLogger.logInfo("B:\tBattery_End\t$${job.getId()}\t${SystemStats.getBatteryEnergyCounter(this)}")
+            }
             Scheduler.addJob(job)
+            //Scheduler.addJob(job)
         }
     }
 
     private var startBenchmark = 0L
+    private var assetImages: List<ByteArray> = emptyList()
+    private var synchronizingLatch = CountDownLatch(1)
 
     fun sequentialBenchmark(target: View) {
-        //for (asset in assets.list())
-        //ODLogger.logInfo(R.drawable.titan)
-        startBenchmark = System.currentTimeMillis()
-        thread { sequentialBenchmark(listAssets()) }
-    }
-
-    private fun sequentialBenchmark(list: List<ByteArray>) {
-        if (list.isEmpty()) {
-            ODLogger.logInfo("Total Duration: ${System.currentTimeMillis() - startBenchmark}ms")
-            return
+        thread {
+            if (assetImages.isEmpty()) assetImages = listAssets()
+            var client = ClientManager.getLocalODClient()
+            if (getScheduler() is CloudScheduler) client = ClientManager.getCloudClient()
+            val models = client.getModels(false, true)
+            models.forEach { model ->
+                client.selectModel(model)
+                ODLogger.logInfo("Selecting Model\t${model.modelName}")
+                sleep(20000)
+                startBenchmark = System.currentTimeMillis()
+                assetImages.forEach { asset ->
+                    val job = Scheduler.createJob(asset)
+                    ODLogger.logInfo("Asset\t$asset")
+                    ODLogger.logInfo("B:\tBattery_Start\t${job.getId()}\t${SystemStats.getBatteryEnergyCounter(this)
+                    }\t${SystemStats.getBatteryPercentage(this)}")
+                    Scheduler.addResultsCallback { _, _ ->
+                        ODLogger.logInfo("B:\tBattery_End\t${job.getId()}\t${SystemStats.getBatteryEnergyCounter
+                        (this)}\t${SystemStats.getBatteryPercentage(this)}")
+                        synchronizingLatch.countDown()
+                    }
+                    Scheduler.addJob(job)
+                    synchronizingLatch.await()
+                    synchronizingLatch = CountDownLatch(1)
+                }
+            }
         }
-        Scheduler.addResultsCallback { jobID, results -> sequentialBenchmark(list.subList(1, list.size)) }
-        Scheduler.addJob(Scheduler.createJob((list.first())))
     }
 
     private var totalJobs = 0
     fun parallelBenchmark(target: View) {
         thread {
             startBenchmark = System.currentTimeMillis()
-            Scheduler.addResultsCallback() { jobID, results -> if (++totalJobs >= assets.list("benchmark").size) ODLogger.logInfo("Total Duration: ${System.currentTimeMillis() - startBenchmark}ms") }
+            Scheduler.addResultsCallback() { _, _ ->
+                if (++totalJobs >= assets.list("benchmark")!!.size) ODLogger
+                        .logInfo("Total Duration: ${System.currentTimeMillis() - startBenchmark}ms")
+            }
             for (asset in listAssets()) {
                 Scheduler.addJob(Scheduler.createJob(asset))
             }
@@ -157,10 +200,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun listAssets(): List<ByteArray> {
         val ret = LinkedList<ByteArray>()
-        for (asset in assets.list("benchmark")) {
-            val stream = ByteArrayOutputStream()
-            BitmapFactory.decodeStream(assets.open("benchmark/$asset")).compress(Bitmap.CompressFormat.PNG, 100, stream)
-            ret.addLast(stream.toByteArray())
+        assets.list("benchmark")!!.forEach { asset ->
+            ODLogger.logInfo(asset)
+            ret.addLast(loadAssetImage(assets.open("benchmark/$asset")))
         }
         //assets.open("benchmark/$asset")
         //ImageUtils.getByteArrayFromImage()
@@ -175,6 +217,13 @@ class MainActivity : AppCompatActivity() {
         return ret
     }
 
+    private fun loadAssetImage(asset: InputStream): ByteArray {
+        val stream = ByteArrayOutputStream()
+        //ret.addLast(File("benchmark/$asset").readBytes())
+        BitmapFactory.decodeStream(asset).compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
+    }
+
     fun discoverToggleListener(target : View) {
         if ((target as ToggleButton).isChecked) MulticastListener.listen()
         else MulticastListener.stop()
@@ -187,6 +236,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         loggingConsole = Logger(this, findViewById(R.id.loggingConsole))
+        loggingConsole.benchmark(this)
         odClient = ODLib(this)
         ODLogger.enableLogs(loggingConsole, LogLevel.Info)
         ODLogger.startBackgroundLoggingService()
@@ -209,7 +259,9 @@ class MainActivity : AppCompatActivity() {
         val adp = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayList1)
         modelSpinner.adapter = adp
 
+        findViewById<EditText>(R.id.cloudIP).setText(ODSettings.cloudIp, TextView.BufferType.EDITABLE)
         verifyStoragePermissions(this)
+        requestBatteryPermissions()
     }
 
 
@@ -227,6 +279,15 @@ class MainActivity : AppCompatActivity() {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun requestBatteryPermissions() {
+        val permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.BATTERY_STATS)
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            println("No battery stats")
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.BATTERY_STATS), 3)
+        }
+        //this.enforceCallingOrSelfPermission(android.Manifest.permission.BATTERY_STATS, null)
     }
 
     private fun verifyStoragePermissions(activity: Activity) {

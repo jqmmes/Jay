@@ -3,10 +3,8 @@
     <output-path>$PROJECT_DIR$/out/</output-path>
     <root id="archive" name="ODCloud.jar">
       <element id="module-output" name="ODLib-Common" />
-      <element id="module-output" name="ODLib-Cloudlet" />
-      <element id="module-output" name="ODCloud" />
       <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/ODCloud/src/kotlin/META-INF/MANIFEST.MF" />
+        <element id="file-copy" path="$PROJECT_DIR$/ODCloud/src/main/kotlin/META-INF/MANIFEST.MF" />
       </element>
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.mojo/animal-sniffer-annotations/1.17/f97ce6decaea32b36101e37979f8b647f00681fb/animal-sniffer-annotations-1.17.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" path-in-jar="/" />
@@ -52,6 +50,10 @@
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.api.grpc/proto-google-common-protos/1.12.0/1140cc74df039deb044ed0e320035e674dc13062/proto-google-common-protos-1.12.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.protobuf/protobuf-java/3.5.1/8c3492f7662fa1cbf8ca76a0f5eb1146f7725acd/protobuf-java-3.5.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.tensorflow/tensorflow/1.10.0/f9289bf479ffaca47dc5c226affa47f6002e59ef/tensorflow-1.10.0.jar" path-in-jar="/" />
+      <element id="module-output" name="ODCloud" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-collections4/4.2/54ebea0a5b653d3c680131e73fe807bb8f78c4ed/commons-collections4-4.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.android.support/support-annotations/27.1.1/39ded76b5e1ce1c5b2688e1d25cdc20ecee32007/support-annotations-27.1.1.jar" path-in-jar="/" />
+      <element id="module-output" name="ODLib-Cloudlet" />
     </root>
   </artifact>
 </component>

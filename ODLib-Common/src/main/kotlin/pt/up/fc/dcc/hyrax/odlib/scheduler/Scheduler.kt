@@ -27,11 +27,11 @@ abstract class Scheduler {
 
             Companion.scheduler = scheduler
             thread (isDaemon = true, name="JobManagerService") {
-                ODLogger.logInfo("JobManager Service starting thread...")
+                ODLogger.logInfo("Scheduler Service starting thread...")
                 var job: ODJob
                 running = true
                 while(running) {
-                    ODLogger.logInfo("JobManager Service waiting for jobs..")
+                    ODLogger.logInfo("Scheduler Service waiting for jobs..")
                     job = pendingJobs.takeFirst()
                     if (running) { scheduler.scheduleJob(job) }
                 }

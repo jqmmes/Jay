@@ -1,13 +1,28 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import android.app.Activity
+import android.content.Context
 import android.widget.TextView
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
-import java.util.Calendar
+import java.io.File
+import java.io.FileOutputStream
+import java.util.*
 
 class Logger(private val activity : Activity, private val loggingConsole : TextView) : ODLog {
+
+    private lateinit var outputFileOS: FileOutputStream
+
+    fun benchmark(context: Context) {
+        val cal = Calendar.getInstance()
+        outputFileOS = FileOutputStream(File(context.getExternalFilesDir(null),
+                "benchmark_${cal.get(Calendar.HOUR_OF_DAY)}_${cal.get(Calendar.MINUTE)}_${cal.get(Calendar.SECOND)}," +
+                        ".txt"), false)
+    }
+
     override fun log(message : String, logLevel: LogLevel) {
+        outputFileOS.write("B:\t${System.currentTimeMillis()}\t$message\n".toByteArray())
+        outputFileOS.flush()
         activity.runOnUiThread {
             val cal = Calendar.getInstance()
             loggingConsole.text = String.format(
