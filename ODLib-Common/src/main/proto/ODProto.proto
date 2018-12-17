@@ -71,6 +71,10 @@ message DeviceStatus {
     int32 connections = 7;
 }
 
+message Boolean {
+    bool value = 1;
+}
+
 service ODCommunication {
     rpc putJobAsync (AsyncRequest) returns (Status) {};
     rpc putResultAsync (JobResults) returns (Status) {};
@@ -80,6 +84,8 @@ service ODCommunication {
     rpc listModels (google.protobuf.Empty) returns (Models) {};
     rpc selectModel (Model) returns (Status) {};
     rpc configModel (ModelConfig) returns (Status) {};
+    rpc modelLoaded (Model) returns (Boolean) {
+    };
 
     rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
     rpc sayHello (RemoteClient) returns (Status) {};

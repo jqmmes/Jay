@@ -143,19 +143,21 @@
                 android:orientation="horizontal">
 
             <Button
+                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/sequentialBenchmark"
                     android:onClick="sequentialBenchmark"
                     android:layout_weight="1"
-                    android:text="@string/sequential"/>
+                    android:text="@string/SmallAssets"/>
 
             <Button
+                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/parallelBenchmark"
                     android:layout_weight="1"
-                    android:text="@string/parallel"
+                    android:text="@string/LargeAssets"
                     android:onClick="parallelBenchmark"/>
         </LinearLayout>
 

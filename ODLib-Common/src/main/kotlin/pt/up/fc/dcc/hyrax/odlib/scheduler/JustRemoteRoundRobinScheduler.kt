@@ -1,12 +1,10 @@
 package pt.up.fc.dcc.hyrax.odlib.scheduler
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import java.util.*
-import kotlin.collections.HashMap
 
 
 @Suppress("unused")
@@ -22,11 +20,11 @@ class JustRemoteRoundRobinScheduler : Scheduler() {
         ODLogger.logInfo("JustRemoteRoundRobinScheduler starting")
     }
 
-    private fun getNextRemoteRoundRobin() : RemoteODClient? {
-        val clients = Collections.list(ClientManager.getRemoteODClients())
+    private fun getNextRemoteRoundRobin(): RemoteODClient? {
+        val clients = ClientManager.getRemoteODClients(false)
         if (clients.isEmpty()) return null
         nextRemote %= clients.size
-        return clients[nextRemote++] as RemoteODClient
+        return clients[nextRemote++]
     }
 
     override fun jobCompleted(id: Long, results: List<ODDetection?>) {
@@ -35,13 +33,14 @@ class JustRemoteRoundRobinScheduler : Scheduler() {
     }
 
     override fun scheduleJob(job: ODJob) {
-            val nextClient = getNextRemoteRoundRobin()
-            if (nextClient != null) {
-                jobBookkeeping[job.getId()] = nextClient.getId()
-                //val start = System.currentTimeMillis()
-                nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
-                //nextClient.getLatencyMovingAverage().addLatency(System.currentTimeMillis()-start)
-                //ODLogger.logInfo(nextClient.getLatencyMovingAverage().getAvgLatency().toString())
+        val nextClient = getNextRemoteRoundRobin()
+        if (nextClient != null) {
+            ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.getAddress()}\tJUST_REMOTE_ROUND_ROBIN")
+            jobBookkeeping[job.getId()] = nextClient.getId()
+            //val start = System.currentTimeMillis()
+            nextClient.asyncDetectObjects(job) { R -> jobCompleted(job.getId(), R) }
+            //nextClient.getLatencyMovingAverage().addLatency(System.currentTimeMillis()-start)
+            //ODLogger.logInfo(nextClient.getLatencyMovingAverage().getAvgLatency().toString())
         }
     }
 }

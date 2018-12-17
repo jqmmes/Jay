@@ -150,6 +150,12 @@ internal class GRPCServer(private val port: Int = ODSettings.serverPort, private
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
+        override fun modelLoaded(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Boolean>) {
+            genericComplete(ODProto.Boolean.newBuilder().setValue(ODComputingService.modelLoaded(ODUtils.parseModel
+            (request))).build(),
+                    responseObserver)
+        }
+
         override fun configModel (request: ODProto.ModelConfig?, responseObserver: StreamObserver<ODProto.Status>) {
             //ODLogger.logInfo("Received configModel")
             val configRequest = ODUtils.parseModelConfig(request)

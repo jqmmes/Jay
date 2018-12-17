@@ -167,6 +167,15 @@ internal constructor(private var channel: ManagedChannel) {
         }
     }
 
+    fun modelLoaded(model: ODModel): Boolean {
+        try {
+            return blockingStub.modelLoaded(ODUtils.genModel(model)).value
+        } catch (e: StatusRuntimeException) {
+            ODLogger.logError("RPC Failed: " + e.status)
+        }
+        return false
+    }
+
     fun getStatus() : DeviceInformation? {
         try {
             val result = blockingStub.getStatus(Empty.newBuilder().build())

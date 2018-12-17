@@ -12,11 +12,11 @@ interface DetectObjects {
     fun downloadModel(model: ODModel): File?
     fun checkDownloadedModel(name: String): Boolean
 
-    //fun loadModel(path: String, label: String = String(), score: Float = minimumScore)
     fun loadModel(model: ODModel)
+    fun modelLoaded(model: ODModel): Boolean
     fun setMinAcceptScore(score: Float)
     fun detectObjects(imgPath: String) : List<ODDetection>
     fun detectObjects(imgData: ByteArray) : List<ODDetection>
     fun getByteArrayFromImage(imgPath: String) : ByteArray
-    fun close()
+    fun clean()
 }

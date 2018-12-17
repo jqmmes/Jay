@@ -20,9 +20,9 @@ class JustRemoteRandomScheduler : Scheduler() {
         ODLogger.logInfo("JustRemoteRandomScheduler starting")
     }
     private fun getNextRemoteRandom() : RemoteODClient? {
-        val clients = Collections.list(ClientManager.getRemoteODClients(false))
+        val clients = ClientManager.getRemoteODClients(false)
         if (clients.isEmpty()) return null
-        return clients[Random().nextInt(clients.size)] as RemoteODClient
+        return clients[Random().nextInt(clients.size)]
     }
 
     override fun jobCompleted(id: Long, results: List<ODDetection?>) {
@@ -33,6 +33,7 @@ class JustRemoteRandomScheduler : Scheduler() {
     override fun scheduleJob(job: ODJob) {
             val nextClient = getNextRemoteRandom()
             if (nextClient != null) {
+                ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.getAddress()}\tJUST_REMOTE_RANDOM")
                 jobBookkeeping[job.getId()] = nextClient.getId()
                 nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
         }

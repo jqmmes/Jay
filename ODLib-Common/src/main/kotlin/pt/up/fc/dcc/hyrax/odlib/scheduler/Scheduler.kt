@@ -9,7 +9,7 @@ import kotlin.concurrent.thread
 abstract class Scheduler {
 
     protected open fun jobCompleted(id: Long, results: List<ODDetection?>) {
-        ODLogger.logInfo("Job ($id) completed\n\t\t$results")
+        ODLogger.logInfo("Job_Complete\t$id\n\t\t$results")
         addResults(id, results)
     }
 

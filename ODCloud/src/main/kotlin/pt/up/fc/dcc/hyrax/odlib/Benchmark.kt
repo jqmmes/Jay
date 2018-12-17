@@ -12,18 +12,17 @@ import javax.imageio.ImageIO
 
 object Benchmark {
 
-    fun run() {
-            val client = ClientManager.getLocalODClient()
-        val models = client.getModels(false, true).reversed()
-            Scheduler.startService(LocalScheduler())
-            var countDownLatch = CountDownLatch(1)
-            for (model in models) {
+    fun run(dataSize: String = "small", mModel: String = "all") {
+        val client = ClientManager.getLocalODClient()
+        Scheduler.startService(LocalScheduler())
+        var countDownLatch = CountDownLatch(1)
+        for (model in client.getModels(false, true).reversed()) {
+            if (model.modelName == mModel || mModel == "all") {
                 println("Model:\t${model.modelName}")
                 client.selectModel(model)
-                Thread.sleep(5)
-                //for (f in File("/Users/joaquim/IdeaProjects/ODLib/ODLib-AndroidDemo/src/main/assets/benchmark")
-                for (f in File("./benchmark")
-                        .listFiles()) {
+                Thread.sleep(1000)
+                while (!client.modelLoaded(model)) Thread.sleep(1000)
+                for (f in File("./benchmark/$dataSize").listFiles()) {
                     if (f.name.startsWith(".")) continue
                     val img = ImageIO.read(f)
                     if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
@@ -35,10 +34,9 @@ object Benchmark {
                     val output = ByteArrayOutputStream()
                     ImageIO.write(img, "jpg", output)
                     val start = System.currentTimeMillis()
-                    client.asyncDetectObjects(
-                            Scheduler.createJob(output.toByteArray())
-                    ) {
-                        println("${f.name}\t${System.currentTimeMillis() - start}ms")
+                    val job = Scheduler.createJob(output.toByteArray())
+                    client.asyncDetectObjects(job) {
+                        println("${job.getId()}\t${f.name}\t${System.currentTimeMillis() - start}ms")
                         countDownLatch.countDown()
                     }
                     countDownLatch.await()
@@ -48,3 +46,4 @@ object Benchmark {
             }
         }
     }
+}

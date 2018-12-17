@@ -102,6 +102,10 @@ open class RemoteODClient {
         remoteClient.selectModel(model)
     }
 
+    fun modelLoaded(model: ODModel): Boolean {
+        return remoteClient.modelLoaded(model)
+    }
+
     fun getDeviceStatus() : DeviceInformation {
         return remoteClient.getStatus() ?: DeviceInformation()
     }

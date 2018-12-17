@@ -19,4 +19,6 @@
     <string name="sequential">Sequential</string>
     <string name="parallel">Parallel</string>
     <string name="changeCloud">Change Cloud</string>
+    <string name="SmallAssets">Small Asssets</string>
+    <string name="LargeAssets">Large Assets</string>
 </resources>

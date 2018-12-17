@@ -14,6 +14,7 @@ class CloudScheduler : Scheduler() {
     }
 
     override fun scheduleJob(job: ODJob) {
+        ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${ClientManager.getCloudClient().getAddress()}\tCLOUD")
         ClientManager.getCloudClient().asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
     }
 }

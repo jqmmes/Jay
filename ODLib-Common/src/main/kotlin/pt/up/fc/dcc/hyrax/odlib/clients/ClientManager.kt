@@ -6,7 +6,6 @@ import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Suppress("unused")
@@ -29,7 +28,7 @@ object ClientManager {
                 if (newClient!!.ping()) {
                     remoteODClients[clientId] = newClient!!
                     isNewClient = true
-                    StatusManager.setConnections(remoteODClients.minus(0).size)
+                    StatusManager.setConnections(remoteODClients.minus(0L).size)
                 } else {
                     newClient!!.destroy()
                 }
@@ -44,8 +43,8 @@ object ClientManager {
     }
 
     fun getLocalODClient(): RemoteODClient {
-        if (!remoteODClients.contains(0)) addOrIgnoreClient("localhost", ODSettings.serverPort)
-        return remoteODClients[0]!!
+        if (!remoteODClients.contains(0L)) addOrIgnoreClient("localhost", ODSettings.serverPort)
+        return remoteODClients[0L]!!
     }
 
     fun changeCloudClient(cloudODClient: CloudODClient) {
@@ -53,22 +52,22 @@ object ClientManager {
     }
 
     fun getCloudClient(): CloudODClient {
-        ODLogger.logInfo("getCloudClient\t${cloud.getAddress()}")
         return cloud
     }
 
     fun getRemoteODClient(id: Long): RemoteODClient? {
         if (id == 0L) return getLocalODClient()
-        var client: RemoteODClient? = null
+        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER") var client: RemoteODClient? = null
         synchronized(NEW_CLIENT_LOCK) {
             client = remoteODClients[id]
         }
         return client
     }
 
-    fun getRemoteODClients(includeLocal: Boolean = false) : Enumeration<RemoteODClient>? {
-        if (!includeLocal && remoteODClients.contains(0)) return (remoteODClients.minus(0) as ConcurrentHashMap).elements()
-        return remoteODClients.elements()
+    fun getRemoteODClients(includeLocal: Boolean = false): List<RemoteODClient> {
+        if (!includeLocal && remoteODClients.containsKey(0L)) return (remoteODClients.minus(0L)).values.toList()
+        if (!includeLocal) return remoteODClients.values.toList()
+        return remoteODClients.values.toList()
     }
 
     fun updateStatus(clientID: Long, deviceInformation: DeviceInformation) {

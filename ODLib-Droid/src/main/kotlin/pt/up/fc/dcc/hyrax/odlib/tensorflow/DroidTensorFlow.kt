@@ -7,15 +7,23 @@ import android.graphics.BitmapFactory
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.utils.*
+import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import java.io.*
-import java.util.zip.GZIPInputStream
 import java.net.URL
 import java.net.URLConnection
+import java.util.zip.GZIPInputStream
 import kotlin.concurrent.thread
 
 @Suppress("unused")
 class DroidTensorFlow(private val context: Context) : DetectObjects {
+    override fun modelLoaded(model: ODModel): Boolean {
+        if (localDetector == null) return false
+        return true
+    }
+
     override var minimumScore: Float = 0f
 
     private var localDetector : Classifier? = null
@@ -50,8 +58,9 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 )
         )
 
-    override fun close() {
+    override fun clean() {
         if (localDetector != null) localDetector!!.close()
+        localDetector = null
     }
 
     override fun getByteArrayFromImage(imgPath: String): ByteArray {
@@ -84,6 +93,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
 
     private fun loadModel(path: String) { //, score: Float
         ODLogger.logInfo("Loading Model from: $path")
+        localDetector = null
         try {
             localDetector = TensorFlowObjectDetectionAPIModel.create(
                     Resources.getSystem().assets, path, tfOdApiInputSize)
@@ -95,6 +105,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun loadModel(model: ODModel) {
+        localDetector = null
         thread(name="DroidTensorflow loadModel") {
             var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
             println("${model.modelName}\t${model.remoteUrl}")

@@ -31,25 +31,29 @@ import kotlin.math.max
  * https://github.com/tensorflow/models/blob/master/research/object_detection/
  */
 internal class CloudletTensorFlow : DetectObjects {
-    override fun close() {
-        if (!::loadedModel.isInitialized) loadedModel.close()
-        modelClosed = true
-    }
-
     override var minimumScore: Float = 0.3f
 
-    private lateinit var modelPath: String
-    private lateinit var loadedModel: SavedModelBundle
+    private var loadedModel: SavedModelBundle? = null
     private var modelClosed = true
     private var modelCacheDir: String = "/tmp/ODLib/Models/"
 
-    //override fun loadModel(path: String, label: String, score: Float) {
+    override fun modelLoaded(model: ODModel): Boolean {
+        if (modelClosed || loadedModel == null) return false
+        return true
+    }
+
+    override fun clean() {
+        if (loadedModel != null) loadedModel!!.close()
+        loadedModel = null
+        modelClosed = true
+    }
+
+
     private fun loadModel(path: String, score: Float = minimumScore) {
-        modelPath = path
-        if (!modelClosed) loadedModel.close()
-        loadedModel = SavedModelBundle.load(modelPath, "serve")
+        clean()
+        loadedModel = SavedModelBundle.load(path, "serve")
         val tensor = Tensor.create(UInt8::class.java, longArrayOf(1L, 1L, 1L, 3), ByteBuffer.wrap(ByteArray(3)))
-        loadedModel.session().runner()
+        loadedModel!!.session().runner()
                 .feed("image_tensor", tensor)
                 .fetch("detection_scores")
                 .fetch("detection_classes")
@@ -64,11 +68,11 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
     override fun detectObjects(imgData: ByteArray): List<ODDetection> {
-        if (!::loadedModel.isInitialized or modelClosed) {
+        if (loadedModel == null || modelClosed) {
             throw (Exception("\"Model not loaded.\""))
         }
         try {
-            return processOutputs(loadedModel, makeImageTensor(imgData))
+            return processOutputs(loadedModel!!, makeImageTensor(imgData))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -76,10 +80,10 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
     override fun detectObjects(imgPath: String): List<ODDetection> {
-        if (!::loadedModel.isInitialized or modelClosed) {
+        if (loadedModel == null || modelClosed) {
             throw (Exception("\"Model not loaded.\""))
         }
-        return processOutputs(loadedModel, makeImageTensor(imgPath))
+        return processOutputs(loadedModel!!, makeImageTensor(imgPath))
     }
 
     private fun resizeImage(imgData: ByteArray, maxSize: Int = 300): Image {
@@ -207,6 +211,7 @@ internal class CloudletTensorFlow : DetectObjects {
         return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
     }
 
+    @Suppress("unused")
     private fun convertBufferedImageType(bufferedImage: BufferedImage): BufferedImage {
         ODLogger.logInfo("Checking image format...")
         val converted = BufferedImage(300, 300, BufferedImage.TYPE_3BYTE_BGR)
@@ -305,6 +310,7 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
     override fun loadModel(model: ODModel) {
+        clean()
         val modelPath = File(modelCacheDir, model.modelName)
         if (!checkDownloadedModel(model.modelName)) {
             val tmpFile = downloadModel(model)
@@ -348,17 +354,17 @@ internal class CloudletTensorFlow : DetectObjects {
                         "http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz",
                         checkDownloadedModel("ssdlite_mobilenet_v2_coco")
                 ),
-                ODModel(4,
+                /*ODModel(4,
                         "faster_rcnn_resnet101_coco",
                         "http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz",
                         checkDownloadedModel("faster_rcnn_resnet101_coco")
-                ),
+                ),*/
                 ODModel(5,
                         "ssd_resnet_50_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
                         checkDownloadedModel("ssd_resnet_50_fpn_coco")
-                ),
-                ODModel(
+                )//,
+                /*ODModel(
                         6,
                         "faster_rcnn_inception_resnet_v2_atrous_coco",
                         "http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28.tar.gz",
@@ -375,6 +381,6 @@ internal class CloudletTensorFlow : DetectObjects {
                         "faster_rcnn_nas_lowproposals_coco",
                         "http://download.tensorflow.org/models/object_detection/faster_rcnn_nas_lowproposals_coco_2018_01_28.tar.gz",
                         checkDownloadedModel("faster_rcnn_nas_lowproposals_coco")
-                )
+                )*/
         )
 }

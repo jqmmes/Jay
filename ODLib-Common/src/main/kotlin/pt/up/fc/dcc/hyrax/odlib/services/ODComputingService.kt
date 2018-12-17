@@ -121,6 +121,11 @@ object ODComputingService {
         if(running) localDetect.loadModel(odModel)
     }
 
+    fun modelLoaded(odModel: ODModel): Boolean {
+        if (running) return localDetect.modelLoaded(odModel)
+        return false
+    }
+
     fun configTFModel(configRequest: Pair<ODModel, HashMap<String, String>>) {
         for (key in configRequest.second.keys) {
             when (key) {
@@ -143,7 +148,7 @@ object ODComputingService {
             try {
                 result = localDetect.detectObjects(odJob.getData())
             } catch (e: Exception) {
-                ODLogger.logError("Execution failed ${e.stackTrace}")
+                ODLogger.logError("Execution_Failed ${e.stackTrace}")
             }
             synchronized(JOBS_LOCK) {
                 runningJobs.decrementAndGet()
@@ -158,29 +163,26 @@ object ODComputingService {
     private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: (
     (List<ODDetection>) -> Unit)?, val jobId: Long = 0) : Runnable {
         override fun run() {
-            ODLogger.logInfo("ODComputingService executing a job")
             synchronized(JOBS_LOCK) {
                 runningJobs.incrementAndGet()
                 StatusManager.setRunningJobs(runningJobs.get())
             }
-            ODLogger.logInfo("Running job $jobId")
+            ODLogger.logInfo("Running_Job\t$jobId")
             try {
                 if (callback != null) callback!!(localDetect.detectObjects(imageData))
-                ODLogger.logInfo("Finished running job $jobId")
+                ODLogger.logInfo("Finished_Running_Job\t$jobId")
             } catch (e: Exception) {
-                ODLogger.logError("Execution failed ${e.stackTrace}")
+                ODLogger.logError("Execution_Failed ${e.stackTrace}")
                 e.printStackTrace()
                 if (callback != null) callback!!(emptyList())
-                ODLogger.logInfo("Error running job $jobId")
+                ODLogger.logInfo("Error_Running_Job\t$jobId")
             }
-            ODLogger.logInfo("ODComputingService waiting to decrement and get")
             synchronized(JOBS_LOCK) {
                 runningJobs.decrementAndGet()
                 totalJobs.decrementAndGet()
                 StatusManager.setRunningJobs(runningJobs.get())
                 StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
             }
-            ODLogger.logInfo("ODComputingService finished executing a job")
         }
     }
 }

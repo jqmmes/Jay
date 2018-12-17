@@ -82,7 +82,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 d.labels.add(line)
                 line = br.readLine()
             }
-            br.close()*/
+            br.clean()*/
 
 
             d.inferenceInterface = MyTensorFlowInferenceInterface(assetManager, modelFilename)
@@ -203,7 +203,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         }
         //Trace.endSection() //"recognizeImage"
         ODLogger.logInfo("TensorflowObjectDetectionAPIModel closing session...")
-        //sessionInferenceInterface.close()
+        //sessionInferenceInterface.clean()
         sessionInferenceInterface.closeSession()
         ODLogger.logInfo("TensorflowObjectDetectionAPIModel closing session... Closed")
         return recognitions

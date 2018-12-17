@@ -14,10 +14,16 @@ class ODCloud {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            // Benchmark all protocols
+            // Benchmark
             if (args.isNotEmpty()) {
-                if (args[0] == "benchmark") {
-                    Benchmark.run()
+                var mModel = "all"
+                if (args.size > 1) mModel = args[1]
+                if (args[0] == "benchmark" || args[0] == "benchmark-small") {
+                    Benchmark.run(mModel = mModel)
+                    return
+                }
+                if (args[0] == "benchmark-large") {
+                    Benchmark.run("large", mModel)
                     return
                 }
                 if (args[0] == "cloudlet") {

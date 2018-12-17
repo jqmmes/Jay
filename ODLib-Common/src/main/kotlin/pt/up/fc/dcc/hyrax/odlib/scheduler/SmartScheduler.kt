@@ -83,6 +83,7 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
 
     override fun scheduleJob(job: ODJob) {
         val nextClient = getNextClient()
+        ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.second.getAddress()}\tSMART")
         val startTime = System.currentTimeMillis()
         nextClient.second.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
         if (nextClient.first) {
@@ -139,7 +140,7 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
 
     inner class RTTTimer : TimerTask() {
         override fun run() {
-            for (client in ClientManager.getRemoteODClients()!!.toList()) {
+            for (client in ClientManager.getRemoteODClients()) {
                 RTTClient.measureRTT(client, ODSettings.rttPort)
             }
             smartTimer.schedule(this, rttDelayMillis)
