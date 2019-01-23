@@ -2,6 +2,8 @@ package pt.up.fc.dcc.hyrax.odlib
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -261,6 +263,16 @@ class MainActivity : AppCompatActivity() {
         findViewById<EditText>(R.id.cloudIP).setText(ODSettings.cloudIp, TextView.BufferType.EDITABLE)
         verifyStoragePermissions(this)
         requestBatteryPermissions()
+
+
+        registerBroadcastReceiver()
+    }
+
+
+    private fun registerBroadcastReceiver(){
+        val br : BroadcastReceiver = MyBroadcastReceiver(this)
+        val filter = IntentFilter("pt.up.fc.dcc.hyrax.odlib.MainActivity.ODLibAppControl")
+        this.registerReceiver(br, filter)
     }
 
 

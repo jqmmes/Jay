@@ -18,7 +18,6 @@ dependencies {
     // Kotlin
     //noinspection DifferentStdlibGradleVersion
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.26.1'
     implementation "org.jetbrains.anko:anko:$ANKO_VERSION"
     implementation 'nl.komponents.kovenant:kovenant:3.3.0'
     // GRPC
@@ -76,11 +75,5 @@ artifacts {
 idea {
     module {
         sourceDirs += file("$buildDir/generated-sources/release/java")
-    }
-}
-
-kotlin {
-    experimental {
-        coroutines "enable"
     }
 }

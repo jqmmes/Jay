@@ -14,10 +14,6 @@ artifacts {
     archives shadowJar
 }
 
-/*jar {
-    dependsOn(":ODLib-Common")
-}*/
-
 dependencies {
     implementation fileTree(dir: 'lib', include: '*.jar')
     implementation 'org.kamranzafar:jtar:2.3'
