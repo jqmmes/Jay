@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.services
+package pt.up.fc.dcc.hyrax.odlib.services.Worker
 
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
@@ -35,7 +35,7 @@ object ODComputingService {
     }
 
     fun setWorkingThreads(threadCount: Int) {
-        this.workingThreads = threadCount
+        workingThreads = threadCount
         StatusManager.setCpuWorkers(workingThreads)
         ODLogger.logInfo("Set new threadPool thread number $threadCount. Will take effect next time service is started")
     }
@@ -50,7 +50,7 @@ object ODComputingService {
         val future = executor.submit(CallableJobObjects(localDetect, odJob))
         synchronized(JOBS_LOCK) {
             totalJobs.incrementAndGet()
-            StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
+            StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
         }
         return future.get() //wait termination
     }
@@ -61,7 +61,7 @@ object ODComputingService {
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback, jobId = jobId))
         synchronized(JOBS_LOCK) {
             totalJobs.incrementAndGet()
-            StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
+            StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
         }
         if (callback == null) return ReturnStatus.Success
         return ReturnStatus.Waiting
@@ -154,7 +154,7 @@ object ODComputingService {
                 runningJobs.decrementAndGet()
                 totalJobs.decrementAndGet()
                 StatusManager.setRunningJobs(runningJobs.get())
-                StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
+                StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
             }
             return result
         }
@@ -181,7 +181,7 @@ object ODComputingService {
                 runningJobs.decrementAndGet()
                 totalJobs.decrementAndGet()
                 StatusManager.setRunningJobs(runningJobs.get())
-                StatusManager.setIdleJobs(totalJobs.get()-runningJobs.get())
+                StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
             }
         }
     }

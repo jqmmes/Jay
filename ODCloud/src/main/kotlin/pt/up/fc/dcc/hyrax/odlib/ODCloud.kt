@@ -4,7 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
-import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 

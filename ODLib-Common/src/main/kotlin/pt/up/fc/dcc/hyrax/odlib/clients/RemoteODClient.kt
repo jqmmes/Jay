@@ -6,7 +6,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.*
 @Suppress("unused")
 open class RemoteODClient {
     private var address: String
-    private var port: Int = ODSettings.serverPort
+    private var port: Int = ODSettings.brokerPort
     private var models : MutableSet<ODModel> = HashSet()
     private lateinit var remoteClient: GRPCClient
     private var id : Long = 0
@@ -17,7 +17,7 @@ open class RemoteODClient {
         setLocalVars()
     }
 
-    constructor(address: String, port: Int = ODSettings.serverPort) {
+    constructor(address: String, port: Int = ODSettings.brokerPort) {
         this.address = address
         this.port = port
         setLocalVars()

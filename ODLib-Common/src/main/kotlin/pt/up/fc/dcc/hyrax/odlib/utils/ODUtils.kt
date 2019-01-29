@@ -82,7 +82,7 @@ object ODUtils {
     internal fun genLocalClient(): ODProto.RemoteClient? {
         return ODProto.RemoteClient.newBuilder()
                 .setAddress(NetworkUtils.getLocalIpV4(false))
-                .setPort(ODSettings.serverPort)
+                .setPort(ODSettings.brokerPort)
                 .setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4(false)))
                 .build()
     }

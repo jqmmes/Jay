@@ -14,14 +14,13 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
-import kotlinx.android.synthetic.main.activity_main.*
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.scheduler.*
-import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger

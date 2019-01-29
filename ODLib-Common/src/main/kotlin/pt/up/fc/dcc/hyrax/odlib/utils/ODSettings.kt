@@ -1,7 +1,14 @@
 package pt.up.fc.dcc.hyrax.odlib.utils
 
 object ODSettings {
-    var serverPort : Int = 50051
+
+
+    var brokerPort : Int = 50051
+    val workerPort : Int = 50052
+    val schedulerPort : Int = 50053
+    val profilerPort : Int = 50054
+
+
     const val rttPort: Int = 8888
     const val cloudIp: String = "35.204.130.183"
     const val grpcTimeout: Long = 10 //Seconds

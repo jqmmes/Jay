@@ -12,7 +12,7 @@ import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -25,7 +25,7 @@ import java.io.IOException
  *
  * Note: this file was automatically converted from Java
  */
-internal class GRPCServer(private val port: Int = ODSettings.serverPort, private val useNettyServer : Boolean = false) {
+internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private val useNettyServer : Boolean = false) {
 
     private var server: Server? = null
 

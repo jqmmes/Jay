@@ -43,7 +43,7 @@ object ClientManager {
     }
 
     fun getLocalODClient(): RemoteODClient {
-        if (!remoteODClients.contains(0L)) addOrIgnoreClient("localhost", ODSettings.serverPort)
+        if (!remoteODClients.contains(0L)) addOrIgnoreClient("localhost", ODSettings.brokerPort)
         return remoteODClients[0L]!!
     }
 

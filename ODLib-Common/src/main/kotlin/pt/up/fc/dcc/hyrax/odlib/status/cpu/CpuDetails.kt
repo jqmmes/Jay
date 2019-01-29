@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.status.cpu
 
-import pt.up.fc.dcc.hyrax.odlib.services.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
 
 object CpuDetails {
     private var avgComputationTime : Double = 0.0

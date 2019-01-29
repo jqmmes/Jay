@@ -13,11 +13,11 @@ object DatagramProcessor {
         val ois = ObjectInputStream(ByteArrayInputStream(packet.data))
         val message = ois.readObject() as AdvertisingMessage
         when (message.msgType) {
-            0 -> ClientManager.addOrIgnoreClient(NetworkUtils.getHostAddressFromPacket(packet), ODSettings.serverPort)
+            0 -> ClientManager.addOrIgnoreClient(NetworkUtils.getHostAddressFromPacket(packet), ODSettings.brokerPort)
             1 -> {
                 val clientID = ODUtils.genClientId(NetworkUtils.getHostAddressFromPacket(packet))
                 if (ClientManager.getRemoteODClient(clientID) == null) {
-                    ClientManager.addOrIgnoreClient(NetworkUtils.getHostAddressFromPacket(packet), ODSettings.serverPort)
+                    ClientManager.addOrIgnoreClient(NetworkUtils.getHostAddressFromPacket(packet), ODSettings.brokerPort)
                 }
                 ClientManager.updateStatus(clientID, ODUtils.parseDeviceStatus(message.data))
             }
