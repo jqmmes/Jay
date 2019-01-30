@@ -1,8 +1,8 @@
-package pt.up.fc.dcc.hyrax.odlib.services.Worker
+package pt.up.fc.dcc.hyrax.odlib.services.worker
 
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
-object ODComputingService {
+object WorkerService {
     private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
     private var running = false
     private var workingThreads = 1
@@ -31,7 +31,7 @@ object ODComputingService {
         executor.shutdown()
         StatusManager.setCpuWorkers(workingThreads)
         StatusManager.setQueueSize(queueSize)
-        ODLogger.logInfo("ODComputingService init")
+        ODLogger.logInfo("WorkerService init")
     }
 
     fun setWorkingThreads(threadCount: Int) {
@@ -45,8 +45,8 @@ object ODComputingService {
     }
 
     internal fun putJobAndWait(odJob: ODJob) : List<ODDetection?> {
-        ODLogger.logInfo("ODComputingService put job and wait..")
-        if (!running) throw Exception("ODComputingService not running")
+        ODLogger.logInfo("WorkerService put job and wait..")
+        if (!running) throw Exception("WorkerService not running")
         val future = executor.submit(CallableJobObjects(localDetect, odJob))
         synchronized(JOBS_LOCK) {
             totalJobs.incrementAndGet()
@@ -56,8 +56,8 @@ object ODComputingService {
     }
 
     internal fun putJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?, jobId: Long): ReturnStatus {
-        ODLogger.logInfo("ODComputingService put job into Job Queue...")
-        if (!running) throw Exception("ODComputingService not running")
+        ODLogger.logInfo("WorkerService put job into Job Queue...")
+        if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback, jobId = jobId))
         synchronized(JOBS_LOCK) {
             totalJobs.incrementAndGet()
@@ -71,18 +71,18 @@ object ODComputingService {
         Scheduler.startService(scheduler)
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)
-        ODComputingService.localDetect = localDetect
-        thread(start = true, isDaemon = true, name = "ODComputingService") {
+        WorkerService.localDetect = localDetect
+        thread(start = true, isDaemon = true, name = "WorkerService") {
             running = true
             while (running) {
                 try {
-                    ODLogger.logInfo("ODComputingService waiting for job...")
+                    ODLogger.logInfo("WorkerService waiting for job...")
                     val task = jobQueue.take()
                     if (!(executor.isShutdown || executor.isTerminated) && running) executor.execute(task)
                     else running = false
-                    ODLogger.logInfo("ODComputingService job submitted to thread pool")
+                    ODLogger.logInfo("WorkerService job submitted to thread pool")
                 } catch (e: Exception) {
-                    ODLogger.logWarn("ODComputingService error")
+                    ODLogger.logWarn("WorkerService error")
                     running = false
                 }
             }

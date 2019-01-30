@@ -11,8 +11,8 @@ import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -28,7 +28,6 @@ import java.io.IOException
 internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private val useNettyServer : Boolean = false) {
 
     private var server: Server? = null
-
 
     @Throws(IOException::class)
     fun start() : GRPCServer{
@@ -107,7 +106,7 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.AsyncRequest?, responseObserver: StreamObserver<ODProto.Status>) {
             //ODLogger.logInfo("Received putJobAsync")
-            ODComputingService.putJob(
+            WorkerService.putJob(
                     ODUtils.parseAsyncRequestImageByteArray(req),
                     { results -> ODUtils.parseAsyncRequestRemoteClient(req)!!.putResults(req!!.job.id, results) },
                     req!!.job.id
@@ -136,22 +135,22 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }
             }
-            ODComputingService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult, request!!.id)
+            WorkerService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult, request!!.id)
         }
 
         override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {
             //ODLogger.logInfo("Received listModels")
-            genericComplete(ODUtils.genModels(ODComputingService.listModels()), responseObserver)
+            genericComplete(ODUtils.genModels(WorkerService.listModels()), responseObserver)
         }
 
         override fun selectModel (request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>) {
             //ODLogger.logInfo("Received selectModel")
-            ODComputingService.loadModel(ODUtils.parseModel(request))
+            WorkerService.loadModel(ODUtils.parseModel(request))
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 
         override fun modelLoaded(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Boolean>) {
-            genericComplete(ODProto.Boolean.newBuilder().setValue(ODComputingService.modelLoaded(ODUtils.parseModel
+            genericComplete(ODProto.Boolean.newBuilder().setValue(WorkerService.modelLoaded(ODUtils.parseModel
             (request))).build(),
                     responseObserver)
         }
@@ -159,7 +158,7 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
         override fun configModel (request: ODProto.ModelConfig?, responseObserver: StreamObserver<ODProto.Status>) {
             //ODLogger.logInfo("Received configModel")
             val configRequest = ODUtils.parseModelConfig(request)
-            ODComputingService.configTFModel(configRequest)
+            WorkerService.configTFModel(configRequest)
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver)
         }
 

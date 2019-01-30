@@ -1,30 +1,29 @@
-package pt.up.fc.dcc.hyrax.odlib.scheduler
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-
+import java.util.*
 
 @Suppress("unused")
-class RemoteRoundRobinScheduler : Scheduler() {
+class RemoteRandomScheduler : Scheduler() {
     override fun destroy() {
         jobBookkeeping.clear()
     }
 
-    private var nextRemote: Int = 0
+    private var nextRemote = 0
     private val jobBookkeeping = HashMap<Long, Long>()
 
     init {
-        ODLogger.logInfo("RemoteRoundRobinScheduler starting")
+        ODLogger.logInfo("RemoteRandomScheduler starting")
     }
 
-    private fun getNextRemoteRoundRobin() : RemoteODClient? {
-        val clients = ClientManager.getRemoteODClients()
+    private fun getNextRemoteRandom() : RemoteODClient? {
+        val clients = ClientManager.getRemoteODClients(false)
         if (clients.isEmpty()) return null
-        nextRemote %= clients.size
-        return clients[nextRemote++]
+        return clients[Random().nextInt(clients.size)]
     }
 
     override fun jobCompleted(id: Long, results: List<ODDetection?>) {
@@ -33,9 +32,9 @@ class RemoteRoundRobinScheduler : Scheduler() {
     }
 
     override fun scheduleJob(job: ODJob) {
-            val nextClient = getNextRemoteRoundRobin()
+            val nextClient = getNextRemoteRandom()
             if (nextClient != null) {
-                ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.getAddress()}\tROUND_ROBIN")
+                ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.getAddress()}\tRANDOM")
                 jobBookkeeping[job.getId()] = nextClient.getId()
                 nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
                 return

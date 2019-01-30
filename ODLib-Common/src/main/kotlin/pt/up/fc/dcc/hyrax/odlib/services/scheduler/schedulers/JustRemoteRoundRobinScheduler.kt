@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.scheduler
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient

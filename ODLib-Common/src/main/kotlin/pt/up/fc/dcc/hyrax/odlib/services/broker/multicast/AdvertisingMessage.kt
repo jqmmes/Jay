@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.multicast
+package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
 import java.io.Serializable
 import java.util.*

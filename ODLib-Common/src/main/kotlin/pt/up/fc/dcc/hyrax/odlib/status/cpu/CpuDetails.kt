@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.status.cpu
 
-import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 
 object CpuDetails {
     private var avgComputationTime : Double = 0.0
@@ -23,18 +23,18 @@ object CpuDetails {
     }
 
     fun getQueueSize() : Int {
-        return ODComputingService.getQueueSize()
+        return WorkerService.getQueueSize()
     }
 
     fun getWorkingThreads() : Int {
-        return ODComputingService.getWorkingThreads()
+        return WorkerService.getWorkingThreads()
     }
 
     fun getPendingJobs() : Int {
-        return ODComputingService.getPendingJobsCount()
+        return WorkerService.getPendingJobsCount()
     }
 
     fun getRunningJobs() : Int {
-        return ODComputingService.getJobsRunningCount()
+        return WorkerService.getJobsRunningCount()
     }
 }

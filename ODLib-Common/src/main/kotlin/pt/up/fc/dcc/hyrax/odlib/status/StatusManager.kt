@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.status
 
 import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
-import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
+import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.status.cpu.CpuDetails
 import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils

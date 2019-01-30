@@ -1,7 +1,7 @@
-package pt.up.fc.dcc.hyrax.odlib.scheduler
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
+import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 

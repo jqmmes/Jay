@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.multicast
+package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils

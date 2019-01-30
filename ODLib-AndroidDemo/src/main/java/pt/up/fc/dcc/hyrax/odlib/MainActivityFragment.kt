@@ -2,15 +2,15 @@ package pt.up.fc.dcc.hyrax.odlib
 
 import android.content.Intent
 import android.graphics.Bitmap
-import android.support.v4.app.Fragment
 import android.os.Bundle
 import android.provider.MediaStore
+import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 

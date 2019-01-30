@@ -3,10 +3,12 @@ package pt.up.fc.dcc.hyrax.odlib
 import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
+import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
@@ -17,10 +19,12 @@ import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastAdvertiser
-import pt.up.fc.dcc.hyrax.odlib.multicast.MulticastListener
-import pt.up.fc.dcc.hyrax.odlib.scheduler.*
-import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.BrokerService
+import pt.up.fc.dcc.hyrax.odlib.services.SchedulerService
+import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
+import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.*
+import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -63,7 +67,7 @@ class MainActivity : AppCompatActivity() {
             ODLogger.logInfo("CPU Cores: ${SystemStats.getCpuCount()}")
             ODLogger.logInfo("Battery Status ${SystemStats.getBatteryPercentage(this)}\nCharging? ${SystemStats
                     .getBatteryCharging(this)}")
-            ODComputingService.setWorkingThreads(max(SystemStats.getCpuCount() / 2, 1))
+            WorkerService.setWorkingThreads(max(SystemStats.getCpuCount() / 2, 1))
             odClient.setScheduler(getScheduler())
             if (getScheduler() is CloudScheduler) {
                 thread {
@@ -233,7 +237,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        setSupportActionBar(toolbar)
+        //setSupportActionBar(toolbar)
 
         loggingConsole = Logger(this, findViewById(R.id.loggingConsole))
         loggingConsole.benchmark(this)
@@ -265,6 +269,22 @@ class MainActivity : AppCompatActivity() {
 
 
         registerBroadcastReceiver()
+
+
+        val brokerIntent = Intent(this, BrokerService::class.java)
+        val workerIntent = Intent(this, WorkerService::class.java)
+        val schedulerIntent = Intent(this, SchedulerService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(brokerIntent)
+            startForegroundService(workerIntent)
+            startForegroundService(schedulerIntent)
+        } else {
+            this.startService(brokerIntent)
+            this.startService(workerIntent)
+            this.startService(schedulerIntent)
+        }
+
+
     }
 
 

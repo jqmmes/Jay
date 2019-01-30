@@ -1,8 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.scheduler.LocalScheduler
-import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.LocalScheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File

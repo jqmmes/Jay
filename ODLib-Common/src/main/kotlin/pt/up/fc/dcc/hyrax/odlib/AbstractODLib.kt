@@ -3,9 +3,9 @@ package pt.up.fc.dcc.hyrax.odlib
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.scheduler.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.scheduler.LocalScheduler
-import pt.up.fc.dcc.hyrax.odlib.services.Worker.ODComputingService
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.LocalScheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -29,7 +29,7 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
     }
 
     fun setScheduler(scheduler: Scheduler) {
-        if (ODComputingService.isRunning()) {
+        if (WorkerService.isRunning()) {
             ODLogger.logWarn("Can only change scheduler with ComputingService offline")
             return
         }
@@ -38,17 +38,17 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
     }
 
     fun startODService() {
-        ODComputingService.startService(localDetector, scheduler)
+        WorkerService.startService(localDetector, scheduler)
     }
 
     fun stopODService() {
-        ODComputingService.stop()
+        WorkerService.stop()
     }
 
     fun startGRPCServer(port : Int) {
         ODSettings.brokerPort = port
         if (grpcServer == null) {
-            if (!ODComputingService.isRunning()) startODService()
+            if (!WorkerService.isRunning()) startODService()
             grpcServer = GRPCServer.startServer(port)
         }
     }
@@ -56,7 +56,7 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
     fun startGRPCServerService(port : Int = ODSettings.brokerPort, useNettyServer : Boolean = false) {
         ODSettings.brokerPort = port
         if (grpcServer == null) {
-            if (!ODComputingService.isRunning()) startODService()
+            if (!WorkerService.isRunning()) startODService()
             grpcServer = GRPCServer(port, useNettyServer).start()
         }
     }
