@@ -8,7 +8,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application>
-        <service android:name=".services.BrokerService"/>
+        <service android:name=".services.BrokerAndroidService"/>
+        <service android:name=".services.WorkerAndroidService"/>
+        <service android:name=".services.SchedulerAndroidService"/>
     </application>
 
 </manifest>

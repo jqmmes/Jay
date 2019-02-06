@@ -41,8 +41,8 @@
                     android:id="@+id/serviceToggleButton"
                     android:layout_weight="1"
                     android:onClick="serviceToggleListener"
-                    android:textOff="@string/service_off"
-                    android:textOn="@string/service_on"/>
+                    android:textOff="@string/worker_service_off"
+                    android:textOn="@string/worker_service_on"/>
 
             <ToggleButton
                     android:layout_width="wrap_content"
@@ -50,8 +50,8 @@
                     android:id="@+id/serverToggleButton"
                     android:layout_weight="1"
                     android:onClick="serverToggleListener"
-                    android:textOff="@string/server_off"
-                    android:textOn="@string/server_on"/>
+                    android:textOff="@string/scheduler_service_off"
+                    android:textOn="@string/scheduler_service_on"/>
             <ToggleButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

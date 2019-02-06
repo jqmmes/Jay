@@ -21,4 +21,8 @@
     <string name="changeCloud">Change Cloud</string>
     <string name="SmallAssets">Small Asssets</string>
     <string name="LargeAssets">Large Assets</string>
+    <string name="scheduler_service_on">Scheduler On</string>
+    <string name="scheduler_service_off">Scheduler Off</string>
+    <string name="worker_service_off">Worker Off</string>
+    <string name="worker_service_on">Worker On</string>
 </resources>

@@ -3,12 +3,10 @@ package pt.up.fc.dcc.hyrax.odlib
 import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
-import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
@@ -19,8 +17,6 @@ import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.services.BrokerService
-import pt.up.fc.dcc.hyrax.odlib.services.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.*
@@ -55,14 +51,24 @@ class MainActivity : AppCompatActivity() {
         ODLogger.logInfo("Toggle Server $start")
 
         if (start) {
+            odClient.startScheduler()
+        } else {
+            odClient.stopScheduler()
+        }
+        /*if (start) {
             findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
             toggleService(true)
-            odClient.startGRPCServerService(useNettyServer = true)
-        } else odClient.stopGRPCServer()
+            //odClient.startGRPCServerService(useNettyServer = true)
+        } else odClient.stopGRPCServer()*/
     }
 
     private fun toggleService(start: Boolean) {
-        ODLogger.logInfo("Toggle Service $start")
+        if (start) {
+            odClient.startWorker()
+        } else {
+            odClient.stopWorker()
+        }
+        /*ODLogger.logInfo("Toggle Service $start")
         if (start) {
             ODLogger.logInfo("CPU Cores: ${SystemStats.getCpuCount()}")
             ODLogger.logInfo("Battery Status ${SystemStats.getBatteryPercentage(this)}\nCharging? ${SystemStats
@@ -80,7 +86,8 @@ class MainActivity : AppCompatActivity() {
             odClient.startODService()
             Scheduler.addResultsCallback { id, results -> resultsCallback(id, results) }
 
-        } else odClient.stopODService()
+        } else odClient.stopODService()*/
+
     }
 
     private fun resultsCallback(id: Long, results: List<ODDetection?>) {
@@ -251,14 +258,14 @@ class MainActivity : AppCompatActivity() {
 
         schedulerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulerAdapter)
 
-        findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
-        findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = true
-        odClient.startGRPCServerService(useNettyServer = true)
+        findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = odClient.serviceRunningWorker()
+        findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = odClient.serviceRunningScheduler()
+        //odClient.startGRPCServerService(useNettyServer = true)
 
         val arrayList1 = ArrayList<String>()
-        for (model in odClient.listModels(false)) {
+        /*for (model in odClient.listModels(false)) {
             arrayList1.add(model.modelName)
-        }
+        }*/
 
         val adp = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayList1)
         modelSpinner.adapter = adp
@@ -268,25 +275,33 @@ class MainActivity : AppCompatActivity() {
         requestBatteryPermissions()
 
 
-        registerBroadcastReceiver()
+        //odClient.startWorker()
+        //odClient.startScheduler()
 
+        //registerBroadcastReceiver()
 
-        val brokerIntent = Intent(this, BrokerService::class.java)
-        val workerIntent = Intent(this, WorkerService::class.java)
-        val schedulerIntent = Intent(this, SchedulerService::class.java)
+        /*
+        val brokerIntent = Intent(this, BrokerAndroidService::class.java)
+        val workerIntent = Intent(this, WorkerAndroidService::class.java)
+        val schedulerIntent = Intent(this, SchedulerAndroidService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(brokerIntent)
             startForegroundService(workerIntent)
             startForegroundService(schedulerIntent)
         } else {
-            this.startService(brokerIntent)
-            this.startService(workerIntent)
-            this.startService(schedulerIntent)
-        }
+            this.start(brokerIntent)
+            this.start(workerIntent)
+            this.start(schedulerIntent)
+        }*/
 
 
     }
 
+
+    override fun onDestroy(){
+        //odClient.destroy()
+        super.onDestroy()
+    }
 
     private fun registerBroadcastReceiver(){
         val br : BroadcastReceiver = MyBroadcastReceiver(this)

@@ -126,8 +126,8 @@ object ODUtils {
         deviceStatus.cpuCores = deviceInformation.computationThreads
         deviceStatus.queueSize = deviceInformation.queueSize
         deviceStatus.runningJobs = deviceInformation.runningJobs
-        deviceStatus.pendingJobs = deviceInformation.pendingJobs
-        deviceStatus.connections = deviceInformation.connections
+        //deviceStatus.pendingJobs = deviceInformation.pendingJobs
+        //deviceStatus.connections = deviceInformation.connections
         return deviceStatus.build()
     }
 
@@ -138,8 +138,8 @@ object ODUtils {
         deviceInformation.computationThreads = deviceStatus.cpuCores
         deviceInformation.queueSize = deviceStatus.queueSize
         deviceInformation.runningJobs = deviceStatus.runningJobs
-        deviceInformation.pendingJobs = deviceStatus.pendingJobs
-        deviceInformation.connections= deviceStatus.connections
+        //deviceInformation.pendingJobs = deviceStatus.pendingJobs
+        //deviceInformation.connections= deviceStatus.connections
         return deviceInformation
     }
 

@@ -7,8 +7,8 @@ object BrokerService {
 
     private var server: GRPCServerBase? = null
 
-    fun start() {
-        server = BrokerGRPCServer().start()
+    fun start(useNettyServer: Boolean = false) {
+        server = BrokerGRPCServer(useNettyServer).start()
     }
 
     fun stop() {

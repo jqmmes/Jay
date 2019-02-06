@@ -60,23 +60,32 @@ message AsyncRequest {
 }
 
 message DeviceStatus {
-    int32 battery = 1;
-    int32 batteryStatus = 2;
+    int64 id = 1;
 
-    int32 cpuCores = 3;
-    int32 queueSize = 4;
-    int32 runningJobs = 5;
-    int32 pendingJobs = 6;
+    int32 battery = 2;
+    int32 batteryStatus = 3;
 
-    int32 connections = 7;
+    int32 cpuCores = 4;
+    int32 queueSize = 5;
+    int32 runningJobs = 6;
+
+    int32 avgTimePerJob = 7;
+
+
+    //int32 pendingJobs = 6;
+    //int32 connections = 7;
 }
 
 message Boolean {
     bool value = 1;
 }
 
+message Ping {
+    bytes data = 1;
+}
+
 service Broker {
-    rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {
+    rpc ping (Ping) returns (Ping) {
     };
     rpc executeJob (Job) returns (JobResults) {
     }; // Send to Worker
@@ -93,6 +102,7 @@ service Worker {
     rpc submitJob (Job) returns (JobResults) {
     };
 }
+
 
 service ODCommunication {
     rpc putJobAsync (AsyncRequest) returns (Status) {};

@@ -10,7 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 
-abstract class AbstractODLib (private val localDetector : DetectObjects) {
+abstract class AbstractODLib (protected val localDetector : DetectObjects) {
 
     private var grpcServer : GRPCServer? = null
     private var jobManager : Scheduler? = null
@@ -38,7 +38,7 @@ abstract class AbstractODLib (private val localDetector : DetectObjects) {
     }
 
     fun startODService() {
-        WorkerService.startService(localDetector, scheduler)
+        WorkerService.start(localDetector)
     }
 
     fun stopODService() {

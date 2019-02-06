@@ -29,8 +29,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun ping(request: Empty?, responseObserver: StreamObserver<Empty>?) {
-            genericComplete(Empty.newBuilder().build(), responseObserver)
+        override fun ping(request: ODProto.Ping, responseObserver: StreamObserver<ODProto.Ping>?) {
+            genericComplete(ODProto.Ping.newBuilder().build(), responseObserver)
         }
     }
 }

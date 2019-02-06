@@ -2,7 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.worker
 
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
@@ -26,6 +26,7 @@ object WorkerService {
     private var queueSize : Int = Int.MAX_VALUE
     private lateinit var localDetect: DetectObjects
     private val JOBS_LOCK = Object()
+    private var server: WorkerGRPCServer? = null
 
     init {
         executor.shutdown()
@@ -67,8 +68,9 @@ object WorkerService {
         return ReturnStatus.Waiting
     }
 
-    fun startService(localDetect: DetectObjects, scheduler: Scheduler) {
-        Scheduler.startService(scheduler)
+    fun start(localDetect: DetectObjects, useNettyServer: Boolean = false) {
+        server = WorkerGRPCServer(useNettyServer)
+
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)
         WorkerService.localDetect = localDetect
@@ -91,8 +93,8 @@ object WorkerService {
     }
 
     fun stop() {
-        Scheduler.stopService()
         running = false
+        if (server != null) server!!.stop()
         waitingResultsMap.clear()
         jobQueue.clear()
         jobQueue.offer(RunnableJobObjects(localDetect, ByteArray(0), {}, 0))
