@@ -13,8 +13,12 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.brokerPort, useNettyServer) {
 
     private fun runJob(host: String, request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>) {
-        WorkerGRPCClient(host).submitJob(request!!) { results ->
+        println("runJob in $host")
+        val client = WorkerGRPCClient(host)
+        client.submitJob(request!!) { results ->
             genericComplete(results, responseObserver)
+            println("runJob Complete")
+            client.shutdownNow()
         }
     }
 
@@ -24,8 +28,13 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun putJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>?) {
-            SchedulerGRPCClient("127.0.0.1").scheduleJob(request!!) { client ->
-                runJob(client.address, request, responseObserver!!)
+            println("received putJob BrokerGRPCServer")
+            //runJob("127.0.0.1", request, responseObserver!!)
+            //return
+            val client = SchedulerGRPCClient("127.0.0.1")
+            client.scheduleJob(request!!) { remoteClient ->
+                runJob(remoteClient.address, request, responseObserver!!)
+                client.shutdownNow()
             }
         }
 

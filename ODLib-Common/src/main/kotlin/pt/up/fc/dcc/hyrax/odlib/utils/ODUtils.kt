@@ -40,7 +40,7 @@ object ODUtils {
     }
 
     internal fun genStatus(status: ReturnStatus) : ODProto.Status {
-        return ODProto.Status.newBuilder().setCode(status.code).build()
+        return ODProto.Status.newBuilder().setCode(ODProto.Status.Code.forNumber(status.code)).build()
     }
 
     internal fun genModel(model : ODModel) : ODProto.Model {

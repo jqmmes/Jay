@@ -12,14 +12,13 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
     protected var channel: ManagedChannel
     abstract var blockingStub: T1
     abstract var futureStub: T2
-    protected val threadPool: ExecutorService
+    abstract val threadPool: ExecutorService
 
     init {
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                 .build()
-        threadPool = Executors.newSingleThreadExecutor()!!
     }
 
     abstract fun reconnectStubs()

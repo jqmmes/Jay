@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker
 
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
+import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
@@ -26,7 +27,7 @@ object WorkerService {
     private var queueSize : Int = Int.MAX_VALUE
     private lateinit var localDetect: DetectObjects
     private val JOBS_LOCK = Object()
-    private var server: WorkerGRPCServer? = null
+    private var server: GRPCServerBase? = null
 
     init {
         executor.shutdown()
@@ -69,7 +70,7 @@ object WorkerService {
     }
 
     fun start(localDetect: DetectObjects, useNettyServer: Boolean = false) {
-        server = WorkerGRPCServer(useNettyServer)
+        server = WorkerGRPCServer(useNettyServer).start()
 
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)

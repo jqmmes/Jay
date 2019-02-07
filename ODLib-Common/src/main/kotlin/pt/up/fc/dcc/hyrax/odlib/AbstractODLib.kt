@@ -9,12 +9,18 @@ import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import java.util.*
 
 abstract class AbstractODLib (protected val localDetector : DetectObjects) {
 
     private var grpcServer : GRPCServer? = null
     private var jobManager : Scheduler? = null
     private var scheduler : Scheduler = LocalScheduler()
+    private val uuid = UUID.randomUUID().toString()
+
+    protected fun getUUID() : String {
+        return uuid
+    }
 
     fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
         return ClientManager.getLocalODClient().getModels(onlyLoaded, true)

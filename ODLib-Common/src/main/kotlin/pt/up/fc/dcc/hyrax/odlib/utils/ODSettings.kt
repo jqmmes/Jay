@@ -4,9 +4,9 @@ object ODSettings {
 
 
     var brokerPort : Int = 50051
-    val workerPort : Int = 50052
-    val schedulerPort : Int = 50053
-    val profilerPort : Int = 50054
+    val workerPort : Int = 50053
+    val schedulerPort : Int = 50055
+    val profilerPort : Int = 50057
 
 
     const val rttPort: Int = 8888

@@ -14,15 +14,45 @@ import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.WorkerAndroidService
 import android.app.ActivityManager
-
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.os.IBinder
+import android.os.Messenger
+import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
+import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 
 
 class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
 
+
+    private val clientConnection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // This is called when the connection with the service has been
+            // established, giving us the object we can use to
+            // interact with the service.  We are communicating with the
+            // service using a Messenger, so here we get a client-side
+            // representation of that from the raw IBinder object.
+            clientService = Messenger(service)
+            clientBound = true
+        }
+
+        override fun onServiceDisconnected(className: ComponentName) {
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            clientService = null
+            clientBound = false
+        }
+    }
+
+
     init {
         DroidBatteryDetails.monitorBattery(context)
         WorkerAndroidService.setDetector(localDetector)
+        Intent(context, ClientAndroidService::class.java).also { intent -> context.bindService(intent, clientConnection, Context.BIND_AUTO_CREATE)}
     }
+
+    private var clientService : Messenger? = null
+    private var clientBound : Boolean = false
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
         val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
@@ -101,6 +131,14 @@ class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
     fun destroy() {
         stopWorker()
         stopScheduler()
+        if (clientBound) {
+            context.unbindService(clientConnection)
+            clientBound = false
+        }
+    }
+
+    fun putJob(byteArray: ByteArray) {
+        BrokerGRPCClient("127.0.0.1").putJob(byteArray)
     }
 
     companion object {

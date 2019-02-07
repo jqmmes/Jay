@@ -14,13 +14,13 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.*
-import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -32,7 +32,6 @@ import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
-import kotlin.math.max
 
 @Suppress("UNUSED_PARAMETER")
 class MainActivity : AppCompatActivity() {
@@ -147,6 +146,10 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target: View) {
         thread(name = "chooseImage CreateJob") {
+            odClient.putJob(loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}")))
+
+            return@thread
+
             val job = Scheduler.createJob(
                     loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}"))
             )

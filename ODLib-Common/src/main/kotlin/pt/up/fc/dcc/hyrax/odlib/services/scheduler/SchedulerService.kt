@@ -14,7 +14,7 @@ object SchedulerService {
     }
 
     internal fun scheduleJob(id: Long): RemoteODClient {
-        return ClientManager.getLocalODClient()
+        return RemoteODClient("127.0.0.1")
     }
 
     fun stop() {

@@ -23,13 +23,19 @@ message Job {
     bytes data = 2;
 }
 
-message JobResults {
-    repeated Detection detections = 1;
-    int64 id = 2;
+message Status {
+    enum Code {
+        Success = 0;
+        Error = 1;
+        Waiting = 2;
+    }
+    Code code = 1;
 }
 
-message Status {
-    int32 code = 1;
+message JobResults {
+    Status.Code status = 1;
+    repeated Detection detections = 2;
+    int64 id = 3;
 }
 
 message Models {
@@ -84,6 +90,24 @@ message Ping {
     bytes data = 1;
 }
 
+
+message Service {
+    enum Type {
+        SCHEDULER = 0;
+        WORKER = 1;
+    }
+    Type type = 1;
+    Boolean running = 2;
+}
+
+message ServiceStatus {
+    repeated Service service = 1;
+}
+
+message ServiceRequest {
+    repeated Service.Type type = 1;
+}
+
 service Broker {
     rpc ping (Ping) returns (Ping) {
     };
@@ -91,6 +115,7 @@ service Broker {
     }; // Send to Worker
     rpc putJob (Job) returns (JobResults) {
     }; // Send to Scheduler
+    rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
 }
 
 service Scheduler {
