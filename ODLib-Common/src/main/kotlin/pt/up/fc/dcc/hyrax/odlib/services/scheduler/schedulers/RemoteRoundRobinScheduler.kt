@@ -14,7 +14,7 @@ class RemoteRoundRobinScheduler : Scheduler() {
     }
 
     private var nextRemote: Int = 0
-    private val jobBookkeeping = HashMap<Long, Long>()
+    private val jobBookkeeping = HashMap<String, Long>()
 
     init {
         ODLogger.logInfo("RemoteRoundRobinScheduler starting")
@@ -27,7 +27,7 @@ class RemoteRoundRobinScheduler : Scheduler() {
         return clients[nextRemote++]
     }
 
-    override fun jobCompleted(id: Long, results: List<ODDetection?>) {
+    override fun jobCompleted(id: String, results: List<ODDetection?>) {
         super.jobCompleted(id, results)
         jobBookkeeping.remove(id)
     }

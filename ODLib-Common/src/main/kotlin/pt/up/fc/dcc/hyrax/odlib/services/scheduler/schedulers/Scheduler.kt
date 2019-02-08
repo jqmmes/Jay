@@ -8,7 +8,7 @@ import kotlin.concurrent.thread
 
 abstract class Scheduler {
 
-    protected open fun jobCompleted(id: Long, results: List<ODDetection?>) {
+    protected open fun jobCompleted(id: String, results: List<ODDetection?>) {
         ODLogger.logInfo("Job_Complete\t$id\n\t\t$results")
         addResults(id, results)
     }
@@ -17,8 +17,7 @@ abstract class Scheduler {
     abstract fun destroy()
 
     companion object {
-        private var jobId = 0L
-        private var jobResultsCallback : ((Long, List<ODDetection?>) -> Unit)? = null
+        private var jobResultsCallback : ((String, List<ODDetection?>) -> Unit)? = null
         private val pendingJobs = LinkedBlockingDeque<ODJob>()
         private var running: Boolean = false
         private lateinit var scheduler: Scheduler
@@ -41,28 +40,28 @@ abstract class Scheduler {
         internal fun stopService() {
             running = false
             pendingJobs.clear()
-            pendingJobs.offerFirst(ODJob(Long.MAX_VALUE, ByteArray(0)))
+            pendingJobs.offerFirst(ODJob(ByteArray(0)))
             scheduler.destroy()
         }
 
         fun createJob(data: ByteArray) : ODJob {
-            return ODJob(jobId++, data)
+            return ODJob(data)
         }
 
-        fun addResultsCallback(callback: (jobID: Long, results: List<ODDetection?>) -> Unit) {
+        fun addResultsCallback(callback: (jobID: String, results: List<ODDetection?>) -> Unit) {
             jobResultsCallback = callback
         }
 
-        fun addJob(job: ODJob): Long {
+        fun addJob(job: ODJob): String? {
             return try {
                 pendingJobs.putLast(job)
                 job.getId()
             } catch (ignore: Exception) {
-                -1L
+                null
             }
         }
 
-        internal fun addResults(jobId: Long, results: List<ODDetection?>) {
+        internal fun addResults(jobId: String, results: List<ODDetection?>) {
             if (jobResultsCallback != null) jobResultsCallback!!(jobId, results)
         }
     }

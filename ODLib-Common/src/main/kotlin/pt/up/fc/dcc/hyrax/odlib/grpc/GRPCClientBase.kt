@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
+import io.grpc.Grpc
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings

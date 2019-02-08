@@ -9,7 +9,7 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
+//import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
@@ -24,7 +24,9 @@ import java.io.IOException
  * Server that manages startup/shutdown of a `Greeter` server.
  *
  * Note: this file was automatically converted from Java
+ *
  */
+@Deprecated("GRPCServer is now split into Broker, etc")
 internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private val useNettyServer : Boolean = false) {
 
     private var server: Server? = null
@@ -34,13 +36,13 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
         ODLogger.logInfo("will start server on port $port")
         server = if (useNettyServer){
             NettyServerBuilder.forPort(port)
-                    .addService(ODCommunicationImpl())
+                    //.addService(ODCommunicationImpl())
                     .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                     .build()
                     .start()
         } else {
             ServerBuilder.forPort(port)
-                    .addService(ODCommunicationImpl())
+                    //.addService(ODCommunicationImpl())
                     .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                     .build()
                     .start()
@@ -94,7 +96,7 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
             ODLogger.logError("GRPCServer context canceled")
         }
     }
-
+/*
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
         override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
@@ -171,5 +173,5 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
             //ODLogger.logInfo("Received getStatus")
             genericComplete(ODUtils.genDeviceStatus(StatusManager.getDeviceInformation()), responseObserver)
         }
-    }
+    }*/
 }

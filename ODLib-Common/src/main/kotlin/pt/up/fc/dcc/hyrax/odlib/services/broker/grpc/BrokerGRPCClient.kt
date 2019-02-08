@@ -20,6 +20,6 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerGrpc.BrokerBlockingS
 
     fun putJob(data: ByteArray) {
         println("putJob BrokerGRPCClient")
-        blockingStub.putJob(ODUtils.genJobRequest(0, data))
+        blockingStub.putJob(ODUtils.genJobRequest("", data))
     }
 }

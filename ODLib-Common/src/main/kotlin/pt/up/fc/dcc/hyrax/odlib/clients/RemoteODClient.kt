@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.clients
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.*
 
+@Deprecated("Will be RemoteClient")
 @Suppress("unused")
 open class RemoteODClient {
     private var address: String
@@ -78,7 +79,8 @@ open class RemoteODClient {
     }
 
     open fun detectObjects(odJob: ODJob) : List<ODDetection?>{
-        return ODUtils.parseResults(remoteClient.putJobSync(odJob.getId(), odJob.getData()))
+        //return ODUtils.parseResults(remoteClient.putJobSync(odJob.getId(), odJob.getData()))
+        return ODUtils.parseResults(null)
     }
 
     fun putResults(id: Long, results : List<ODDetection?>) {
@@ -87,7 +89,7 @@ open class RemoteODClient {
 
     open fun asyncDetectObjects(odJob: ODJob, callback: (List<ODDetection?>) -> Unit) {
         //remoteClient.putJobAsync(odJob.getId(), odJob.getData(), callback)
-        remoteClient.putJobCloudAsync(odJob.getId(), odJob.getData(), callback)
+        //remoteClient.putJobCloudAsync(odJob.getId(), odJob.getData(), callback)
     }
 
     fun sayHello() {

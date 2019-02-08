@@ -5,21 +5,13 @@ option java_outer_classname = "ODProto";
 import "google/protobuf/empty.proto";
 
 
-message Box {
-    float top_1 = 1;
-    float top_2 = 2 ;
-    float bottom_1 = 3;
-    float bottom_2 = 4;
-}
-
 message Detection {
     float score = 1;
-    Box box = 2;
     int32 class = 3;
 }
 
 message Job {
-    int64 id = 1;
+    string id = 1; // uuid
     bytes data = 2;
 }
 
@@ -35,7 +27,7 @@ message Status {
 message JobResults {
     Status.Code status = 1;
     repeated Detection detections = 2;
-    int64 id = 3;
+    string id = 3; // uuid
 }
 
 message Models {
@@ -50,7 +42,7 @@ message Model {
 }
 
 message RemoteClient {
-    int64 id = 1;
+    string id = 1;  // uuid
     string address = 2;
     int32 port = 3;
 }
@@ -66,7 +58,7 @@ message AsyncRequest {
 }
 
 message DeviceStatus {
-    int64 id = 1;
+    string id = 1; // uuid
 
     int32 battery = 2;
     int32 batteryStatus = 3;
@@ -76,10 +68,10 @@ message DeviceStatus {
     int32 runningJobs = 6;
 
     int32 avgTimePerJob = 7;
+}
 
-
-    //int32 pendingJobs = 6;
-    //int32 connections = 7;
+message NetworkStatus {
+    repeated DeviceStatus deviceStatus = 1;
 }
 
 message Boolean {
@@ -109,27 +101,25 @@ message ServiceRequest {
 }
 
 service Broker {
-    rpc ping (Ping) returns (Ping) {
-    };
-    rpc executeJob (Job) returns (JobResults) {
-    }; // Send to Worker
-    rpc putJob (Job) returns (JobResults) {
-    }; // Send to Scheduler
+    rpc ping (Ping) returns (Ping) {};
+    rpc executeJob (Job) returns (JobResults) {}; // Send to Worker
+    rpc putJob (Job) returns (JobResults) {}; // Send to Scheduler
     rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
+    rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
 }
 
 service Scheduler {
-    rpc scheduleJob (Job) returns (RemoteClient) {
-    };
+    rpc scheduleJob (Job) returns (RemoteClient) {};
+    rpc updateNetworkStatus (NetworkStatus) returns (Status) {};
 }
 
 service Worker {
-    rpc submitJob (Job) returns (JobResults) {
-    };
+    rpc submitJob (Job) returns (JobResults) {};
+    //rpc getWorkerStatus () returns () {};
 }
 
 
-service ODCommunication {
+/*service ODCommunication {
     rpc putJobAsync (AsyncRequest) returns (Status) {};
     rpc putResultAsync (JobResults) returns (Status) {};
 
@@ -138,10 +128,9 @@ service ODCommunication {
     rpc listModels (google.protobuf.Empty) returns (Models) {};
     rpc selectModel (Model) returns (Status) {};
     rpc configModel (ModelConfig) returns (Status) {};
-    rpc modelLoaded (Model) returns (Boolean) {
-    };
+    rpc modelLoaded (Model) returns (Boolean) {};
 
     rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
     rpc sayHello (RemoteClient) returns (Status) {};
     rpc getStatus (google.protobuf.Empty) returns (DeviceStatus);
-}
+}*/

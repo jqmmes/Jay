@@ -2,10 +2,12 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 import java.util.*
 
-data class ODJob(private val jobID: Long, private val data: ByteArray) {
+data class ODJob(private val data: ByteArray) {
 
-    fun getId() : Long{
-        return jobID
+    private val jobId = UUID.randomUUID().toString()
+
+    fun getId(): String {
+        return jobId
     }
 
     fun getData() : ByteArray {
@@ -18,14 +20,14 @@ data class ODJob(private val jobID: Long, private val data: ByteArray) {
 
         other as ODJob
 
-        if (jobID != other.jobID) return false
+        if (jobId != other.jobId) return false
         if (!Arrays.equals(data, other.data)) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = jobID.hashCode()
+        var result = jobId.hashCode()
         result = 31 * result + Arrays.hashCode(data)
         return result
     }

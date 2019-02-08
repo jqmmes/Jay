@@ -21,14 +21,12 @@ abstract class GRPCServerBase(private val port: Int,
         ODLogger.logInfo("will start server on port $port")
         server = if (useNettyServer) {
             NettyServerBuilder.forPort(port)
-                    //.addService(ODCommunicationImpl())
                     .addService(grpcImpl)
                     .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                     .build()
                     .start()
         } else {
             ServerBuilder.forPort(port)
-                    //.addService(ODCommunicationImpl())
                     .addService(grpcImpl)
                     .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                     .build()
@@ -51,6 +49,7 @@ abstract class GRPCServerBase(private val port: Int,
     /**
      * Await termination on the main thread since the grpc library uses daemon threads.
      */
+    @Suppress("unused")
     @Throws(InterruptedException::class)
     private fun blockUntilShutdown() {
         server?.awaitTermination()

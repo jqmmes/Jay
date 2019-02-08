@@ -10,7 +10,7 @@ class LocalScheduler : Scheduler() {
         executingJobs.clear()
     }
 
-    private val executingJobs = HashMap<Long, ODJob>()
+    private val executingJobs = HashMap<String, ODJob>()
 
     init {
         ODLogger.logInfo("Starting LocalScheduler...")

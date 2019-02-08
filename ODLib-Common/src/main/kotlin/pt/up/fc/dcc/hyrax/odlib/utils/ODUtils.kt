@@ -30,7 +30,7 @@ object ODUtils {
                 .build()
     }
 
-    internal fun genResults(id: Long, results: List<ODDetection?>) : ODProto.JobResults {
+    internal fun genResults(id: String, results: List<ODDetection?>) : ODProto.JobResults {
         val builder = ODProto.JobResults.newBuilder()
                 .setId(id)
         for (detection in results) {
@@ -56,7 +56,7 @@ object ODUtils {
         return ODModel(model!!.id, model.name, model.url, model.downloaded)
     }
 
-    internal fun genJobRequest(imgId: Long, imgData : ByteArray) : ODProto.Job {
+    internal fun genJobRequest(imgId: String, imgData: ByteArray) : ODProto.Job {
         return ODProto.Job.newBuilder().setId(imgId).setData(ByteString.copyFrom(imgData)).build()
     }
 
@@ -83,7 +83,8 @@ object ODUtils {
         return ODProto.RemoteClient.newBuilder()
                 .setAddress(NetworkUtils.getLocalIpV4(false))
                 .setPort(ODSettings.brokerPort)
-                .setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4(false)))
+                //.setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4(false)))
+                .setId("")
                 .build()
     }
 
@@ -97,7 +98,7 @@ object ODUtils {
         return 0
     }
 
-    fun genAsyncRequest(id: Long, data: ByteArray): ODProto.AsyncRequest? {
+    fun genAsyncRequest(id: String, data: ByteArray): ODProto.AsyncRequest? {
         return  ODProto.AsyncRequest.newBuilder()
                 .setJob(genJobRequest(id, data))
                 .setRemoteClient(genLocalClient())

@@ -19,7 +19,8 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
             val client = ODProto.RemoteClient.newBuilder()
             .setAddress("127.0.0.1")
                     .setPort(ODSettings.brokerPort)
-                    .setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4(false)))
+                    //.setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4(false)))
+                    .setId("")
                     .build()
             genericComplete(client, responseObserver!!)
         }

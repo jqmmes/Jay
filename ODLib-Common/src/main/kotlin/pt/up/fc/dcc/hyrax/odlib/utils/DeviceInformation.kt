@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
 
+@Deprecated("Will be integrated in RemoteClient")
 class DeviceInformation (var battery: Int = 100,
                          var batteryStatus: BatteryStatus = BatteryStatus.CHARGED,
                          var deviceTemperature: Float = 0.0f,

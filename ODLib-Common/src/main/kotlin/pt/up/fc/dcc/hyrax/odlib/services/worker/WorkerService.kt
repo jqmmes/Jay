@@ -57,7 +57,7 @@ object WorkerService {
         return future.get() //wait termination
     }
 
-    internal fun putJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?, jobId: Long): ReturnStatus {
+    internal fun putJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?, jobId: String): ReturnStatus {
         ODLogger.logInfo("WorkerService put job into Job Queue...")
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback, jobId = jobId))
@@ -98,7 +98,7 @@ object WorkerService {
         if (server != null) server!!.stop()
         waitingResultsMap.clear()
         jobQueue.clear()
-        jobQueue.offer(RunnableJobObjects(localDetect, ByteArray(0), {}, 0))
+        jobQueue.offer(RunnableJobObjects(localDetect, ByteArray(0), {}))
         executor.shutdownNow()
     }
 
@@ -164,7 +164,7 @@ object WorkerService {
     }
 
     private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: (
-    (List<ODDetection>) -> Unit)?, val jobId: Long = 0) : Runnable {
+    (List<ODDetection>) -> Unit)?, val jobId: String? = null) : Runnable {
         override fun run() {
             synchronized(JOBS_LOCK) {
                 runningJobs.incrementAndGet()
