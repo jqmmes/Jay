@@ -1,8 +1,8 @@
-package pt.up.fc.dcc.hyrax.odlib.status.battery
+package pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery
 
 import android.content.Context
 import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
-import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
 import java.lang.Thread.sleep
 import kotlin.concurrent.thread

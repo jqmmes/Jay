@@ -1,13 +1,14 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
-import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ConcurrentHashMap
 
+@Deprecated("Will be Managed locally")
 @Suppress("unused")
 object ClientManager {
 
@@ -23,7 +24,7 @@ object ClientManager {
         var newClient : RemoteODClient? = null
         synchronized(NEW_CLIENT_LOCK) {
             if (!remoteODClients.containsKey(clientId)) {
-                ODLogger.logInfo("new Client found $clientId")
+                ODLogger.logInfo("new Worker found $clientId")
                 newClient = RemoteODClient(if (clientId != 0L) Ip else "localhost", port)
                 if (newClient!!.ping()) {
                     remoteODClients[clientId] = newClient!!

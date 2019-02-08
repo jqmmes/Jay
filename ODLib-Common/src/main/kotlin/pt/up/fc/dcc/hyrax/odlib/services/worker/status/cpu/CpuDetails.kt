@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.status.cpu
+package pt.up.fc.dcc.hyrax.odlib.services.worker.status.cpu
 
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 

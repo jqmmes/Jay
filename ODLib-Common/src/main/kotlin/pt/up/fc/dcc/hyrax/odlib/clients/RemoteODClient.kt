@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.clients
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.*
 
-@Deprecated("Will be Client")
+@Deprecated("Will be Worker")
 @Suppress("unused")
 open class RemoteODClient {
     private var address: String

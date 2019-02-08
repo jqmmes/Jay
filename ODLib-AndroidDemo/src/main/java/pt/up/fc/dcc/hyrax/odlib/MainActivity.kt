@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
 
     fun chooseImage(target: View) {
         thread(name = "chooseImage CreateJob") {
-            odClient.putJob(loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}")))
+            odClient.scheduleJob(loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}")))
 
             return@thread
 

@@ -15,7 +15,7 @@ message Job {
     bytes data = 2;
 }
 
-message Status {
+message RequestStatus {
     enum Code {
         Success = 0;
         Error = 1;
@@ -25,7 +25,7 @@ message Status {
 }
 
 message JobResults {
-    Status.Code status = 1;
+    RequestStatus.Code status = 1;
     repeated Detection detections = 2;
     string id = 3; // uuid
 }
@@ -41,10 +41,8 @@ message Model {
     bool downloaded = 4;
 }
 
-message RemoteClient {
+message WorkerId {
     string id = 1;  // uuid
-    string address = 2;
-    int32 port = 3;
 }
 
 message ModelConfig {
@@ -54,7 +52,7 @@ message ModelConfig {
 
 message AsyncRequest {
     Job job = 1;
-    RemoteClient remoteClient = 2;
+    string id = 2;
 }
 
 message WorkerStatus {
@@ -73,6 +71,7 @@ message WorkerStatus {
 
 message Ping {
     bytes data = 1;
+    bool reply = 2;
 }
 
 
@@ -82,7 +81,7 @@ message Service {
         WORKER = 1;
     }
     Type type = 1;
-    Boolean running = 2;
+    bool running = 2;
 }
 
 message ServiceStatus {
@@ -96,18 +95,20 @@ message ServiceRequest {
 service Broker {
     rpc ping (Ping) returns (Ping) {};
     rpc executeJob (Job) returns (JobResults) {}; // Send to Worker
-    rpc putJob (Job) returns (JobResults) {}; // Send to Scheduler
-    rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
-    rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
-    rpc advertiseWorkerStatus(WorkerStatus) returns (Status) {}; // Worker > Broker, Broker Externo > Broker
+    rpc scheduleJob (Job) returns (JobResults) {}; // Send to Scheduler
+    //rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
+    //rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
+    rpc advertiseWorkerStatus(WorkerStatus) returns (RequestStatus) {}; // Broker Externo > Broker
+    rpc diffuseWorkerStatus(WorkerStatus) returns (RequestStatus) {}; // Worker > Broker
+    rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {};
 }
 
 service Scheduler { // Broker interno > Scheduler
-    rpc scheduleJob (Job) returns (RemoteClient) {};
-    rpc notify(WorkerStatus) returns (Status) {}; 
+    rpc schedule (Job) returns (WorkerId) {};
+    rpc notify (WorkerStatus) returns (RequestStatus) {};
 }
 
 service Worker { // Broker interno > Worker
-    rpc submitJob (Job) returns (JobResults) {};
+    rpc execute (Job) returns (JobResults) {};
 }
 

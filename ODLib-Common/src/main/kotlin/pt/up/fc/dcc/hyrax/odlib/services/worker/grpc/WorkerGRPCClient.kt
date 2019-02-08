@@ -18,11 +18,9 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerGrpc.WorkerBlockingS
         futureStub = WorkerGrpc.newFutureStub(channel)
     }
 
-    fun submitJob(job: ODProto.Job, callback: (ODProto.JobResults) -> Unit) {
-        println("WorkerGRPCClient submitJob")
-        blockingStub.submitJob(job)
-        return
-        val futureJob = futureStub.submitJob(job)
-        futureJob.addListener({ callback(futureJob.get()) }, { J -> threadPool.submit(J) })
+    fun execute(job: ODProto.Job?, callback: ((ODProto.JobResults) -> Unit)? = null) {
+        println("WorkerGRPCClient queueJob")
+        val futureJob = futureStub.execute(job)
+        futureJob.addListener({ if (callback != null) callback(futureJob.get()) }, { J -> threadPool.submit(J) })
     }
 }

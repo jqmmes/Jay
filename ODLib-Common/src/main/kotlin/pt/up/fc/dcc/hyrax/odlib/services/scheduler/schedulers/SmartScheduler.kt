@@ -5,8 +5,8 @@ import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
-import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
-import pt.up.fc.dcc.hyrax.odlib.status.network.rtt.RTTClient
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.network.rtt.RTTClient
 import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger

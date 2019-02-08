@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.interfaces
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import java.io.File
+import java.io.Serializable
 
 interface DetectObjects {
     var minimumScore: Float

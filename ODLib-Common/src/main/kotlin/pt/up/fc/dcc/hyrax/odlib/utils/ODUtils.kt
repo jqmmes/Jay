@@ -39,11 +39,11 @@ object ODUtils {
         return builder.build()
     }
 
-    internal fun genStatus(status: ReturnStatus) : ODProto.Status {
-        return ODProto.Status.newBuilder().setCode(ODProto.Status.Code.forNumber(status.code)).build()
-    }
+    /*internal fun genStatus(status: ReturnStatus) : ODProto.RequestStatus {
+        return ODProto.RequestStatus.newBuilder().setCode(ODProto.RequestStatus.Code.forNumber(status.code)).build()
+    }*/
 
-    internal fun genModel(model : ODModel) : ODProto.Model {
+    /*internal fun genModel(model : ODModel) : ODProto.Model {
         return ODProto.Model.newBuilder()
                 .setId(model.modelId)
                 .setName(model.modelName)
@@ -54,24 +54,24 @@ object ODUtils {
 
     internal fun parseModel(model: ODProto.Model?) : ODModel {
         return ODModel(model!!.id, model.name, model.url, model.downloaded)
-    }
+    }*/
 
     internal fun genJobRequest(job: ODJob) : ODProto.Job {
         return ODProto.Job.newBuilder().setId(job.id).setData(ByteString.copyFrom(job.data)).build()
     }
 
-    internal fun parseModelConfig(modelConfig: ODProto.ModelConfig?) : Pair<ODModel, HashMap<String, String>> {
+    /*internal fun parseModelConfig(modelConfig: ODProto.ModelConfig?) : Pair<ODModel, HashMap<String, String>> {
         return Pair(parseModel(modelConfig!!.model), HashMap(modelConfig.configsMap))
     }
 
     internal fun parseAsyncRequestImageByteArray(asyncRequest: ODProto.AsyncRequest?) : ByteArray {
         return asyncRequest!!.job.data.toByteArray()
-    }
+    }*/
 
-    internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
+    /*internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
         val clientId = if (NetworkUtils.getLocalIpV4(false) == asyncRequest!!.remoteClient.address) 0 else ODUtils.genClientId(asyncRequest.remoteClient.address)
         return ClientManager.getRemoteODClient(clientId)
-    }
+    }*/
 
     internal fun genModelConfig(configs: Map<String, String>) : ODProto.ModelConfig {
         return ODProto.ModelConfig.newBuilder()
@@ -79,14 +79,14 @@ object ODUtils {
                 .build()
     }
 
-    internal fun genLocalClient(): ODProto.RemoteClient? {
+    /*internal fun genLocalClient(): ODProto.RemoteClient? {
         return ODProto.RemoteClient.newBuilder()
                 .setAddress(NetworkUtils.getLocalIpV4(false))
                 .setPort(ODSettings.brokerPort)
                 //.setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4(false)))
                 .setId("")
                 .build()
-    }
+    }*/
 
     internal fun genClientId(ipV4: String): Long {
         try {
@@ -101,11 +101,11 @@ object ODUtils {
     fun genAsyncRequest(id: String, data: ByteArray): ODProto.AsyncRequest? {
         return  ODProto.AsyncRequest.newBuilder()
                 //.setJob(genJobRequest(id, data))
-                .setRemoteClient(genLocalClient())
+                //.setRemoteClient(genLocalClient())
                 .build()
     }
 
-    fun parseModels(result: ODProto.Models?): Set<ODModel> {
+    /*fun parseModels(result: ODProto.Models?): Set<ODModel> {
         val parsedResults : HashSet<ODModel> = HashSet()
         for (rawModel in 0 until result!!.modelsCount) {
             parsedResults.add(parseModel(result.getModels(rawModel)))
@@ -118,10 +118,10 @@ object ODUtils {
         for (iterator in listModels)
             builder.addModels(genModel(iterator))
         return builder.build()
-    }
+    }*/
 
-    fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.DeviceStatus {
-        val deviceStatus = ODProto.DeviceStatus.newBuilder()
+    fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.WorkerStatus {
+        val deviceStatus = ODProto.WorkerStatus.newBuilder()
         deviceStatus.battery = deviceInformation.battery
         deviceStatus.batteryStatus = deviceInformation.batteryStatus.status
         deviceStatus.cpuCores = deviceInformation.computationThreads
@@ -130,9 +130,10 @@ object ODUtils {
         //deviceStatus.pendingJobs = deviceInformation.pendingJobs
         //deviceStatus.connections = deviceInformation.connections
         return deviceStatus.build()
+
     }
 
-    fun parseDeviceStatus(deviceStatus: ODProto.DeviceStatus) : DeviceInformation {
+    fun parseDeviceStatus(deviceStatus: ODProto.WorkerStatus) : DeviceInformation {
         val deviceInformation = DeviceInformation()
         deviceInformation.battery = deviceStatus.battery
         deviceInformation.batteryStatus.status = deviceStatus.batteryStatus
@@ -145,7 +146,7 @@ object ODUtils {
     }
 
     fun parseDeviceStatus(data: ByteArray): DeviceInformation {
-        val deviceStatus = ODProto.DeviceStatus.parseFrom(data)
+        val deviceStatus = ODProto.WorkerStatus.parseFrom(data)
         return parseDeviceStatus(deviceStatus)
     }
 }

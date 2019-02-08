@@ -4,11 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.support.v4.app.NotificationCompat
-import pt.up.fc.dcc.hyrax.odlib.tensorflow.DroidTensorFlow
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import pt.up.fc.dcc.hyrax.odlib.status.battery.DroidBatteryDetails
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.DroidBatteryDetails
 import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
@@ -19,11 +18,9 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.Messenger
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
-import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 
 
-class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
+class ODLib(val context : Context) : AbstractODLib() {
 
 
     private val clientConnection = object : ServiceConnection {
@@ -48,7 +45,7 @@ class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
 
     init {
         DroidBatteryDetails.monitorBattery(context)
-        WorkerAndroidService.setDetector(localDetector)
+        //WorkerAndroidService.setDetector(localDetector)
         Intent(context, ClientAndroidService::class.java).also { intent -> context.bindService(intent, clientConnection, Context.BIND_AUTO_CREATE)}
     }
 
@@ -66,7 +63,7 @@ class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
     }
 
 
-    private fun startBroker() {
+    override fun startBroker() {
         if (serviceRunningBroker()) return
         val brokerIntent = Intent(context, BrokerAndroidService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -76,7 +73,7 @@ class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
         }
     }
 
-    fun startScheduler() {
+    override fun startScheduler() {
         startBroker()
         if (serviceRunningScheduler()) return
         val schedulerIntent = Intent(context, SchedulerAndroidService::class.java)
@@ -87,7 +84,7 @@ class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
         }
     }
 
-    fun startWorker() {
+    override fun startWorker() {
         startBroker()
         if (serviceRunningWorker()) return
         val workerIntent = Intent(context, WorkerAndroidService::class.java)
@@ -110,39 +107,36 @@ class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
         return isMyServiceRunning(SchedulerAndroidService::class.java)
     }
 
-    private fun stopBroker() {
+    override fun stopBroker() {
         if (!serviceRunningBroker()) return
         context.stopService(Intent(context, BrokerAndroidService::class.java))
     }
 
-    fun stopWorker() {
+    override fun stopWorker() {
         if (!serviceRunningWorker()) return
         context.stopService(Intent(context, WorkerAndroidService::class.java))
         if (!serviceRunningScheduler()) stopBroker()
 
     }
 
-    fun stopScheduler() {
+    override fun stopScheduler() {
         if (!serviceRunningScheduler()) return
         context.stopService(Intent(context, SchedulerAndroidService::class.java))
         if (!serviceRunningWorker()) stopBroker()
     }
 
 
-    fun destroy() {
-        stopWorker()
-        stopScheduler()
+    override fun destroy() {
+        super.destroy()
         if (clientBound) {
             context.unbindService(clientConnection)
             clientBound = false
         }
     }
 
-    fun putJob(byteArray: ByteArray) {
-        BrokerGRPCClient("127.0.0.1").putJob(ODJob(byteArray))
-    }
 
-    companion object {
+
+    internal companion object {
         private var notifyID = 1
         private val CHANNEL_ID = "my_channel_01"// The id of the channel.
         private val name = "BrokerChannel"// The user-visible name of the channel.

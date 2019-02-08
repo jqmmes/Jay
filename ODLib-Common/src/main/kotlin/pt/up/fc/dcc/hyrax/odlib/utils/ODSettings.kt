@@ -16,5 +16,6 @@ object ODSettings {
     const val grpcShortTimeout: Long = 500 //Milliseconds
     const val grpcMaxMessageSize: Int = 150000000
     const val RTTHistorySize: Int = 5
-    const val RTTDelayMillis: Long = 15000L
+    const val RTTDelayMillis: Long = 15000L // 15s
+    const val pingPayloadSize: Int = 32000 // 32Kb
 }

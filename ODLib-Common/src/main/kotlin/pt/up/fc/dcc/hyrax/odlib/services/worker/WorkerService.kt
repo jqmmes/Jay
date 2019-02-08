@@ -3,13 +3,12 @@ package pt.up.fc.dcc.hyrax.odlib.services.worker
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
-import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -28,6 +27,7 @@ object WorkerService {
     private lateinit var localDetect: DetectObjects
     private val JOBS_LOCK = Object()
     private var server: GRPCServerBase? = null
+    private var brokerGRPC = BrokerGRPCClient("127.0.0.1")
 
     init {
         executor.shutdown()
@@ -46,18 +46,7 @@ object WorkerService {
         return running
     }
 
-    internal fun putJobAndWait(odJob: ODJob) : List<ODDetection?> {
-        ODLogger.logInfo("WorkerService put job and wait..")
-        if (!running) throw Exception("WorkerService not running")
-        val future = executor.submit(CallableJobObjects(localDetect, odJob))
-        synchronized(JOBS_LOCK) {
-            totalJobs.incrementAndGet()
-            StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
-        }
-        return future.get() //wait termination
-    }
-
-    internal fun putJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?, jobId: String): ReturnStatus {
+    internal fun queueJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?, jobId: String): ReturnStatus {
         ODLogger.logInfo("WorkerService put job into Job Queue...")
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback, jobId = jobId))
@@ -74,7 +63,7 @@ object WorkerService {
 
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)
-        WorkerService.localDetect = localDetect
+        this.localDetect = localDetect
         thread(start = true, isDaemon = true, name = "WorkerService") {
             running = true
             while (running) {
@@ -91,6 +80,8 @@ object WorkerService {
             }
             if (!executor.isShutdown) executor.shutdownNow()
         }
+
+        loadModel(listModels().first())
     }
 
     fun stop() {
@@ -141,28 +132,6 @@ object WorkerService {
         return localDetect.models.toSet()
     }
 
-    private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODDetection>> {
-        override fun call(): List<ODDetection> {
-            synchronized(JOBS_LOCK) {
-                runningJobs.incrementAndGet()
-                StatusManager.setRunningJobs(runningJobs.get())
-            }
-            var result = emptyList<ODDetection>()
-            try {
-                result = localDetect.detectObjects(odJob.data)
-            } catch (e: Exception) {
-                ODLogger.logError("Execution_Failed ${e.stackTrace}")
-            }
-            synchronized(JOBS_LOCK) {
-                runningJobs.decrementAndGet()
-                totalJobs.decrementAndGet()
-                StatusManager.setRunningJobs(runningJobs.get())
-                StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
-            }
-            return result
-        }
-    }
-
     private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: (
     (List<ODDetection>) -> Unit)?, val jobId: String? = null) : Runnable {
         override fun run() {
@@ -188,4 +157,40 @@ object WorkerService {
             }
         }
     }
+
+
+    /*
+    internal fun putJobAndWait(odJob: ODJob) : List<ODDetection?> {
+    ODLogger.logInfo("WorkerService put job and wait..")
+    if (!running) throw Exception("WorkerService not running")
+    val future = executor.submit(CallableJobObjects(localDetect, odJob))
+    synchronized(JOBS_LOCK) {
+        totalJobs.incrementAndGet()
+        StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
+    }
+    return future.get() //wait termination
+    }
+
+    private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODDetection>> {
+        override fun call(): List<ODDetection> {
+            synchronized(JOBS_LOCK) {
+                runningJobs.incrementAndGet()
+                StatusManager.setRunningJobs(runningJobs.get())
+            }
+            var result = emptyList<ODDetection>()
+            try {
+                result = localDetect.detectObjects(odJob.data)
+            } catch (e: Exception) {
+                ODLogger.logError("Execution_Failed ${e.stackTrace}")
+            }
+            synchronized(JOBS_LOCK) {
+                runningJobs.decrementAndGet()
+                totalJobs.decrementAndGet()
+                StatusManager.setRunningJobs(runningJobs.get())
+                StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
+            }
+            return result
+        }
+    }
+    */
 }

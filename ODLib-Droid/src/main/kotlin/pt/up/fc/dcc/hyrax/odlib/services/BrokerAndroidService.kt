@@ -3,12 +3,10 @@ package pt.up.fc.dcc.hyrax.odlib.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.support.v4.app.NotificationCompat
 import pt.up.fc.dcc.hyrax.odlib.ODLib
-import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 
-internal class BrokerAndroidService : Service() {
+internal class BrokerAndroidService() : Service() {
 
     override fun onCreate() {
         super.onCreate()

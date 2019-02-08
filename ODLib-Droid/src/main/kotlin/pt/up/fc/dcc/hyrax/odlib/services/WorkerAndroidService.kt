@@ -3,28 +3,21 @@ package pt.up.fc.dcc.hyrax.odlib.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.support.v4.app.NotificationCompat
 import pt.up.fc.dcc.hyrax.odlib.ODLib
-import pt.up.fc.dcc.hyrax.odlib.R
-import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
+import pt.up.fc.dcc.hyrax.odlib.tensorflow.DroidTensorFlow
 
 internal class WorkerAndroidService : Service() {
 
-
-    companion object {
-        private var localDetector : DetectObjects? = null
-        internal fun setDetector(detector: DetectObjects) {
-            localDetector = detector
-        }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        WorkerService.start(DroidTensorFlow(this), true)
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onCreate() {
         super.onCreate()
-
         val notification = ODLib.makeNotification(this, "Worker Service", "Service Running")
         startForeground(notification.first, notification.second)
-        if (localDetector != null) WorkerService.start(localDetector!!, true)
     }
 
 

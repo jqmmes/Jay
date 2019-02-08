@@ -1,23 +1,14 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
-import com.google.protobuf.Empty
 import io.grpc.Context
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
-import pt.up.fc.dcc.hyrax.odlib.interfaces.JobResultCallback
 //import pt.up.fc.dcc.hyrax.odlib.protoc.ODCommunicationGrpc
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.odlib.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.io.IOException
 
 /**
@@ -99,7 +90,7 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
 /*
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
-        override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Client?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
+        override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
             //ODLogger.logInfo("Received seyHello")
             ClientManager.addOrIgnoreClient(request!!.address, request.port)
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)
@@ -108,7 +99,7 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
         // Just send to odService and return
         override fun putJobAsync(req: ODProto.AsyncRequest?, responseObserver: StreamObserver<ODProto.Status>) {
             //ODLogger.logInfo("Received putJobAsync")
-            WorkerService.putJob(
+            WorkerService.queueJob(
                     ODUtils.parseAsyncRequestImageByteArray(req),
                     { results -> ODUtils.parseAsyncRequestRemoteClient(req)!!.putResults(req!!.job.id, results) },
                     req!!.job.id
@@ -137,7 +128,7 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
                     genericComplete(ODUtils.genResults(id, resultList), responseObserver)
                 }
             }
-            WorkerService.putJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult, request!!.id)
+            WorkerService.queueJob(request!!.data.toByteArray(), ResultCallback(request.id)::onNewResult, request!!.id)
         }
 
         override fun listModels (request: Empty, responseObserver: StreamObserver<ODProto.Models>) {

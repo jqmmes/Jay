@@ -7,13 +7,13 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.*
 
-class Client(val id: String = UUID.randomUUID().toString(), address: String){
+class Worker(val id: String = UUID.randomUUID().toString(), address: String){
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Client
+        other as Worker
 
         if (id != other.id) return false
 
