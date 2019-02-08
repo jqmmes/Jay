@@ -131,6 +131,6 @@ service Worker {
     rpc modelLoaded (Model) returns (Boolean) {};
 
     rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
-    rpc sayHello (RemoteClient) returns (Status) {};
+    rpc sayHello (Client) returns (Status) {};
     rpc getStatus (google.protobuf.Empty) returns (DeviceStatus);
 }*/

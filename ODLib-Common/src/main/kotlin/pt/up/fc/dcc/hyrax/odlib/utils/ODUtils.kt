@@ -56,8 +56,8 @@ object ODUtils {
         return ODModel(model!!.id, model.name, model.url, model.downloaded)
     }
 
-    internal fun genJobRequest(imgId: String, imgData: ByteArray) : ODProto.Job {
-        return ODProto.Job.newBuilder().setId(imgId).setData(ByteString.copyFrom(imgData)).build()
+    internal fun genJobRequest(job: ODJob) : ODProto.Job {
+        return ODProto.Job.newBuilder().setId(job.id).setData(ByteString.copyFrom(job.data)).build()
     }
 
     internal fun parseModelConfig(modelConfig: ODProto.ModelConfig?) : Pair<ODModel, HashMap<String, String>> {
@@ -100,7 +100,7 @@ object ODUtils {
 
     fun genAsyncRequest(id: String, data: ByteArray): ODProto.AsyncRequest? {
         return  ODProto.AsyncRequest.newBuilder()
-                .setJob(genJobRequest(id, data))
+                //.setJob(genJobRequest(id, data))
                 .setRemoteClient(genLocalClient())
                 .build()
     }

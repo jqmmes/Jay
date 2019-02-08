@@ -154,9 +154,9 @@ class MainActivity : AppCompatActivity() {
                     loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}"))
             )
 
-            ODLogger.logInfo("Battery_Start\t$${job.getId()}\t${SystemStats.getBatteryEnergyCounter(this)}")
+            ODLogger.logInfo("Battery_Start\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")
             Scheduler.addResultsCallback { _, _ ->
-                ODLogger.logInfo("Battery_End\t$${job.getId()}\t${SystemStats.getBatteryEnergyCounter(this)}")
+                ODLogger.logInfo("Battery_End\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")
             }
             Scheduler.addJob(job)
         }
@@ -199,10 +199,10 @@ class MainActivity : AppCompatActivity() {
                 startBenchmark = System.currentTimeMillis()
                 assetImages.forEach { asset ->
                     val job = Scheduler.createJob(asset)
-                    ODLogger.logInfo("Battery_Start\t${job.getId()}\t${SystemStats.getBatteryEnergyCounter(this)
+                    ODLogger.logInfo("Battery_Start\t${job.id}\t${SystemStats.getBatteryEnergyCounter(this)
                     }\t${SystemStats.getBatteryPercentage(this)}")
                     Scheduler.addResultsCallback { _, _ ->
-                        ODLogger.logInfo("Battery_End\t${job.getId()}\t${SystemStats.getBatteryEnergyCounter
+                        ODLogger.logInfo("Battery_End\t${job.id}\t${SystemStats.getBatteryEnergyCounter
                         (this)}\t${SystemStats.getBatteryPercentage(this)}")
                         synchronizingLatch.countDown()
                     }

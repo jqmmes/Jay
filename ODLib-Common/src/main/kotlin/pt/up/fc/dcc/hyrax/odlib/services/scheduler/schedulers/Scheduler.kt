@@ -55,7 +55,7 @@ abstract class Scheduler {
         fun addJob(job: ODJob): String? {
             return try {
                 pendingJobs.putLast(job)
-                job.getId()
+                job.id
             } catch (ignore: Exception) {
                 null
             }

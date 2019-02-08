@@ -35,9 +35,9 @@ class RemoteRoundRobinScheduler : Scheduler() {
     override fun scheduleJob(job: ODJob) {
             val nextClient = getNextRemoteRoundRobin()
             if (nextClient != null) {
-                ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.getAddress()}\tROUND_ROBIN")
-                jobBookkeeping[job.getId()] = nextClient.getId()
-                nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
+                ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.getAddress()}\tROUND_ROBIN")
+                jobBookkeeping[job.id] = nextClient.getId()
+                nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
                 return
             }
         }

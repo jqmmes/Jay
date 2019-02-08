@@ -149,7 +149,7 @@ object WorkerService {
             }
             var result = emptyList<ODDetection>()
             try {
-                result = localDetect.detectObjects(odJob.getData())
+                result = localDetect.detectObjects(odJob.data)
             } catch (e: Exception) {
                 ODLogger.logError("Execution_Failed ${e.stackTrace}")
             }

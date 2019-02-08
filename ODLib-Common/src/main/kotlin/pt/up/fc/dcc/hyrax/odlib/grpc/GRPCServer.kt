@@ -99,7 +99,7 @@ internal class GRPCServer(private val port: Int = ODSettings.brokerPort, private
 /*
     inner class ODCommunicationImpl : ODCommunicationGrpc.ODCommunicationImplBase() {
 
-        override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.RemoteClient?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
+        override fun sayHello(request: pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Client?, responseObserver: StreamObserver<pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status>?) {
             //ODLogger.logInfo("Received seyHello")
             ClientManager.addOrIgnoreClient(request!!.address, request.port)
             genericComplete(ODUtils.genStatus(ReturnStatus.Success), responseObserver!!)

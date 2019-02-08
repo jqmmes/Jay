@@ -20,6 +20,7 @@ import android.os.IBinder
 import android.os.Messenger
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 
 
 class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
@@ -138,7 +139,7 @@ class ODLib(val context : Context) : AbstractODLib(DroidTensorFlow(context)) {
     }
 
     fun putJob(byteArray: ByteArray) {
-        BrokerGRPCClient("127.0.0.1").putJob(byteArray)
+        BrokerGRPCClient("127.0.0.1").putJob(ODJob(byteArray))
     }
 
     companion object {

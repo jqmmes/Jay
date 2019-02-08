@@ -6,6 +6,7 @@ import java.lang.Exception
 import java.net.Socket
 import kotlin.concurrent.thread
 
+@Deprecated("Using Protobuf now")
 object RTTClient {
     private lateinit var clientSocket : Socket
 

@@ -35,12 +35,12 @@ class JustRemoteRoundRobinScheduler : Scheduler() {
     override fun scheduleJob(job: ODJob) {
         val nextClient = getNextRemoteRoundRobin()
         if (nextClient != null) {
-            ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.getAddress()}\tJUST_REMOTE_ROUND_ROBIN")
-            jobBookkeeping[job.getId()] = nextClient.getId()
+            ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.getAddress()}\tJUST_REMOTE_ROUND_ROBIN")
+            jobBookkeeping[job.id] = nextClient.getId()
             //val start = System.currentTimeMillis()
-            nextClient.asyncDetectObjects(job) { R -> jobCompleted(job.getId(), R) }
-            //nextClient.getLatencyMovingAverage().addLatency(System.currentTimeMillis()-start)
-            //ODLogger.logInfo(nextClient.getLatencyMovingAverage().getAvgLatency().toString())
+            nextClient.asyncDetectObjects(job) { R -> jobCompleted(job.id, R) }
+            //nextClient.getLatencyMovingAverage().addRTT(System.currentTimeMillis()-start)
+            //ODLogger.logInfo(nextClient.getLatencyMovingAverage().getAvgRTT().toString())
         }
     }
 }

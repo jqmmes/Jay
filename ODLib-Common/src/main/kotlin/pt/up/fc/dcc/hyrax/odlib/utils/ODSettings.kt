@@ -15,4 +15,6 @@ object ODSettings {
     const val grpcLongTimeout: Long = 120 //Seconds
     const val grpcShortTimeout: Long = 500 //Milliseconds
     const val grpcMaxMessageSize: Int = 150000000
+    const val RTTHistorySize: Int = 5
+    const val RTTDelayMillis: Long = 15000L
 }

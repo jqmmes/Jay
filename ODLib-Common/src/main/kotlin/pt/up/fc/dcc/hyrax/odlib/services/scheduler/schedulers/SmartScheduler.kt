@@ -83,9 +83,9 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
 
     override fun scheduleJob(job: ODJob) {
         val nextClient = getNextClient()
-        ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.second.getAddress()}\tSMART")
+        ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.second.getAddress()}\tSMART")
         val startTime = System.currentTimeMillis()
-        nextClient.second.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
+        nextClient.second.asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
         if (nextClient.first) {
             ClientManager.getRemoteODClient(nextClient.second.getId())!!
                     .getDeviceStatus().networkLatency.addLatency(System.currentTimeMillis() -startTime)

@@ -18,8 +18,8 @@ class LocalScheduler : Scheduler() {
     }
 
     override fun scheduleJob(job: ODJob) {
-        ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${ClientManager.getLocalODClient().getAddress()}\tLOCAL")
-        ClientManager.getLocalODClient().asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
-        executingJobs[job.getId()] = job
+        ODLogger.logInfo("Job_Scheduled\t${job.id}\t${ClientManager.getLocalODClient().getAddress()}\tLOCAL")
+        ClientManager.getLocalODClient().asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
+        executingJobs[job.id] = job
     }
 }

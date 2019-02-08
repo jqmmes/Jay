@@ -33,9 +33,9 @@ class JustRemoteRandomScheduler : Scheduler() {
     override fun scheduleJob(job: ODJob) {
             val nextClient = getNextRemoteRandom()
             if (nextClient != null) {
-                ODLogger.logInfo("Job_Scheduled\t${job.getId()}\t${nextClient.getAddress()}\tJUST_REMOTE_RANDOM")
-                jobBookkeeping[job.getId()] = nextClient.getId()
-                nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.getId(), R)}
+                ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.getAddress()}\tJUST_REMOTE_RANDOM")
+                jobBookkeeping[job.id] = nextClient.getId()
+                nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
         }
     }
 }
