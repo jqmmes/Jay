@@ -57,7 +57,7 @@ message AsyncRequest {
     RemoteClient remoteClient = 2;
 }
 
-message DeviceStatus {
+message WorkerStatus {
     string id = 1; // uuid
 
     int32 battery = 2;
@@ -68,14 +68,7 @@ message DeviceStatus {
     int32 runningJobs = 6;
 
     int32 avgTimePerJob = 7;
-}
-
-message NetworkStatus {
-    repeated DeviceStatus deviceStatus = 1;
-}
-
-message Boolean {
-    bool value = 1;
+    int32 bandwidthEstimate = 8; // KB/s
 }
 
 message Ping {
@@ -106,31 +99,15 @@ service Broker {
     rpc putJob (Job) returns (JobResults) {}; // Send to Scheduler
     rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
     rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
+    rpc advertiseWorkerStatus(WorkerStatus) returns (Status) {}; // Worker > Broker, Broker Externo > Broker
 }
 
-service Scheduler {
+service Scheduler { // Broker interno > Scheduler
     rpc scheduleJob (Job) returns (RemoteClient) {};
-    rpc updateNetworkStatus (NetworkStatus) returns (Status) {};
+    rpc notify(WorkerStatus) returns (Status) {}; 
 }
 
-service Worker {
+service Worker { // Broker interno > Worker
     rpc submitJob (Job) returns (JobResults) {};
-    //rpc getWorkerStatus () returns () {};
 }
 
-
-/*service ODCommunication {
-    rpc putJobAsync (AsyncRequest) returns (Status) {};
-    rpc putResultAsync (JobResults) returns (Status) {};
-
-    rpc putJobSync (Job) returns (JobResults) {};
-
-    rpc listModels (google.protobuf.Empty) returns (Models) {};
-    rpc selectModel (Model) returns (Status) {};
-    rpc configModel (ModelConfig) returns (Status) {};
-    rpc modelLoaded (Model) returns (Boolean) {};
-
-    rpc ping (google.protobuf.Empty) returns (google.protobuf.Empty) {};
-    rpc sayHello (Client) returns (Status) {};
-    rpc getStatus (google.protobuf.Empty) returns (DeviceStatus);
-}*/
