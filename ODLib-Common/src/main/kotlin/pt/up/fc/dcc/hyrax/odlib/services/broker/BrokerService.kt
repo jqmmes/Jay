@@ -6,6 +6,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
+import javax.security.sasl.AuthorizeCallback
 
 object BrokerService {
 
@@ -32,8 +33,9 @@ object BrokerService {
         worker.execute(request)
     }
 
-    internal fun scheduleJob(request: ODProto.Job?) {
-        scheduler.schedule(request!!) { worker -> workers[worker.id]!!.grpc.executeJob(request) }
+    internal fun scheduleJob(request: ODProto.Job?, callback: ((ODProto.JobResults?) -> Unit)? = null) {
+        //scheduler.schedule(request!!) { worker -> println(worker.id); workers[worker.id]!!.grpc.executeJob(request, callback) }
+        for (worker in workers.keys) scheduler.notify(ODProto.WorkerStatus.newBuilder().setId(worker).build())
     }
 
     internal fun diffuseWorkerStatus(request: ODProto.WorkerStatus?) {

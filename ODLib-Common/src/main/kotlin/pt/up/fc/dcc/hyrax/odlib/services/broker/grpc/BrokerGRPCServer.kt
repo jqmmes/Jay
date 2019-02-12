@@ -20,6 +20,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun scheduleJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>?) {
             println("received queueJob BrokerGRPCServer")
             BrokerService.scheduleJob(request)
+            genericComplete(ODProto.JobResults.newBuilder().build(), responseObserver)
         }
 
         override fun ping(request: ODProto.Ping, responseObserver: StreamObserver<ODProto.Ping>?) {

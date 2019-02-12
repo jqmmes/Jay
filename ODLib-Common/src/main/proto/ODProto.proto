@@ -101,6 +101,10 @@ service Broker {
     rpc advertiseWorkerStatus(WorkerStatus) returns (RequestStatus) {}; // Broker Externo > Broker
     rpc diffuseWorkerStatus(WorkerStatus) returns (RequestStatus) {}; // Worker > Broker
     rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+
+    rpc getModels(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+    rpc setModel(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+
 }
 
 service Scheduler { // Broker interno > Scheduler

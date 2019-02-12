@@ -58,10 +58,14 @@ abstract class GRPCServerBase(private val port: Int,
     protected fun <T> genericComplete(request: T, responseObserver: StreamObserver<T>?) {
         if (!Context.current().isCancelled) {
             responseObserver!!.onNext(request)
+            println("onNext")
             responseObserver.onCompleted()
+            println("onCompleted")
         } else {
+            println("Error")
             ODLogger.logError("GRPCServer context canceled")
         }
+        println("genericComplete Done")
     }
 
     /*companion object {

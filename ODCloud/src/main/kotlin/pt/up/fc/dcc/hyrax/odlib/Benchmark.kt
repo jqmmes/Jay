@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
+import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.LocalScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import java.awt.image.BufferedImage
@@ -13,7 +14,8 @@ import javax.imageio.ImageIO
 object Benchmark {
 
     fun run(dataSize: String = "small", mModel: String = "all") {
-        val client = ClientManager.getLocalODClient()
+        //val client = ClientManager.getLocalODClient()
+        val client= BrokerGRPCClient("127.0.0.1")
         Scheduler.startService(LocalScheduler())
         var countDownLatch = CountDownLatch(1)
         for (model in client.getModels(false, true).reversed()) {
@@ -35,6 +37,7 @@ object Benchmark {
                     ImageIO.write(img, "jpg", output)
                     val start = System.currentTimeMillis()
                     val job = Scheduler.createJob(output.toByteArray())
+                    client.executeJob(job)
                     client.asyncDetectObjects(job) {
                         println("${job.getId()}\t${f.name}\t${System.currentTimeMillis() - start}ms")
                         countDownLatch.countDown()

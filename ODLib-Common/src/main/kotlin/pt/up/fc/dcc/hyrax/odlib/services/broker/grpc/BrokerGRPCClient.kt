@@ -25,12 +25,22 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerGrpc.BrokerBlockingS
         futureStub = BrokerGrpc.newFutureStub(channel)
     }
 
-    fun scheduleJob(job: ODJob) {
-        futureStub.scheduleJob(ODUtils.genJobRequest(job))
+    fun scheduleJob(job: ODJob, callback: ((ODProto.JobResults) -> Unit)? = null) {
+        println("00___results")
+        val call = futureStub.scheduleJob(ODUtils.genJobRequest(job))
+        call.addListener({println("00__00__00___results")}, {J -> threadPool.submit(J)})
+        println("00__00___results")
+        /*call.addListener(
+                {if (callback != null) callback(call.get())
+                    println("results!!")},
+                {//J -> threadPool.submit(J)
+                println("results_0")}
+        )*/
     }
 
-    fun executeJob(job: ODProto.Job?) {
-        futureStub.executeJob(job)
+    fun executeJob(job: ODProto.Job?, callback: ((ODProto.JobResults) -> Unit)? = null) {
+        val call = futureStub.executeJob(job)
+        call.addListener({callback?.invoke(call.get())}, {J -> threadPool.submit(J)})
     }
 
     fun ping(payload: Int = ODSettings.pingPayloadSize, reply: Boolean = false, callback: ((Long) -> Unit)? = null): ListenableFuture<ODProto.Ping>? {

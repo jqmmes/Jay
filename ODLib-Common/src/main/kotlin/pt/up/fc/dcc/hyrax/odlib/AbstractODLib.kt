@@ -66,7 +66,8 @@ abstract class AbstractODLib {
     }
 
     fun scheduleJob(byteArray: ByteArray) {
-        broker.scheduleJob(ODJob(byteArray))
+        println("results___0")
+        broker.scheduleJob(ODJob(byteArray)) { println("results")}
     }
 
     open fun destroy() {
