@@ -6,6 +6,7 @@ import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
@@ -31,6 +32,7 @@ import kotlin.math.max
  * https://github.com/tensorflow/models/blob/master/research/object_detection/
  */
 internal class CloudletTensorFlow : DetectObjects {
+
     override var minimumScore: Float = 0.3f
 
     private var loadedModel: SavedModelBundle? = null
@@ -49,7 +51,7 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
 
-    private fun loadModel(path: String, score: Float = minimumScore) {
+    private fun loadModel(path: String, score: Float = minimumScore, completeCallback: ((ODProto.Status) -> Unit)?) {
         clean()
         loadedModel = SavedModelBundle.load(path, "serve")
         val tensor = Tensor.create(UInt8::class.java, longArrayOf(1L, 1L, 1L, 3), ByteBuffer.wrap(ByteArray(3)))

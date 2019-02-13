@@ -99,7 +99,7 @@ internal constructor(private var channel: ManagedChannel) {
         return true
     }
 
-    fun putJobSync(id: Long, data: ByteArray) : ODProto.JobResults? {
+    fun putJobSync(id: Long, data: ByteArray) : ODProto.Results? {
         try {
             //val result = blockingStub.putJobSync(ODUtils.genJobRequest(id, data))
             ODLogger.logInfo("RPC putJobSync success")

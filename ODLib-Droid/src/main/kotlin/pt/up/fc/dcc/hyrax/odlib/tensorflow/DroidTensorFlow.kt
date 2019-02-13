@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -104,7 +105,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
 
     }
 
-    override fun loadModel(model: ODModel) {
+    override fun loadModel(model: ODModel, completeCallback: ((ODProto.Status) -> Unit)?) {
         localDetector = null
         thread(name="DroidTensorflow loadModel") {
             var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath

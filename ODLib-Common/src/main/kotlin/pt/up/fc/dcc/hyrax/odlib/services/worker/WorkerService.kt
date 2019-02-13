@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.worker
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
@@ -48,14 +49,14 @@ object WorkerService {
 
     internal fun queueJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?, jobId: String): ReturnStatus {
         ODLogger.logInfo("WorkerService put job into Job Queue...")
+        println("WorkerService put job into Job Queue...")
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback, jobId = jobId))
         synchronized(JOBS_LOCK) {
             totalJobs.incrementAndGet()
             StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
         }
-        if (callback == null) return ReturnStatus.Success
-        return ReturnStatus.Waiting
+        return if (callback == null) ReturnStatus.Success else ReturnStatus.Waiting
     }
 
     fun start(localDetect: DetectObjects, useNettyServer: Boolean = false) {
@@ -86,7 +87,7 @@ object WorkerService {
 
     fun stop() {
         running = false
-        if (server != null) server!!.stop()
+        server?.stop()
         waitingResultsMap.clear()
         jobQueue.clear()
         jobQueue.offer(RunnableJobObjects(localDetect, ByteArray(0), {}))
@@ -111,11 +112,11 @@ object WorkerService {
         return queueSize
     }
 
-    fun loadModel(odModel: ODModel) {
-        if(running) localDetect.loadModel(odModel)
+    fun loadModel(odModel: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
+        if(running) localDetect.loadModel(odModel, callback)
     }
 
-    fun modelLoaded(odModel: ODModel): Boolean {
+    /*fun modelLoaded(odModel: ODModel): Boolean {
         if (running) return localDetect.modelLoaded(odModel)
         return false
     }
@@ -126,7 +127,7 @@ object WorkerService {
                 "minScore" -> localDetect.minimumScore = configRequest.second[key]!!.toFloat()
             }
         }
-    }
+    }*/
 
     fun listModels() : Set<ODModel> {
         return localDetect.models.toSet()
@@ -141,12 +142,12 @@ object WorkerService {
             }
             ODLogger.logInfo("Running_Job\t$jobId")
             try {
-                if (callback != null) callback!!(localDetect.detectObjects(imageData))
+                callback?.invoke(localDetect.detectObjects(imageData))
                 ODLogger.logInfo("Finished_Running_Job\t$jobId")
             } catch (e: Exception) {
                 ODLogger.logError("Execution_Failed ${e.stackTrace}")
                 e.printStackTrace()
-                if (callback != null) callback!!(emptyList())
+                callback?.invoke(emptyList())
                 ODLogger.logInfo("Error_Running_Job\t$jobId")
             }
             synchronized(JOBS_LOCK) {
@@ -157,40 +158,4 @@ object WorkerService {
             }
         }
     }
-
-
-    /*
-    internal fun putJobAndWait(odJob: ODJob) : List<ODDetection?> {
-    ODLogger.logInfo("WorkerService put job and wait..")
-    if (!running) throw Exception("WorkerService not running")
-    val future = executor.submit(CallableJobObjects(localDetect, odJob))
-    synchronized(JOBS_LOCK) {
-        totalJobs.incrementAndGet()
-        StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
-    }
-    return future.get() //wait termination
-    }
-
-    private class CallableJobObjects(val localDetect: DetectObjects, val odJob: ODJob) : Callable<List<ODDetection>> {
-        override fun call(): List<ODDetection> {
-            synchronized(JOBS_LOCK) {
-                runningJobs.incrementAndGet()
-                StatusManager.setRunningJobs(runningJobs.get())
-            }
-            var result = emptyList<ODDetection>()
-            try {
-                result = localDetect.detectObjects(odJob.data)
-            } catch (e: Exception) {
-                ODLogger.logError("Execution_Failed ${e.stackTrace}")
-            }
-            synchronized(JOBS_LOCK) {
-                runningJobs.decrementAndGet()
-                totalJobs.decrementAndGet()
-                StatusManager.setRunningJobs(runningJobs.get())
-                StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
-            }
-            return result
-        }
-    }
-    */
 }

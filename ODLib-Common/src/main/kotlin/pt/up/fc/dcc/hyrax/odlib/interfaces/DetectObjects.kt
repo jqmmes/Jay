@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.interfaces
 
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import java.io.File
@@ -13,7 +14,7 @@ interface DetectObjects {
     fun downloadModel(model: ODModel): File?
     fun checkDownloadedModel(name: String): Boolean
 
-    fun loadModel(model: ODModel)
+    fun loadModel(model: ODModel, completeCallback: ((ODProto.Status) -> Unit)? = null)
     fun modelLoaded(model: ODModel): Boolean
     fun setMinAcceptScore(score: Float)
     fun detectObjects(imgPath: String) : List<ODDetection>

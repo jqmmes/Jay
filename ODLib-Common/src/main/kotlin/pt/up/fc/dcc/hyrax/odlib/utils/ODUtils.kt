@@ -5,7 +5,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 
 object ODUtils {
 
-    internal fun parseResults(results: ODProto.JobResults?): List<ODDetection?> {
+    internal fun parseResults(results: ODProto.Results?): List<ODDetection?> {
         try {
             val detections: Array<ODDetection?> = arrayOfNulls(results!!.detectionsCount)
             var i = 0
@@ -27,8 +27,8 @@ object ODUtils {
                 .build()
     }
 
-    internal fun genResults(id: String, results: List<ODDetection?>) : ODProto.JobResults {
-        val builder = ODProto.JobResults.newBuilder()
+    internal fun genResults(id: String, results: List<ODDetection?>) : ODProto.Results {
+        val builder = ODProto.Results.newBuilder()
                 .setId(id)
         for (detection in results) {
             builder.addDetections(genDetection(detection))
@@ -145,5 +145,25 @@ object ODUtils {
     fun parseDeviceStatus(data: ByteArray): DeviceInformation {
         val deviceStatus = ODProto.Worker.parseFrom(data)
         return parseDeviceStatus(deviceStatus)
+    }
+
+    fun genModelRequest(listModels: Set<ODModel>): ODProto.Models? {
+        val models = ODProto.Models.newBuilder()
+        for (model in listModels) {
+            models.addModels(genModel(model))
+        }
+        return models.build()
+    }
+
+    fun genModel(model: ODModel): ODProto.Model? {
+        return ODProto.Model.newBuilder().setId(model.modelId).setName(model.modelName).setDownloaded(model.downloaded).build()
+    }
+
+    fun parseModels(models: ODProto.Models?): Set<ODModel> {
+        val modelSet : MutableSet<ODModel> = mutableSetOf()
+        for (model in models!!.modelsList) {
+            modelSet.add(ODModel(model.id, model.name, model.url, model.downloaded))
+        }
+        return modelSet.toSet()
     }
 }

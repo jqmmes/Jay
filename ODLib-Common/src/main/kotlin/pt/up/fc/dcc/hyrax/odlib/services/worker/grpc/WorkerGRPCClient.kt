@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker.grpc
 
+import com.google.protobuf.Empty
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -16,8 +17,20 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         futureStub = WorkerServiceGrpc.newFutureStub(channel)
     }
 
-    fun execute(job: ODProto.Job?, callback: ((ODProto.JobResults) -> Unit)? = null) {
+    fun execute(job: ODProto.Job?, callback: ((ODProto.Results?) -> Unit)? = null) {
         val futureJob = futureStub.execute(job)
-        futureJob.addListener({ if (callback != null) callback(futureJob.get()) }, { J -> AbstractODLib.put(J) })
+        futureJob.addListener(Runnable{ callback?.invoke(futureJob.get()) }, AbstractODLib.executorPool)
     }
+
+    fun listModels(callback: ((ODProto.Models) -> Unit)? = null) {
+        val call = futureStub.listModels(Empty.getDefaultInstance())
+        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+    }
+
+    fun selectModel(request: ODProto.Model?, callback: ((ODProto.Status?) -> Unit)?) {
+        val call = futureStub.selectModel(request)
+        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+    }
+
+
 }

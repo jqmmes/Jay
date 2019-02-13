@@ -1,39 +1,30 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.LocalScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import java.util.*
 import java.util.concurrent.*
 
 abstract class AbstractODLib {
 
-    //private var scheduler : Scheduler = LocalScheduler()
     private val broker = BrokerGRPCClient("127.0.0.1")
 
     internal companion object {
-        private val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(5, 30, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>())
-
-        fun put(runnable: Runnable): Future<*>? {
-            return executorPool.submit(runnable)
-        }
+        val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(5, 30, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>())
     }
 
-    fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
-        return broker.getModels(onlyLoaded, true)
+    fun listModels(callback: ((Set<ODModel>) -> Unit)? = null) {
+        broker.getModels(callback)
     }
 
-    fun setModel(model: ODModel) {
-        //ClientManager.getLocalODClient().
-        broker.selectModel(model)
+    fun setModel(model: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
+        broker.selectModel(model, callback)
     }
 
     /*fun setTFModelMinScore(minimumScore: Float) {
@@ -76,11 +67,13 @@ abstract class AbstractODLib {
     }
 
     fun scheduleJob(data: ByteArray) {
-        broker.scheduleJob(ODJob(data)) { println("ODLib scheduleJob END") }
+        broker.scheduleJob(ODJob(data)) { R -> println("ODLib scheduleJob END $R") }
     }
 
     fun updateWorkers() {
+        println("updateWorkers - START")
         broker.updateWorkers()
+        println("updateWorkers - END")
     }
 
     open fun destroy() {

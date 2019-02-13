@@ -13,11 +13,12 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.brokerPort, useNettyServer) {
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
-        override fun executeJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>?) {
-            BrokerService.executeJob(request)
+        override fun executeJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
+            BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver)}
+
         }
 
-        override fun scheduleJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.JobResults>?) {
+        override fun scheduleJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
             BrokerService.scheduleJob(request) {R -> genericComplete(R, responseObserver)}
         }
 
@@ -27,19 +28,29 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(ODProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(0))).build(), responseObserver)
         }
 
-        override fun advertiseWorkerStatus(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.RequestStatus>?) {
+        override fun advertiseWorkerStatus(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.advertiseWorker(request)
-            genericComplete(ODProto.RequestStatus.newBuilder().setCodeValue(0).build(), responseObserver)
+            genericComplete(ODProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
         }
 
-        override fun diffuseWorkerStatus(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.RequestStatus>?) {
+        override fun diffuseWorkerStatus(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.diffuseWorkers(request)
-            genericComplete(ODProto.RequestStatus.newBuilder().setCodeValue(0).build(), responseObserver)
+            genericComplete(ODProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
         }
 
         override fun updateWorkers(request: Empty?, responseObserver: StreamObserver<Empty>?) {
             BrokerService.updateWorkers()
-            genericComplete(request!!, responseObserver)
+            genericComplete(request, responseObserver)
+        }
+
+        override fun getModels(request: Empty?, responseObserver: StreamObserver<ODProto.Models>?) {
+            super.getModels(request, responseObserver)
+            BrokerService.getModels {M -> genericComplete(M, responseObserver)}
+        }
+
+        override fun setModel(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>?) {
+            super.setModel(request, responseObserver)
+            BrokerService.setModel(request) {S -> genericComplete(S, responseObserver)}
         }
     }
 

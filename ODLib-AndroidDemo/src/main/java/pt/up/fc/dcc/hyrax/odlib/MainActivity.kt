@@ -124,22 +124,26 @@ class MainActivity : AppCompatActivity() {
 
     fun downloadModel(target: View) {
         val spinner = findViewById<Spinner>(R.id.select_model)
-        for (model in odClient.listModels(false)) {
-            if (model.modelName == spinner.selectedItem) {
-                if (!model.downloaded) odClient.setModel(model)
-                ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
-                return
+        odClient.listModels {models ->
+            for (model in models) {
+                if (model.modelName == spinner.selectedItem) {
+                    if (!model.downloaded) odClient.setModel(model)
+                    ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
+                    return@listModels
+                }
             }
         }
     }
 
     fun loadModel(target: View) {
         val spinner = findViewById<Spinner>(R.id.select_model)
-        for (model in odClient.listModels(false)) {
-            if (model.modelName == spinner.selectedItem) {
-                ODLogger.logInfo("${model.modelName}\tloaded: ${model.downloaded}")
-                odClient.setModel(model)
-                return
+        odClient.listModels { models ->
+            for (model in models) {
+                if (model.modelName == spinner.selectedItem) {
+                    ODLogger.logInfo("${model.modelName}\tloaded: ${model.downloaded}")
+                    odClient.setModel(model)
+                    return@listModels
+                }
             }
         }
     }
@@ -272,13 +276,17 @@ class MainActivity : AppCompatActivity() {
         findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = odClient.serviceRunningScheduler()
         //odClient.startGRPCServerService(useNettyServer = true)
 
-        val arrayList1 = ArrayList<String>()
-        /*for (model in odClient.listModels(false)) {
-            arrayList1.add(model.modelName)
+        /*if (odClient.serviceRunningWorker() && odClient.serviceRunningScheduler()) {
+            val arrayList1 = ArrayList<String>()
+            odClient.listModels { models ->
+                for (model in models) {
+                    arrayList1.add(model.modelName)
+                }
+                val adp = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayList1)
+                modelSpinner.adapter = adp
+            }
         }*/
 
-        val adp = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayList1)
-        modelSpinner.adapter = adp
 
         findViewById<EditText>(R.id.cloudIP).setText(ODSettings.cloudIp, TextView.BufferType.EDITABLE)
         verifyStoragePermissions(this)

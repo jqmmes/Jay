@@ -27,11 +27,11 @@ object BrokerService {
         if (server != null) server!!.stop()
     }
 
-    internal fun executeJob(request: ODProto.Job?) {
-        worker.execute(request)
+    internal fun executeJob(request: ODProto.Job?, callback: ((ODProto.Results?) -> Unit)? = null) {
+        worker.execute(request, callback)
     }
 
-    internal fun scheduleJob(request: ODProto.Job?, callback: ((ODProto.JobResults?) -> Unit)? = null) {
+    internal fun scheduleJob(request: ODProto.Job?, callback: ((ODProto.Results?) -> Unit)? = null) {
         scheduler.schedule(request) { W -> workers[W.id]!!.grpc.executeJob(request, callback) }
     }
 
@@ -44,4 +44,14 @@ object BrokerService {
     internal fun updateWorkers() {
         for (worker in workers.keys) scheduler.notify(ODProto.Worker.newBuilder().setId(worker).build())
     }
+
+    internal fun getModels(callback: (ODProto.Models) -> Unit) {
+        worker.listModels(callback)
+    }
+
+    internal fun setModel(request: ODProto.Model?, callback: ((ODProto.Status?) -> Unit)? = null) {
+        worker.selectModel(request, callback)
+    }
+
+
 }

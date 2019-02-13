@@ -15,7 +15,7 @@ message Job {
     bytes data = 2;
 }
 
-message RequestStatus {
+message Status {
     enum Code {
         Success = 0;
         Error = 1;
@@ -24,8 +24,8 @@ message RequestStatus {
     Code code = 1;
 }
 
-message JobResults {
-    RequestStatus.Code status = 1;
+message Results {
+    Status.Code status = 1;
     repeated Detection detections = 2;
     string id = 3; // uuid
 }
@@ -52,7 +52,7 @@ message AsyncRequest {
 }
 
 message Worker {
-    RequestStatus.Code status = 1;
+    Status.Code status = 1;
 
     string id = 2; // uuid
 
@@ -91,35 +91,44 @@ message ServiceRequest {
 
 message Scheduler {
     enum Type {
-        Success = 0;
-        Error = 1;
-        Waiting = 2;
+        STATIC = 0;
+        DYNAMIC = 1;
     }
-    Type code = 1;
+    enum StaticType {
+        DEVICE = 0;
+        CLOUD = 1;
+        ROUND_ROBIN = 2;
+    }
+    enum DynamicType {
+        SMART = 0;
+    }
+    Type type = 1;
 }
 
 service BrokerService {
     rpc ping (Ping) returns (Ping) {};
-    rpc executeJob (Job) returns (JobResults) {}; // Send to Worker
-    rpc scheduleJob (Job) returns (JobResults) {}; // Send to Scheduler
+    rpc executeJob (Job) returns (Results) {}; // Send to Worker
+    rpc scheduleJob (Job) returns (Results) {}; // Send to Scheduler
     //rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
     //rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
-    rpc advertiseWorkerStatus(Worker) returns (RequestStatus) {}; // Broker Externo > Broker
-    rpc diffuseWorkerStatus(Worker) returns (RequestStatus) {}; // Worker > Broker
+    rpc advertiseWorkerStatus(Worker) returns (Status) {}; // Broker Externo > Broker
+    rpc diffuseWorkerStatus(Worker) returns (Status) {}; // Worker > Broker
     rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {};
 
-    rpc getModels(google.protobuf.Empty) returns (google.protobuf.Empty) {};
-    rpc setModel(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+    rpc getModels(google.protobuf.Empty) returns (Models) {};
+    rpc setModel(Model) returns (Status) {};
 
 }
 
 service SchedulerService { // Broker interno > Scheduler
     rpc schedule (Job) returns (Worker) {};
-    rpc notify (Worker) returns (RequestStatus) {};
-    rpc setScheduler (Scheduler) returns (RequestStatus) {};
+    rpc notify (Worker) returns (Status) {};
+    rpc setScheduler (Scheduler) returns (Status) {};
 }
 
 service WorkerService { // Broker interno > Worker
-    rpc execute (Job) returns (JobResults) {};
+    rpc execute (Job) returns (Results) {};
+    rpc selectModel (Model) returns (Status) {};
+    rpc listModels (google.protobuf.Empty) returns (Models) {};
 }
 

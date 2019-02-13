@@ -18,11 +18,11 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
 
     fun schedule(request: ODProto.Job?, callback: ((ODProto.Worker) -> Unit)? = null) {
         val call = futureStub.schedule(request)
-        call.addListener({ callback?.invoke(call.get()) }, { J -> AbstractODLib.put(J) })
+        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
-    fun notify(request: ODProto.Worker?, callback: ((ODProto.RequestStatus) -> Unit)? = null) {
+    fun notify(request: ODProto.Worker?, callback: ((ODProto.Status) -> Unit)? = null) {
         val futureJob = futureStub.notify(request)
-        futureJob.addListener({if (callback != null) callback(futureJob.get()) }, { J -> AbstractODLib.put(J) })
+        futureJob.addListener(Runnable { if (callback != null) callback(futureJob.get()) }, AbstractODLib.executorPool)
     }
 }
