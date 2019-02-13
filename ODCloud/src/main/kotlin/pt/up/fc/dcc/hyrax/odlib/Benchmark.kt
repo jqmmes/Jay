@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.LocalScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler

@@ -36,17 +36,17 @@ class MainActivityFragment : Fragment() {
         }
     }
 
-    private fun takePhoto() {
+    /*private fun takePhoto() {
         Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
             takePictureIntent.resolveActivity(activity!!.packageManager)?.also {
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
             }
         }
-    }
+    }*/
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         ODLogger.logInfo("Fragment onCreateView")
-        view.findViewById<Button>(R.id.takePhoto).setOnClickListener { _ -> takePhoto()}
+        //view.findViewById<Button>(R.id.takePhoto).setOnClickListener { _ -> takePhoto()}
     }
 }

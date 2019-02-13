@@ -41,10 +41,6 @@ message Model {
     bool downloaded = 4;
 }
 
-message WorkerId {
-    string id = 1;  // uuid
-}
-
 message ModelConfig {
     Model model = 1;
     map<string, string> configs = 2;
@@ -55,25 +51,26 @@ message AsyncRequest {
     string id = 2;
 }
 
-message WorkerStatus {
-    string id = 1; // uuid
+message Worker {
+    RequestStatus.Code status = 1;
 
-    int32 battery = 2;
-    int32 batteryStatus = 3;
+    string id = 2; // uuid
 
-    int32 cpuCores = 4;
-    int32 queueSize = 5;
-    int32 runningJobs = 6;
+    int32 battery = 3;
+    int32 batteryStatus = 4;
 
-    int32 avgTimePerJob = 7;
-    int32 bandwidthEstimate = 8; // KB/s
+    int32 cpuCores = 5;
+    int32 queueSize = 6;
+    int32 runningJobs = 7;
+
+    int32 avgTimePerJob = 8;
+    int32 bandwidthEstimate = 9; // KB/s
 }
 
 message Ping {
     bytes data = 1;
     bool reply = 2;
 }
-
 
 message Service {
     enum Type {
@@ -92,14 +89,23 @@ message ServiceRequest {
     repeated Service.Type type = 1;
 }
 
-service Broker {
+message Scheduler {
+    enum Type {
+        Success = 0;
+        Error = 1;
+        Waiting = 2;
+    }
+    Type code = 1;
+}
+
+service BrokerService {
     rpc ping (Ping) returns (Ping) {};
     rpc executeJob (Job) returns (JobResults) {}; // Send to Worker
     rpc scheduleJob (Job) returns (JobResults) {}; // Send to Scheduler
     //rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
     //rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
-    rpc advertiseWorkerStatus(WorkerStatus) returns (RequestStatus) {}; // Broker Externo > Broker
-    rpc diffuseWorkerStatus(WorkerStatus) returns (RequestStatus) {}; // Worker > Broker
+    rpc advertiseWorkerStatus(Worker) returns (RequestStatus) {}; // Broker Externo > Broker
+    rpc diffuseWorkerStatus(Worker) returns (RequestStatus) {}; // Worker > Broker
     rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {};
 
     rpc getModels(google.protobuf.Empty) returns (google.protobuf.Empty) {};
@@ -107,12 +113,13 @@ service Broker {
 
 }
 
-service Scheduler { // Broker interno > Scheduler
-    rpc schedule (Job) returns (WorkerId) {};
-    rpc notify (WorkerStatus) returns (RequestStatus) {};
+service SchedulerService { // Broker interno > Scheduler
+    rpc schedule (Job) returns (Worker) {};
+    rpc notify (Worker) returns (RequestStatus) {};
+    rpc setScheduler (Scheduler) returns (RequestStatus) {};
 }
 
-service Worker { // Broker interno > Worker
+service WorkerService { // Broker interno > Worker
     rpc execute (Job) returns (JobResults) {};
 }
 

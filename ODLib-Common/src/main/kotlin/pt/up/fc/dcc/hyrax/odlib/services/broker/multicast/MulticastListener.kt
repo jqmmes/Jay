@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
-import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.getLocalIpV4
@@ -9,7 +8,7 @@ import java.net.*
 import kotlin.concurrent.thread
 
 object MulticastListener {
-    private val devicesKnown : MutableSet<RemoteODClient> = HashSet()
+    //private val devicesKnown : MutableSet<RemoteODClient> = HashSet()
     private var running = false
     private lateinit var listeningSocket : MulticastSocket
     private lateinit var mcIPAddress: InetAddress
@@ -76,9 +75,9 @@ object MulticastListener {
     }
 
     private fun newClient(address: String): Boolean {
-        for (remoteDevice in devicesKnown) {
+        /*for (remoteDevice in devicesKnown) {
             if (remoteDevice.getAddress() == address) return false
-        }
+        }*/
         return true
     }
 

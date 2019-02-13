@@ -1,3 +1,4 @@
+/*
 package pt.up.fc.dcc.hyrax.odlib.services.worker.status.network.rtt
 
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
@@ -35,4 +36,4 @@ object RTTClient {
             try { clientSocket.close() } catch (e: Exception) {}
         }
     }
-}
+}*/

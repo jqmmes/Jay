@@ -1,7 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServer
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
@@ -14,31 +12,43 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.*
+import java.util.concurrent.*
 
 abstract class AbstractODLib {
 
-    private var scheduler : Scheduler = LocalScheduler()
+    //private var scheduler : Scheduler = LocalScheduler()
     private val broker = BrokerGRPCClient("127.0.0.1")
 
+    internal companion object {
+        private val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(5, 30, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>())
+
+        fun put(runnable: Runnable): Future<*>? {
+            return executorPool.submit(runnable)
+        }
+    }
+
     fun listModels(onlyLoaded: Boolean = true) : Set<ODModel> {
-        return ClientManager.getLocalODClient().getModels(onlyLoaded, true)
+        return broker.getModels(onlyLoaded, true)
     }
 
-    fun setTFModel(model: ODModel) {
-        ClientManager.getLocalODClient().selectModel(model)
+    fun setModel(model: ODModel) {
+        //ClientManager.getLocalODClient().
+        broker.selectModel(model)
     }
 
-    fun setTFModelMinScore(minimumScore: Float) {
-        ClientManager.getLocalODClient().configureModel(minimumScore)
-    }
+    /*fun setTFModelMinScore(minimumScore: Float) {
+        //ClientManager.getLocalODClient().configureModel(minimumScore)
+        //broker.configureModel()
+    }*/
 
     fun setScheduler(scheduler: Scheduler) {
+        //broker.setScheduler()
         if (WorkerService.isRunning()) {
             ODLogger.logWarn("Can only change scheduler with ComputingService offline")
             return
         }
         ODLogger.logInfo("Setting scheduler: ${scheduler.javaClass.name}")
-        this.scheduler = scheduler
+        //this.scheduler = scheduler
     }
 
     protected open fun startBroker() {
@@ -65,9 +75,12 @@ abstract class AbstractODLib {
         WorkerService.stop()
     }
 
-    fun scheduleJob(byteArray: ByteArray) {
-        println("results___0")
-        broker.scheduleJob(ODJob(byteArray)) { println("results")}
+    fun scheduleJob(data: ByteArray) {
+        broker.scheduleJob(ODJob(data)) { println("ODLib scheduleJob END") }
+    }
+
+    fun updateWorkers() {
+        broker.updateWorkers()
     }
 
     open fun destroy() {

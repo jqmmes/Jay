@@ -15,8 +15,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.R
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
+//import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
+//import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
 
     fun changeCloud(target: View) {
-        ClientManager.changeCloudClient(CloudODClient(findViewById<EditText>(R.id.cloudIP).text.toString()))
+        //ClientManager.changeCloudClient(CloudODClient(findViewById<EditText>(R.id.cloudIP).text.toString()))
     }
 
     private fun toggleServer(start: Boolean) {
@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
         val spinner = findViewById<Spinner>(R.id.select_model)
         for (model in odClient.listModels(false)) {
             if (model.modelName == spinner.selectedItem) {
-                if (!model.downloaded) odClient.setTFModel(model)
+                if (!model.downloaded) odClient.setModel(model)
                 ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
                 return
             }
@@ -138,9 +138,16 @@ class MainActivity : AppCompatActivity() {
         for (model in odClient.listModels(false)) {
             if (model.modelName == spinner.selectedItem) {
                 ODLogger.logInfo("${model.modelName}\tloaded: ${model.downloaded}")
-                odClient.setTFModel(model)
+                odClient.setModel(model)
                 return
             }
+        }
+    }
+
+    fun takePhoto(target: View) {
+        thread {
+            odClient.updateWorkers()
+            return@thread
         }
     }
 
@@ -173,7 +180,7 @@ class MainActivity : AppCompatActivity() {
     private fun runBenchmark(assetSize: Int) {
         thread {
             if (assetImages.isEmpty()) assetImages = listAssets(assetSize)
-            var client = ClientManager.getLocalODClient()
+            /*var client = ClientManager.getLocalODClient()
             if (getScheduler() is CloudScheduler) client = ClientManager.getCloudClient()
             val models = client.getModels(false, true)
             models.forEach { model ->
@@ -211,7 +218,7 @@ class MainActivity : AppCompatActivity() {
                     synchronizingLatch = CountDownLatch(1)
                 }
 
-            }
+            }*/
         }
     }
 

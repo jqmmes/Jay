@@ -9,6 +9,7 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.io.IOException
+import java.lang.Exception
 
 abstract class GRPCServerBase(private val port: Int,
                               private val useNettyServer: Boolean) {
@@ -55,17 +56,13 @@ abstract class GRPCServerBase(private val port: Int,
         server?.awaitTermination()
     }
 
-    protected fun <T> genericComplete(request: T, responseObserver: StreamObserver<T>?) {
+    protected open fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
         if (!Context.current().isCancelled) {
             responseObserver!!.onNext(request)
-            println("onNext")
             responseObserver.onCompleted()
-            println("onCompleted")
         } else {
-            println("Error")
             ODLogger.logError("GRPCServer context canceled")
         }
-        println("genericComplete Done")
     }
 
     /*companion object {

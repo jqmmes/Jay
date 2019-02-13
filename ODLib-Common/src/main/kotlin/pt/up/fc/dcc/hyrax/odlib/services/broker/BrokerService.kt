@@ -6,7 +6,6 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
-import javax.security.sasl.AuthorizeCallback
 
 object BrokerService {
 
@@ -14,7 +13,6 @@ object BrokerService {
     private val workers: MutableMap<String, Worker> = hashMapOf()
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
     private val worker = WorkerGRPCClient("127.0.0.1")
-
 
     init {
         val local = Worker(address = "127.0.0.1")
@@ -34,17 +32,16 @@ object BrokerService {
     }
 
     internal fun scheduleJob(request: ODProto.Job?, callback: ((ODProto.JobResults?) -> Unit)? = null) {
-        //scheduler.schedule(request!!) { worker -> println(worker.id); workers[worker.id]!!.grpc.executeJob(request, callback) }
-        for (worker in workers.keys) scheduler.notify(ODProto.WorkerStatus.newBuilder().setId(worker).build())
+        scheduler.schedule(request) { W -> workers[W.id]!!.grpc.executeJob(request, callback) }
     }
 
-    internal fun diffuseWorkerStatus(request: ODProto.WorkerStatus?) {
+    internal fun diffuseWorkers(request: ODProto.Worker?) {
         for (client in workers.values) client.grpc.advertiseWorkerStatus(request)
     }
 
-    internal fun advertiseWorkerStatus(request: ODProto.WorkerStatus?) { scheduler.notify(request) }
+    internal fun advertiseWorker(request: ODProto.Worker?) { scheduler.notify(request) }
 
     internal fun updateWorkers() {
-        for (worker in workers.keys) scheduler.notify(ODProto.WorkerStatus.newBuilder().setId(worker).build())
+        for (worker in workers.keys) scheduler.notify(ODProto.Worker.newBuilder().setId(worker).build())
     }
 }

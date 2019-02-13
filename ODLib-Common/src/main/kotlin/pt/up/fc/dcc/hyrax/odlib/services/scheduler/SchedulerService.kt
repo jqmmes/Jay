@@ -8,8 +8,12 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCServer
 object SchedulerService {
 
     private var server :GRPCServerBase? = null
-    private val clients: MutableMap<String, ODProto.WorkerStatus?> = hashMapOf()
+    private val workers: MutableMap<String, ODProto.Worker?> = hashMapOf()
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
+
+    internal fun getWorkers(): HashMap<String, ODProto.Worker?> {
+        return workers as HashMap<String, ODProto.Worker?>
+    }
 
     fun start(useNettyServer: Boolean = false) {
         server = SchedulerGRPCServer(useNettyServer).start()
@@ -17,11 +21,11 @@ object SchedulerService {
     }
 
     internal fun schedule(request: ODProto.Job?): String {
-        return clients.keys.first()
+        return workers.keys.first()
     }
 
-    internal fun notify(status: ODProto.WorkerStatus?) {
-        clients[status!!.id] = status
+    internal fun notify(status: ODProto.Worker?) {
+        workers[status!!.id] = status
     }
 
     fun stop() {

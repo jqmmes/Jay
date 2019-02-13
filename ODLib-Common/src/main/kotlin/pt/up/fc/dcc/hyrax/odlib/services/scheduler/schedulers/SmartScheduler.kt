@@ -1,12 +1,12 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
+
+import pt.up.fc.dcc.hyrax.odlib.clients.Worker
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
-import pt.up.fc.dcc.hyrax.odlib.services.worker.status.network.rtt.RTTClient
 import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -18,8 +18,9 @@ import kotlin.concurrent.thread
 
 
 @Suppress("unused")
-class SmartScheduler : Scheduler(), ClientInfoInterface {
-    private val clientList: MutableList<Pair<Float, Long>> = mutableListOf()
+class SmartScheduler : Scheduler() {
+
+    private val clientList: MutableList<Pair<Float, String>> = mutableListOf()
     private val jobBooKeeping: HashMap<Long, List<Long>> = HashMap()
     private var running: Boolean = false
     private val sleepDuration: Long = 1000
@@ -32,7 +33,7 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
         MulticastListener.listen()
         StatusManager.advertiseStatus()
         MulticastAdvertiser.advertise()
-        ClientManager.setClientInfoCallback(this)
+        //ClientManager.setClientInfoCallback(this)
         reSortClientList(0)
         smartSchedulerUpdaterService()
     }
@@ -43,7 +44,7 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
             running = true
             while (running) {
                 try {
-                    onNewClientStatus(0, ClientManager.getLocalODClient().getDeviceStatus())
+                    //onNewClientStatus(0, ClientManager.getLocalODClient().getDeviceStatus())
                     //onNewClientStatus(ClientManager.getCloudClient().getId(), ClientManager.getCloudClient().getDeviceStatus())
                     sleep(sleepDuration)
                 } catch (e: Exception) {
@@ -54,26 +55,10 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
     }
 
     private fun reSortClientList(clientID: Long) {
-        val client = clientList.find { T -> T.second == clientID }
+        /*val client = clientList.find { T -> T.second == clientID }
         if (client != null) clientList.removeAt(clientList.indexOf(client))
-        clientList.add(Pair(calculateClientScore(clientID), clientID))
-        clientList.sortWith(Comparator{ lhs, rhs -> java.lang.Float.compare(rhs.first, lhs.first) })
-    }
-
-    override fun onNewClientStatus(clientID: Long, information: DeviceInformation) {
-        if (information == ClientManager.getRemoteODClient(clientID)!!.getDeviceInformation()) return
-        synchronized(SORT_LOCK) {
-            ClientManager.getRemoteODClient(clientID)!!.setDeviceInformation(information)
-            reSortClientList(clientID)
-        }
-    }
-
-    override fun onNewClient(odClient: RemoteODClient) {
-        //if (!remoteClients.containsKey(odClient.getId())) { remoteClients[odClient.getId()] = DeviceInformation() }
-    }
-
-    override fun onDisconectedClient(odClient: RemoteODClient) {
-
+        clientList.add(Pair(calculateClientScore(clientID), clientID))*/
+        clientList.sortWith(Comparator { lhs, rhs -> java.lang.Float.compare(rhs.first, lhs.first) })
     }
 
     override fun destroy() {
@@ -82,14 +67,14 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
     }
 
     override fun scheduleJob(job: ODJob) {
-        val nextClient = getNextClient()
+        /*val nextClient = getNextClient()
         ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.second.getAddress()}\tSMART")
         val startTime = System.currentTimeMillis()
         nextClient.second.asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
         if (nextClient.first) {
             ClientManager.getRemoteODClient(nextClient.second.getId())!!
                     .getDeviceStatus().networkLatency.addLatency(System.currentTimeMillis() -startTime)
-        }
+        }*/
     }
 
     /*
@@ -105,7 +90,8 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
 
     private fun calculateClientScore(clientID: Long): Float {
 
-        val clientInformation = ClientManager.getRemoteODClient(clientID)!!.getDeviceInformation()
+        //val clientInformation = ClientManager.getRemoteODClient(clientID)!!.getDeviceInformation()
+        val clientInformation = DeviceInformation()
         /*
          * Lower the better >= 0
          */
@@ -133,19 +119,20 @@ class SmartScheduler : Scheduler(), ClientInfoInterface {
         return score
     }
 
-    private fun getNextClient() : Pair<Boolean, RemoteODClient> {
+    private fun getNextClient() : Pair<Boolean, ODProto.Worker?> {
         println("${clientList[0].second}\t${clientList[0].first}")
-        return Pair(false, ClientManager.getRemoteODClient(clientList[0].second)!!)
+        return Pair(false, SchedulerService.getWorkers()[SchedulerService.getWorkers().keys.first()])
+        //return Pair(false, ClientManager.getRemoteODClient(clientList[0].second)!!)
     }
 
-    inner class RTTTimer : TimerTask() {
+    /*inner class RTTTimer : TimerTask() {
         override fun run() {
-            for (client in ClientManager.getRemoteODClients()) {
+            for (worker in SchedulerService.getWorkers()) {
                 RTTClient.measureRTT(client, ODSettings.rttPort)
             }
             smartTimer.schedule(this, rttDelayMillis)
         }
-    }
+    }*/
 
     companion object {
         private val smartTimer: Timer = Timer()

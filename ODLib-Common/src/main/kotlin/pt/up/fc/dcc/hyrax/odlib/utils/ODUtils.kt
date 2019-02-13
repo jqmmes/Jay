@@ -1,9 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.utils
 
 import com.google.protobuf.ByteString
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 
 object ODUtils {
@@ -120,8 +117,8 @@ object ODUtils {
         return builder.build()
     }*/
 
-    fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.WorkerStatus {
-        val deviceStatus = ODProto.WorkerStatus.newBuilder()
+    fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.Worker {
+        val deviceStatus = ODProto.Worker.newBuilder()
         deviceStatus.battery = deviceInformation.battery
         deviceStatus.batteryStatus = deviceInformation.batteryStatus.status
         deviceStatus.cpuCores = deviceInformation.computationThreads
@@ -133,7 +130,7 @@ object ODUtils {
 
     }
 
-    fun parseDeviceStatus(deviceStatus: ODProto.WorkerStatus) : DeviceInformation {
+    fun parseDeviceStatus(deviceStatus: ODProto.Worker) : DeviceInformation {
         val deviceInformation = DeviceInformation()
         deviceInformation.battery = deviceStatus.battery
         deviceInformation.batteryStatus.status = deviceStatus.batteryStatus
@@ -146,7 +143,7 @@ object ODUtils {
     }
 
     fun parseDeviceStatus(data: ByteArray): DeviceInformation {
-        val deviceStatus = ODProto.WorkerStatus.parseFrom(data)
+        val deviceStatus = ODProto.Worker.parseFrom(data)
         return parseDeviceStatus(deviceStatus)
     }
 }

@@ -1,3 +1,4 @@
+/*
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
@@ -18,4 +19,4 @@ class CloudODClient(address: String = ODSettings.cloudIp, port: Int = ODSettings
     override fun asyncDetectObjects(odJob: ODJob, callback: (List<ODDetection?>) -> Unit) {
         //remoteClient.putJobCloudAsync(odJob.getId(), odJob.getData(), callback)
     }
-}
+}*/

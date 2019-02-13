@@ -1,3 +1,4 @@
+/*
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClient
@@ -111,4 +112,4 @@ open class RemoteODClient {
     fun getDeviceStatus() : DeviceInformation {
         return remoteClient.getStatus() ?: DeviceInformation()
     }
-}
+}*/

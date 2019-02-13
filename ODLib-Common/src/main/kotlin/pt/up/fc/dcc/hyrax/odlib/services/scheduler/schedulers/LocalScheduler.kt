@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
-import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -18,8 +17,8 @@ class LocalScheduler : Scheduler() {
     }
 
     override fun scheduleJob(job: ODJob) {
-        ODLogger.logInfo("Job_Scheduled\t${job.id}\t${ClientManager.getLocalODClient().getAddress()}\tLOCAL")
+        /*ODLogger.logInfo("Job_Scheduled\t${job.id}\t${ClientManager.getLocalODClient().getAddress()}\tLOCAL")
         ClientManager.getLocalODClient().asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
-        executingJobs[job.id] = job
+        executingJobs[job.id] = job*/
     }
 }

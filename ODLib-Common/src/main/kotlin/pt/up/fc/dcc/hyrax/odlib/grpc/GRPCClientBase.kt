@@ -13,7 +13,6 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
     protected var channel: ManagedChannel
     abstract var blockingStub: T1
     abstract var futureStub: T2
-    abstract val threadPool: ExecutorService
 
     init {
         channel = ManagedChannelBuilder.forAddress(host, port)
@@ -29,7 +28,6 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build()
-        //blockingStub = ODCommunicationGrpc.newBlockingStub(channel)
         reconnectStubs()
     }
 

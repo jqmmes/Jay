@@ -1,3 +1,4 @@
+/*
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ClientInfoInterface
@@ -8,8 +9,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ConcurrentHashMap
 
-@Deprecated("Will be Managed locally")
-@Suppress("unused")
+
 object ClientManager {
 
     private var clientInfoCallback: ClientInfoInterface? = null
@@ -74,4 +74,4 @@ object ClientManager {
     fun updateStatus(clientID: Long, deviceInformation: DeviceInformation) {
         if(clientInfoCallback!=null) clientInfoCallback!!.onNewClientStatus(clientID, deviceInformation)
     }
-}
+}*/
