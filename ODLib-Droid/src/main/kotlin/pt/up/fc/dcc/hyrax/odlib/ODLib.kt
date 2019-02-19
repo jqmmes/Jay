@@ -126,8 +126,8 @@ class ODLib(val context : Context) : AbstractODLib() {
     }
 
 
-    override fun destroy() {
-        super.destroy()
+    override fun destroy(keepServices: Boolean) {
+        super.destroy(keepServices)
         if (clientBound) {
             context.unbindService(clientConnection)
             clientBound = false

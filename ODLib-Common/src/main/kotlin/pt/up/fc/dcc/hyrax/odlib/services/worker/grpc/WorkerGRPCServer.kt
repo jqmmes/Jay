@@ -27,7 +27,7 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun selectModel(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>?) {
-            WorkerService.loadModel(ODModel(request!!.id, request.name)) {S -> genericComplete(S, responseObserver)}
+            WorkerService.loadModel(ODModel(request!!.id, request.name, request.url, request.downloaded)) {S -> genericComplete(S, responseObserver)}
         }
     }
 }

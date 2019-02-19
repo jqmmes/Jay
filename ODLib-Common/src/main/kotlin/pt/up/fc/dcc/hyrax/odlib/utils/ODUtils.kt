@@ -156,7 +156,7 @@ object ODUtils {
     }
 
     fun genModel(model: ODModel): ODProto.Model? {
-        return ODProto.Model.newBuilder().setId(model.modelId).setName(model.modelName).setDownloaded(model.downloaded).build()
+        return ODProto.Model.newBuilder().setId(model.modelId).setName(model.modelName).setUrl(model.remoteUrl).setDownloaded(model.downloaded).build()
     }
 
     fun parseModels(models: ODProto.Models?): Set<ODModel> {

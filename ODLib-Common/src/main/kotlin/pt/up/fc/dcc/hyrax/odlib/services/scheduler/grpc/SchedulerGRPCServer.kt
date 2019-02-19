@@ -21,5 +21,10 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
             SchedulerService.notify(request)
             genericComplete(ODProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
         }
+
+        override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
+            super.setScheduler(request, responseObserver)
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
     }
 }

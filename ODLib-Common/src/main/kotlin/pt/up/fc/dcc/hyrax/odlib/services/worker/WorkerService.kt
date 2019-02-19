@@ -16,6 +16,10 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
+/**
+ * TODO: Cleanup
+ */
+
 object WorkerService {
     private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
     private var running = false
@@ -82,7 +86,7 @@ object WorkerService {
             if (!executor.isShutdown) executor.shutdownNow()
         }
 
-        loadModel(listModels().first())
+        //loadModel(listModels().first())
     }
 
     fun stop() {
@@ -113,6 +117,7 @@ object WorkerService {
     }
 
     fun loadModel(odModel: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
+        println("Loading Model $odModel")
         if(running) localDetect.loadModel(odModel, callback)
     }
 

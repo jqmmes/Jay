@@ -76,7 +76,8 @@ abstract class AbstractODLib {
         println("updateWorkers - END")
     }
 
-    open fun destroy() {
+    open fun destroy(keepServices: Boolean = false) {
+        if (keepServices) return
         stopWorker()
         stopScheduler()
         stopBroker()

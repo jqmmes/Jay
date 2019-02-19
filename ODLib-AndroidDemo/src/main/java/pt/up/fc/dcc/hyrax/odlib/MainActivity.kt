@@ -28,7 +28,6 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
@@ -54,11 +53,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             odClient.stopScheduler()
         }
-        /*if (start) {
-            findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = true
-            toggleService(true)
-            //odClient.startGRPCServerService(useNettyServer = true)
-        } else odClient.stopGRPCServer()*/
     }
 
     private fun toggleService(start: Boolean) {
@@ -67,26 +61,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             odClient.stopWorker()
         }
-        /*ODLogger.logInfo("Toggle Service $start")
-        if (start) {
-            ODLogger.logInfo("CPU Cores: ${SystemStats.getCpuCount()}")
-            ODLogger.logInfo("Battery Status ${SystemStats.getBatteryPercentage(this)}\nCharging? ${SystemStats
-                    .getBatteryCharging(this)}")
-            WorkerService.setWorkingThreads(max(SystemStats.getCpuCount() / 2, 1))
-            odClient.setScheduler(getScheduler())
-            if (getScheduler() is CloudScheduler) {
-                thread {
-                    val models = ClientManager.getCloudClient().getModels(false, true)
-                    if (!models.isEmpty()) {
-                        ClientManager.getCloudClient().selectModel(models.first())
-                    }
-                }
-            }
-            odClient.startODService()
-            Scheduler.addResultsCallback { id, results -> resultsCallback(id, results) }
-
-        } else odClient.stopODService()*/
-
     }
 
     private fun resultsCallback(id: Long, results: List<ODDetection?>) {
@@ -124,10 +98,10 @@ class MainActivity : AppCompatActivity() {
 
     fun downloadModel(target: View) {
         val spinner = findViewById<Spinner>(R.id.select_model)
-        odClient.listModels {models ->
+        odClient.listModels { models ->
             for (model in models) {
                 if (model.modelName == spinner.selectedItem) {
-                    if (!model.downloaded) odClient.setModel(model)
+                    odClient.setModel(model)
                     ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
                     return@listModels
                 }
@@ -136,14 +110,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loadModel(target: View) {
-        val spinner = findViewById<Spinner>(R.id.select_model)
-        odClient.listModels { models ->
-            for (model in models) {
-                if (model.modelName == spinner.selectedItem) {
-                    ODLogger.logInfo("${model.modelName}\tloaded: ${model.downloaded}")
-                    odClient.setModel(model)
-                    return@listModels
-                }
+        modelsArrayList.clear()
+        odClient.listModels {models ->
+            for (model in models) modelsArrayList.add(model.modelName)
+            runOnUiThread {
+                modelArrayAdapter.notifyDataSetChanged()
+                modelSpinner.postInvalidate()
+                modelSpinner.adapter = modelArrayAdapter
             }
         }
     }
@@ -255,6 +228,11 @@ class MainActivity : AppCompatActivity() {
         else MulticastListener.stop()
     }
 
+    private val modelsArrayList = ArrayList<String>()
+    private lateinit var modelArrayAdapter: ArrayAdapter<String>
+
+    private lateinit var modelSpinner: Spinner
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -265,7 +243,7 @@ class MainActivity : AppCompatActivity() {
         odClient = ODLib(this)
         ODLogger.enableLogs(loggingConsole, LogLevel.Info)
         ODLogger.startBackgroundLoggingService()
-        val modelSpinner = findViewById<Spinner>(R.id.select_model)
+        modelSpinner = findViewById<Spinner>(R.id.select_model)
         val schedulerSpinner = findViewById<Spinner>(R.id.select_scheduler)
         val schedulerAdapter = arrayOf("LocalScheduler", "RemoteRandomScheduler", "RemoteRoundRobinScheduler",
                 "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler", "CloudScheduler", "SmartScheduler")
@@ -276,49 +254,34 @@ class MainActivity : AppCompatActivity() {
         findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = odClient.serviceRunningScheduler()
         //odClient.startGRPCServerService(useNettyServer = true)
 
-        /*if (odClient.serviceRunningWorker() && odClient.serviceRunningScheduler()) {
-            val arrayList1 = ArrayList<String>()
+        modelArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modelsArrayList)
+
+        if (odClient.serviceRunningWorker() && odClient.serviceRunningScheduler()) {
             odClient.listModels { models ->
+                modelsArrayList.clear()
                 for (model in models) {
-                    arrayList1.add(model.modelName)
+                    modelsArrayList.add(model.modelName)
                 }
-                val adp = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayList1)
-                modelSpinner.adapter = adp
+                runOnUiThread {
+                    modelArrayAdapter.notifyDataSetChanged()
+                    modelSpinner.postInvalidate()
+                    modelSpinner.adapter = modelArrayAdapter
+                }
             }
-        }*/
+        }
+
 
 
         findViewById<EditText>(R.id.cloudIP).setText(ODSettings.cloudIp, TextView.BufferType.EDITABLE)
         verifyStoragePermissions(this)
         requestBatteryPermissions()
-
-
-        //odClient.startWorker()
-        //odClient.startScheduler()
-
         //registerBroadcastReceiver()
-
-        /*
-        val brokerIntent = Intent(this, BrokerAndroidService::class.java)
-        val workerIntent = Intent(this, WorkerAndroidService::class.java)
-        val schedulerIntent = Intent(this, SchedulerAndroidService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(brokerIntent)
-            startForegroundService(workerIntent)
-            startForegroundService(schedulerIntent)
-        } else {
-            this.start(brokerIntent)
-            this.start(workerIntent)
-            this.start(schedulerIntent)
-        }*/
-
-
     }
 
 
     override fun onDestroy(){
-        //odClient.destroy()
         super.onDestroy()
+        odClient.destroy(true)
     }
 
     private fun registerBroadcastReceiver(){

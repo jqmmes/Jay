@@ -102,7 +102,6 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
         } catch (e: IOException) {
             ODLogger.logError("Error loading model")
         }
-
     }
 
     override fun loadModel(model: ODModel, completeCallback: ((ODProto.Status) -> Unit)?) {
