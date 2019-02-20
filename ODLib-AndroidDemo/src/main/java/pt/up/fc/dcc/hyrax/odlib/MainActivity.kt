@@ -22,10 +22,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.*
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
-import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import pt.up.fc.dcc.hyrax.odlib.utils.SystemStats
+import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.*
@@ -70,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getScheduler(): Scheduler {
+    private fun getScheduler(): SchedulerBase {
         val schedulerSpinnerValue = findViewById<Spinner>(R.id.select_scheduler).selectedItem
         return when (schedulerSpinnerValue) {
             "RemoteRandomScheduler" -> RemoteRandomScheduler()
@@ -134,15 +131,15 @@ class MainActivity : AppCompatActivity() {
 
             return@thread
 
-            val job = Scheduler.createJob(
+            val job = ODJob(
                     loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}"))
             )
 
             ODLogger.logInfo("Battery_Start\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")
-            Scheduler.addResultsCallback { _, _ ->
+            /*SchedulerBase.addResultsCallback { _, _ ->
                 ODLogger.logInfo("Battery_End\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")
-            }
-            Scheduler.addJob(job)
+            }*/
+            //SchedulerBase.addJob(job)
         }
     }
 
@@ -182,15 +179,15 @@ class MainActivity : AppCompatActivity() {
 
                 startBenchmark = System.currentTimeMillis()
                 assetImages.forEach { asset ->
-                    val job = Scheduler.createJob(asset)
+                    val job = SchedulerBase.createJob(asset)
                     ODLogger.logInfo("Battery_Start\t${job.id}\t${SystemStats.getBatteryEnergyCounter(this)
                     }\t${SystemStats.getBatteryPercentage(this)}")
-                    Scheduler.addResultsCallback { _, _ ->
+                    SchedulerBase.addResultsCallback { _, _ ->
                         ODLogger.logInfo("Battery_End\t${job.id}\t${SystemStats.getBatteryEnergyCounter
                         (this)}\t${SystemStats.getBatteryPercentage(this)}")
                         synchronizingLatch.countDown()
                     }
-                    Scheduler.addJob(job)
+                    SchedulerBase.addJob(job)
                     synchronizingLatch.await()
                     synchronizingLatch = CountDownLatch(1)
                 }

@@ -4,7 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 
-class LocalScheduler : Scheduler() {
+class LocalScheduler : SchedulerBase("LocalScheduler") {
     override fun destroy() {
         executingJobs.clear()
     }

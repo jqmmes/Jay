@@ -1,11 +1,10 @@
 package pt.up.fc.dcc.hyrax.odlib.utils
 
-import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 
 object ODUtils {
 
-    internal fun parseResults(results: ODProto.Results?): List<ODDetection?> {
+    /*internal fun parseResults(results: ODProto.Results?): List<ODDetection?> {
         try {
             val detections: Array<ODDetection?> = arrayOfNulls(results!!.detectionsCount)
             var i = 0
@@ -18,7 +17,7 @@ object ODUtils {
             for (message in e.stackTrace) ODLogger.logError(message.toString())
         }
         return emptyList()
-    }
+    } */
 
     private fun genDetection(detection: ODDetection?) : ODProto.Detection{
         return ODProto.Detection.newBuilder()
@@ -53,10 +52,6 @@ object ODUtils {
         return ODModel(model!!.id, model.name, model.url, model.downloaded)
     }*/
 
-    internal fun genJobRequest(job: ODJob) : ODProto.Job {
-        return ODProto.Job.newBuilder().setId(job.id).setData(ByteString.copyFrom(job.data)).build()
-    }
-
     /*internal fun parseModelConfig(modelConfig: ODProto.ModelConfig?) : Pair<ODModel, HashMap<String, String>> {
         return Pair(parseModel(modelConfig!!.model), HashMap(modelConfig.configsMap))
     }
@@ -73,32 +68,6 @@ object ODUtils {
     internal fun genModelConfig(configs: Map<String, String>) : ODProto.ModelConfig {
         return ODProto.ModelConfig.newBuilder()
                 .putAllConfigs(configs)
-                .build()
-    }
-
-    /*internal fun genLocalClient(): ODProto.RemoteClient? {
-        return ODProto.RemoteClient.newBuilder()
-                .setAddress(NetworkUtils.getLocalIpV4(false))
-                .setPort(ODSettings.brokerPort)
-                //.setId(ODUtils.genClientId(NetworkUtils.getLocalIpV4(false)))
-                .setId("")
-                .build()
-    }*/
-
-    internal fun genClientId(ipV4: String): Long {
-        try {
-            return if (NetworkUtils.getLocalIpV4(false) == ipV4 || ipV4 == "localhost") 0 else ipV4.replace(".", "")
-                    .toLong()
-        } catch (e: Exception ) {
-            ODLogger.logWarn("failed to gen id from $ipV4")
-        }
-        return 0
-    }
-
-    fun genAsyncRequest(id: String, data: ByteArray): ODProto.AsyncRequest? {
-        return  ODProto.AsyncRequest.newBuilder()
-                //.setJob(genJobRequest(id, data))
-                //.setRemoteClient(genLocalClient())
                 .build()
     }
 
@@ -130,7 +99,7 @@ object ODUtils {
 
     }
 
-    fun parseDeviceStatus(deviceStatus: ODProto.Worker) : DeviceInformation {
+    /*fun parseDeviceStatus(deviceStatus: ODProto.Worker) : DeviceInformation {
         val deviceInformation = DeviceInformation()
         deviceInformation.battery = deviceStatus.battery
         deviceInformation.batteryStatus.status = deviceStatus.batteryStatus
@@ -140,29 +109,25 @@ object ODUtils {
         //deviceInformation.pendingJobs = deviceStatus.pendingJobs
         //deviceInformation.connections= deviceStatus.connections
         return deviceInformation
-    }
+    }*/
 
-    fun parseDeviceStatus(data: ByteArray): DeviceInformation {
+    /*fun parseDeviceStatus(data: ByteArray): DeviceInformation {
         val deviceStatus = ODProto.Worker.parseFrom(data)
         return parseDeviceStatus(deviceStatus)
-    }
+    }*/
 
     fun genModelRequest(listModels: Set<ODModel>): ODProto.Models? {
         val models = ODProto.Models.newBuilder()
         for (model in listModels) {
-            models.addModels(genModel(model))
+            models.addModels(model.getProto())
         }
         return models.build()
-    }
-
-    fun genModel(model: ODModel): ODProto.Model? {
-        return ODProto.Model.newBuilder().setId(model.modelId).setName(model.modelName).setUrl(model.remoteUrl).setDownloaded(model.downloaded).build()
     }
 
     fun parseModels(models: ODProto.Models?): Set<ODModel> {
         val modelSet : MutableSet<ODModel> = mutableSetOf()
         for (model in models!!.modelsList) {
-            modelSet.add(ODModel(model.id, model.name, model.url, model.downloaded))
+            modelSet.add(ODModel(model))
         }
         return modelSet.toSet()
     }

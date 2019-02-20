@@ -46,17 +46,20 @@ message ModelConfig {
     map<string, string> configs = 2;
 }
 
-message AsyncRequest {
-    Job job = 1;
-    string id = 2;
-}
-
 message Worker {
     Status.Code status = 1;
 
     string id = 2; // uuid
 
     int32 battery = 3;
+
+    enum BatteryStatus {
+        CHARGED = 0;
+        CHARGING = 1;
+        USB = 2;
+        DISCHARGING = 3;
+    }
+
     int32 batteryStatus = 4;
 
     int32 cpuCores = 5;
@@ -105,10 +108,14 @@ message Scheduler {
     Type type = 1;
 }
 
+message Schedulers {
+    repeated Scheduler scheduler = 1;
+}
+
 service BrokerService {
     rpc ping (Ping) returns (Ping) {};
     rpc executeJob (Job) returns (Results) {}; // Send to Worker
-    rpc scheduleJob (Job) returns (Results) {}; // Send to Scheduler
+    rpc scheduleJob (Job) returns (Results) {}; // Send to SchedulerBase
     //rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
     //rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
     rpc advertiseWorkerStatus(Worker) returns (Status) {}; // Broker Externo > Broker
@@ -120,10 +127,11 @@ service BrokerService {
 
 }
 
-service SchedulerService { // Broker interno > Scheduler
+service SchedulerService { // Broker interno > SchedulerBase
     rpc schedule (Job) returns (Worker) {};
     rpc notify (Worker) returns (Status) {};
     rpc setScheduler (Scheduler) returns (Status) {};
+    rpc listSchedulers(google.protobuf.Empty) returns (Schedulers) {};
 }
 
 service WorkerService { // Broker interno > Worker

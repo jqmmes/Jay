@@ -45,7 +45,6 @@ class ODLib(val context : Context) : AbstractODLib() {
 
     init {
         DroidBatteryDetails.monitorBattery(context)
-        //WorkerAndroidService.setDetector(localDetector)
         Intent(context, ClientAndroidService::class.java).also { intent -> context.bindService(intent, clientConnection, Context.BIND_AUTO_CREATE)}
     }
 

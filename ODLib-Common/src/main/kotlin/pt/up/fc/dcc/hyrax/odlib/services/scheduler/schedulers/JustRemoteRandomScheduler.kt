@@ -10,7 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import java.util.*
 
 @Suppress("unused")
-class JustRemoteRandomScheduler : Scheduler() {
+class JustRemoteRandomScheduler : SchedulerBase("JustRemoteRandom") {
     override fun destroy() {
         jobBookkeeping.clear()
     }

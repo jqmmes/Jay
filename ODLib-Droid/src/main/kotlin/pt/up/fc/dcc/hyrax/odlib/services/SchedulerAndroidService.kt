@@ -14,7 +14,7 @@ internal class SchedulerAndroidService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        val notification = ODLib.makeNotification(this, "Scheduler Service", "Service Running")
+        val notification = ODLib.makeNotification(this, "SchedulerBase Service", "Service Running")
         startForeground(notification.first, notification.second)
         SchedulerService.start(true)
     }

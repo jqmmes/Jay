@@ -35,12 +35,6 @@ object BrokerService {
         scheduler.schedule(request) { W -> workers[W.id]!!.grpc.executeJob(request, callback) }
     }
 
-    internal fun diffuseWorkers(request: ODProto.Worker?) {
-        for (client in workers.values) client.grpc.advertiseWorkerStatus(request)
-    }
-
-    internal fun advertiseWorker(request: ODProto.Worker?) { scheduler.notify(request) }
-
     internal fun updateWorkers() {
         for (worker in workers.keys) scheduler.notify(ODProto.Worker.newBuilder().setId(worker).build())
     }
@@ -53,5 +47,12 @@ object BrokerService {
         worker.selectModel(request, callback)
     }
 
+    fun advertiseWorkerStatus(request: ODProto.Worker?) {
+        for (client in workers.values) client.grpc.advertiseWorkerStatus(request)
 
+    }
+
+    fun receiveWorkerStatus(request: ODProto.Worker?) {
+        scheduler.notify(request)
+    }
 }

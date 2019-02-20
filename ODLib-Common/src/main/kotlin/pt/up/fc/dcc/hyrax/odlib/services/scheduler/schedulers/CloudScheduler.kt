@@ -4,7 +4,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 
-class CloudScheduler : Scheduler() {
+class CloudScheduler : SchedulerBase("Cloud") {
     override fun destroy() {
 
     }

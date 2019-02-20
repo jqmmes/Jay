@@ -29,12 +29,12 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun advertiseWorkerStatus(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
-            BrokerService.advertiseWorker(request)
+            BrokerService.receiveWorkerStatus(request)
             genericComplete(ODProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
         }
 
         override fun diffuseWorkerStatus(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
-            BrokerService.diffuseWorkers(request)
+            BrokerService.advertiseWorkerStatus(request)
             genericComplete(ODProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
         }
 

@@ -3,15 +3,14 @@ package pt.up.fc.dcc.hyrax.odlib
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.provider.MediaStore
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SchedulerBase
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 
 /**
@@ -31,8 +30,8 @@ class MainActivityFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == AppCompatActivity.RESULT_OK) {
             val imageBitmap = data.extras!!.get("data") as Bitmap
-            val newJob = Scheduler.createJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
-            Scheduler.addJob(newJob)
+            val newJob = ODJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
+            //SchedulerBase.addJob(newJob)
         }
     }
 

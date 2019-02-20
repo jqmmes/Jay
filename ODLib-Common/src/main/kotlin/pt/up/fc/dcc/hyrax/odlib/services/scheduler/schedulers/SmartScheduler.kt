@@ -1,7 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 
-import pt.up.fc.dcc.hyrax.odlib.clients.Worker
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
@@ -10,7 +9,6 @@ import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.lang.Thread.sleep
 import java.util.*
 import kotlin.collections.HashMap
@@ -18,7 +16,7 @@ import kotlin.concurrent.thread
 
 
 @Suppress("unused")
-class SmartScheduler : Scheduler() {
+class SmartScheduler : SchedulerBase("SmartScheduler") {
 
     private val clientList: MutableList<Pair<Float, String>> = mutableListOf()
     private val jobBooKeeping: HashMap<Long, List<Long>> = HashMap()

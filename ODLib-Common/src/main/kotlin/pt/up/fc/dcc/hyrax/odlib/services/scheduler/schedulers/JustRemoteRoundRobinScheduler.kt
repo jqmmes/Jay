@@ -8,7 +8,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 
 
 @Suppress("unused")
-class JustRemoteRoundRobinScheduler : Scheduler() {
+class JustRemoteRoundRobinScheduler : SchedulerBase("JustRemoteRoundRobin") {
     override fun destroy() {
         jobBookkeeping.clear()
     }

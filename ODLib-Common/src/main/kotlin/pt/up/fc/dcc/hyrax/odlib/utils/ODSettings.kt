@@ -2,7 +2,6 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 object ODSettings {
 
-
     var brokerPort : Int = 50051
     val workerPort : Int = 50053
     val schedulerPort : Int = 50055

@@ -25,7 +25,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     }
 
     fun scheduleJob(job: ODJob, callback: ((ODProto.Results) -> Unit)? = null) {
-        val call = futureStub.scheduleJob(ODUtils.genJobRequest(job))
+        val call = futureStub.scheduleJob(job.getProto())
         call.addListener(Runnable{ callback?.invoke(call.get()) }, AbstractODLib.executorPool)//{ J -> AbstractODLib.put(J) })
     }
 
@@ -48,21 +48,22 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }
     }
 
-    fun advertiseWorkerStatus(request: ODProto.Worker?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     fun updateWorkers() {
         BrokerService.updateWorkers()
     }
 
     fun selectModel(model: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
-        val call = futureStub.setModel(ODUtils.genModel(model))
+        val call = futureStub.setModel(model.getProto())
         call.addListener(Runnable{ callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
     fun getModels(callback: ((Set<ODModel>) -> Unit)? = null) {
         val call = futureStub.getModels(Empty.getDefaultInstance())
         call.addListener(Runnable{ callback?.invoke(ODUtils.parseModels(call.get())) }, AbstractODLib.executorPool)
+    }
+
+    fun advertiseWorkerStatus(request: ODProto.Worker?) {
+        val call = futureStub.advertiseWorkerStatus(request)
+        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
     }
 }
