@@ -89,8 +89,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun advertiseToggleListener(target: View) {
-        if ((target as ToggleButton).isChecked) MulticastAdvertiser.advertise()
-        else MulticastAdvertiser.stop()
+        //if ((target as ToggleButton).isChecked) MulticastAdvertiser.advertise()
+        //else MulticastAdvertiser.stop()
     }
 
     fun downloadModel(target: View) {

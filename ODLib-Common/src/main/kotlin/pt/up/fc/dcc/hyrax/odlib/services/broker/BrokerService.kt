@@ -36,7 +36,7 @@ object BrokerService {
     }
 
     internal fun updateWorkers() {
-        for (worker in workers.keys) scheduler.notify(ODProto.Worker.newBuilder().setId(worker).build())
+        for (worker in workers.values) scheduler.notify(worker.getProto())
     }
 
     internal fun getModels(callback: (ODProto.Models) -> Unit) {
@@ -47,12 +47,15 @@ object BrokerService {
         worker.selectModel(request, callback)
     }
 
-    fun advertiseWorkerStatus(request: ODProto.Worker?) {
+    internal fun advertiseWorkerStatus(request: ODProto.Worker?) {
         for (client in workers.values) client.grpc.advertiseWorkerStatus(request)
-
     }
 
-    fun receiveWorkerStatus(request: ODProto.Worker?) {
+    internal fun receiveWorkerStatus(request: ODProto.Worker?) {
         scheduler.notify(request)
     }
+
+    internal fun startMulticasting() {}
+
+    internal fun stopMulticasting() {}
 }

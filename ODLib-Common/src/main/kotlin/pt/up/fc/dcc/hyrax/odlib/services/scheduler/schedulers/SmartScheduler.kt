@@ -30,7 +30,7 @@ class SmartScheduler : SchedulerBase("SmartScheduler") {
         //smartTimer.schedule(RTTTimer(), rttDelayMillis)
         MulticastListener.listen()
         StatusManager.advertiseStatus()
-        MulticastAdvertiser.advertise()
+        //MulticastAdvertiser.advertise()
         //ClientManager.setClientInfoCallback(this)
         reSortClientList(0)
         smartSchedulerUpdaterService()

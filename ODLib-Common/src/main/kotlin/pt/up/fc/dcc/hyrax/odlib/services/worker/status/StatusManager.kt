@@ -11,7 +11,7 @@ object StatusManager {
     var cpuDetails = CpuDetails
 
     fun advertiseStatus() {
-        MulticastAdvertiser.setAdvertiseData(1, ODUtils.genDeviceStatus(deviceInformation).toByteArray())
+        //MulticastAdvertiser.setAdvertiseData(1, ODUtils.genDeviceStatus(deviceInformation).toByteArray())
     }
 
     private fun updateAnnounceStatus() {

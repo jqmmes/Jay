@@ -2,8 +2,8 @@ package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import java.io.ByteArrayOutputStream
-import java.io.ObjectOutputStream
+/*import java.io.ByteArrayOutputStream
+import java.io.ObjectOutputStream*/
 import java.lang.Thread.sleep
 import java.net.*
 import kotlin.concurrent.thread
@@ -19,26 +19,40 @@ object MulticastAdvertiser {
     private var packet: DatagramPacket? = null
     private var currentAdvertiseType = 0
 
-    init { setAdvertiseData() }
+    //init { setAdvertiseData() }
 
     fun setFrequency(frequency: Long) {
         this.multicastFrequency = frequency
     }
 
-    fun setAdvertiseData(msgType: Int = 0, data: ByteArray = ByteArray(0)) {
+    /*fun setAdvertiseData(msgType: Int = 0, data: ByteArray = ByteArray(0)) {
         synchronized(MESSAGE_LOCK) {
             val baos = ByteArrayOutputStream()
             ObjectOutputStream(baos).writeObject(AdvertisingMessage(msgType, data))
             packet = DatagramPacket(baos.toByteArray(), baos.size(), mcIPAddress, mcPort)
             currentAdvertiseType = msgType
         }
+    }*/
+
+    fun setAdvertiseData(data: ByteArray) {
+        synchronized(MESSAGE_LOCK) {
+            /*val baos = ByteArrayOutputStream()
+            ObjectOutputStream(baos).writeObject(data)*/
+            packet = DatagramPacket(data, data.size, mcIPAddress, mcPort)
+        }
     }
+
 
     fun getCurrentAdvertiseType(): Int {
         return currentAdvertiseType
     }
 
-    fun advertise(networkInterface: NetworkInterface? = null) {
+    fun start(data: ByteArray, networkInterface: NetworkInterface? = null) {
+        setAdvertiseData(data)
+        start(networkInterface)
+    }
+
+    fun start(networkInterface: NetworkInterface? = null) {
         if (running) {
             ODLogger.logWarn("MulticastServer already running")
             return
@@ -64,7 +78,7 @@ object MulticastAdvertiser {
             mcSocket.joinGroup(mcIPAddress)
             do {
                 //ODLogger.logInfo("Sending Multicast packet")
-                synchronized(MESSAGE_LOCK) { mcSocket.send(packet) }
+                synchronized(MESSAGE_LOCK) { if (packet != null) mcSocket.send(packet) }
                 sleep(multicastFrequency)
             } while (running)
 
@@ -75,8 +89,13 @@ object MulticastAdvertiser {
         }
     }
 
+    internal fun isRunning() : Boolean {
+        return running
+    }
+
     fun stop() {
         running = false
+        packet = null
     }
 
 }

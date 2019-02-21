@@ -27,8 +27,8 @@ class ODCloud {
                     return
                 }
                 if (args[0] == "cloudlet") {
-                    MulticastAdvertiser.advertise()
-                    MulticastListener.listen()
+                    //MulticastAdvertiser.advertise()
+                    //MulticastListener.listen()
                 }
             }
 
