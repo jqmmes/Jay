@@ -56,7 +56,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String){
     }
 
     internal fun getProto() : ODProto.Worker? {
-        //deviceStatus.batteryStatus = batteryStatus.status
+        //deviceStatus.batteryStatus = batteryStatus.code
         val worker = ODProto.Worker.newBuilder()
         worker.battery = battery
         worker.avgTimePerJob = avgComputingEstimate

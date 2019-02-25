@@ -112,31 +112,36 @@ message Schedulers {
     repeated Scheduler scheduler = 1;
 }
 
-service BrokerService {
-    rpc ping (Ping) returns (Ping) {};
-    rpc executeJob (Job) returns (Results) {}; // Send to Worker
-    rpc scheduleJob (Job) returns (Results) {}; // Send to SchedulerBase
-    //rpc getServiceStatus(ServiceRequest) returns (ServiceStatus) {};
-    //rpc advertiseServiceStatus(ServiceStatus) returns (Status) {};
-    rpc advertiseWorkerStatus(Worker) returns (Status) {}; // Broker Externo > Broker
-    rpc diffuseWorkerStatus(Worker) returns (Status) {}; // Worker > Broker
-    rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+service BrokerService { // Internal and External communication Broker
+    rpc ping (Ping) returns (Ping) {}; // ExternalBroker > Broker
 
-    rpc getModels(google.protobuf.Empty) returns (Models) {};
-    rpc setModel(Model) returns (Status) {};
+    rpc executeJob (Job) returns (Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
+    rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
 
+    rpc advertiseWorkerStatus(Worker) returns (Status) {}; // ExternalBroker > Broker
+    rpc diffuseWorkerStatus(Worker) returns (Status) {};   // WorkerService > Broker --> Calls:
+                                                           //          ExternalBroker::advertiseWorkerStatus
+                                                           //          SchedulerService::notify
+
+    rpc getModels(google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
+    rpc setModel(Model) returns (Status) {};                  // App > Broker --> Calls WorkerService::selectModel
+
+    rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {}; // SchedulerService > Broker
+
+    // TODO
+    rpc getSchedulers(google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
+    rpc setSchedulers(Model) returns (Status) {};                  // App > Broker --> Calls WorkerService::selectModel
 }
 
-service SchedulerService { // Broker interno > SchedulerBase
-    rpc schedule (Job) returns (Worker) {};
-    rpc notify (Worker) returns (Status) {};
-    rpc setScheduler (Scheduler) returns (Status) {};
-    rpc listSchedulers(google.protobuf.Empty) returns (Schedulers) {};
+service SchedulerService {                                             // Broker > SchedulerBase
+    rpc schedule (Job) returns (Worker) {};                            // Schedule a Job
+    rpc notify (Worker) returns (Status) {};                           // Inform about Worker updates
+    rpc setScheduler (Scheduler) returns (Status) {};                  // Select Scheduler to be used
+    rpc listSchedulers(google.protobuf.Empty) returns (Schedulers) {}; // List available Schedulers
 }
 
-service WorkerService { // Broker interno > Worker
-    rpc execute (Job) returns (Results) {};
-    rpc selectModel (Model) returns (Status) {};
-    rpc listModels (google.protobuf.Empty) returns (Models) {};
+service WorkerService {                                           // Broker > WorkerService
+    rpc execute (Job) returns (Results) {};                       // Queue a Job for execution
+    rpc selectModel (Model) returns (Status) {};                  // Select TF Model to be used
+    rpc listModels (google.protobuf.Empty) returns (Models) {};   // List available TF Models
 }
-

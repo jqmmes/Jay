@@ -35,8 +35,8 @@ object ODUtils {
         return builder.build()
     }
 
-    /*internal fun genStatus(status: ReturnStatus) : ODProto.RequestStatus {
-        return ODProto.RequestStatus.newBuilder().setCode(ODProto.RequestStatus.Code.forNumber(status.code)).build()
+    /*internal fun genStatus(code: ReturnStatus) : ODProto.RequestStatus {
+        return ODProto.RequestStatus.newBuilder().setCode(ODProto.RequestStatus.Code.forNumber(code.code)).build()
     }*/
 
     /*internal fun genModel(model : ODModel) : ODProto.Model {
@@ -89,7 +89,7 @@ object ODUtils {
     fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.Worker {
         val deviceStatus = ODProto.Worker.newBuilder()
         deviceStatus.battery = deviceInformation.battery
-        deviceStatus.batteryStatus = deviceInformation.batteryStatus.status
+        deviceStatus.batteryStatus = deviceInformation.batteryStatus.code
         deviceStatus.cpuCores = deviceInformation.computationThreads
         deviceStatus.queueSize = deviceInformation.queueSize
         deviceStatus.runningJobs = deviceInformation.runningJobs
@@ -102,7 +102,7 @@ object ODUtils {
     /*fun parseDeviceStatus(deviceStatus: ODProto.Worker) : DeviceInformation {
         val deviceInformation = DeviceInformation()
         deviceInformation.battery = deviceStatus.battery
-        deviceInformation.batteryStatus.status = deviceStatus.batteryStatus
+        deviceInformation.batteryStatus.code = deviceStatus.batteryStatus
         deviceInformation.computationThreads = deviceStatus.cpuCores
         deviceInformation.queueSize = deviceStatus.queueSize
         deviceInformation.runningJobs = deviceStatus.runningJobs
