@@ -60,14 +60,14 @@ message Worker {
         DISCHARGING = 3;
     }
 
-    int32 batteryStatus = 4;
+    BatteryStatus batteryStatus = 4;
 
     int32 cpuCores = 5;
     int32 queueSize = 6;
     int32 runningJobs = 7;
 
     int32 avgTimePerJob = 8;
-    int32 bandwidthEstimate = 9; // KB/s
+    int32 bandwidthEstimate = 9; // KB/s Este valor não pode ser alterado após recebido o pacote. Não faz sentido
 }
 
 message Ping {

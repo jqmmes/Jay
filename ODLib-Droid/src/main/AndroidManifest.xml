@@ -8,9 +8,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application>
-        <service android:name=".services.BrokerAndroidService"/>
-        <service android:name=".services.WorkerAndroidService"/>
-        <service android:name=".services.SchedulerAndroidService"/>
+        <service android:name=".services.BrokerAndroidService" android:exported="true"/>
+        <service android:name=".services.WorkerAndroidService" android:exported="true"/>
+        <service android:name=".services.SchedulerAndroidService" android:exported="true" />
     </application>
 
 </manifest>

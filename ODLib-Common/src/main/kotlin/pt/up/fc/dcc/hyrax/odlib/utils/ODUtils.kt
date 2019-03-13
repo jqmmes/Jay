@@ -89,7 +89,7 @@ object ODUtils {
     fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.Worker {
         val deviceStatus = ODProto.Worker.newBuilder()
         deviceStatus.battery = deviceInformation.battery
-        deviceStatus.batteryStatus = deviceInformation.batteryStatus.code
+        deviceStatus.batteryStatus = ODProto.Worker.BatteryStatus.CHARGED// TODO: Load appropriate status
         deviceStatus.cpuCores = deviceInformation.computationThreads
         deviceStatus.queueSize = deviceInformation.queueSize
         deviceStatus.runningJobs = deviceInformation.runningJobs

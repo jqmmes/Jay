@@ -9,7 +9,8 @@ object ODSettings {
 
 
     const val rttPort: Int = 8888
-    const val cloudIp: String = "35.204.130.183"
+    //const val cloudIp: String = "35.204.130.183"
+    const val cloudIp: String = "odcloud.duckdns.org"
     const val grpcTimeout: Long = 10 //Seconds
     const val grpcLongTimeout: Long = 120 //Seconds
     const val grpcShortTimeout: Long = 500 //Milliseconds
