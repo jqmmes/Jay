@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.grpc
 
+import com.google.protobuf.BoolValue
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
 import io.grpc.BindableService
@@ -9,6 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.brokerPort, useNettyServer) {
 
@@ -55,8 +57,18 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             BrokerService.getSchedulers {S -> genericComplete(S, responseObserver)}
         }
 
-        override fun setSchedulers(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
+        override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.setScheduler(request) {S -> genericComplete(S, responseObserver)}
+        }
+
+        override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<ODProto.Status>?) {
+            BrokerService.listenMulticast(request?.value ?: false)
+            genericComplete(ODUtils.genStatus(ODProto.Status.Code.Success), responseObserver)
+        }
+
+        override fun announceMulticast(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
+            BrokerService.announceMulticast(true, request)
+            genericComplete(ODUtils.genStatus(ODProto.Status.Code.Success), responseObserver)
         }
     }
 }

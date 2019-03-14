@@ -8,6 +8,13 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
 
     private var worker : ODProto.Worker? = null
 
+    override fun init() {
+        super.init()
+        if (workerType == ODProto.Worker.Type.REMOTE) {
+            SchedulerService.listenForWorkers(true)
+        }
+    }
+
     override fun getName(): String {
         return "${super.getName()} [${workerType.name}]"
     }
@@ -27,5 +34,8 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
 
     override fun destroy() {
         worker = null
+        if (workerType == ODProto.Worker.Type.REMOTE) {
+            SchedulerService.listenForWorkers(false)
+        }
     }
 }

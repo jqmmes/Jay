@@ -19,25 +19,13 @@ object MulticastAdvertiser {
     private var packet: DatagramPacket? = null
     private var currentAdvertiseType = 0
 
-    //init { setAdvertiseData() }
-
+    @Suppress("unused")
     fun setFrequency(frequency: Long) {
         this.multicastFrequency = frequency
     }
 
-    /*fun setAdvertiseData(msgType: Int = 0, data: ByteArray = ByteArray(0)) {
-        synchronized(MESSAGE_LOCK) {
-            val baos = ByteArrayOutputStream()
-            ObjectOutputStream(baos).writeObject(AdvertisingMessage(msgType, data))
-            packet = DatagramPacket(baos.toByteArray(), baos.size(), mcIPAddress, mcPort)
-            currentAdvertiseType = msgType
-        }
-    }*/
-
     fun setAdvertiseData(data: ByteArray) {
         synchronized(MESSAGE_LOCK) {
-            /*val baos = ByteArrayOutputStream()
-            ObjectOutputStream(baos).writeObject(data)*/
             packet = DatagramPacket(data, data.size, mcIPAddress, mcPort)
         }
     }
@@ -77,7 +65,6 @@ object MulticastAdvertiser {
             mcSocket.loopbackMode = true
             mcSocket.joinGroup(mcIPAddress)
             do {
-                //ODLogger.logInfo("Sending Multicast packet")
                 synchronized(MESSAGE_LOCK) { if (packet != null) mcSocket.send(packet) }
                 sleep(multicastFrequency)
             } while (running)

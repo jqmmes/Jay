@@ -3,6 +3,7 @@ syntax = "proto3";
 option java_package = "pt.up.fc.dcc.hyrax.odlib.protoc";
 option java_outer_classname = "ODProto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
 
 
 message Detection {
@@ -100,19 +101,6 @@ message ServiceRequest {
 }
 
 message Scheduler {
-    /*enum Type {
-        STATIC = 0;
-        DYNAMIC = 1;
-    }
-    enum StaticType {
-        DEVICE = 0;
-        CLOUD = 1;
-        ROUND_ROBIN = 2;
-    }
-    enum DynamicType {
-        SMART = 0;
-    }
-    Type type = 1;*/
     string id = 1;
     string name = 2;
 }
@@ -122,24 +110,30 @@ message Schedulers {
 }
 
 service BrokerService { // Internal and External communication Broker
-    rpc ping (Ping) returns (Ping) {}; // ExternalBroker > Broker
+                        rpc ping (Ping) returns (Ping) {}; // ExternalBroker > Broker
 
-    rpc executeJob (Job) returns (Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
-    rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
+                        rpc executeJob (Job) returns (Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
+                        rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
 
-    rpc advertiseWorkerStatus(Worker) returns (Status) {}; // ExternalBroker > Broker
-    rpc diffuseWorkerStatus(Worker) returns (Status) {};   // WorkerService > Broker --> Calls:
-                                                           //          ExternalBroker::advertiseWorkerStatus
-                                                           //          SchedulerService::notify
+                        rpc advertiseWorkerStatus(Worker) returns (Status) {}; // ExternalBroker > Broker
+                        rpc diffuseWorkerStatus(Worker) returns (Status) {}; // WorkerService > Broker --> Calls:
+                        //          ExternalBroker::advertiseWorkerStatus
+                        //          SchedulerService::notify
 
-    rpc getModels(google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
-    rpc setModel(Model) returns (Status) {};                  // App > Broker --> Calls WorkerService::selectModel
+                        rpc getModels (google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
+                        rpc setModel (Model) returns (Status) {}; // App > Broker --> Calls WorkerService::selectModel
 
-    rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {}; // SchedulerService > Broker
+                        rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {}; // SchedulerService > Broker
 
-    // TODO
-    rpc getSchedulers(google.protobuf.Empty) returns (Schedulers) {}; // App > Broker --> Calls SchedulerService::listSchedulers
-    rpc setSchedulers(Scheduler) returns (Status) {};                  // App > Broker --> Calls SchedulerService::setScheduler
+                        rpc getSchedulers (google.protobuf.Empty) returns (Schedulers) {}; // App > Broker --> Calls SchedulerService::listSchedulers
+                        rpc setScheduler (Scheduler) returns (Status) {
+                        }; // App > Broker --> Calls SchedulerService::setScheduler
+
+
+                        rpc listenMulticast (google.protobuf.BoolValue) returns (Status) {
+                        }; // SchedulerService --> Broker (Starts MC listen)
+                        rpc announceMulticast (Worker) returns (Status) {
+                        }; // SchedulerService --> Broker (Starts MCast advertise)
 }
 
 service SchedulerService {                                             // Broker > SchedulerBase

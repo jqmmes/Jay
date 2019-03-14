@@ -64,6 +64,11 @@ object SchedulerService {
         workers[worker!!.id] = worker
     }
 
+    internal fun listenForWorkers(listen: Boolean) {
+        if (listen) brokerGRPC.listenMulticastWorkers()
+        else brokerGRPC.listenMulticastWorkers(true)
+    }
+
     fun stop() {
         if (server != null) server!!.stop()
     }

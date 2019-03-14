@@ -10,6 +10,13 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     private var devices = devices.toList()
     private var roundRobinCount: Int = 0
 
+    override fun init() {
+        super.init()
+        if (ODProto.Worker.Type.REMOTE in devices) {
+            SchedulerService.listenForWorkers(true)
+        }
+    }
+
     override fun getName(): String {
         val strategy = if (roundRobin) "RoundRobin" else "Random"
         var devs = ""
@@ -32,5 +39,8 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     override fun destroy() {
         devices = emptyList()
         roundRobinCount = 0
+        if (ODProto.Worker.Type.REMOTE in devices) {
+            SchedulerService.listenForWorkers(false)
+        }
     }
 }

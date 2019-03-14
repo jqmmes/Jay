@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.grpc
 
+import com.google.protobuf.BoolValue
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
@@ -67,9 +68,18 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable{ callback?.invoke(ODUtils.parseSchedulers(call.get())) }, AbstractODLib.executorPool)
     }
 
+    fun setScheduler(id: String) {
+        val call = futureStub.setScheduler(ODProto.Scheduler.newBuilder().setId(id).build())
+        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
+    }
 
     fun advertiseWorkerStatus(request: ODProto.Worker?) {
         val call = futureStub.advertiseWorkerStatus(request)
+        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
+    }
+
+    fun listenMulticastWorkers(stopListener: Boolean = false) {
+        val call = futureStub.listenMulticast(BoolValue.of(stopListener))
         call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
     }
 }

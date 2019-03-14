@@ -2,19 +2,22 @@ package pt.up.fc.dcc.hyrax.odlib.services.broker
 
 import pt.up.fc.dcc.hyrax.odlib.clients.Worker
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Schedulers
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.Type
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Job
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Results
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Model
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Models
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker as ODWorker
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Results
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Scheduler
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Schedulers
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.Type
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCServer
+import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
+import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker as ODWorker
 
 object BrokerService {
 
@@ -77,7 +80,23 @@ object BrokerService {
         scheduler.setScheduler(request, callback)
     }
 
-    internal fun startMulticasting() {}
+    internal fun listenMulticast(stopListener: Boolean = false) {
+        if (stopListener) MulticastListener.stop()
+        else MulticastListener.listen(callback = { W, A -> checkWorker(W, A) })
+    }
 
-    internal fun stopMulticasting() {}
+    private fun checkWorker(worker: ODProto.Worker?, address: String) {
+        if (worker == null) return
+        if (worker.id !in workers) workers[worker.id] = Worker(worker, address)
+        else workers[worker.id]?.updateStatus(worker)
+    }
+
+    internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
+        if (stopAdvertiser) MulticastAdvertiser.stop()
+        else {
+            val data = worker?.toByteArray() ?: ByteArray(0)
+            if (MulticastAdvertiser.isRunning()) MulticastAdvertiser.setAdvertiseData(data)
+            else MulticastAdvertiser.start(data)
+        }
+    }
 }

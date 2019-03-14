@@ -4,12 +4,12 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated.SchedulerBase
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
-import java.util.concurrent.*
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 abstract class AbstractODLib {
 
@@ -31,7 +31,8 @@ abstract class AbstractODLib {
         broker.selectModel(model, callback)
     }
 
-    fun setScheduler(scheduler: String) {
+    fun setScheduler(id: String) {
+        broker.setScheduler(id)
         //broker.setScheduler()
         /*if (WorkerService.isRunning()) {
             ODLogger.logWarn("Can only change scheduler with ComputingService offline")

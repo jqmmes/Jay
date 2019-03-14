@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.getLocalIpV4
@@ -13,7 +14,7 @@ object MulticastListener {
     private lateinit var listeningSocket : MulticastSocket
     private lateinit var mcIPAddress: InetAddress
 
-    fun listen(networkInterface: NetworkInterface? = null) {
+    fun listen(callback: ((ODProto.Worker?, String) -> Unit)? = null, networkInterface: NetworkInterface? = null) {
         if (running) {
             ODLogger.logInfo("Multicast MulticastListener already running")
             return
@@ -47,14 +48,19 @@ object MulticastListener {
                 //ODLogger.logInfo("Waiting for a  multicast message...")
                 try {
                     listeningSocket.receive(packet)
-                }catch (e: SocketException) {
+                } catch (e: SocketException) {
                     ODLogger.logWarn("Socket error")
                     running = false
                     continue
                 }
                 if (listeningSocket.`interface`.isLoopbackAddress || getHostAddressFromPacket(packet) != localIp) {
                     //ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
-                    DatagramProcessor.process(packet)
+                    //DatagramProcessor.process(packet)
+                    try {
+                        callback?.invoke(ODProto.Worker.parseFrom(packet.data), getHostAddressFromPacket(packet))
+                    } catch (ignore: Exception) {
+
+                    }
                 }
                 /*if (newClient(packet.address.hostAddress)) {
                     callback.onNewClient(packet) // getHostAddressFromPacket(packet)
@@ -73,12 +79,4 @@ object MulticastListener {
         listeningSocket.leaveGroup(mcIPAddress)
         listeningSocket.close()
     }
-
-    private fun newClient(address: String): Boolean {
-        /*for (remoteDevice in devicesKnown) {
-            if (remoteDevice.getAddress() == address) return false
-        }*/
-        return true
-    }
-
 }
