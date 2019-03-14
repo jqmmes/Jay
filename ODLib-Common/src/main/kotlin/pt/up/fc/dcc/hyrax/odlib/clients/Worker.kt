@@ -7,7 +7,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.*
 
-class Worker(val id: String = UUID.randomUUID().toString(), address: String){
+class Worker(val id: String = UUID.randomUUID().toString(), address: String, val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE){
 
     val grpc: BrokerGRPCClient = BrokerGRPCClient(address)
 
@@ -56,13 +56,14 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String){
     }
 
     internal fun getProto() : ODProto.Worker? {
-        //deviceStatus.batteryStatus = batteryStatus.code
         val worker = ODProto.Worker.newBuilder()
+        worker.id = id
         worker.battery = battery
         worker.avgTimePerJob = avgComputingEstimate
         worker.cpuCores = cpuCores
         worker.queueSize = queueSize
         worker.runningJobs = runningJobs
+        worker.type = type
         return worker.build()
     }
 

@@ -1,11 +1,10 @@
-package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated
 
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import java.util.concurrent.LinkedBlockingDeque
-import kotlin.concurrent.thread
 
+@Deprecated("New Schedulers")
 abstract class SchedulerBase(name: String) : Scheduler(name) {
 
     protected open fun jobCompleted(id: String, results: List<ODDetection?>) {

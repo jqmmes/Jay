@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated
 
 
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob

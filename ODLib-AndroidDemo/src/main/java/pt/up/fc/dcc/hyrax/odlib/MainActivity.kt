@@ -18,9 +18,8 @@ import pt.up.fc.dcc.hyrax.odlib.R
 //import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
 //import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.*
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated.*
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.io.ByteArrayOutputStream
@@ -121,6 +120,15 @@ class MainActivity : AppCompatActivity() {
     fun takePhoto(target: View) {
         thread {
             odClient.updateWorkers()
+            schedulersArrayList.clear()
+            odClient.listSchedulers {schedulers ->
+                for (scheduler in schedulers) schedulersArrayList.add(scheduler)
+                runOnUiThread {
+                    schedulerArrayAdapter.notifyDataSetChanged()
+                    schedulerSpinner.postInvalidate()
+                    schedulerSpinner.adapter = schedulerArrayAdapter
+                }
+            }
             return@thread
         }
     }
@@ -227,8 +235,11 @@ class MainActivity : AppCompatActivity() {
 
     private val modelsArrayList = ArrayList<String>()
     private lateinit var modelArrayAdapter: ArrayAdapter<String>
+    private val schedulersArrayList = ArrayList<String>()
+    private lateinit var schedulerArrayAdapter: ArrayAdapter<String>
 
     private lateinit var modelSpinner: Spinner
+    private lateinit var schedulerSpinner: Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -241,16 +252,17 @@ class MainActivity : AppCompatActivity() {
         ODLogger.enableLogs(loggingConsole, LogLevel.Info)
         ODLogger.startBackgroundLoggingService()
         modelSpinner = findViewById<Spinner>(R.id.select_model)
-        val schedulerSpinner = findViewById<Spinner>(R.id.select_scheduler)
-        val schedulerAdapter = arrayOf("LocalScheduler", "RemoteRandomScheduler", "RemoteRoundRobinScheduler",
-                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler", "CloudScheduler", "SmartScheduler")
+        schedulerSpinner = findViewById<Spinner>(R.id.select_scheduler)
+        /*val schedulerAdapter = arrayOf("LocalScheduler", "RemoteRandomScheduler", "RemoteRoundRobinScheduler",
+                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler", "CloudScheduler", "SmartScheduler")*/
 
-        schedulerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulerAdapter)
+        schedulerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulersArrayList)
 
         findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = odClient.serviceRunningWorker()
         findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = odClient.serviceRunningScheduler()
         //odClient.startGRPCServerService(useNettyServer = true)
 
+        schedulerArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulersArrayList)
         modelArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modelsArrayList)
 
         if (odClient.serviceRunningWorker() && odClient.serviceRunningScheduler()) {

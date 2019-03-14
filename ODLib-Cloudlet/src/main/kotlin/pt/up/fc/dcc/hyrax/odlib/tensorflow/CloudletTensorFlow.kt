@@ -32,6 +32,26 @@ import kotlin.math.max
  * https://github.com/tensorflow/models/blob/master/research/object_detection/
  */
 internal class CloudletTensorFlow : DetectObjects {
+    override fun loadModel(model: ODModel, completeCallback: ((ODProto.Status) -> Unit)?) {
+        clean()
+        val modelPath = File(modelCacheDir, model.modelName)
+        if (!checkDownloadedModel(model.modelName)) {
+            val tmpFile = downloadModel(model)
+            ODLogger.logInfo("Extraction Model....")
+            if (tmpFile != null) {
+                val newModel = File(extractModel(tmpFile))
+                ODLogger.logInfo("Extracted...")
+                if (modelPath != newModel) {
+                    newModel.renameTo(modelPath)
+                    ODLogger.logInfo("Renaming model dir to: ${modelPath.absolutePath}")
+                }
+            }
+            tmpFile?.delete()
+        }
+        ODLogger.logInfo("Loading model.. ${model.modelName}")
+        loadModel(File(modelPath, "saved_model/").absolutePath, completeCallback = completeCallback)
+        //Files.delete(File(modelCacheDir+model.modelName+".tar.gz").toPath())
+    }
 
     override var minimumScore: Float = 0.3f
 
@@ -310,28 +330,6 @@ internal class CloudletTensorFlow : DetectObjects {
         ODLogger.logInfo("Extracting model... Complete")
         return basePath
     }
-
-    override fun loadModel(model: ODModel) {
-        clean()
-        val modelPath = File(modelCacheDir, model.modelName)
-        if (!checkDownloadedModel(model.modelName)) {
-            val tmpFile = downloadModel(model)
-            ODLogger.logInfo("Extraction Model....")
-            if (tmpFile != null) {
-                val newModel = File(extractModel(tmpFile))
-                ODLogger.logInfo("Extracted...")
-                if (modelPath != newModel) {
-                    newModel.renameTo(modelPath)
-                    ODLogger.logInfo("Renaming model dir to: ${modelPath.absolutePath}")
-                }
-            }
-            tmpFile?.delete()
-        }
-        ODLogger.logInfo("Loading model.. ${model.modelName}")
-        loadModel(File(modelPath, "saved_model/").absolutePath)
-        //Files.delete(File(modelCacheDir+model.modelName+".tar.gz").toPath())
-    }
-
 
     override val models: List<ODModel>
         get() = listOf(

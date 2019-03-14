@@ -4,7 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SchedulerBase
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated.SchedulerBase
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -23,17 +23,21 @@ abstract class AbstractODLib {
         broker.getModels(callback)
     }
 
+    fun listSchedulers(callback: ((Set<String>) -> Unit)? = null) {
+        broker.getSchedulers(callback)
+    }
+
     fun setModel(model: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
         broker.selectModel(model, callback)
     }
 
-    fun setScheduler(scheduler: SchedulerBase) {
+    fun setScheduler(scheduler: String) {
         //broker.setScheduler()
-        if (WorkerService.isRunning()) {
+        /*if (WorkerService.isRunning()) {
             ODLogger.logWarn("Can only change scheduler with ComputingService offline")
             return
         }
-        ODLogger.logInfo("Setting scheduler: ${scheduler.javaClass.name}")
+        ODLogger.logInfo("Setting scheduler: ${scheduler.javaClass.name}")*/
         //this.scheduler = scheduler
     }
 

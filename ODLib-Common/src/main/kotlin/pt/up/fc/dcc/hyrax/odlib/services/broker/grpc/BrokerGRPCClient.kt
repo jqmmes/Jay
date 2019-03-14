@@ -62,6 +62,12 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable{ callback?.invoke(ODUtils.parseModels(call.get())) }, AbstractODLib.executorPool)
     }
 
+    fun getSchedulers(callback: ((Set<String>) -> Unit)? = null) {
+        val call = futureStub.getSchedulers(Empty.getDefaultInstance())
+        call.addListener(Runnable{ callback?.invoke(ODUtils.parseSchedulers(call.get())) }, AbstractODLib.executorPool)
+    }
+
+
     fun advertiseWorkerStatus(request: ODProto.Worker?) {
         val call = futureStub.advertiseWorkerStatus(request)
         call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)

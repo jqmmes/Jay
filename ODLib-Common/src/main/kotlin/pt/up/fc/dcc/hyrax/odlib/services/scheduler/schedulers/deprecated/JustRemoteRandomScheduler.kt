@@ -1,31 +1,30 @@
-package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated
 
-
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+//import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
+//import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-
+import java.util.*
 
 @Suppress("unused")
-class RemoteRoundRobinScheduler : SchedulerBase("RemoteRoundRobin") {
+class JustRemoteRandomScheduler : SchedulerBase("JustRemoteRandom") {
     override fun destroy() {
         jobBookkeeping.clear()
     }
 
-    private var nextRemote: Int = 0
-    private val jobBookkeeping = HashMap<String, String>()
+    private var nextRemote = 0
+    private val jobBookkeeping: HashMap<String, String> = HashMap()
 
     init {
-        ODLogger.logInfo("RemoteRoundRobinScheduler starting")
+        ODLogger.logInfo("JustRemoteRandomScheduler starting")
     }
-
-    private fun getNextRemoteRoundRobin() : ODProto.Worker? {
+    private fun getNextRemoteRandom() : Worker? {
         val clients = SchedulerService.getWorkers()
         if (clients.isEmpty()) return null
-        nextRemote %= clients.size
-        return clients[clients.keys.toList()[nextRemote++]]
+        return clients[clients.keys.shuffled().first()]
     }
 
     override fun jobCompleted(id: String, results: List<ODDetection?>) {
@@ -34,12 +33,11 @@ class RemoteRoundRobinScheduler : SchedulerBase("RemoteRoundRobin") {
     }
 
     override fun scheduleJob(job: ODJob) {
-            val nextClient = getNextRemoteRoundRobin()
+            val nextClient = getNextRemoteRandom()
             if (nextClient != null) {
-                //ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.getAddress()}\tROUND_ROBIN")
+                //ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.getAddress()}\tJUST_REMOTE_RANDOM")
                 jobBookkeeping[job.id] = nextClient.id
                 //nextClient.asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
-                return
-            }
         }
+    }
 }

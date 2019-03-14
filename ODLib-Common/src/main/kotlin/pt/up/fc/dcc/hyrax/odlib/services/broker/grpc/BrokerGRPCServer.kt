@@ -50,8 +50,13 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun setModel(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.setModel(request) {S -> genericComplete(S, responseObserver)}
         }
+
+        override fun getSchedulers(request: Empty?, responseObserver: StreamObserver<ODProto.Schedulers>?) {
+            BrokerService.getSchedulers {S -> genericComplete(S, responseObserver)}
+        }
+
+        override fun setSchedulers(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
+            BrokerService.setScheduler(request) {S -> genericComplete(S, responseObserver)}
+        }
     }
-
-
-
 }

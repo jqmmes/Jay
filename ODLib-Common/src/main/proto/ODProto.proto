@@ -67,7 +67,14 @@ message Worker {
     int32 runningJobs = 7;
 
     int32 avgTimePerJob = 8;
-    int32 bandwidthEstimate = 9; // KB/s Este valor não pode ser alterado após recebido o pacote. Não faz sentido
+    enum Type {
+        LOCAL = 0;
+        CLOUD = 1;
+        REMOTE = 2;
+    }
+    Type type = 9;
+    //int32 bandwidthEstimate = 9; // KB/s Este valor não pode ser alterado após recebido o pacote. Não faz sentido
+
 }
 
 message Ping {
@@ -93,7 +100,7 @@ message ServiceRequest {
 }
 
 message Scheduler {
-    enum Type {
+    /*enum Type {
         STATIC = 0;
         DYNAMIC = 1;
     }
@@ -105,7 +112,9 @@ message Scheduler {
     enum DynamicType {
         SMART = 0;
     }
-    Type type = 1;
+    Type type = 1;*/
+    string id = 1;
+    string name = 2;
 }
 
 message Schedulers {
@@ -129,8 +138,8 @@ service BrokerService { // Internal and External communication Broker
     rpc updateWorkers(google.protobuf.Empty) returns (google.protobuf.Empty) {}; // SchedulerService > Broker
 
     // TODO
-    rpc getSchedulers(google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
-    rpc setSchedulers(Model) returns (Status) {};                  // App > Broker --> Calls WorkerService::selectModel
+    rpc getSchedulers(google.protobuf.Empty) returns (Schedulers) {}; // App > Broker --> Calls SchedulerService::listSchedulers
+    rpc setSchedulers(Scheduler) returns (Status) {};                  // App > Broker --> Calls SchedulerService::setScheduler
 }
 
 service SchedulerService {                                             // Broker > SchedulerBase

@@ -1,8 +1,7 @@
-package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated
 
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager

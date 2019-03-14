@@ -1,9 +1,10 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
+    id 'com.github.johnrengelman.shadow'
 }
 apply plugin: 'kotlin'
 apply plugin: 'application'
-apply plugin: "com.github.johnrengelman.shadow"
+//apply plugin: "com.github.johnrengelman.shadow"
 
 
 
@@ -28,7 +29,7 @@ mainClassName = 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
 
 jar {
     manifest {
-        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
+        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.odlib.ODCloudKt'
     }
 }
 

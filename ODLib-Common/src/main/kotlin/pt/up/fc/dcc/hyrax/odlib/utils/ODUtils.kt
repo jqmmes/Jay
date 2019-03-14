@@ -131,4 +131,14 @@ object ODUtils {
         }
         return modelSet.toSet()
     }
+
+    fun genStatus(code: ODProto.Status.Code): ODProto.Status? {
+        return ODProto.Status.newBuilder().setCode(code).build()
+    }
+
+    fun parseSchedulers(schedulers: ODProto.Schedulers?): Set<String> {
+        val schedulerSet : MutableSet<String> = mutableSetOf()
+        for (scheduler in schedulers!!.schedulerList) schedulerSet.add(scheduler.name)
+        return schedulerSet
+    }
 }

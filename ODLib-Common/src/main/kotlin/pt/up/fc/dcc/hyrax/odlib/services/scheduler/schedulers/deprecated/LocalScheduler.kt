@@ -1,8 +1,6 @@
-package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
+package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated
 
-import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 
 class LocalScheduler : SchedulerBase("LocalScheduler") {
     override fun destroy() {

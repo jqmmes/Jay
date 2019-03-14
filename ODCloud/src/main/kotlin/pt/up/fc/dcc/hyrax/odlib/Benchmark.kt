@@ -1,15 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.LocalScheduler
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SchedulerBase
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.IOException
 import java.util.concurrent.CountDownLatch
-import javax.imageio.ImageIO
 
 object Benchmark {
 
@@ -18,7 +10,7 @@ object Benchmark {
         val client= BrokerGRPCClient("127.0.0.1")
         //SchedulerBase.startService(LocalScheduler())
         var countDownLatch = CountDownLatch(1)
-        for (model in client.getModels(false, true).reversed()) {
+        /*for (model in client.getModels(false, true).reversed()) {
             if (model.modelName == mModel || mModel == "all") {
                 println("Model:\t${model.modelName}")
                 client.selectModel(model)
@@ -47,6 +39,6 @@ object Benchmark {
                 }
                 println("---------------------------------------")
             }
-        }
+        }*/
     }
 }
