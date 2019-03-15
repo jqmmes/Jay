@@ -28,7 +28,7 @@ import kotlin.concurrent.thread
 @Suppress("UNUSED_PARAMETER")
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var odClient: ODLib
+    //private lateinit var odClient: ODLib
     private lateinit var loggingConsole: Logger
     private val requestExternalStorage = 1
     private val permissionsStorage = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -114,14 +114,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    fun loadModel(target: View) {
-
-    }
-
-    fun takePhoto(target: View) {
-
     }
 
     fun chooseImage(target: View) {
@@ -370,5 +362,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val SMALL_ASSETS: Int = 0
         private const val LARGE_ASSETS: Int = 1
+        lateinit var odClient: ODLib
     }
 }
