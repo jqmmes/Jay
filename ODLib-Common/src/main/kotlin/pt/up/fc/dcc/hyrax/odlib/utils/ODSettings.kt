@@ -19,4 +19,5 @@ object ODSettings {
     const val pingTimeout: Long = 10000L // 15s
     const val RTTDelayMillis: Long = 15000L // 15s
     const val pingPayloadSize: Int = 32000 // 32Kb
+    const val averageComputationTimesToStore: Int = 10
 }

@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker
 
+import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
@@ -10,6 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -33,6 +35,15 @@ object WorkerService {
     private val JOBS_LOCK = Object()
     private var server: GRPCServerBase? = null
     private var brokerGRPC = BrokerGRPCClient("127.0.0.1")
+    private val averageComputationTimes = CircularFifoQueue<Long>(ODSettings.averageComputationTimesToStore)
+
+    private fun getProto(): ODProto.Worker? {
+        val builder = ODProto.Worker.newBuilder()
+        builder.queueSize = queueSize
+        builder.runningJobs = runningJobs.get()
+        builder.avgTimePerJob = if (averageComputationTimes.size > 0) averageComputationTimes.sum()/averageComputationTimes.size else 0
+        return builder.build()
+    }
 
     init {
         executor.shutdown()
@@ -51,13 +62,14 @@ object WorkerService {
         return running
     }
 
-    internal fun queueJob(imgData: ByteArray, callback: ((List<ODDetection>) -> Unit)?, jobId: String): ReturnStatus {
+    internal fun queueJob(job: ODProto.Job, callback: ((List<ODDetection>) -> Unit)?): ReturnStatus {
         ODLogger.logInfo("WorkerService put job into Job Queue...")
         println("WorkerService put job into Job Queue...")
         if (!running) throw Exception("WorkerService not running")
-        jobQueue.put(RunnableJobObjects(localDetect, imageData = imgData, callback = callback, jobId = jobId))
+        jobQueue.put(RunnableJobObjects(job, callback))
         synchronized(JOBS_LOCK) {
             totalJobs.incrementAndGet()
+            brokerGRPC.diffuseWorkerStatus(getProto())
             StatusManager.setIdleJobs(totalJobs.get()- runningJobs.get())
         }
         return if (callback == null) ReturnStatus.Success else ReturnStatus.Waiting
@@ -65,6 +77,7 @@ object WorkerService {
 
     fun start(localDetect: DetectObjects, useNettyServer: Boolean = false) {
         server = WorkerGRPCServer(useNettyServer).start()
+        brokerGRPC.announceMulticast()
 
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(workingThreads)
@@ -94,7 +107,7 @@ object WorkerService {
         server?.stop()
         waitingResultsMap.clear()
         jobQueue.clear()
-        jobQueue.offer(RunnableJobObjects(localDetect, ByteArray(0), {}))
+        jobQueue.offer(RunnableJobObjects(null, {}))
         executor.shutdownNow()
     }
 
@@ -121,39 +134,30 @@ object WorkerService {
         if(running) localDetect.loadModel(odModel, callback)
     }
 
-    /*fun modelLoaded(odModel: ODModel): Boolean {
-        if (running) return localDetect.modelLoaded(odModel)
-        return false
-    }
-
-    fun configTFModel(configRequest: Pair<ODModel, HashMap<String, String>>) {
-        for (key in configRequest.second.keys) {
-            when (key) {
-                "minScore" -> localDetect.minimumScore = configRequest.second[key]!!.toFloat()
-            }
-        }
-    }*/
 
     fun listModels() : Set<ODModel> {
         return localDetect.models.toSet()
     }
 
-    private class RunnableJobObjects(val localDetect: DetectObjects, var imageData: ByteArray, var callback: (
-    (List<ODDetection>) -> Unit)?, val jobId: String? = null) : Runnable {
+    private class RunnableJobObjects(val job: ODProto.Job?, var callback: ((List<ODDetection>) -> Unit)?) : Runnable {
         override fun run() {
+            val data = job?.data?.toByteArray() ?: ByteArray(0)
+            val id = job?.id ?: -1
             synchronized(JOBS_LOCK) {
                 runningJobs.incrementAndGet()
                 StatusManager.setRunningJobs(runningJobs.get())
             }
-            ODLogger.logInfo("Running_Job\t$jobId")
+            ODLogger.logInfo("Running_Job\t$id")
             try {
-                callback?.invoke(localDetect.detectObjects(imageData))
-                ODLogger.logInfo("Finished_Running_Job\t$jobId")
+                val computationStartTimestamp = System.currentTimeMillis()
+                callback?.invoke(localDetect.detectObjects(data))
+                averageComputationTimes.add(System.currentTimeMillis()-computationStartTimestamp)
+                ODLogger.logInfo("Finished_Running_Job\t$id")
             } catch (e: Exception) {
                 ODLogger.logError("Execution_Failed ${e.stackTrace}")
                 e.printStackTrace()
                 callback?.invoke(emptyList())
-                ODLogger.logInfo("Error_Running_Job\t$jobId")
+                ODLogger.logInfo("Error_Running_Job\t$id")
             }
             synchronized(JOBS_LOCK) {
                 runningJobs.decrementAndGet()

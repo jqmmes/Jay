@@ -11,9 +11,10 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     private var roundRobinCount: Int = 0
 
     override fun init() {
-        super.init()
         if (ODProto.Worker.Type.REMOTE in devices) {
-            SchedulerService.listenForWorkers(true)
+            SchedulerService.listenForWorkers(true) {super.init()}
+        } else {
+            super.init()
         }
     }
 

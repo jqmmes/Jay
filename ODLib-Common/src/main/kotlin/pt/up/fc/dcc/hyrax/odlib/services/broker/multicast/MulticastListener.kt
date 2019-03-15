@@ -76,7 +76,9 @@ object MulticastListener {
 
     fun stop() {
         running = false
-        listeningSocket.leaveGroup(mcIPAddress)
-        listeningSocket.close()
+        try {
+            listeningSocket.leaveGroup(mcIPAddress)
+            listeningSocket.close()
+        } catch (ignore: Exception) {}
     }
 }

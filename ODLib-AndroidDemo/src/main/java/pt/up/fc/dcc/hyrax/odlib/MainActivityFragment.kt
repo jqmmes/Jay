@@ -28,8 +28,8 @@ class MainActivityFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == AppCompatActivity.RESULT_OK) {
-            val imageBitmap = data.extras!!.get("data") as Bitmap
-            val newJob = ODJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
+            //val imageBitmap = data.extras!!.get("data") as Bitmap
+            //val newJob = ODJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
             //SchedulerBase.addJob(newJob)
         }
     }

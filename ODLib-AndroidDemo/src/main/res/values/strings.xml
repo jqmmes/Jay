@@ -25,4 +25,6 @@
     <string name="scheduler_service_off">Scheduler Off</string>
     <string name="worker_service_off">Worker Off</string>
     <string name="worker_service_on">Worker On</string>
+    <string name="show_models">Show Models</string>
+    <string name="show_schedulers">Show Schedulers</string>
 </resources>

@@ -35,14 +35,14 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable{ println(callback?.invoke(call.get()))}, AbstractODLib.executorPool)
     }
 
-    fun ping(payload: Int = ODSettings.pingPayloadSize, reply: Boolean = false, timeout: Long = 15000, callback: ((Long) -> Unit)? = null) {
+    fun ping(payload: Int = ODSettings.pingPayloadSize, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
         AbstractODLib.executorPool.submit {
             val timer = System.currentTimeMillis()
             try {
                 blockingStub
                         .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS)
                         .ping(ODProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(payload))).setReply(reply).build())
-                callback?.invoke(System.currentTimeMillis() - timer)
+                callback?.invoke((System.currentTimeMillis() - timer).toInt())
             } catch (e: TimeoutException) {
                 callback?.invoke(-1)
             }
@@ -50,7 +50,8 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     }
 
     fun updateWorkers() {
-        BrokerService.updateWorkers()
+        val call = futureStub.updateWorkers(Empty.getDefaultInstance())
+        call.addListener(Runnable{ println("updateWorkers: ${call.get()}") }, AbstractODLib.executorPool)
     }
 
     fun selectModel(model: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
@@ -63,14 +64,14 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable{ callback?.invoke(ODUtils.parseModels(call.get())) }, AbstractODLib.executorPool)
     }
 
-    fun getSchedulers(callback: ((Set<String>) -> Unit)? = null) {
+    fun getSchedulers(callback: ((Set<Pair<String, String>>) -> Unit)? = null) {
         val call = futureStub.getSchedulers(Empty.getDefaultInstance())
         call.addListener(Runnable{ callback?.invoke(ODUtils.parseSchedulers(call.get())) }, AbstractODLib.executorPool)
     }
 
-    fun setScheduler(id: String) {
+    fun setScheduler(id: String, callback: ((Boolean) -> Unit)) {
         val call = futureStub.setScheduler(ODProto.Scheduler.newBuilder().setId(id).build())
-        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { callback(call.get().code == ODProto.Status.Code.Success) }, AbstractODLib.executorPool)
     }
 
     fun advertiseWorkerStatus(request: ODProto.Worker?) {
@@ -78,8 +79,19 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
     }
 
-    fun listenMulticastWorkers(stopListener: Boolean = false) {
+    fun diffuseWorkerStatus(request: ODProto.Worker?) {
+        val call = futureStub.advertiseWorkerStatus(request)
+        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
+    }
+
+
+    fun listenMulticastWorkers(stopListener: Boolean = false, callback: ((ODProto.Status) -> Unit)? = null) {
         val call = futureStub.listenMulticast(BoolValue.of(stopListener))
+        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+    }
+
+    fun announceMulticast() {
+        val call = futureStub.announceMulticast(null)
         call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
     }
 }

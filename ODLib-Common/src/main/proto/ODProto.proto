@@ -67,14 +67,14 @@ message Worker {
     int32 queueSize = 6;
     int32 runningJobs = 7;
 
-    int32 avgTimePerJob = 8;
+    int64 avgTimePerJob = 8;
     enum Type {
         LOCAL = 0;
         CLOUD = 1;
         REMOTE = 2;
     }
     Type type = 9;
-    //int32 bandwidthEstimate = 9; // KB/s Este valor não pode ser alterado após recebido o pacote. Não faz sentido
+    int32 bandwidthEstimate = 10; // KB/s valor a ser calculado no Broker e enviado para o scheduler
 
 }
 
@@ -110,30 +110,26 @@ message Schedulers {
 }
 
 service BrokerService { // Internal and External communication Broker
-                        rpc ping (Ping) returns (Ping) {}; // ExternalBroker > Broker
+    rpc ping (Ping) returns (Ping) {}; // ExternalBroker > Broker
 
-                        rpc executeJob (Job) returns (Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
-                        rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
+    rpc executeJob (Job) returns (Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
+    rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
 
-                        rpc advertiseWorkerStatus(Worker) returns (Status) {}; // ExternalBroker > Broker
-                        rpc diffuseWorkerStatus(Worker) returns (Status) {}; // WorkerService > Broker --> Calls:
-                        //          ExternalBroker::advertiseWorkerStatus
-                        //          SchedulerService::notify
+    rpc advertiseWorkerStatus(Worker) returns (Status) {}; // ExternalBroker > Broker
+    rpc diffuseWorkerStatus(Worker) returns (Status) {}; // WorkerService > Broker --> Calls:
+                                                //          ExternalBroker::advertiseWorkerStatus
+                                                //          SchedulerService::notify
 
-                        rpc getModels (google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
-                        rpc setModel (Model) returns (Status) {}; // App > Broker --> Calls WorkerService::selectModel
+    rpc getModels (google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
+    rpc setModel (Model) returns (Status) {}; // App > Broker --> Calls WorkerService::selectModel
 
-                        rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {}; // SchedulerService > Broker
+    rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {}; // SchedulerService > Broker
 
-                        rpc getSchedulers (google.protobuf.Empty) returns (Schedulers) {}; // App > Broker --> Calls SchedulerService::listSchedulers
-                        rpc setScheduler (Scheduler) returns (Status) {
-                        }; // App > Broker --> Calls SchedulerService::setScheduler
+    rpc getSchedulers (google.protobuf.Empty) returns (Schedulers) {}; // App > Broker --> Calls SchedulerService::listSchedulers
+    rpc setScheduler (Scheduler) returns (Status) {}; // App > Broker --> Calls SchedulerService::setScheduler
 
-
-                        rpc listenMulticast (google.protobuf.BoolValue) returns (Status) {
-                        }; // SchedulerService --> Broker (Starts MC listen)
-                        rpc announceMulticast (Worker) returns (Status) {
-                        }; // SchedulerService --> Broker (Starts MCast advertise)
+    rpc listenMulticast (google.protobuf.BoolValue) returns (Status) {}; // SchedulerService --> Broker (Starts MC listen)
+    rpc announceMulticast (Worker) returns (Status) {}; // SchedulerService --> Broker (Starts MCast advertise)
 }
 
 service SchedulerService {                                             // Broker > SchedulerBase

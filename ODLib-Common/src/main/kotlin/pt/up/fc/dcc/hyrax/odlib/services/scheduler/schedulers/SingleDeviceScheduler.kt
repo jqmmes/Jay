@@ -3,15 +3,20 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
+import java.lang.Thread.sleep
 
 class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Scheduler("SingleDeviceScheduler") {
 
     private var worker : ODProto.Worker? = null
 
     override fun init() {
-        super.init()
         if (workerType == ODProto.Worker.Type.REMOTE) {
-            SchedulerService.listenForWorkers(true)
+            SchedulerService.listenForWorkers(true) {S ->
+                println("init complete")
+                super.init()
+            }
+        } else {
+            super.init()
         }
     }
 

@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated
+/*package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated
 
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -52,9 +52,9 @@ class SmartScheduler : SchedulerBase("SmartScheduler") {
     }
 
     private fun reSortClientList(clientID: Long) {
-        /*val client = clientList.find { T -> T.second == clientID }
+        *//*val client = clientList.find { T -> T.second == clientID }
         if (client != null) clientList.removeAt(clientList.indexOf(client))
-        clientList.add(Pair(calculateClientScore(clientID), clientID))*/
+        clientList.add(Pair(calculateClientScore(clientID), clientID))*//*
         clientList.sortWith(Comparator { lhs, rhs -> java.lang.Float.compare(rhs.first, lhs.first) })
     }
 
@@ -64,23 +64,23 @@ class SmartScheduler : SchedulerBase("SmartScheduler") {
     }
 
     override fun scheduleJob(job: ODJob) {
-        /*val nextClient = getNextClient()
+        *//*val nextClient = getNextClient()
         ODLogger.logInfo("Job_Scheduled\t${job.id}\t${nextClient.second.getAddress()}\tSMART")
         val startTime = System.currentTimeMillis()
         nextClient.second.asyncDetectObjects(job) {R -> jobCompleted(job.id, R)}
         if (nextClient.first) {
             ClientManager.getRemoteODClient(nextClient.second.getId())!!
                     .getDeviceStatus().networkLatency.addLatency(System.currentTimeMillis() -startTime)
-        }*/
+        }*//*
     }
 
-    /*
+    *//*
     *
     * A -- B
     * x -- C(1.0)
     *
     * Converter x em 0.0-1.0
-    */
+    *//*
     private fun crossMultiplication(A: Float, B: Float, C: Float = 1.0f): Float {
         return (C*A)/B
     }
@@ -89,9 +89,9 @@ class SmartScheduler : SchedulerBase("SmartScheduler") {
 
         //val clientInformation = ClientManager.getRemoteODClient(clientID)!!.getDeviceInformation()
         val clientInformation = DeviceInformation()
-        /*
+        *//*
          * Lower the better >= 0
-         */
+         *//*
         // Assuming 100ms as top latency, reserve score
         val latency = 1f-crossMultiplication(clientInformation.networkLatency.getAvgLatency().toFloat(), 100f)
         // Assuming a total of 50 jobs as max, reverse score
@@ -100,9 +100,9 @@ class SmartScheduler : SchedulerBase("SmartScheduler") {
         //val available spots
         val queueSpace = 1f-crossMultiplication(clientInformation.pendingJobs.toFloat(), clientInformation.queueSize.toFloat())
 
-        /*
+        *//*
          * Higher the better >= 0
-         */
+         *//*
         // assuming 100% battery
         val scaledBattery = crossMultiplication(clientInformation.battery.toFloat(), 100f)
         // assuming 8 threads as max
@@ -122,17 +122,17 @@ class SmartScheduler : SchedulerBase("SmartScheduler") {
         //return Pair(false, ClientManager.getRemoteODClient(clientList[0].second)!!)
     }
 
-    /*inner class RTTTimer : TimerTask() {
+    *//*inner class RTTTimer : TimerTask() {
         override fun run() {
             for (worker in SchedulerService.getWorkers()) {
                 RTTClient.measureRTT(client, ODSettings.rttPort)
             }
             smartTimer.schedule(this, rttDelayMillis)
         }
-    }*/
+    }*//*
 
     companion object {
         private val smartTimer: Timer = Timer()
         private const val rttDelayMillis: Long = 15000
     }
-}
+}*/

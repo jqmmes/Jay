@@ -17,9 +17,7 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
     override val grpcImpl: BindableService = object : WorkerServiceGrpc.WorkerServiceImplBase() {
 
         override fun execute(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
-            WorkerService.queueJob(request!!.data.toByteArray(), {
-                detectionList -> genericComplete(ODUtils.genResults(request.id, detectionList), responseObserver)
-            }, request.id)
+            WorkerService.queueJob(request!!, { detectionList -> genericComplete(ODUtils.genResults(request.id, detectionList), responseObserver) })
         }
 
         override fun listModels(request: Empty?, responseObserver: StreamObserver<ODProto.Models>?) {

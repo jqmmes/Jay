@@ -136,9 +136,9 @@ object ODUtils {
         return ODProto.Status.newBuilder().setCode(code).build()
     }
 
-    fun parseSchedulers(schedulers: ODProto.Schedulers?): Set<String> {
-        val schedulerSet : MutableSet<String> = mutableSetOf()
-        for (scheduler in schedulers!!.schedulerList) schedulerSet.add(scheduler.name)
+    fun parseSchedulers(schedulers: ODProto.Schedulers?): Set<Pair<String, String>> {
+        val schedulerSet : MutableSet<Pair<String, String>> = mutableSetOf()
+        for (scheduler in schedulers!!.schedulerList) schedulerSet.add(Pair(scheduler.id, scheduler.name))
         return schedulerSet
     }
 }

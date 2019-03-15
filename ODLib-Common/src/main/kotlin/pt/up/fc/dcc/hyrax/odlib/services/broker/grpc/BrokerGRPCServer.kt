@@ -59,15 +59,17 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.setScheduler(request) {S -> genericComplete(S, responseObserver)}
+            //genericComplete(ODUtils.genStatus(ODProto.Status.Code.Success), responseObserver)
         }
 
         override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<ODProto.Status>?) {
+            println("Listen for MCast")
             BrokerService.listenMulticast(request?.value ?: false)
             genericComplete(ODUtils.genStatus(ODProto.Status.Code.Success), responseObserver)
         }
 
         override fun announceMulticast(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
-            BrokerService.announceMulticast(true, request)
+            BrokerService.announceMulticast(false, request)
             genericComplete(ODUtils.genStatus(ODProto.Status.Code.Success), responseObserver)
         }
     }

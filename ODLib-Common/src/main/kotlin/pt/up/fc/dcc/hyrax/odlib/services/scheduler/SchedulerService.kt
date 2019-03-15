@@ -9,7 +9,9 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.MultiDeviceScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
 import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
+import java.util.*
 
 object SchedulerService {
 
@@ -17,6 +19,7 @@ object SchedulerService {
     private val workers: MutableMap<String, Worker?> = hashMapOf()
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
     private var scheduler : Scheduler? = null
+    private val notifyListeners = LinkedList<((Worker?) -> Unit)>()
 
     private val schedulers: Array<Scheduler> = arrayOf(
             SingleDeviceScheduler(Worker.Type.LOCAL),
@@ -31,9 +34,13 @@ object SchedulerService {
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD),
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.REMOTE),
             MultiDeviceScheduler(false, Worker.Type.CLOUD, Worker.Type.REMOTE),
-            MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE)
+            MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE),
+            SmartScheduler()
     )
 
+    internal fun getWorker(id: String) : Worker? {
+        return if (workers.containsKey(id)) workers[id] else null
+    }
 
     internal fun getWorkers(vararg filter: ODProto.Worker.Type): HashMap<String, Worker?> {
         return getWorkers(filter.asList())
@@ -55,18 +62,22 @@ object SchedulerService {
     internal fun schedule(request: Job?): ODProto.Worker? {
         if (scheduler == null) scheduler = schedulers[0]
         scheduler?.scheduleJob(ODJob(request))
-        var worker = scheduler?.scheduleJob(ODJob(request))
-        println(worker)
-        return worker
+        return scheduler?.scheduleJob(ODJob(request))
     }
 
     internal fun notify(worker: Worker?) {
         workers[worker!!.id] = worker
+        for (listener in notifyListeners) listener.invoke(worker)
     }
 
-    internal fun listenForWorkers(listen: Boolean) {
-        if (listen) brokerGRPC.listenMulticastWorkers()
-        else brokerGRPC.listenMulticastWorkers(true)
+    internal fun registerNotifyListener(listener: ((Worker?) -> Unit)) {
+        notifyListeners.addLast(listener)
+    }
+
+    internal fun listenForWorkers(listen: Boolean, callback: ((ODProto.Status) -> Unit)? = null) {
+        println("listenForWorkers")
+        if (listen) brokerGRPC.listenMulticastWorkers(callback = callback)
+        else brokerGRPC.listenMulticastWorkers(true, callback)
     }
 
     fun stop() {
@@ -83,7 +94,10 @@ object SchedulerService {
     fun setScheduler(id: String?) : ODProto.Status.Code {
         for (scheduler in schedulers)
             if (scheduler.id == id) {
+                this.scheduler?.destroy()
                 this.scheduler = scheduler
+                this.scheduler?.init()
+                this.scheduler?.waitInit()
                 return ODProto.Status.Code.Success
             }
         return ODProto.Status.Code.Error

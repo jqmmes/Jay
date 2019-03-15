@@ -33,6 +33,7 @@ class ODCloud {
             ODLogger.enableLogs(LoggingInterface(), LogLevel.Info)
             WorkerService.setWorkingThreads(StatusManager.cpuDetails.getAvailableCores())
             odLib.startWorker()
+            odLib.listModels {ML -> odLib.setModel(ML.first()) }
 
             Runtime.getRuntime().addShutdownHook(object : Thread() {
                 override fun run() {

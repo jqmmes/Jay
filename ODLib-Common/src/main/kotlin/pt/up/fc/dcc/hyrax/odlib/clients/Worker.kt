@@ -12,7 +12,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     val grpc: BrokerGRPCClient = BrokerGRPCClient(address)
 
     //var rttEstimate: Long = 0
-    var avgComputingEstimate = 0
+    var avgComputingEstimate = 0L
     var battery = 100
     var cpuCores = 0
     var queueSize = 1
@@ -20,8 +20,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     var batteryStatus : BatteryStatus = BatteryStatus.CHARGED
 
     private val smartTimer: Timer = Timer()
-    private var circularFIFO: CircularFifoQueue<Long> = CircularFifoQueue(ODSettings.RTTHistorySize)
-    private var calculatedAvgLatency: Long = 0L
+    private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
+    var calculatedAvgLatency: Int = 0
     //private var pingFuture : ListenableFuture<ODProto.Ping>? = null
     private var consecutiveFailedPing = 0
 
@@ -64,16 +64,17 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         worker.queueSize = queueSize
         worker.runningJobs = runningJobs
         worker.type = type
+        worker.bandwidthEstimate = calculatedAvgLatency
         return worker.build()
     }
 
 
-    private fun addRTT(millis: Long) {
+    private fun addRTT(millis: Int) {
         circularFIFO.add(millis)
         calculatedAvgLatency = circularFIFO.sum()/circularFIFO.size
     }
 
-    fun getAvgRTT() : Long {
+    fun getAvgRTT() : Int {
         return calculatedAvgLatency
     }
 
@@ -89,7 +90,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private inner class RTTTimer : TimerTask() {
         override fun run() {
             grpc.ping(timeout = ODSettings.pingTimeout, callback = { T ->
-                if (T == -1L) consecutiveFailedPing++
+                if (T == -1) consecutiveFailedPing++
                 else {
                     consecutiveFailedPing = 0
                     addRTT(T)

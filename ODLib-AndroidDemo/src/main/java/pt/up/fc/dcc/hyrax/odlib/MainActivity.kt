@@ -15,15 +15,12 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.R
-//import pt.up.fc.dcc.hyrax.odlib.clients.ClientManager
-//import pt.up.fc.dcc.hyrax.odlib.clients.CloudODClient
 import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.deprecated.*
-import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
+//import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.utils.*
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
@@ -35,13 +32,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loggingConsole: Logger
     private val requestExternalStorage = 1
     private val permissionsStorage = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    private var schedulersIds : Set<Pair<String, String>> = setOf()
 
 
-    fun changeCloud(target: View) {
+    /*fun changeCloud(target: View) {
         //ClientManager.changeCloudClient(CloudODClient(findViewById<EditText>(R.id.cloudIP).text.toString()))
+    }*/
+
+    fun workerToggleListener(target: View) {
+        toggleWorker((target as ToggleButton).isChecked)
     }
 
-    private fun toggleServer(start: Boolean) {
+    fun schedulerToggleListener(target: View) {
+        toggleScheduler((target as ToggleButton).isChecked)
+    }
+
+    private fun toggleScheduler(start: Boolean) {
         ODLogger.logInfo("Toggle Server $start")
 
         if (start) {
@@ -51,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun toggleService(start: Boolean) {
+    private fun toggleWorker(start: Boolean) {
         if (start) {
             odClient.startWorker()
         } else {
@@ -59,14 +65,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun resultsCallback(id: Long, results: List<ODDetection?>) {
+    /*private fun resultsCallback(id: Long, results: List<ODDetection?>) {
         ODLogger.logInfo("Received results for Job $id")
         for (result in results) {
             if (result != null) ODLogger.logInfo("\t\t${COCODataLabels.label(result.class_)}\t${result.score * 100.0}%")
         }
-    }
+    }*/
 
-    private fun getScheduler(): SchedulerBase {
+    /*private fun getScheduler(): SchedulerBase {
         val schedulerSpinnerValue = findViewById<Spinner>(R.id.select_scheduler).selectedItem
         return when (schedulerSpinnerValue) {
             "RemoteRandomScheduler" -> RemoteRandomScheduler()
@@ -77,19 +83,24 @@ class MainActivity : AppCompatActivity() {
             "SmartScheduler" -> SmartScheduler()
             else -> LocalScheduler()
         }
-    }
+    }*/
 
-    fun serviceToggleListener(target: View) {
-        toggleService((target as ToggleButton).isChecked)
-    }
 
-    fun serverToggleListener(target: View) {
-        toggleServer((target as ToggleButton).isChecked)
-    }
-
-    fun advertiseToggleListener(target: View) {
-        //if ((target as ToggleButton).isChecked) MulticastAdvertiser.advertise()
-        //else MulticastAdvertiser.stop()
+    fun showSchedulersListener(target: View) {
+        thread {
+            odClient.updateWorkers()
+            schedulersArrayList.clear()
+            odClient.listSchedulers {schedulers ->
+                schedulersIds = schedulers
+                for (scheduler in schedulers) schedulersArrayList.add(scheduler.second)
+                runOnUiThread {
+                    schedulerArrayAdapter.notifyDataSetChanged()
+                    schedulerSpinner.postInvalidate()
+                    schedulerSpinner.adapter = schedulerArrayAdapter
+                }
+            }
+            return@thread
+        }
     }
 
     fun downloadModel(target: View) {
@@ -106,31 +117,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loadModel(target: View) {
-        modelsArrayList.clear()
-        odClient.listModels {models ->
-            for (model in models) modelsArrayList.add(model.modelName)
-            runOnUiThread {
-                modelArrayAdapter.notifyDataSetChanged()
-                modelSpinner.postInvalidate()
-                modelSpinner.adapter = modelArrayAdapter
-            }
-        }
+
     }
 
     fun takePhoto(target: View) {
-        thread {
-            odClient.updateWorkers()
-            schedulersArrayList.clear()
-            odClient.listSchedulers {schedulers ->
-                for (scheduler in schedulers) schedulersArrayList.add(scheduler)
-                runOnUiThread {
-                    schedulerArrayAdapter.notifyDataSetChanged()
-                    schedulerSpinner.postInvalidate()
-                    schedulerSpinner.adapter = schedulerArrayAdapter
-                }
-            }
-            return@thread
-        }
+
     }
 
     fun chooseImage(target: View) {
@@ -139,11 +130,11 @@ class MainActivity : AppCompatActivity() {
 
             return@thread
 
-            val job = ODJob(
+            /*val job = ODJob(
                     loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}"))
             )
 
-            ODLogger.logInfo("Battery_Start\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")
+            ODLogger.logInfo("Battery_Start\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")*/
             /*SchedulerBase.addResultsCallback { _, _ ->
                 ODLogger.logInfo("Battery_End\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")
             }*/
@@ -228,9 +219,16 @@ class MainActivity : AppCompatActivity() {
         return stream.toByteArray()
     }
 
-    fun discoverToggleListener(target: View) {
-        if ((target as ToggleButton).isChecked) MulticastListener.listen()
-        else MulticastListener.stop()
+    fun showModelsListener(target: View) {
+        modelsArrayList.clear()
+        odClient.listModels {models ->
+            for (model in models) modelsArrayList.add(model.modelName)
+            runOnUiThread {
+                modelArrayAdapter.notifyDataSetChanged()
+                modelSpinner.postInvalidate()
+                modelSpinner.adapter = modelArrayAdapter
+            }
+        }
     }
 
     private val modelsArrayList = ArrayList<String>()
@@ -244,28 +242,59 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        //setSupportActionBar(toolbar)
 
         loggingConsole = Logger(this, findViewById(R.id.loggingConsole))
         loggingConsole.benchmark(this)
         odClient = ODLib(this)
         ODLogger.enableLogs(loggingConsole, LogLevel.Info)
         ODLogger.startBackgroundLoggingService()
-        modelSpinner = findViewById<Spinner>(R.id.select_model)
-        schedulerSpinner = findViewById<Spinner>(R.id.select_scheduler)
-        /*val schedulerAdapter = arrayOf("LocalScheduler", "RemoteRandomScheduler", "RemoteRoundRobinScheduler",
-                "JustRemoteRoundRobinScheduler", "JustRemoteRandomScheduler", "CloudScheduler", "SmartScheduler")*/
+        modelSpinner = findViewById(R.id.select_model)
+        modelSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                println(parent?.getItemAtPosition(position))
+                odClient.listModels { models ->
+                    for (model in models) {
+                        if (model.modelName == parent?.selectedItem) {
+                            odClient.setModel(model)
+                            ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
+                            return@listModels
+                        }
+                    }
+                }
+
+            }
+        }
+
+
+        schedulerSpinner = findViewById(R.id.select_scheduler)
+        schedulerSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                for (scheduler in schedulersIds)
+                    if (scheduler.second == parent?.selectedItem) {
+                        thread {
+                            println(parent.selectedItem)
+                            odClient.setScheduler(scheduler.first)
+                        }
+                    }
+            }
+        }
 
         schedulerSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulersArrayList)
 
         findViewById<ToggleButton>(R.id.serviceToggleButton).isChecked = odClient.serviceRunningWorker()
         findViewById<ToggleButton>(R.id.serverToggleButton).isChecked = odClient.serviceRunningScheduler()
-        //odClient.startGRPCServerService(useNettyServer = true)
+
 
         schedulerArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulersArrayList)
         modelArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modelsArrayList)
 
-        if (odClient.serviceRunningWorker() && odClient.serviceRunningScheduler()) {
+        /*if (odClient.serviceRunningWorker() && odClient.serviceRunningScheduler()) {
             odClient.listModels { models ->
                 modelsArrayList.clear()
                 for (model in models) {
@@ -277,11 +306,11 @@ class MainActivity : AppCompatActivity() {
                     modelSpinner.adapter = modelArrayAdapter
                 }
             }
-        }
+        }*/
 
 
 
-        findViewById<EditText>(R.id.cloudIP).setText(ODSettings.cloudIp, TextView.BufferType.EDITABLE)
+        //findViewById<EditText>(R.id.cloudIP).setText(ODSettings.cloudIp, TextView.BufferType.EDITABLE)
         verifyStoragePermissions(this)
         requestBatteryPermissions()
         //registerBroadcastReceiver()
