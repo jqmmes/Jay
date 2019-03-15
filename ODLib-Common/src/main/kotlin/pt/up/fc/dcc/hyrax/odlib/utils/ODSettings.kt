@@ -5,11 +5,9 @@ object ODSettings {
     var brokerPort : Int = 50051
     val workerPort : Int = 50053
     val schedulerPort : Int = 50055
-    val profilerPort : Int = 50057
 
 
     const val rttPort: Int = 8888
-    //const val cloudIp: String = "35.204.130.183"
     const val cloudIp: String = "odcloud.duckdns.org"
     const val grpcTimeout: Long = 10 //Seconds
     const val grpcLongTimeout: Long = 120 //Seconds
@@ -20,4 +18,6 @@ object ODSettings {
     const val RTTDelayMillis: Long = 15000L // 15s
     const val pingPayloadSize: Int = 32000 // 32Kb
     const val averageComputationTimesToStore: Int = 10
+    const val workingThreads: Int = 1
+    const val workerStatusUpdateInterval: Long = 5000 // 5s
 }

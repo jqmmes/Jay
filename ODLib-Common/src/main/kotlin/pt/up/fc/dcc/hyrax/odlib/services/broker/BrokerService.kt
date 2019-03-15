@@ -64,11 +64,12 @@ object BrokerService {
         worker.selectModel(request, callback)
     }
 
-    internal fun advertiseWorkerStatus(request: ODWorker?) {
+    internal fun diffuseWorkerStatus(request: ODWorker?) {
         for (client in workers.values) client.grpc.advertiseWorkerStatus(request)
     }
 
     internal fun receiveWorkerStatus(request: ODWorker?) {
+        workers[request?.id]?.updateStatus(request)
         scheduler.notify(request)
     }
 

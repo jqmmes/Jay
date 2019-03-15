@@ -1,3 +1,4 @@
+/*
 package pt.up.fc.dcc.hyrax.odlib.services.worker.status.network.rtt
 
 import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
@@ -51,4 +52,4 @@ object RTTServer {
         }
         try { serverSocket.close() } catch (e: Exception) {}
     }
-}
+}*/

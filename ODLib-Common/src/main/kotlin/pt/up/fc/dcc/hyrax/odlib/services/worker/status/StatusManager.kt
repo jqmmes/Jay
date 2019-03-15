@@ -1,14 +1,15 @@
+/*
 package pt.up.fc.dcc.hyrax.odlib.services.worker.status
 
 import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
-import pt.up.fc.dcc.hyrax.odlib.services.worker.status.cpu.CpuDetails
+//import pt.up.fc.dcc.hyrax.odlib.services.worker.status.cpu.CpuDetails
 import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
 object StatusManager {
     private val deviceInformation = DeviceInformation()
-    var cpuDetails = CpuDetails
+    //var cpuDetails = CpuDetails
 
     fun advertiseStatus() {
         //MulticastAdvertiser.setAdvertiseData(1, ODUtils.genDeviceStatus(deviceInformation).toByteArray())
@@ -56,4 +57,4 @@ object StatusManager {
         deviceInformation.batteryStatus = status
         updateAnnounceStatus()
     }
-}
+}*/

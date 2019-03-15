@@ -16,17 +16,18 @@ message Job {
     bytes data = 2;
 }
 
+enum StatusCode {
+    Success = 0;
+    Error = 1;
+    Waiting = 2;
+}
+
 message Status {
-    enum Code {
-        Success = 0;
-        Error = 1;
-        Waiting = 2;
-    }
-    Code code = 1;
+    StatusCode code = 1;
 }
 
 message Results {
-    Status.Code status = 1;
+    StatusCode status = 1;
     repeated Detection detections = 2;
     string id = 3; // uuid
 }
@@ -48,7 +49,7 @@ message ModelConfig {
 }
 
 message Worker {
-    Status.Code status = 1;
+    StatusCode status = 1;
 
     string id = 2; // uuid
 
@@ -60,7 +61,6 @@ message Worker {
         USB = 2;
         DISCHARGING = 3;
     }
-
     BatteryStatus batteryStatus = 4;
 
     int32 cpuCores = 5;
@@ -68,13 +68,17 @@ message Worker {
     int32 runningJobs = 7;
 
     int64 avgTimePerJob = 8;
+
     enum Type {
         LOCAL = 0;
         CLOUD = 1;
         REMOTE = 2;
     }
     Type type = 9;
+
     int32 bandwidthEstimate = 10; // KB/s valor a ser calculado no Broker e enviado para o scheduler
+    int64 totalMemory = 11;
+    int64 freeMemory = 12;
 
 }
 
@@ -117,7 +121,7 @@ service BrokerService { // Internal and External communication Broker
 
     rpc advertiseWorkerStatus(Worker) returns (Status) {}; // ExternalBroker > Broker
     rpc diffuseWorkerStatus(Worker) returns (Status) {}; // WorkerService > Broker --> Calls:
-                                                //          ExternalBroker::advertiseWorkerStatus
+                                                //          ExternalBroker::diffuseWorkerStatus
                                                 //          SchedulerService::notify
 
     rpc getModels (google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels

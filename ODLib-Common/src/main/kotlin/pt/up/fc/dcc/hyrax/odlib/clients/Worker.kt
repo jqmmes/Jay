@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.clients
 
 import org.apache.commons.collections4.queue.CircularFifoQueue
-import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -17,11 +17,13 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     var cpuCores = 0
     var queueSize = 1
     var runningJobs = 0
-    var batteryStatus : BatteryStatus = BatteryStatus.CHARGED
+    var batteryStatus : ODProto.Worker.BatteryStatus = BatteryStatus.CHARGED
+    var totalMemory = 0L
+    var freeMemory = 0L
 
     private val smartTimer: Timer = Timer()
     private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
-    var calculatedAvgLatency: Int = 0
+    var bandwidthEstimate: Int = 0
     //private var pingFuture : ListenableFuture<ODProto.Ping>? = null
     private var consecutiveFailedPing = 0
 
@@ -30,14 +32,50 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         updateStatus(proto)
     }
 
-    internal fun updateStatus(proto: ODProto.Worker?) {
-        battery = proto!!.battery
+    internal fun updateStatus(proto: ODProto.Worker?) : ODProto.Worker? {
+        if (proto == null) return null
+        battery = proto.battery
         avgComputingEstimate = proto.avgTimePerJob
         runningJobs = proto.runningJobs
         cpuCores = proto.cpuCores
         queueSize = proto.queueSize
-        batteryStatus = BatteryStatus.valueOf(proto.batteryStatus.toString())
+        batteryStatus = proto.batteryStatus
+        totalMemory = proto.totalMemory
+        freeMemory = proto.freeMemory
+        return getProto()
+    }
 
+    internal fun getProto() : ODProto.Worker? {
+        val worker = ODProto.Worker.newBuilder()
+        worker.id = id // Internal
+        worker.battery = battery // Modified by Worker
+        worker.avgTimePerJob = avgComputingEstimate // Modified by Worker
+        worker.cpuCores = cpuCores // Set by Worker
+        worker.queueSize = queueSize // Set by Worker
+        worker.runningJobs = runningJobs // Modified by Worker
+        worker.type = type // Set in Broker
+        worker.bandwidthEstimate = bandwidthEstimate // Set internally
+        worker.totalMemory = totalMemory
+        worker.freeMemory = freeMemory
+        return worker.build()
+    }
+
+
+    private fun addRTT(millis: Int) {
+        circularFIFO.add(millis)
+        bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0
+    }
+
+    fun getAvgRTT() : Int {
+        return bandwidthEstimate
+    }
+
+    fun doRTTEstimates() {
+        smartTimer.scheduleAtFixedRate(RTTTimer(), 0L, ODSettings.RTTDelayMillis)
+    }
+
+    fun stopRTTEstimates() {
+        smartTimer.cancel()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -54,38 +92,6 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     override fun hashCode(): Int {
         return id.hashCode()
     }
-
-    internal fun getProto() : ODProto.Worker? {
-        val worker = ODProto.Worker.newBuilder()
-        worker.id = id
-        worker.battery = battery
-        worker.avgTimePerJob = avgComputingEstimate
-        worker.cpuCores = cpuCores
-        worker.queueSize = queueSize
-        worker.runningJobs = runningJobs
-        worker.type = type
-        worker.bandwidthEstimate = calculatedAvgLatency
-        return worker.build()
-    }
-
-
-    private fun addRTT(millis: Int) {
-        circularFIFO.add(millis)
-        calculatedAvgLatency = circularFIFO.sum()/circularFIFO.size
-    }
-
-    fun getAvgRTT() : Int {
-        return calculatedAvgLatency
-    }
-
-    fun doRTTEstimates() {
-        smartTimer.scheduleAtFixedRate(RTTTimer(), 0L, ODSettings.RTTDelayMillis)
-    }
-
-    fun stopRTTEstimates() {
-        smartTimer.cancel()
-    }
-
 
     private inner class RTTTimer : TimerTask() {
         override fun run() {

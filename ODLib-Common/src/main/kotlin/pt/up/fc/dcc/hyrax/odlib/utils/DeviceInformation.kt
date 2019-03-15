@@ -1,3 +1,4 @@
+/*
 package pt.up.fc.dcc.hyrax.odlib.utils
 
 import pt.up.fc.dcc.hyrax.odlib.enums.BatteryStatus
@@ -50,4 +51,4 @@ class DeviceInformation (var battery: Int = 100,
     }
 
 
-}
+}*/

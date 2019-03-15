@@ -31,7 +31,7 @@ class ODCloud {
             }
 
             ODLogger.enableLogs(LoggingInterface(), LogLevel.Info)
-            WorkerService.setWorkingThreads(StatusManager.cpuDetails.getAvailableCores())
+            //WorkerService.setWorkingThreads(StatusManager.cpuDetails.getAvailableCores())
             odLib.startWorker()
             odLib.listModels {ML -> odLib.setModel(ML.first()) }
 

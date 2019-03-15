@@ -1,14 +1,11 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc
 
-import com.google.common.util.concurrent.ListenableFuture
 import com.google.protobuf.Empty
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import java.util.concurrent.Callable
-import java.util.concurrent.Future
 
 class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.SchedulerServiceBlockingStub, SchedulerServiceGrpc.SchedulerServiceFutureStub>
 (host, ODSettings.schedulerPort) {
@@ -22,7 +19,7 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
 
     fun schedule(request: ODProto.Job?, callback: ((ODProto.Worker?) -> Unit)? = null) {
         val call = futureStub.schedule(request)
-        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+        call.addListener(Runnable { callback?.invoke(call?.get()) }, AbstractODLib.executorPool)
     }
 
     fun listSchedulers(callback: ((ODProto.Schedulers?) -> Unit)? = null) {

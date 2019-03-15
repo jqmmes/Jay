@@ -71,7 +71,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
     fun setScheduler(id: String, callback: ((Boolean) -> Unit)) {
         val call = futureStub.setScheduler(ODProto.Scheduler.newBuilder().setId(id).build())
-        call.addListener(Runnable { callback(call.get().code == ODProto.Status.Code.Success) }, AbstractODLib.executorPool)
+        call.addListener(Runnable { callback(call.get().code == ODProto.StatusCode.Success) }, AbstractODLib.executorPool)
     }
 
     fun advertiseWorkerStatus(request: ODProto.Worker?) {

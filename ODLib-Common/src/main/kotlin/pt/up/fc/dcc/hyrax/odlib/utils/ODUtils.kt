@@ -86,7 +86,7 @@ object ODUtils {
         return builder.build()
     }*/
 
-    fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.Worker {
+    /*fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.Worker {
         val deviceStatus = ODProto.Worker.newBuilder()
         deviceStatus.battery = deviceInformation.battery
         deviceStatus.batteryStatus = ODProto.Worker.BatteryStatus.CHARGED// TODO: Load appropriate status
@@ -97,7 +97,7 @@ object ODUtils {
         //deviceStatus.connections = deviceInformation.connections
         return deviceStatus.build()
 
-    }
+    }*/
 
     /*fun parseDeviceStatus(deviceStatus: ODProto.Worker) : DeviceInformation {
         val deviceInformation = DeviceInformation()
@@ -132,7 +132,7 @@ object ODUtils {
         return modelSet.toSet()
     }
 
-    fun genStatus(code: ODProto.Status.Code): ODProto.Status? {
+    fun genStatus(code: ODProto.StatusCode): ODProto.Status? {
         return ODProto.Status.newBuilder().setCode(code).build()
     }
 

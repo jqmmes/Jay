@@ -91,15 +91,15 @@ object SchedulerService {
 
     }
 
-    fun setScheduler(id: String?) : ODProto.Status.Code {
+    fun setScheduler(id: String?) : ODProto.StatusCode {
         for (scheduler in schedulers)
             if (scheduler.id == id) {
                 this.scheduler?.destroy()
                 this.scheduler = scheduler
                 this.scheduler?.init()
                 this.scheduler?.waitInit()
-                return ODProto.Status.Code.Success
+                return ODProto.StatusCode.Success
             }
-        return ODProto.Status.Code.Error
+        return ODProto.StatusCode.Error
     }
 }
