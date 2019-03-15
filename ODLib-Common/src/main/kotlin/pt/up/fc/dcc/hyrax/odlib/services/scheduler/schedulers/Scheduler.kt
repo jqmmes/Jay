@@ -18,9 +18,7 @@ abstract class Scheduler(name: String) {
     abstract fun scheduleJob(job: ODJob) : ODProto.Worker?
 
     open fun init() {
-        println("Super init")
         waitInit.countDown()
-        println("Super init -1")
     }
 
     abstract fun destroy()
@@ -30,8 +28,6 @@ abstract class Scheduler(name: String) {
     }
 
     fun waitInit() {
-        println("Wait init")
         waitInit.await()
-        println("Wait ended")
     }
 }
