@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.enums
+package pt.up.fc.dcc.hyrax.odlib.logger
 
 enum class LogLevel {
     Disabled,

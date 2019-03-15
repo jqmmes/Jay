@@ -2,7 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
 import kotlin.random.Random
 
 class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devices: ODProto.Worker.Type): Scheduler("MultiDeviceScheduler") {

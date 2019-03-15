@@ -11,8 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 
 /**
  * A placeholder fragment containing a simple view.
@@ -39,8 +38,6 @@ class MainActivityFragment : Fragment() {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == AppCompatActivity.RESULT_OK) {
             val imageBitmap = data.extras!!.get("data") as Bitmap
             MainActivity.odClient.scheduleJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
-            //val newJob = ODJob(ImageUtils.getByteArrayFromBitmap(imageBitmap))
-            //SchedulerBase.addJob(newJob)
         }
     }
 
@@ -55,6 +52,5 @@ class MainActivityFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         ODLogger.logInfo("Fragment onCreateView")
-        //view.findViewById<Button>(R.id.takePhoto).setOnClickListener { _ -> takePhoto()}
     }
 }

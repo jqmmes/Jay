@@ -7,9 +7,8 @@ import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.TimeUnit

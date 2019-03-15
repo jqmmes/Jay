@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
-import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.io.ByteArrayInputStream

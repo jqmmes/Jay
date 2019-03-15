@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer

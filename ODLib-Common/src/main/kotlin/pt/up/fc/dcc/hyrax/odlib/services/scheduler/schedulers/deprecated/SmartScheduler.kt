@@ -6,8 +6,8 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
 import pt.up.fc.dcc.hyrax.odlib.utils.DeviceInformation
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.Logger.ODLogger
 import java.lang.Thread.sleep
 import java.util.*
 import kotlin.collections.HashMap

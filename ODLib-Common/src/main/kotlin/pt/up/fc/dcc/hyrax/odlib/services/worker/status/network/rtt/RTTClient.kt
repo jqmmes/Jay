@@ -2,7 +2,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker.code.network.rtt
 
 import pt.up.fc.dcc.hyrax.odlib.clients.RemoteODClient
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.Logger.ODLogger
 import java.lang.Exception
 import java.net.Socket
 import kotlin.concurrent.thread

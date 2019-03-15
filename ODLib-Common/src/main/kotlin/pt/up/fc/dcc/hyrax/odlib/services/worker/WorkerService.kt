@@ -1,13 +1,13 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker
 
-import pt.up.fc.dcc.hyrax.odlib.enums.ReturnStatus
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.StatusCode
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
-import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -31,11 +31,11 @@ object WorkerService {
         ODLogger.logInfo("WorkerService init")
     }
 
-    internal fun queueJob(job: ODProto.Job, callback: ((List<ODDetection>) -> Unit)?): ReturnStatus {
+    internal fun queueJob(job: ODProto.Job, callback: ((List<ODDetection>) -> Unit)?): StatusCode {
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(job, callback))
         WorkerProfiler.atomicOperation(WorkerProfiler.totalJobs, increment = true)
-        return if (callback == null) ReturnStatus.Success else ReturnStatus.Waiting
+        return if (callback == null) StatusCode.Success else StatusCode.Waiting
     }
 
     fun start(localDetect: DetectObjects, useNettyServer: Boolean = false) {

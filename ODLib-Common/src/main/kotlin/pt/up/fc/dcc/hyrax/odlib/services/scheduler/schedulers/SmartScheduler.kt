@@ -2,7 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 

@@ -1,7 +1,7 @@
 /*
 package pt.up.fc.dcc.hyrax.odlib.services.worker.status.network.rtt
 
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.Logger.ODLogger
 import java.net.ServerSocket
 import java.net.Socket
 import kotlin.concurrent.thread

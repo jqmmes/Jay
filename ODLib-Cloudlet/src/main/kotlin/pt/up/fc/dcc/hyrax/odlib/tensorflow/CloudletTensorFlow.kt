@@ -7,9 +7,9 @@ import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import java.awt.Image
 import java.awt.Image.SCALE_FAST
 import java.awt.image.BufferedImage

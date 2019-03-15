@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.utils
+package pt.up.fc.dcc.hyrax.odlib.structures
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 

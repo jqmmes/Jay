@@ -1,8 +1,7 @@
 @file:Suppress("unused")
 
-package pt.up.fc.dcc.hyrax.odlib.utils
+package pt.up.fc.dcc.hyrax.odlib.logger
 
-import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import java.lang.Exception
 import java.util.concurrent.BlockingQueue

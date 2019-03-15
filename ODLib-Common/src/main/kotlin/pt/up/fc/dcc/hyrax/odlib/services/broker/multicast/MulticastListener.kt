@@ -1,10 +1,10 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
-import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.getHostAddressFromPacket
-import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils.getLocalIpV4
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.getHostAddressFromPacket
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.getLocalIpV4
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.net.*
 import kotlin.concurrent.thread
 
@@ -28,7 +28,7 @@ object MulticastListener {
             if (networkInterface != null) {
                 listeningSocket.networkInterface = networkInterface
             } else {
-                val interfaces = NetworkUtils.getCompatibleInterfaces<Inet4Address>()
+                val interfaces = ODUtils.getCompatibleInterfaces<Inet4Address>()
                 if (!interfaces.isEmpty()) {
                     ODLogger.logInfo("Using default interface (${interfaces[0]}) to advertise")
                     listeningSocket.networkInterface = interfaces[0]

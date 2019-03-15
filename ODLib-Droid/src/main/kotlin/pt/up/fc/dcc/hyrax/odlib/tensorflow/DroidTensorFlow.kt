@@ -9,9 +9,9 @@ import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
-import pt.up.fc.dcc.hyrax.odlib.utils.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import java.io.*
 import java.net.URL
 import java.net.URLConnection

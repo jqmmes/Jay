@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker
 
-import pt.up.fc.dcc.hyrax.odlib.clients.Worker
+import pt.up.fc.dcc.hyrax.odlib.structures.Worker
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Job

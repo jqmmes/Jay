@@ -2,8 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import java.lang.Thread.sleep
+import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
 
 class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Scheduler("SingleDeviceScheduler") {
 

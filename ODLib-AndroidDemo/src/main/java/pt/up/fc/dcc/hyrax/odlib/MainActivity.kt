@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
@@ -15,12 +16,11 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import pt.up.fc.dcc.hyrax.odlib.R
-import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 //import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
-import pt.up.fc.dcc.hyrax.odlib.utils.*
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
@@ -28,16 +28,11 @@ import kotlin.concurrent.thread
 @Suppress("UNUSED_PARAMETER")
 class MainActivity : AppCompatActivity() {
 
-    //private lateinit var odClient: ODLib
     private lateinit var loggingConsole: Logger
     private val requestExternalStorage = 1
     private val permissionsStorage = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     private var schedulersIds : Set<Pair<String, String>> = setOf()
 
-
-    /*fun changeCloud(target: View) {
-        //ClientManager.changeCloudClient(CloudODClient(findViewById<EditText>(R.id.cloudIP).text.toString()))
-    }*/
 
     fun workerToggleListener(target: View) {
         toggleWorker((target as ToggleButton).isChecked)
@@ -72,19 +67,6 @@ class MainActivity : AppCompatActivity() {
         }
     }*/
 
-    /*private fun getScheduler(): SchedulerBase {
-        val schedulerSpinnerValue = findViewById<Spinner>(R.id.select_scheduler).selectedItem
-        return when (schedulerSpinnerValue) {
-            "RemoteRandomScheduler" -> RemoteRandomScheduler()
-            "RemoteRoundRobinScheduler" -> RemoteRoundRobinScheduler()
-            "JustRemoteRoundRobinScheduler" -> JustRemoteRoundRobinScheduler()
-            "JustRemoteRandomScheduler" -> JustRemoteRandomScheduler()
-            "CloudScheduler" -> CloudScheduler()
-            "SmartScheduler" -> SmartScheduler()
-            else -> LocalScheduler()
-        }
-    }*/
-
 
     fun showSchedulersListener(target: View) {
         thread {
@@ -103,34 +85,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun downloadModel(target: View) {
-        val spinner = findViewById<Spinner>(R.id.select_model)
-        odClient.listModels { models ->
-            for (model in models) {
-                if (model.modelName == spinner.selectedItem) {
-                    odClient.setModel(model)
-                    ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
-                    return@listModels
-                }
-            }
-        }
-    }
-
     fun chooseImage(target: View) {
         thread(name = "chooseImage CreateJob") {
             odClient.scheduleJob(loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}")))
 
             return@thread
-
-            /*val job = ODJob(
-                    loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}"))
-            )
-
-            ODLogger.logInfo("Battery_Start\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")*/
-            /*SchedulerBase.addResultsCallback { _, _ ->
-                ODLogger.logInfo("Battery_End\t$${job.id}\t${SystemStats.getBatteryEnergyCounter(this)}")
-            }*/
-            //SchedulerBase.addJob(job)
         }
     }
 
@@ -286,23 +245,6 @@ class MainActivity : AppCompatActivity() {
         schedulerArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulersArrayList)
         modelArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modelsArrayList)
 
-        /*if (odClient.serviceRunningWorker() && odClient.serviceRunningScheduler()) {
-            odClient.listModels { models ->
-                modelsArrayList.clear()
-                for (model in models) {
-                    modelsArrayList.add(model.modelName)
-                }
-                runOnUiThread {
-                    modelArrayAdapter.notifyDataSetChanged()
-                    modelSpinner.postInvalidate()
-                    modelSpinner.adapter = modelArrayAdapter
-                }
-            }
-        }*/
-
-
-
-        //findViewById<EditText>(R.id.cloudIP).setText(ODSettings.cloudIp, TextView.BufferType.EDITABLE)
         verifyStoragePermissions(this)
         requestBatteryPermissions()
         //registerBroadcastReceiver()
@@ -362,6 +304,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val SMALL_ASSETS: Int = 0
         private const val LARGE_ASSETS: Int = 1
+        @SuppressLint("StaticFieldLeak")
         lateinit var odClient: ODLib
     }
 }

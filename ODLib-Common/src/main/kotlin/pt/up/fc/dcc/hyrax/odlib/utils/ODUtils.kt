@@ -1,23 +1,49 @@
 package pt.up.fc.dcc.hyrax.odlib.utils
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import pt.up.fc.dcc.hyrax.odlib.structures.ODDetection
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import java.net.DatagramPacket
+import java.net.Inet4Address
+import java.net.NetworkInterface
 
 object ODUtils {
 
-    /*internal fun parseResults(results: ODProto.Results?): List<ODDetection?> {
-        try {
-            val detections: Array<ODDetection?> = arrayOfNulls(results!!.detectionsCount)
-            var i = 0
-            for (detection in results.detectionsList) {
-                detections[i++] = ODDetection(detection.score, detection.class_)
+    private var localIPv4: String = ""
+    private var firstRefresh: Boolean = true
+
+    internal inline fun <reified T>getCompatibleInterfaces(): List<NetworkInterface> {
+        val interfaceList : MutableList<NetworkInterface> = mutableListOf()
+        for (netInt in NetworkInterface.getNetworkInterfaces()) {
+            if (!netInt.isLoopback && !netInt.isPointToPoint && netInt.isUp && netInt.supportsMulticast()) {
+                for (address in netInt.inetAddresses)
+                    if (address is T) {
+                        ODLogger.logInfo("Available Multicast interface: ${netInt.name}")
+                        interfaceList.add(netInt)
+                    }
             }
-            return detections.asList()
-        } catch (e: NullPointerException) {
-            ODLogger.logError("parseResults Exception: (${e.message})")
-            for (message in e.stackTrace) ODLogger.logError(message.toString())
         }
-        return emptyList()
-    } */
+        return interfaceList
+    }
+
+    fun getLocalIpV4(refresh: Boolean = false): String {
+        if (refresh || firstRefresh) {
+            firstRefresh = false
+            localIPv4 = ""
+            val interfaces = getCompatibleInterfaces<Inet4Address>()
+            if (!interfaces.isEmpty()) {
+                for (ip in interfaces[0].inetAddresses) {
+                    if (ip is Inet4Address) localIPv4 = ip.toString().trim('/')
+                }
+            }
+        }
+        return localIPv4
+    }
+
+    fun getHostAddressFromPacket(packet: DatagramPacket) : String {
+        return packet.address.hostAddress.substringBefore("%")
+    }
 
     private fun genDetection(detection: ODDetection?) : ODProto.Detection{
         return ODProto.Detection.newBuilder()
@@ -35,87 +61,6 @@ object ODUtils {
         return builder.build()
     }
 
-    /*internal fun genStatus(code: ReturnStatus) : ODProto.RequestStatus {
-        return ODProto.RequestStatus.newBuilder().setCode(ODProto.RequestStatus.Code.forNumber(code.code)).build()
-    }*/
-
-    /*internal fun genModel(model : ODModel) : ODProto.Model {
-        return ODProto.Model.newBuilder()
-                .setId(model.modelId)
-                .setName(model.modelName)
-                .setUrl(model.remoteUrl)
-                .setDownloaded(model.downloaded)
-                .build()
-    }
-
-    internal fun parseModel(model: ODProto.Model?) : ODModel {
-        return ODModel(model!!.id, model.name, model.url, model.downloaded)
-    }*/
-
-    /*internal fun parseModelConfig(modelConfig: ODProto.ModelConfig?) : Pair<ODModel, HashMap<String, String>> {
-        return Pair(parseModel(modelConfig!!.model), HashMap(modelConfig.configsMap))
-    }
-
-    internal fun parseAsyncRequestImageByteArray(asyncRequest: ODProto.AsyncRequest?) : ByteArray {
-        return asyncRequest!!.job.data.toByteArray()
-    }*/
-
-    /*internal fun parseAsyncRequestRemoteClient(asyncRequest: ODProto.AsyncRequest?) : RemoteODClient? {
-        val clientId = if (NetworkUtils.getLocalIpV4(false) == asyncRequest!!.remoteClient.address) 0 else ODUtils.genClientId(asyncRequest.remoteClient.address)
-        return ClientManager.getRemoteODClient(clientId)
-    }*/
-
-    internal fun genModelConfig(configs: Map<String, String>) : ODProto.ModelConfig {
-        return ODProto.ModelConfig.newBuilder()
-                .putAllConfigs(configs)
-                .build()
-    }
-
-    /*fun parseModels(result: ODProto.Models?): Set<ODModel> {
-        val parsedResults : HashSet<ODModel> = HashSet()
-        for (rawModel in 0 until result!!.modelsCount) {
-            parsedResults.add(parseModel(result.getModels(rawModel)))
-        }
-        return parsedResults.toSet()
-    }
-
-    fun genModels(listModels: Set<ODModel>): ODProto.Models {
-        val builder = ODProto.Models.newBuilder()
-        for (iterator in listModels)
-            builder.addModels(genModel(iterator))
-        return builder.build()
-    }*/
-
-    /*fun genDeviceStatus(deviceInformation: DeviceInformation) : ODProto.Worker {
-        val deviceStatus = ODProto.Worker.newBuilder()
-        deviceStatus.battery = deviceInformation.battery
-        deviceStatus.batteryStatus = ODProto.Worker.BatteryStatus.CHARGED// TODO: Load appropriate status
-        deviceStatus.cpuCores = deviceInformation.computationThreads
-        deviceStatus.queueSize = deviceInformation.queueSize
-        deviceStatus.runningJobs = deviceInformation.runningJobs
-        //deviceStatus.pendingJobs = deviceInformation.pendingJobs
-        //deviceStatus.connections = deviceInformation.connections
-        return deviceStatus.build()
-
-    }*/
-
-    /*fun parseDeviceStatus(deviceStatus: ODProto.Worker) : DeviceInformation {
-        val deviceInformation = DeviceInformation()
-        deviceInformation.battery = deviceStatus.battery
-        deviceInformation.batteryStatus.code = deviceStatus.batteryStatus
-        deviceInformation.computationThreads = deviceStatus.cpuCores
-        deviceInformation.queueSize = deviceStatus.queueSize
-        deviceInformation.runningJobs = deviceStatus.runningJobs
-        //deviceInformation.pendingJobs = deviceStatus.pendingJobs
-        //deviceInformation.connections= deviceStatus.connections
-        return deviceInformation
-    }*/
-
-    /*fun parseDeviceStatus(data: ByteArray): DeviceInformation {
-        val deviceStatus = ODProto.Worker.parseFrom(data)
-        return parseDeviceStatus(deviceStatus)
-    }*/
-
     fun genModelRequest(listModels: Set<ODModel>): ODProto.Models? {
         val models = ODProto.Models.newBuilder()
         for (model in listModels) {
@@ -124,16 +69,16 @@ object ODUtils {
         return models.build()
     }
 
+    fun genStatus(code: ODProto.StatusCode): ODProto.Status? {
+        return ODProto.Status.newBuilder().setCode(code).build()
+    }
+
     fun parseModels(models: ODProto.Models?): Set<ODModel> {
         val modelSet : MutableSet<ODModel> = mutableSetOf()
         for (model in models!!.modelsList) {
             modelSet.add(ODModel(model))
         }
         return modelSet.toSet()
-    }
-
-    fun genStatus(code: ODProto.StatusCode): ODProto.Status? {
-        return ODProto.Status.newBuilder().setCode(code).build()
     }
 
     fun parseSchedulers(schedulers: ODProto.Schedulers?): Set<Pair<String, String>> {

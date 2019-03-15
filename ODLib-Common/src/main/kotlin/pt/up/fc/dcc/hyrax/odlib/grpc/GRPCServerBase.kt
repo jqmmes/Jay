@@ -6,10 +6,9 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.io.IOException
-import java.lang.Exception
 
 abstract class GRPCServerBase(private val port: Int,
                               private val useNettyServer: Boolean) {

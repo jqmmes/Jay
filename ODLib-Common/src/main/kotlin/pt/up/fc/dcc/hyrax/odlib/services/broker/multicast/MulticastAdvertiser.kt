@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
-import pt.up.fc.dcc.hyrax.odlib.utils.NetworkUtils
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 /*import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream*/
 import java.lang.Thread.sleep
@@ -53,7 +53,7 @@ object MulticastAdvertiser {
             if (networkInterface != null) {
                 mcSocket.networkInterface = networkInterface
             } else {
-                val interfaces = NetworkUtils.getCompatibleInterfaces<Inet4Address>()
+                val interfaces = ODUtils.getCompatibleInterfaces<Inet4Address>()
                 if (!interfaces.isEmpty()) {
                     ODLogger.logInfo("Using default interface (${interfaces[0]}) to advertise")
                     mcSocket.networkInterface = interfaces[0]

@@ -1,10 +1,9 @@
 package pt.up.fc.dcc.hyrax.odlib
 
-import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
-import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.StatusManager
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 
 class ODCloud {
     companion object {

@@ -17,7 +17,7 @@ import android.graphics.Bitmap
 import android.graphics.RectF
 import org.tensorflow.Graph
 //import org.tensorflow.contrib.android.TensorFlowInferenceInterface
-import pt.up.fc.dcc.hyrax.odlib.utils.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.io.IOException
 import java.util.*
 

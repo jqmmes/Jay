@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib
 import android.app.Activity
 import android.content.Context
 import android.widget.TextView
-import pt.up.fc.dcc.hyrax.odlib.enums.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import java.io.File
 import java.io.FileOutputStream

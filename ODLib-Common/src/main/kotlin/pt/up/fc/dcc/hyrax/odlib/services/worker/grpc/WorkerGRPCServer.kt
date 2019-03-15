@@ -7,7 +7,7 @@ import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
@@ -25,7 +25,7 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun selectModel(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>?) {
-            WorkerService.loadModel(ODModel(request!!.id, request.name, request.url, request.downloaded)) {S -> genericComplete(S, responseObserver)}
+            WorkerService.loadModel(ODModel(request!!.id, request.name, request.url, request.downloaded)) { S -> genericComplete(S, responseObserver)}
         }
     }
 }

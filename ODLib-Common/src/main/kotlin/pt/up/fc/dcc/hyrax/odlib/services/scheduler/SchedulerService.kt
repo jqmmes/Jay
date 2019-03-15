@@ -10,7 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.MultiDeviceSchedul
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
 import java.util.*
 
 object SchedulerService {

@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.clients
+package pt.up.fc.dcc.hyrax.odlib.structures
 
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
@@ -20,6 +20,9 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     var batteryStatus : ODProto.Worker.BatteryStatus = BatteryStatus.CHARGED
     var totalMemory = 0L
     var freeMemory = 0L
+    var freeSpace = Long.MAX_VALUE // TODO
+    var computationLoad = 0 // TODO
+    var connections = 0 // TODO
 
     private val smartTimer: Timer = Timer()
     private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)

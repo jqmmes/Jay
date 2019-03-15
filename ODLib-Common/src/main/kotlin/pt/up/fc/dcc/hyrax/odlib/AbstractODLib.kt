@@ -5,8 +5,8 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.odlib.utils.ODJob
-import pt.up.fc.dcc.hyrax.odlib.utils.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit

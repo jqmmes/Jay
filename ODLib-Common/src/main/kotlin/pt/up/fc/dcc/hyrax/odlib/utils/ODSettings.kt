@@ -2,10 +2,9 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 object ODSettings {
 
-    var brokerPort : Int = 50051
-    val workerPort : Int = 50053
-    val schedulerPort : Int = 50055
-
+    const val brokerPort : Int = 50051
+    const val workerPort : Int = 50053
+    const val schedulerPort : Int = 50055
 
     const val rttPort: Int = 8888
     const val cloudIp: String = "odcloud.duckdns.org"
