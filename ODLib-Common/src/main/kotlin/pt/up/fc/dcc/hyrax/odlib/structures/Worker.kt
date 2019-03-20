@@ -24,31 +24,20 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     var computationLoad = 0 // TODO
     var connections = 0 // TODO
 
+
     private val smartTimer: Timer = Timer()
     private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
     var bandwidthEstimate: Int = 0
     //private var pingFuture : ListenableFuture<ODProto.Ping>? = null
     private var consecutiveFailedPing = 0
+    private var proto : ODProto.Worker? = null
 
 
     constructor(proto: ODProto.Worker?, address: String) : this(proto!!.id, address){
         updateStatus(proto)
     }
 
-    internal fun updateStatus(proto: ODProto.Worker?) : ODProto.Worker? {
-        if (proto == null) return null
-        battery = proto.battery
-        avgComputingEstimate = proto.avgTimePerJob
-        runningJobs = proto.runningJobs
-        cpuCores = proto.cpuCores
-        queueSize = proto.queueSize
-        batteryStatus = proto.batteryStatus
-        totalMemory = proto.totalMemory
-        freeMemory = proto.freeMemory
-        return getProto()
-    }
-
-    internal fun getProto() : ODProto.Worker? {
+    private fun genProto() {
         val worker = ODProto.Worker.newBuilder()
         worker.id = id // Internal
         worker.battery = battery // Modified by Worker
@@ -60,7 +49,26 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         worker.bandwidthEstimate = bandwidthEstimate // Set internally
         worker.totalMemory = totalMemory
         worker.freeMemory = freeMemory
-        return worker.build()
+        proto = worker.build()
+    }
+
+    internal fun updateStatus(proto: ODProto.Worker?) : ODProto.Worker? {
+        if (proto == null) return this.proto
+        battery = proto.battery
+        avgComputingEstimate = proto.avgTimePerJob
+        runningJobs = proto.runningJobs
+        cpuCores = proto.cpuCores
+        queueSize = proto.queueSize
+        batteryStatus = proto.batteryStatus
+        totalMemory = proto.totalMemory
+        freeMemory = proto.freeMemory
+        genProto()
+        return getProto()
+    }
+
+    internal fun getProto() : ODProto.Worker? {
+        if (proto == null) genProto()
+        return proto
     }
 
 

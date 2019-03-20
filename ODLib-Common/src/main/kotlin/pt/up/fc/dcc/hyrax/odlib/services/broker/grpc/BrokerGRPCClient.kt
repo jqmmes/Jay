@@ -75,12 +75,12 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
     fun advertiseWorkerStatus(request: ODProto.Worker?) {
         val call = futureStub.advertiseWorkerStatus(request)
-        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { println("advertiseWorkerStatus Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
     }
 
     fun diffuseWorkerStatus(request: ODProto.Worker?) {
-        val call = futureStub.advertiseWorkerStatus(request)
-        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
+        val call = futureStub.diffuseWorkerStatus(request)
+        call.addListener(Runnable { println("diffuseWorkerStatus Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
     }
 
 
@@ -91,6 +91,6 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
     fun announceMulticast() {
         val call = futureStub.announceMulticast(null)
-        call.addListener(Runnable { println("Request Status: ${call.get()}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { println("announceMulticast Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
     }
 }

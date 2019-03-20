@@ -36,7 +36,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun diffuseWorkerStatus(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
-            BrokerService.diffuseWorkerStatus(request)
+            BrokerService.updateWorker(request)
+            BrokerService.diffuseWorkerStatus()
             genericComplete(ODProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
         }
 
@@ -63,7 +64,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<ODProto.Status>?) {
-            println("Listen for MCast")
             BrokerService.listenMulticast(request?.value ?: false)
             genericComplete(ODUtils.genStatus(ODProto.StatusCode.Success), responseObserver)
         }
@@ -71,6 +71,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun announceMulticast(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.announceMulticast(false, request)
             genericComplete(ODUtils.genStatus(ODProto.StatusCode.Success), responseObserver)
+        }
+
+        override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<ODProto.Worker>?) {
+
         }
     }
 }

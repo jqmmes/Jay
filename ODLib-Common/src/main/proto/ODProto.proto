@@ -120,9 +120,11 @@ service BrokerService { // Internal and External communication Broker
     rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
 
     rpc advertiseWorkerStatus(Worker) returns (Status) {}; // ExternalBroker > Broker
-    rpc diffuseWorkerStatus(Worker) returns (Status) {}; // WorkerService > Broker --> Calls:
-                                                //          ExternalBroker::diffuseWorkerStatus
-                                                //          SchedulerService::notify
+    rpc diffuseWorkerStatus(Worker) returns (Status) {};   // WorkerService > Broker --> Calls:
+                                                           //          ExternalBroker::diffuseWorkerStatus
+                                                           //          SchedulerService::notify
+    rpc requestWorkerStatus(google.protobuf.Empty) returns (Worker) {}; // ExternalBroker > Broker
+                                                                        //      SchedulerService::notify
 
     rpc getModels (google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
     rpc setModel (Model) returns (Status) {}; // App > Broker --> Calls WorkerService::selectModel

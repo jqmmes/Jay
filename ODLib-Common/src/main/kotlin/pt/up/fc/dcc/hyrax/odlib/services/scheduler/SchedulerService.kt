@@ -65,9 +65,12 @@ object SchedulerService {
         return scheduler?.scheduleJob(ODJob(request))
     }
 
-    internal fun notify(worker: Worker?) {
+    internal fun notify(worker: Worker?) : ODProto.StatusCode {
+        //if (worker!!.id !in workers.keys) return ODProto.StatusCode.Error
         workers[worker!!.id] = worker
         for (listener in notifyListeners) listener.invoke(worker)
+        println("SchedulerService notify (${worker.id})")
+        return ODProto.StatusCode.Success
     }
 
     internal fun registerNotifyListener(listener: ((Worker?) -> Unit)) {
@@ -75,7 +78,6 @@ object SchedulerService {
     }
 
     internal fun listenForWorkers(listen: Boolean, callback: ((ODProto.Status) -> Unit)? = null) {
-        println("listenForWorkers")
         if (listen) brokerGRPC.listenMulticastWorkers(callback = callback)
         else brokerGRPC.listenMulticastWorkers(true, callback)
     }

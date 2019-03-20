@@ -17,6 +17,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import java.lang.Thread.sleep
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker as ODWorker
 
 object BrokerService {
@@ -25,11 +26,11 @@ object BrokerService {
     private val workers: MutableMap<String, Worker> = hashMapOf()
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
     private val worker = WorkerGRPCClient("127.0.0.1")
+    private val local: Worker = Worker(address = "127.0.0.1", type = Type.LOCAL)
+    private val cloud = Worker(address = ODSettings.cloudIp, type = Type.CLOUD)
 
     init {
-        val local = Worker(address = "127.0.0.1", type = Type.LOCAL)
         workers[local.id] = local
-        val cloud = Worker(address = ODSettings.cloudIp, type = Type.CLOUD)
         workers[cloud.id] = cloud
     }
 
@@ -47,13 +48,13 @@ object BrokerService {
 
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
         scheduler.schedule(request) { W ->
-            println(W)
             if (W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
         }
     }
 
     internal fun updateWorkers() {
-        for (worker in workers.values) scheduler.notify(worker.getProto())
+        for (worker in workers.values) scheduler.notify(worker.getProto()) { S -> println("updateWorkers: ${S?.code?.name}") }
+        sleep(1000)
     }
 
     internal fun getModels(callback: (Models) -> Unit) {
@@ -64,13 +65,25 @@ object BrokerService {
         worker.selectModel(request, callback)
     }
 
-    internal fun diffuseWorkerStatus(request: ODWorker?) {
-        for (client in workers.values) client.grpc.advertiseWorkerStatus(request)
+    internal fun diffuseWorkerStatus() {
+        // TODO: Validar que o Scheduler está a funcionar
+        for (client in workers.values) if (client.type == Type.REMOTE) client.grpc.advertiseWorkerStatus(local.getProto())
+    }
+
+    internal fun updateWorker(request: ODWorker?, updateCloud: Boolean = false) {
+        if (updateCloud){
+            cloud.updateStatus(request)
+            scheduler.notify(cloud.getProto()) {S -> println("updateWorker: ${S?.code?.name}")}
+        } else {
+            local.updateStatus(request)
+            scheduler.notify(local.getProto()) {S -> println("updateWorker: ${S?.code?.name}")}
+        }
+
     }
 
     internal fun receiveWorkerStatus(request: ODWorker?) {
         workers[request?.id]?.updateStatus(request)
-        scheduler.notify(request)
+        scheduler.notify(request) {S -> println("receiveWorkerStatus: ${S?.code?.name}")}
     }
 
     fun getSchedulers(callback: ((Schedulers?) -> Unit)? = null) {
