@@ -15,7 +15,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.R
+//import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 //import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
@@ -70,7 +70,6 @@ class MainActivity : AppCompatActivity() {
 
     fun showSchedulersListener(target: View) {
         thread {
-            odClient.updateWorkers()
             schedulersArrayList.clear()
             odClient.listSchedulers {schedulers ->
                 schedulersIds = schedulers

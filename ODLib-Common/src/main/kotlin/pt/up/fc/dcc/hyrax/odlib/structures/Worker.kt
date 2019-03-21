@@ -5,7 +5,10 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import java.lang.Thread.sleep
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import kotlin.concurrent.thread
 
 class Worker(val id: String = UUID.randomUUID().toString(), address: String, val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE){
 
@@ -31,6 +34,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     //private var pingFuture : ListenableFuture<ODProto.Ping>? = null
     private var consecutiveFailedPing = 0
     private var proto : ODProto.Worker? = null
+    private var autoStatusUpdate = false
+    private var autoStatusUpdateRunning = CountDownLatch(0)
 
 
     constructor(proto: ODProto.Worker?, address: String) : this(proto!!.id, address){
@@ -71,6 +76,23 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         return proto
     }
 
+    internal fun enableAutoStatusUpdate() {
+        if (autoStatusUpdate) return
+        thread {
+            autoStatusUpdate = true
+            autoStatusUpdateRunning = CountDownLatch(1)
+            do {
+                grpc.requestWorkerStatus { W -> updateStatus(W) }
+                sleep(ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS)
+            } while (autoStatusUpdate)
+            autoStatusUpdateRunning.countDown()
+        }
+    }
+
+    internal fun disableAutoStatusUpdate(wait: Boolean = true) {
+        autoStatusUpdate = false
+        if (wait) autoStatusUpdateRunning.await()
+    }
 
     private fun addRTT(millis: Int) {
         circularFIFO.add(millis)

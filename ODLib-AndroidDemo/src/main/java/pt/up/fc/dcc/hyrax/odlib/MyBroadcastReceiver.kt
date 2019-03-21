@@ -7,7 +7,7 @@ import android.content.Intent
 class MyBroadcastReceiver(val activity: MainActivity) : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        println("xpto")
+        //println("xpto")
         /*val action = intent.getStringArrayListExtra("action")
         println(action)
         for (act in action) {

@@ -18,6 +18,8 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.lang.Thread.sleep
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker as ODWorker
 
 object BrokerService {
@@ -32,6 +34,7 @@ object BrokerService {
     init {
         workers[local.id] = local
         workers[cloud.id] = cloud
+        cloud.enableAutoStatusUpdate()
     }
 
     fun start(useNettyServer: Boolean = false) {
@@ -40,6 +43,7 @@ object BrokerService {
 
     fun stop() {
         if (server != null) server!!.stop()
+        cloud.disableAutoStatusUpdate()
     }
 
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
@@ -52,9 +56,25 @@ object BrokerService {
         }
     }
 
+    private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {
+        scheduler.notify(worker) { S ->
+            println("updateWorkers::notify Complete ${S?.code?.name}")
+            if (S?.code == ODProto.StatusCode.Error) {
+                sleep(100)
+                BrokerService.updateWorker(worker, latch)
+            } else (latch.countDown())
+        }
+    }
+
     internal fun updateWorkers() {
-        for (worker in workers.values) scheduler.notify(worker.getProto()) { S -> println("updateWorkers: ${S?.code?.name}") }
-        sleep(1000)
+        println("updateWorkers ${workers.size}")
+        val countDownLatch = CountDownLatch(workers.size)
+        for (worker in workers.values) {
+            println("updateWorkers:: $worker")
+            updateWorker(worker.getProto(), countDownLatch)
+        }
+        countDownLatch.await()
+        println("updateWorkers::End")
     }
 
     internal fun getModels(callback: (Models) -> Unit) {
@@ -65,25 +85,34 @@ object BrokerService {
         worker.selectModel(request, callback)
     }
 
-    internal fun diffuseWorkerStatus() {
-        // TODO: Validar que o Scheduler está a funcionar
-        for (client in workers.values) if (client.type == Type.REMOTE) client.grpc.advertiseWorkerStatus(local.getProto())
+    internal fun diffuseWorkerStatus() : CountDownLatch {
+        val countDownLatch = CountDownLatch(1)
+        val atomicLock = AtomicInteger(0)
+        for (client in workers.values) {
+            if (client.type == Type.REMOTE) {
+                atomicLock.incrementAndGet()
+                client.grpc.advertiseWorkerStatus(local.getProto()) {if (atomicLock.decrementAndGet() == 0) countDownLatch.countDown()}
+            }
+        }
+        return countDownLatch
     }
 
-    internal fun updateWorker(request: ODWorker?, updateCloud: Boolean = false) {
+    internal fun updateWorker(request: ODWorker?, updateCloud: Boolean = false) : CountDownLatch {
+        val countDownLatch = CountDownLatch(1)
         if (updateCloud){
             cloud.updateStatus(request)
-            scheduler.notify(cloud.getProto()) {S -> println("updateWorker: ${S?.code?.name}")}
+            scheduler.notify(cloud.getProto()) {countDownLatch.countDown()}
         } else {
             local.updateStatus(request)
-            scheduler.notify(local.getProto()) {S -> println("updateWorker: ${S?.code?.name}")}
+            scheduler.notify(local.getProto()) {countDownLatch.countDown()}
         }
+        return countDownLatch
 
     }
 
-    internal fun receiveWorkerStatus(request: ODWorker?) {
+    internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: () -> Unit) {
         workers[request?.id]?.updateStatus(request)
-        scheduler.notify(request) {S -> println("receiveWorkerStatus: ${S?.code?.name}")}
+        scheduler.notify(request) {completeCallback()}
     }
 
     fun getSchedulers(callback: ((Schedulers?) -> Unit)? = null) {
@@ -113,5 +142,9 @@ object BrokerService {
             if (MulticastAdvertiser.isRunning()) MulticastAdvertiser.setAdvertiseData(data)
             else MulticastAdvertiser.start(data)
         }
+    }
+
+    fun requestWorkerStatus(): ODProto.Worker? {
+        return local.getProto()
     }
 }

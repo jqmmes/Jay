@@ -49,6 +49,8 @@ abstract class AbstractODLib {
 
     protected open fun stopBroker() {
         BrokerService.stop()
+        stopScheduler()
+        stopWorker()
     }
 
     open fun stopScheduler() {
@@ -61,12 +63,6 @@ abstract class AbstractODLib {
 
     fun scheduleJob(data: ByteArray) {
         broker.scheduleJob(ODJob(data)) { R -> println("ODLib scheduleJob END $R") }
-    }
-
-    fun updateWorkers() {
-        println("updateWorkers - START")
-        broker.updateWorkers()
-        println("updateWorkers - END")
     }
 
     open fun destroy(keepServices: Boolean = false) {

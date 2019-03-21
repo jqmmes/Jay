@@ -25,6 +25,7 @@ abstract class GRPCServerBase(private val port: Int,
                     .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                     .build()
                     .start()
+
         } else {
             ServerBuilder.forPort(port)
                     .addService(grpcImpl)

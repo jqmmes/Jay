@@ -19,4 +19,5 @@ object ODSettings {
     const val averageComputationTimesToStore: Int = 10
     const val workingThreads: Int = 1
     const val workerStatusUpdateInterval: Long = 5000 // 5s
+    const val AUTO_STATUS_UPDATE_INTERVAL_MS: Long = 5000 // 5s
 }

@@ -19,6 +19,7 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
                 .usePlaintext()
                 .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                 .build()
+        println("Channel Built $host:$port\tState:${channel.getState(true).name}")
     }
 
     abstract fun reconnectStubs()

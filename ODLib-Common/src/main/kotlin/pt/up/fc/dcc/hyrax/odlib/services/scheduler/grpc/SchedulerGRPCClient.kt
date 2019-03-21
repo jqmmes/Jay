@@ -6,6 +6,8 @@ import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
+import java.util.concurrent.ExecutionException
 
 class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.SchedulerServiceBlockingStub, SchedulerServiceGrpc.SchedulerServiceFutureStub>
 (host, ODSettings.schedulerPort) {
@@ -32,8 +34,11 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
-    fun notify(request: ODProto.Worker?, callback: ((ODProto.Status?) -> Unit)? = null) {
+    fun notify(request: ODProto.Worker?, callback: ((ODProto.Status?) -> Unit)) {
         val call = futureStub.notify(request)
-        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+        call.addListener(Runnable {
+            try { callback(call.get()) }
+            catch (e: ExecutionException) { callback(ODUtils.genStatus(ODProto.StatusCode.Error)) }
+        }, AbstractODLib.executorPool)
     }
 }

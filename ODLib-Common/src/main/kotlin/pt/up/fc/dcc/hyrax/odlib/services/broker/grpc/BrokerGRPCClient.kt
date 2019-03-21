@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
 import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -38,7 +39,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         AbstractODLib.executorPool.submit {
             val timer = System.currentTimeMillis()
             try {
-                blockingStub
+                val result = blockingStub
                         .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS)
                         .ping(ODProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(payload))).setReply(reply).build())
                 callback?.invoke((System.currentTimeMillis() - timer).toInt())
@@ -48,9 +49,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }
     }
 
-    fun updateWorkers() {
+    fun updateWorkers(callback: (() -> Unit)) {
         val call = futureStub.updateWorkers(Empty.getDefaultInstance())
-        call.addListener(Runnable{ println("updateWorkers: ${call.get()}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable{ call.get(); callback() }, AbstractODLib.executorPool)
     }
 
     fun selectModel(model: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
@@ -73,14 +74,19 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { callback(call.get().code == ODProto.StatusCode.Success) }, AbstractODLib.executorPool)
     }
 
-    fun advertiseWorkerStatus(request: ODProto.Worker?) {
+    fun advertiseWorkerStatus(request: ODProto.Worker?, completeCallback: () -> Unit) {
         val call = futureStub.advertiseWorkerStatus(request)
-        call.addListener(Runnable { println("advertiseWorkerStatus Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { completeCallback() }, AbstractODLib.executorPool)
     }
 
     fun diffuseWorkerStatus(request: ODProto.Worker?) {
         val call = futureStub.diffuseWorkerStatus(request)
         call.addListener(Runnable { println("diffuseWorkerStatus Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+    }
+
+    fun requestWorkerStatus(callback: ((ODProto.Worker?) -> Unit)){
+        val call = futureStub.requestWorkerStatus(Empty.getDefaultInstance())
+        call.addListener(Runnable { try {callback(call.get())} catch (e: ExecutionException) {callback(null) } }, AbstractODLib.executorPool)
     }
 
 

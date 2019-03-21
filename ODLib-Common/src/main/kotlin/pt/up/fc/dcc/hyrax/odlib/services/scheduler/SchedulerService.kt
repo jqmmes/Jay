@@ -11,7 +11,9 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
 import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import java.lang.Thread.sleep
 import java.util.*
+import kotlin.concurrent.thread
 
 object SchedulerService {
 
@@ -56,7 +58,9 @@ object SchedulerService {
 
     fun start(useNettyServer: Boolean = false) {
         server = SchedulerGRPCServer(useNettyServer).start()
-        brokerGRPC.updateWorkers()
+        thread {
+            brokerGRPC.updateWorkers{println("Scheduler Initiated")}
+        }
     }
 
     internal fun schedule(request: Job?): ODProto.Worker? {
