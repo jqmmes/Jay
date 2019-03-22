@@ -6,6 +6,7 @@ import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import java.util.concurrent.ExecutionException
 
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
 (host, ODSettings.workerPort) {
@@ -24,13 +25,18 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
 
     fun listModels(callback: ((ODProto.Models) -> Unit)? = null) {
         val call = futureStub.listModels(Empty.getDefaultInstance())
-        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+            } catch (e: ExecutionException) {
+                println("listModels Unavailable")
+            }
+
+        }, AbstractODLib.executorPool)
     }
 
     fun selectModel(request: ODProto.Model?, callback: ((ODProto.Status?) -> Unit)?) {
         val call = futureStub.selectModel(request)
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
-
-
 }

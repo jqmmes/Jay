@@ -10,7 +10,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
 
     override fun init() {
         if (workerType == ODProto.Worker.Type.REMOTE) {
-            SchedulerService.listenForWorkers(true) {S ->
+            SchedulerService.listenForWorkers(true) {
                 println("init complete")
                 super.init()
             }

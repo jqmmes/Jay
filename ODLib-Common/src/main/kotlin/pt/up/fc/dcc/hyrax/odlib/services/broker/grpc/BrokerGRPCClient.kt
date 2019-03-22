@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.broker.grpc
 import com.google.protobuf.BoolValue
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
+import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
@@ -39,7 +40,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         AbstractODLib.executorPool.submit {
             val timer = System.currentTimeMillis()
             try {
-                val result = blockingStub
+                @Suppress("UNUSED_VARIABLE") val result = blockingStub
                         .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS)
                         .ping(ODProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(payload))).setReply(reply).build())
                 callback?.invoke((System.currentTimeMillis() - timer).toInt())
@@ -61,12 +62,21 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
     fun getModels(callback: ((Set<ODModel>) -> Unit)? = null) {
         val call = futureStub.getModels(Empty.getDefaultInstance())
-        call.addListener(Runnable{ callback?.invoke(ODUtils.parseModels(call.get())) }, AbstractODLib.executorPool)
+        call.addListener(Runnable{ try { callback?.invoke(ODUtils.parseModels(call.get())) }
+        catch (e: ExecutionException) {
+            println("getModels Unavailable")
+        }
+        }, AbstractODLib.executorPool)
     }
 
     fun getSchedulers(callback: ((Set<Pair<String, String>>) -> Unit)? = null) {
         val call = futureStub.getSchedulers(Empty.getDefaultInstance())
-        call.addListener(Runnable{ callback?.invoke(ODUtils.parseSchedulers(call.get())) }, AbstractODLib.executorPool)
+        call.addListener(Runnable{
+            try { callback?.invoke(ODUtils.parseSchedulers(call.get())) }
+            catch (e: ExecutionException) {
+                println("getSchedulers Unavailable")
+            }
+        }, AbstractODLib.executorPool)
     }
 
     fun setScheduler(id: String, callback: ((Boolean) -> Unit)) {

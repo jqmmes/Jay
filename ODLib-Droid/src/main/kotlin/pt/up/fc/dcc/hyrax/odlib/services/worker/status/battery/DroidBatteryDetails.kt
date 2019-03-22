@@ -10,7 +10,7 @@ import kotlin.concurrent.thread
 // TODO: Monitor Android Device Battery Status
 object DroidBatteryDetails {
 
-    fun monitorBattery(context: Context) {
+    fun monitorBattery(@Suppress("UNUSED_PARAMETER") context: Context) {
         thread (isDaemon = true, name = "monitorBattery") {
             while(true) {
                 //StatusManager.setBatteryPercentage(SystemStats.getBatteryPercentage(context))

@@ -53,6 +53,7 @@ class ODLib(val context : Context) : AbstractODLib() {
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
         val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        @Suppress("DEPRECATION")
         for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClass.name == service.service.className) {
                 return true
@@ -139,12 +140,13 @@ class ODLib(val context : Context) : AbstractODLib() {
         private var notifyID = 1
         private val CHANNEL_ID = "my_channel_01"// The id of the channel.
         private val name = "BrokerChannel"// The user-visible name of the channel.
+        @Suppress("DEPRECATION")
         private val importance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             NotificationManager.IMPORTANCE_MIN
         } else {
             Notification.PRIORITY_LOW
         }
-        private val GROUP_KEY_ODLIB_SERVICES = "pt.up.fc.dcc.hyrax.odlib.SERVICES"
+        private const val GROUP_KEY_ODLIB_SERVICES = "pt.up.fc.dcc.hyrax.odlib.SERVICES"
 
         internal fun makeNotification(context: Context, title: CharSequence, text: CharSequence) : Pair<Int, Notification> {
             val mNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

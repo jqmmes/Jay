@@ -15,7 +15,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
-//import pt.up.fc.dcc.hyrax.odlib.R
+import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 //import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
@@ -204,7 +204,6 @@ class MainActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                println(parent?.getItemAtPosition(position))
                 odClient.listModels { models ->
                     for (model in models) {
                         if (model.modelName == parent?.selectedItem) {
