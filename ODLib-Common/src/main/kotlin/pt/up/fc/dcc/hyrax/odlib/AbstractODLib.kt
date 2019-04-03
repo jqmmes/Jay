@@ -58,7 +58,7 @@ abstract class AbstractODLib {
     }
 
     open fun stopWorker() {
-        BrokerService.announceMulticast(false)
+        BrokerService.announceMulticast(true)
         WorkerService.stop()
     }
 

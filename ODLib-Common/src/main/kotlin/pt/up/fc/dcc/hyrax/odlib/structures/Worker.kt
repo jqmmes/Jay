@@ -30,7 +30,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
 
     private val smartTimer: Timer = Timer()
     private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
-    var bandwidthEstimate: Int = 0
+    private var bandwidthEstimate: Int = 0
     //private var pingFuture : ListenableFuture<ODProto.Ping>? = null
     private var consecutiveFailedPing = 0
     private var proto : ODProto.Worker? = null
@@ -40,6 +40,15 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
 
     constructor(proto: ODProto.Worker?, address: String) : this(proto!!.id, address){
         updateStatus(proto)
+    }
+
+    init {
+        bandwidthEstimate = when (type) {
+            ODProto.Worker.Type.LOCAL -> 0
+            ODProto.Worker.Type.REMOTE -> 15
+            ODProto.Worker.Type.CLOUD -> 50
+            else -> 15
+        }
     }
 
     private fun genProto() {

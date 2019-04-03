@@ -135,7 +135,7 @@ service BrokerService { // Internal and External communication Broker
     rpc setScheduler (Scheduler) returns (Status) {}; // App > Broker --> Calls SchedulerService::setScheduler
 
     rpc listenMulticast (google.protobuf.BoolValue) returns (Status) {}; // SchedulerService --> Broker (Starts MC listen)
-    rpc announceMulticast (Worker) returns (Status) {}; // SchedulerService --> Broker (Starts MCast advertise)
+    rpc announceMulticast (google.protobuf.Empty) returns (Status) {}; // SchedulerService --> Broker (Starts MCast advertise)
 }
 
 service SchedulerService {                                             // Broker > SchedulerBase

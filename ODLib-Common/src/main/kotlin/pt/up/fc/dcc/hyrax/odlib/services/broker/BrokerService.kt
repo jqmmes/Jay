@@ -103,7 +103,7 @@ object BrokerService {
             cloud.updateStatus(request)
             scheduler.notify(cloud.getProto()) {countDownLatch.countDown()}
         } else {
-            local.updateStatus(request)
+            announceMulticast(worker = local.updateStatus(request))
             scheduler.notify(local.getProto()) {countDownLatch.countDown()}
         }
         return countDownLatch
@@ -140,7 +140,7 @@ object BrokerService {
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
         if (stopAdvertiser) MulticastAdvertiser.stop()
         else {
-            val data = local.getProto()?.toByteArray() ?: ByteArray(0)
+            val data = worker?.toByteArray() ?: local.getProto()?.toByteArray()
             if (MulticastAdvertiser.isRunning()) MulticastAdvertiser.setAdvertiseData(data)
             else MulticastAdvertiser.start(data)
         }

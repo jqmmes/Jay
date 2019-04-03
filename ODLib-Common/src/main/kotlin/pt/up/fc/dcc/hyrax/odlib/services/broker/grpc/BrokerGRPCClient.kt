@@ -106,7 +106,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     }
 
     fun announceMulticast() {
-        val call = futureStub.announceMulticast(null)
+        val call = futureStub.announceMulticast(Empty.getDefaultInstance())
         call.addListener(Runnable { println("announceMulticast Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
     }
 }

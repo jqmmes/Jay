@@ -71,8 +71,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(ODUtils.genStatus(ODProto.StatusCode.Success), responseObserver)
         }
 
-        override fun announceMulticast(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
-            BrokerService.announceMulticast(false, request)
+        override fun announceMulticast(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
+            BrokerService.announceMulticast()
             genericComplete(ODUtils.genStatus(ODProto.StatusCode.Success), responseObserver)
         }
 
