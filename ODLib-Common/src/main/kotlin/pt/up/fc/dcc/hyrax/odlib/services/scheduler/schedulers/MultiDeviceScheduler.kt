@@ -26,10 +26,13 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     }
 
     override fun scheduleJob(job: ODJob) : ODProto.Worker? {
+        println(devices)
         val workers = SchedulerService.getWorkers(devices)
         return when {
             workers.isEmpty() -> null
             roundRobin -> {
+                println(roundRobinCount)
+                println(workers.size)
                 roundRobinCount %= workers.size
                 workers.values.toTypedArray()[roundRobinCount++]
             }

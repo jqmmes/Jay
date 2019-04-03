@@ -51,7 +51,7 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
     fun notify(request: ODProto.Worker?, callback: ((ODProto.Status?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()
-            callback(ODUtils.genStatus(ODProto.StatusCode.Error))
+            return callback(ODUtils.genStatus(ODProto.StatusCode.Error))
         }
         println("SchedulerGRPCClient::notify ${channel.getState(false)}")
         val call = futureStub.notify(request)

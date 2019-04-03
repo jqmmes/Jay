@@ -65,15 +65,12 @@ object SchedulerService {
 
     internal fun schedule(request: Job?): ODProto.Worker? {
         if (scheduler == null) scheduler = schedulers[0]
-        scheduler?.scheduleJob(ODJob(request))
         return scheduler?.scheduleJob(ODJob(request))
     }
 
     internal fun notify(worker: Worker?) : ODProto.StatusCode {
-        //if (worker!!.id !in workers.keys) return ODProto.StatusCode.Error
         workers[worker!!.id] = worker
         for (listener in notifyListeners) listener.invoke(worker)
-        println("SchedulerService notify (${worker.id})")
         return ODProto.StatusCode.Success
     }
 

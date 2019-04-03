@@ -111,9 +111,9 @@ object BrokerService {
 
     }
 
-    internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: () -> Unit) {
+    internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: (ODProto.Status?) -> Unit) {
         workers[request?.id]?.updateStatus(request)
-        scheduler.notify(request) {completeCallback()}
+        scheduler.notify(request, completeCallback)
     }
 
     fun getSchedulers(callback: ((Schedulers?) -> Unit)? = null) {
