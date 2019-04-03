@@ -29,6 +29,7 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
     }
 
     fun listSchedulers(callback: ((ODProto.Schedulers?) -> Unit)? = null) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         println("SchedulerGRPCClient::listSchedulers ${channel.getState(false)}")
         val call = futureStub.listSchedulers(Empty.getDefaultInstance())
         call.addListener(Runnable {
@@ -48,7 +49,10 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
     }
 
     fun notify(request: ODProto.Worker?, callback: ((ODProto.Status?) -> Unit)) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) callback(ODUtils.genStatus(ODProto.StatusCode.Error))
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
+            channel.resetConnectBackoff()
+            callback(ODUtils.genStatus(ODProto.StatusCode.Error))
+        }
         println("SchedulerGRPCClient::notify ${channel.getState(false)}")
         val call = futureStub.notify(request)
         call.addListener(Runnable {

@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker.grpc
 
 import com.google.protobuf.Empty
+import io.grpc.ConnectivityState
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -20,12 +21,14 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
     }
 
     fun execute(job: ODProto.Job?, callback: ((ODProto.Results?) -> Unit)? = null) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         println("WorkerGRPCClient::execute")
         val futureJob = futureStub.execute(job)
         futureJob.addListener(Runnable{ callback?.invoke(futureJob.get()) }, AbstractODLib.executorPool)
     }
 
     fun listModels(callback: ((ODProto.Models) -> Unit)? = null) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         println("WorkerGRPCClient::listModels")
         val call = futureStub.listModels(Empty.getDefaultInstance())
         call.addListener(Runnable {

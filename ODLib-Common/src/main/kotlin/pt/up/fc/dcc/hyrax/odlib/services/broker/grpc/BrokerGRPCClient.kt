@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.broker.grpc
 import com.google.protobuf.BoolValue
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
+import io.grpc.ConnectivityState
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
@@ -14,6 +15,12 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+
+/**
+ * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
+ * TRANSIENT_FAILURE
+ *
+ */
 
 class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerServiceBlockingStub, BrokerServiceGrpc.BrokerServiceFutureStub>
 (host, ODSettings.brokerPort) {
@@ -39,6 +46,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     }
 
     fun ping(payload: Int = ODSettings.pingPayloadSize, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         println("BrokerServiceGrpc::ping ${channel.getState(false)}")
         AbstractODLib.executorPool.submit {
             val timer = System.currentTimeMillis()
@@ -66,6 +74,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     }
 
     fun getModels(callback: ((Set<ODModel>) -> Unit)? = null) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         println("BrokerServiceGrpc::getModels ${channel.getState(false)}")
         val call = futureStub.getModels(Empty.getDefaultInstance())
         call.addListener(Runnable{ try { callback?.invoke(ODUtils.parseModels(call.get())) }
@@ -76,6 +85,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     }
 
     fun getSchedulers(callback: ((Set<Pair<String, String>>) -> Unit)? = null) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         println("BrokerServiceGrpc::getSchedulers ${channel.getState(false)}")
         val call = futureStub.getSchedulers(Empty.getDefaultInstance())
         call.addListener(Runnable{
