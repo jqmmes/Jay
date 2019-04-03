@@ -5,6 +5,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.getLocalIpV4
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
+import java.io.ByteArrayOutputStream
 import java.net.*
 import kotlin.concurrent.thread
 
@@ -54,12 +55,10 @@ object MulticastListener {
                     continue
                 }
                 if (listeningSocket.`interface`.isLoopbackAddress || getHostAddressFromPacket(packet) != localIp) {
-                    //ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
-                    //DatagramProcessor.process(packet)
                     try {
-                        callback?.invoke(ODProto.Worker.parseFrom(packet.data), getHostAddressFromPacket(packet))
+                        callback?.invoke(ODProto.Worker.parseFrom(ByteArray(packet.length) { pos -> packet.data[pos] }), getHostAddressFromPacket(packet))
                     } catch (ignore: Exception) {
-
+                        ignore.printStackTrace()
                     }
                 }
                 /*if (newClient(packet.address.hostAddress)) {

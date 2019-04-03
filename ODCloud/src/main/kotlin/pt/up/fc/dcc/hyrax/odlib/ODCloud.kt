@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import java.lang.Thread.sleep
 
 class ODCloud {
     companion object {
@@ -31,6 +32,7 @@ class ODCloud {
             ODLogger.enableLogs(LoggingInterface(), LogLevel.Info)
             //WorkerService.setWorkingThreads(StatusManager.cpuDetails.getAvailableCores())
             odLib.startWorker()
+            sleep(5000)
             odLib.listModels {ML -> odLib.setModel(ML.first()) }
 
             Runtime.getRuntime().addShutdownHook(object : Thread() {

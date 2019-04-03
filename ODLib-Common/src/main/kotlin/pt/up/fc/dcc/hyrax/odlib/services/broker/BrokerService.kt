@@ -126,19 +126,21 @@ object BrokerService {
 
     internal fun listenMulticast(stopListener: Boolean = false) {
         if (stopListener) MulticastListener.stop()
-        else MulticastListener.listen(callback = { W, A -> checkWorker(W, A) })
+        else MulticastListener.listen(callback = { W, A -> println("Packet received to process :: Callback"); checkWorker(W, A) })
     }
 
     private fun checkWorker(worker: ODProto.Worker?, address: String) {
+        println("Check Worker $worker")
         if (worker == null) return
         if (worker.id !in workers) workers[worker.id] = Worker(worker, address)
         else workers[worker.id]?.updateStatus(worker)
+        scheduler.notify(workers[worker.id]?.getProto()) {S -> println("Notified Scheduler $S")}
     }
 
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
         if (stopAdvertiser) MulticastAdvertiser.stop()
         else {
-            val data = worker?.toByteArray() ?: ByteArray(0)
+            val data = local.getProto()?.toByteArray() ?: ByteArray(0)
             if (MulticastAdvertiser.isRunning()) MulticastAdvertiser.setAdvertiseData(data)
             else MulticastAdvertiser.start(data)
         }

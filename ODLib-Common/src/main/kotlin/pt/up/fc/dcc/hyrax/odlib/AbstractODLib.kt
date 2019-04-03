@@ -58,11 +58,12 @@ abstract class AbstractODLib {
     }
 
     open fun stopWorker() {
+        BrokerService.announceMulticast(false)
         WorkerService.stop()
     }
 
-    fun scheduleJob(data: ByteArray) {
-        broker.scheduleJob(ODJob(data)) { R -> println("ODLib scheduleJob END $R") }
+    fun scheduleJob(data: ByteArray, result: ((ODProto.Results) -> Unit)? = null) {
+        broker.scheduleJob(ODJob(data), result)
     }
 
     open fun destroy(keepServices: Boolean = false) {
