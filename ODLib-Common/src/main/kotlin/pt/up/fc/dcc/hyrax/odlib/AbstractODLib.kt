@@ -7,13 +7,14 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
 import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
+import java.lang.Thread.sleep
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractODLib {
 
-    private val broker = BrokerGRPCClient("127.0.0.1")
+    protected val broker = BrokerGRPCClient("127.0.0.1")
 
     internal companion object {
         val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(5, 30, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>())
@@ -41,6 +42,7 @@ abstract class AbstractODLib {
 
     open fun startScheduler() {
         startBroker()
+        sleep(500)
         SchedulerService.start()
     }
 

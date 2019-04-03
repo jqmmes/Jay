@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.DroidBatteryDetails
-import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.WorkerAndroidService
@@ -18,6 +17,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.Messenger
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
+import java.lang.Thread.sleep
 
 
 class ODLib(val context : Context) : AbstractODLib() {

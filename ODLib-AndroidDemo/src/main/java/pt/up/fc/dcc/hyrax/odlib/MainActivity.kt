@@ -19,6 +19,7 @@ import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 //import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.*
@@ -59,13 +60,6 @@ class MainActivity : AppCompatActivity() {
             odClient.stopWorker()
         }
     }
-
-    /*private fun resultsCallback(id: Long, results: List<ODDetection?>) {
-        ODLogger.logInfo("Received results for Job $id")
-        for (result in results) {
-            if (result != null) ODLogger.logInfo("\t\t${COCODataLabels.label(result.class_)}\t${result.score * 100.0}%")
-        }
-    }*/
 
 
     fun showSchedulersListener(target: View) {
@@ -173,8 +167,12 @@ class MainActivity : AppCompatActivity() {
 
     fun showModelsListener(target: View) {
         modelsArrayList.clear()
+        modelsList.clear()
         odClient.listModels {models ->
-            for (model in models) modelsArrayList.add(model.modelName)
+            for (model in models) {
+                modelsList.add(model)
+                modelsArrayList.add(model.modelName)
+            }
             runOnUiThread {
                 modelArrayAdapter.notifyDataSetChanged()
                 modelSpinner.postInvalidate()
@@ -183,6 +181,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val modelsList = mutableListOf<ODModel>()
     private val modelsArrayList = ArrayList<String>()
     private lateinit var modelArrayAdapter: ArrayAdapter<String>
     private val schedulersArrayList = ArrayList<String>()
@@ -206,16 +205,13 @@ class MainActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                odClient.listModels { models ->
-                    for (model in models) {
-                        if (model.modelName == parent?.selectedItem) {
-                            odClient.setModel(model)
-                            ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
-                            return@listModels
-                        }
+                for (model in modelsList) {
+                    if (model.modelName == parent?.selectedItem) {
+                        odClient.setModel(model)
+                        ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
+                        return
                     }
                 }
-
             }
         }
 

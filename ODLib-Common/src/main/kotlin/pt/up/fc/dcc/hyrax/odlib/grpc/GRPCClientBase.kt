@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class GRPCClientBase<T1, T2>(private val host: String, private val port: Int) {
     /** Construct client for accessing RouteGuide server using the existing channel.  */
-    protected var channel: ManagedChannel
+    var channel: ManagedChannel
     abstract var blockingStub: T1
     abstract var futureStub: T2
 

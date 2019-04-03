@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.structures
 
+import io.grpc.ConnectivityState
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -90,8 +91,11 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         thread {
             autoStatusUpdate = true
             autoStatusUpdateRunning = CountDownLatch(1)
+            var backoffCount = 0
             do {
-                grpc.requestWorkerStatus { W -> updateStatus(W) }
+                if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE)
+                    grpc.requestWorkerStatus { W -> updateStatus(W) }
+                else if(++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
                 sleep(ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS)
             } while (autoStatusUpdate)
             autoStatusUpdateRunning.countDown()

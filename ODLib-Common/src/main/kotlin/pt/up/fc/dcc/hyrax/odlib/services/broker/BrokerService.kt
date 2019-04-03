@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker
 
+import io.grpc.ConnectivityState
 import pt.up.fc.dcc.hyrax.odlib.structures.Worker
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -57,8 +58,8 @@ object BrokerService {
     }
 
     private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {
+        //while (scheduler.channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) sleep(100)
         scheduler.notify(worker) { S ->
-            println("updateWorkers::notify Complete ${S?.code?.name}")
             if (S?.code == ODProto.StatusCode.Error) {
                 sleep(100)
                 BrokerService.updateWorker(worker, latch)
