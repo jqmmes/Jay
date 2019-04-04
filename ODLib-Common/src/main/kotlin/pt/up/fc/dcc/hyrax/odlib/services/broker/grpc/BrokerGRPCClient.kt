@@ -44,7 +44,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable{ println(callback?.invoke(call.get()))}, AbstractODLib.executorPool)
     }
 
-    fun ping(payload: Int = ODSettings.pingPayloadSize, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
+    fun ping(payload: Int, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         println("BrokerServiceGrpc::ping ${channel.getState(false)}")
         AbstractODLib.executorPool.submit {
@@ -124,5 +124,29 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.announceMulticast(Empty.getDefaultInstance())
         call.addListener(Runnable { println("announceMulticast Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+    }
+
+    fun enableHearBeats(workerTypes: ODProto.WorkerTypes) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.enableHearBeats(workerTypes)
+        call.addListener(Runnable { println("enableHearBeats Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+    }
+
+    fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.enableBandwidthEstimates(bandwidthEstimateConfig)
+        call.addListener(Runnable { println("enableBandwidthEstimates Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+    }
+
+    fun disableHearBeats() {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.disableHearBeats(Empty.getDefaultInstance())
+        call.addListener(Runnable { println("disableHearBeats Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+    }
+
+    fun disableBandwidthEstimates() {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.disableBandwidthEstimates(Empty.getDefaultInstance())
+        call.addListener(Runnable { println("disableBandwidthEstimates Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
     }
 }

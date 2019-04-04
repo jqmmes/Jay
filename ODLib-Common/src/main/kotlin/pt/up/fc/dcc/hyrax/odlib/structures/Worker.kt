@@ -13,30 +13,39 @@ import kotlin.concurrent.thread
 
 class Worker(val id: String = UUID.randomUUID().toString(), address: String, val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE){
 
+    enum class Status {
+        ONLINE,
+        OFFLINE
+    }
+
     val grpc: BrokerGRPCClient = BrokerGRPCClient(address)
 
-    //var rttEstimate: Long = 0
-    var avgComputingEstimate = 0L
-    var battery = 100
-    var cpuCores = 0
-    var queueSize = 1
-    var runningJobs = 0
-    var batteryStatus : ODProto.Worker.BatteryStatus = BatteryStatus.CHARGED
-    var totalMemory = 0L
-    var freeMemory = 0L
-    var freeSpace = Long.MAX_VALUE // TODO
-    var computationLoad = 0 // TODO
-    var connections = 0 // TODO
-
+    private var avgComputingEstimate = 0L
+    private var battery = 100
+    private var cpuCores = 0
+    private var queueSize = 1
+    private var runningJobs = 0
+    private var batteryStatus : ODProto.Worker.BatteryStatus = BatteryStatus.CHARGED
+    private var totalMemory = 0L
+    private var freeMemory = 0L
+    private var status = Status.ONLINE
+    private var bandwidthEstimate: Int = 0
+    // TODO: Implement more variables
+    //private var freeSpace = Long.MAX_VALUE
+    //private var computationLoad = 0
+    //private var connections = 0
 
     private val smartTimer: Timer = Timer()
     private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
-    private var bandwidthEstimate: Int = 0
-    //private var pingFuture : ListenableFuture<ODProto.Ping>? = null
     private var consecutiveFailedPing = 0
     private var proto : ODProto.Worker? = null
     private var autoStatusUpdate = false
     private var autoStatusUpdateRunning = CountDownLatch(0)
+    private var pingPayloadSize = 0
+    private var calcRTT = false
+    private var checkingHeartBeat = false
+
+    private var statusChangeCallback: ((Status) -> Unit)? = null
 
 
     constructor(proto: ODProto.Worker?, address: String) : this(proto!!.id, address){
@@ -64,6 +73,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         worker.bandwidthEstimate = bandwidthEstimate // Set internally
         worker.totalMemory = totalMemory
         worker.freeMemory = freeMemory
+        worker.bandwidthEstimate = bandwidthEstimate
         proto = worker.build()
     }
 
@@ -112,16 +122,28 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0
     }
 
-    fun getAvgRTT() : Int {
-        return bandwidthEstimate
-    }
-
-    fun doRTTEstimates() {
+    fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
+        checkingHeartBeat = true
+        this.statusChangeCallback = statusChangeCallback
         smartTimer.scheduleAtFixedRate(RTTTimer(), 0L, ODSettings.RTTDelayMillis)
     }
 
-    fun stopRTTEstimates() {
+    fun disableHeartBeat() {
         smartTimer.cancel()
+        checkingHeartBeat = false
+        statusChangeCallback = null
+    }
+
+    fun doActiveRTTEstimates(payload: Int = ODSettings.pingPayloadSize, statusChangeCallback: ((Status) -> Unit)? = null) {
+        pingPayloadSize = payload
+        calcRTT = true
+        if (!checkingHeartBeat) enableHeartBeat(statusChangeCallback)
+    }
+
+    fun stopActiveRTTEstimates() {
+        if (checkingHeartBeat) disableHeartBeat()
+        pingPayloadSize = 0
+        calcRTT = false
     }
 
     override fun equals(other: Any?): Boolean {
@@ -139,17 +161,29 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         return id.hashCode()
     }
 
+    fun isOnline(): Boolean {
+        return status == Status.ONLINE
+    }
+
     private inner class RTTTimer : TimerTask() {
         override fun run() {
-            grpc.ping(timeout = ODSettings.pingTimeout, callback = { T ->
-                if (T == -1) consecutiveFailedPing++
-                else {
+            grpc.ping(pingPayloadSize, timeout = ODSettings.pingTimeout, callback = { T ->
+                if (T == -1) {
+                    consecutiveFailedPing++
+                    if (status == Status.ONLINE) {
+                        status = Status.OFFLINE
+                        statusChangeCallback?.invoke(status)
+                    }
+                } else {
+                    if (status == Status.OFFLINE) {
+                        status = Status.ONLINE
+                        statusChangeCallback?.invoke(status)
+                    }
                     consecutiveFailedPing = 0
-                    addRTT(T)
+                    if (calcRTT) addRTT(T)
                 }
             })
-
-            smartTimer.schedule(this, ODSettings.RTTDelayMillis)
+            //smartTimer.schedule(this, ODSettings.RTTDelayMillis)
         }
     }
 }

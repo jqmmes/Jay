@@ -17,6 +17,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.lang.Thread.sleep
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -57,7 +58,7 @@ object BrokerService {
     }
 
     private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {
-        scheduler.notify(worker) { S ->
+        scheduler.notifyWorkerUpdate(worker) { S ->
             if (S?.code == ODProto.StatusCode.Error) {
                 sleep(50)
                 BrokerService.updateWorker(worker, latch)
@@ -66,14 +67,11 @@ object BrokerService {
     }
 
     internal fun updateWorkers() {
-        println("updateWorkers ${workers.size}")
         val countDownLatch = CountDownLatch(workers.size)
         for (worker in workers.values) {
-            println("updateWorkers:: $worker")
-            updateWorker(worker.getProto(), countDownLatch)
+            if (worker.isOnline()) updateWorker(worker.getProto(), countDownLatch)
         }
         countDownLatch.await()
-        println("updateWorkers::End")
     }
 
     internal fun getModels(callback: (Models) -> Unit) {
@@ -100,10 +98,10 @@ object BrokerService {
         val countDownLatch = CountDownLatch(1)
         if (updateCloud){
             cloud.updateStatus(request)
-            scheduler.notify(cloud.getProto()) {countDownLatch.countDown()}
+            scheduler.notifyWorkerUpdate(cloud.getProto()) {countDownLatch.countDown()}
         } else {
             announceMulticast(worker = local.updateStatus(request))
-            scheduler.notify(local.getProto()) {countDownLatch.countDown()}
+            scheduler.notifyWorkerUpdate(local.getProto()) {countDownLatch.countDown()}
         }
         return countDownLatch
 
@@ -111,7 +109,7 @@ object BrokerService {
 
     internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: (ODProto.Status?) -> Unit) {
         workers[request?.id]?.updateStatus(request)
-        scheduler.notify(request, completeCallback)
+        scheduler.notifyWorkerUpdate(request, completeCallback)
     }
 
     fun getSchedulers(callback: ((Schedulers?) -> Unit)? = null) {
@@ -125,15 +123,14 @@ object BrokerService {
 
     internal fun listenMulticast(stopListener: Boolean = false) {
         if (stopListener) MulticastListener.stop()
-        else MulticastListener.listen(callback = { W, A -> println("Packet received to process :: Callback"); checkWorker(W, A) })
+        else MulticastListener.listen(callback = { W, A -> checkWorker(W, A) })
     }
 
     private fun checkWorker(worker: ODProto.Worker?, address: String) {
-        println("Check Worker $worker")
         if (worker == null) return
         if (worker.id !in workers) workers[worker.id] = Worker(worker, address)
         else workers[worker.id]?.updateStatus(worker)
-        scheduler.notify(workers[worker.id]?.getProto()) {S -> println("Notified Scheduler $S")}
+        scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> println("Notified Scheduler $S")}
     }
 
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
@@ -147,5 +144,37 @@ object BrokerService {
 
     fun requestWorkerStatus(): ODProto.Worker? {
         return local.getProto()
+    }
+
+    fun enableHearBeats(types: ODProto.WorkerTypes?): Status? {
+        if (types == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
+        for (key in workers.keys)
+            if (workers[key]?.type in types.typeList && workers[key]?.type != Type.LOCAL) workers[key]?.enableHeartBeat { StatusUpdate ->
+                if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto()) {}
+                else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {}
+            }
+        return ODUtils.genStatus(ODProto.StatusCode.Success)
+    }
+
+    fun enableBandwidthEstimates(method: ODProto.BandwidthEstimate?): Status? {
+        if (method == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
+        if (method.type == ODProto.BandwidthEstimate.Type.ACTIVE) {
+            for (key in workers.keys)
+                if (workers[key]?.type in method.workerTypeList && workers[key]?.type != Type.LOCAL) workers[key]?.doActiveRTTEstimates {StatusUpdate ->
+                    if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto())  {S -> println("notifyWorkerUpdate ${S?.code?.name}")}
+                    else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> println("notifyWorkerFailure ${S?.code?.name}")}
+                }
+        }
+        return ODUtils.genStatus(ODProto.StatusCode.Success)
+    }
+
+    fun disableHearBeats(): Status? {
+        for (key in workers.keys) workers[key]?.disableHeartBeat()
+        return ODUtils.genStatus(ODProto.StatusCode.Success)
+    }
+
+    fun disableBandwidthEstimates(): ODProto.Status? {
+        for (key in workers.keys) workers[key]?.stopActiveRTTEstimates()
+        return ODUtils.genStatus(ODProto.StatusCode.Success)
     }
 }

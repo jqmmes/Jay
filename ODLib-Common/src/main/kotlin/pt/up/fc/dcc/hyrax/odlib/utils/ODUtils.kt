@@ -86,4 +86,12 @@ object ODUtils {
         for (scheduler in schedulers!!.schedulerList) schedulerSet.add(Pair(scheduler.id, scheduler.name))
         return schedulerSet
     }
+
+    fun genWorkerTypes(vararg types: ODProto.Worker.Type): ODProto.WorkerTypes {
+        return ODProto.WorkerTypes.newBuilder().addAllType(types.asIterable()).build()
+    }
+
+    fun genWorkerTypes(types: List<ODProto.Worker.Type>): ODProto.WorkerTypes {
+        return ODProto.WorkerTypes.newBuilder().addAllType(types).build()
+    }
 }

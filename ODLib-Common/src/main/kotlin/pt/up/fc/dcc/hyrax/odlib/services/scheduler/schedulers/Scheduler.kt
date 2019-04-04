@@ -17,6 +17,8 @@ abstract class Scheduler(name: String) {
 
     abstract fun scheduleJob(job: ODJob) : ODProto.Worker?
 
+    abstract fun getWorkerTypes() : ODProto.WorkerTypes
+
     open fun init() {
         waitInit.countDown()
     }

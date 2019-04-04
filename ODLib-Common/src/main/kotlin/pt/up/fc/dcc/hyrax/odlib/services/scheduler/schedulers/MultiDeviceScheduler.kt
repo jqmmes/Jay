@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import kotlin.random.Random
 
 class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devices: ODProto.Worker.Type): Scheduler("MultiDeviceScheduler") {
@@ -12,8 +13,12 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
 
     override fun init() {
         if (ODProto.Worker.Type.REMOTE in devices) {
-            SchedulerService.listenForWorkers(true) {super.init()}
+            SchedulerService.listenForWorkers(true) {
+                SchedulerService.enableHeartBeat(getWorkerTypes())
+                super.init()
+            }
         } else {
+            SchedulerService.enableHeartBeat(getWorkerTypes())
             super.init()
         }
     }
@@ -42,9 +47,14 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
 
     override fun destroy() {
         devices = emptyList()
+        SchedulerService.disableHeartBeat()
         roundRobinCount = 0
         if (ODProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(false)
         }
+    }
+
+    override fun getWorkerTypes(): ODProto.WorkerTypes {
+        return ODUtils.genWorkerTypes(devices)
     }
 }

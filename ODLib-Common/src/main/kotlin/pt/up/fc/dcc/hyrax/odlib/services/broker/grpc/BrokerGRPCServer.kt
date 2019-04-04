@@ -77,5 +77,21 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<ODProto.Worker>?) {
             genericComplete(BrokerService.requestWorkerStatus(), responseObserver)
         }
+
+        override fun enableHearBeats(request: ODProto.WorkerTypes?, responseObserver: StreamObserver<ODProto.Status>?) {
+            genericComplete(BrokerService.enableHearBeats(request), responseObserver)
+        }
+
+        override fun enableBandwidthEstimates(request: ODProto.BandwidthEstimate?, responseObserver: StreamObserver<ODProto.Status>?) {
+            genericComplete(BrokerService.enableBandwidthEstimates(request), responseObserver)
+        }
+
+        override fun disableHearBeats(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
+            genericComplete(BrokerService.disableHearBeats(), responseObserver)
+        }
+
+        override fun disableBandwidthEstimates(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
+            genericComplete(BrokerService.disableBandwidthEstimates(), responseObserver)
+        }
     }
 }

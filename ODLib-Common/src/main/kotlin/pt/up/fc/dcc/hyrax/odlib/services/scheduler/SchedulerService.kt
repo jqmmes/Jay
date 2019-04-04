@@ -16,11 +16,16 @@ import kotlin.concurrent.thread
 
 object SchedulerService {
 
+    enum class WorkerConnectivityStatus {
+        ONLINE,
+        OFFLINE
+    }
+
     private var server :GRPCServerBase? = null
     private val workers: MutableMap<String, Worker?> = hashMapOf()
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
     private var scheduler : Scheduler? = null
-    private val notifyListeners = LinkedList<((Worker?) -> Unit)>()
+    private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
 
     private val schedulers: Array<Scheduler> = arrayOf(
             SingleDeviceScheduler(Worker.Type.LOCAL),
@@ -67,13 +72,22 @@ object SchedulerService {
         return scheduler?.scheduleJob(ODJob(request))
     }
 
-    internal fun notify(worker: Worker?) : ODProto.StatusCode {
+    internal fun notifyWorkerUpdate(worker: Worker?) : ODProto.StatusCode {
         workers[worker!!.id] = worker
-        for (listener in notifyListeners) listener.invoke(worker)
+        for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
         return ODProto.StatusCode.Success
     }
 
-    internal fun registerNotifyListener(listener: ((Worker?) -> Unit)) {
+    internal fun notifyWorkerFailure(worker: Worker?): ODProto.StatusCode {
+        if (worker!!.id in workers.keys) {
+            workers.remove(worker.id)
+            for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)
+            return ODProto.StatusCode.Success
+        }
+        return ODProto.StatusCode.Error
+    }
+
+    internal fun registerNotifyListener(listener: ((Worker?, WorkerConnectivityStatus) -> Unit)) {
         notifyListeners.addLast(listener)
     }
 
@@ -86,14 +100,14 @@ object SchedulerService {
         if (server != null) server!!.stop()
     }
 
-    fun listSchedulers() : ODProto.Schedulers {
+    internal fun listSchedulers() : ODProto.Schedulers {
         val schedulersProto = ODProto.Schedulers.newBuilder()
         for (scheduler in schedulers) schedulersProto.addScheduler(scheduler.getProto())
         return schedulersProto.build()
 
     }
 
-    fun setScheduler(id: String?) : ODProto.StatusCode {
+    internal fun setScheduler(id: String?) : ODProto.StatusCode {
         for (scheduler in schedulers)
             if (scheduler.id == id) {
                 this.scheduler?.destroy()
@@ -103,5 +117,21 @@ object SchedulerService {
                 return ODProto.StatusCode.Success
             }
         return ODProto.StatusCode.Error
+    }
+
+    internal fun enableHeartBeat(workerTypes: ODProto.WorkerTypes) {
+        brokerGRPC.enableHearBeats(workerTypes)
+    }
+
+    internal fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate) {
+        brokerGRPC.enableBandwidthEstimates(bandwidthEstimateConfig)
+    }
+
+    fun disableHeartBeat() {
+        brokerGRPC.disableHearBeats()
+    }
+
+    fun disableBandwidthEstimates() {
+        brokerGRPC.disableBandwidthEstimates()
     }
 }

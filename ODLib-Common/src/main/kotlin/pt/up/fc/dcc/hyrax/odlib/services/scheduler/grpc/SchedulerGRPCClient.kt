@@ -43,14 +43,26 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
-    fun notify(request: ODProto.Worker?, callback: ((ODProto.Status?) -> Unit)) {
+    fun notifyWorkerUpdate(request: ODProto.Worker?, callback: ((ODProto.Status?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()
             return callback(ODUtils.genStatus(ODProto.StatusCode.Error))
         }
-        val call = futureStub.notify(request)
+        val call = futureStub.notifyWorkerUpdate(request)
         call.addListener(Runnable {
             try { callback(call.get()) }
+            catch (e: ExecutionException) { callback(ODUtils.genStatus(ODProto.StatusCode.Error)) }
+        }, AbstractODLib.executorPool)
+    }
+
+    fun notifyWorkerFailure(request: ODProto.Worker?, callback: ((ODProto.Status?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
+            channel.resetConnectBackoff()
+            return callback(ODUtils.genStatus(ODProto.StatusCode.Error))
+        }
+        val call = futureStub.notifyWorkerFailure(request)
+        call.addListener(Runnable {
+            try {callback(call.get()) }
             catch (e: ExecutionException) { callback(ODUtils.genStatus(ODProto.StatusCode.Error)) }
         }, AbstractODLib.executorPool)
     }

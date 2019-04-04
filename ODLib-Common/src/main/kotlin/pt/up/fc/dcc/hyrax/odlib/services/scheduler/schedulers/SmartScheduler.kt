@@ -4,19 +4,31 @@ import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
 class SmartScheduler : Scheduler("SmartScheduler") {
-
     private val rankedWorkers = LinkedBlockingDeque<RankedWorker>()
     private var maxAvgTimePerJob = 0L
     private var maxBandwidthEstimate = 0L
 
     override fun init() {
-        SchedulerService.registerNotifyListener { W ->  rankWorker(W) }
+        SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) rankWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
+        SchedulerService.enableBandwidthEstimates(
+                ODProto.BandwidthEstimate.newBuilder()
+                        .setType(ODProto.BandwidthEstimate.Type.ACTIVE)
+                        .addAllWorkerType(getWorkerTypes().typeList)
+                        .build()
+        )
         super.init()
+    }
+
+    private fun removeWorker(worker: ODProto.Worker?) {
+        val index = rankedWorkers.indexOf(RankedWorker(id=worker?.id))
+        if (index == -1) return
+        rankedWorkers.remove(rankedWorkers.elementAt(index))
     }
 
     // Return last ID higher score = Better worker
@@ -25,8 +37,13 @@ class SmartScheduler : Scheduler("SmartScheduler") {
     }
 
     override fun destroy() {
+        SchedulerService.disableBandwidthEstimates()
         rankedWorkers.clear()
 
+    }
+
+    override fun getWorkerTypes(): ODProto.WorkerTypes {
+        return ODUtils.genWorkerTypes(ODProto.Worker.Type.LOCAL, ODProto.Worker.Type.CLOUD, ODProto.Worker.Type.REMOTE)
     }
 
     private fun rankWorkers(workers: List<ODProto.Worker?>) {
