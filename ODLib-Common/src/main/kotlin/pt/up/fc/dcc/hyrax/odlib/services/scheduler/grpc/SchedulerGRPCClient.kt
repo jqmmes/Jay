@@ -2,7 +2,6 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc
 
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
-import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -17,33 +16,29 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
     override var futureStub: SchedulerServiceGrpc.SchedulerServiceFutureStub = SchedulerServiceGrpc.newFutureStub(channel)
 
     override fun reconnectStubs() {
-        println("SchedulerGRPCClient::reconnectStubs")
         blockingStub = SchedulerServiceGrpc.newBlockingStub(channel)
         futureStub = SchedulerServiceGrpc.newFutureStub(channel)
     }
 
     fun schedule(request: ODProto.Job?, callback: ((ODProto.Worker?) -> Unit)? = null) {
-        println("SchedulerGRPCClient::schedule ${channel.getState(false)}")
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.schedule(request)
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
     fun listSchedulers(callback: ((ODProto.Schedulers?) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        println("SchedulerGRPCClient::listSchedulers ${channel.getState(false)}")
         val call = futureStub.listSchedulers(Empty.getDefaultInstance())
         call.addListener(Runnable {
             try {
                 println("${call.isDone}\t${call.isCancelled}")
                 callback?.invoke(call.get())
-            } catch (e: ExecutionException) {
-                println("listSchedulers Unavailable")
-            }
+            } catch (e: ExecutionException) { println("listSchedulers Unavailable") }
         }, AbstractODLib.executorPool)
     }
 
     fun setScheduler(request: ODProto.Scheduler?, callback: ((ODProto.Status?) -> Unit)? = null) {
-        println("SchedulerGRPCClient::setScheduler ${channel.getState(false)}")
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.setScheduler(request)
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
@@ -53,7 +48,6 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
             channel.resetConnectBackoff()
             return callback(ODUtils.genStatus(ODProto.StatusCode.Error))
         }
-        println("SchedulerGRPCClient::notify ${channel.getState(false)}")
         val call = futureStub.notify(request)
         call.addListener(Runnable {
             try { callback(call.get()) }

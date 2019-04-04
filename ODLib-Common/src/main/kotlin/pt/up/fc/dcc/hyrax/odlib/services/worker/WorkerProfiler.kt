@@ -21,7 +21,7 @@ internal object WorkerProfiler {
 
     var runningJobs : AtomicInteger = AtomicInteger(0)
     var totalJobs : AtomicInteger = AtomicInteger(0)
-    var queueSize : Int = Int.MAX_VALUE
+    private var queueSize : Int = Int.MAX_VALUE
 
 
     internal fun start() {

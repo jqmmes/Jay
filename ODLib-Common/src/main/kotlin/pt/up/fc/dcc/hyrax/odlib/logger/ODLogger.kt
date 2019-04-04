@@ -9,7 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
 object ODLogger{
-    lateinit var loggingConsole : ODLog
+    private lateinit var loggingConsole : ODLog
     private val logQueue : BlockingQueue<Pair<String, LogLevel>> = LinkedBlockingQueue()
     private var running: Boolean = false
     private var logLevel : LogLevel = LogLevel.Disabled

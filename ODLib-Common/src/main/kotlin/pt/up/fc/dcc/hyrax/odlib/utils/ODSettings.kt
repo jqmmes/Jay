@@ -6,11 +6,8 @@ object ODSettings {
     const val workerPort : Int = 50053
     const val schedulerPort : Int = 50055
 
-    const val rttPort: Int = 8888
     const val cloudIp: String = "odcloud.duckdns.org"
-    const val grpcTimeout: Long = 10 //Seconds
-    const val grpcLongTimeout: Long = 120 //Seconds
-    const val grpcShortTimeout: Long = 500 //Milliseconds
+
     const val grpcMaxMessageSize: Int = 150000000
     const val RTTHistorySize: Int = 5
     const val pingTimeout: Long = 10000L // 15s
@@ -20,4 +17,8 @@ object ODSettings {
     const val workingThreads: Int = 1
     const val workerStatusUpdateInterval: Long = 5000 // 5s
     const val AUTO_STATUS_UPDATE_INTERVAL_MS: Long = 5000 // 5s
+
+    /*const val grpcTimeout: Long = 10 //Seconds
+    const val grpcLongTimeout: Long = 120 //Seconds
+    const val grpcShortTimeout: Long = 500 //Milliseconds*/
 }

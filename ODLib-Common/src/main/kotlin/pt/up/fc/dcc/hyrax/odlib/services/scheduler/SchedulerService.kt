@@ -11,7 +11,6 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
 import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
-import java.lang.Thread.sleep
 import java.util.*
 import kotlin.concurrent.thread
 

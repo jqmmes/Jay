@@ -63,7 +63,7 @@ object WorkerService {
         server?.stop()
         waitingResultsMap.clear()
         jobQueue.clear()
-        jobQueue.offer(RunnableJobObjects(null, {}))
+        jobQueue.offer(RunnableJobObjects(null) {})
         executor.shutdownNow()
         WorkerProfiler.destroy()
     }

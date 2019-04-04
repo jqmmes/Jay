@@ -1,11 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
-import io.grpc.Grpc
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 abstract class GRPCClientBase<T1, T2>(private val host: String, private val port: Int) {

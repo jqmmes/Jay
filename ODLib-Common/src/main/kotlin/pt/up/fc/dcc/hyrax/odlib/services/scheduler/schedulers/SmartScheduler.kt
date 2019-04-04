@@ -33,6 +33,13 @@ class SmartScheduler : Scheduler("SmartScheduler") {
         for (worker in workers) rankWorker(worker)
     }
 
+    /*private fun reSortClientList(clientID: Long) {
+        *//*val client = clientList.find { T -> T.second == clientID }
+        if (client != null) clientList.removeAt(clientList.indexOf(client))
+        clientList.add(Pair(calculateClientScore(clientID), clientID))*//*
+                clientList.sortWith(Comparator { lhs, rhs -> java.lang.Float.compare(rhs.first, lhs.first) })
+    }*/
+
     private fun rankWorker(worker: ODProto.Worker?) {
         if (RankedWorker(id=worker?.id) !in rankedWorkers) {
             rankedWorkers.addLast(RankedWorker(Random.nextFloat(), worker!!.id))

@@ -5,12 +5,10 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.getLocalIpV4
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import java.io.ByteArrayOutputStream
 import java.net.*
 import kotlin.concurrent.thread
 
 object MulticastListener {
-    //private val devicesKnown : MutableSet<RemoteODClient> = HashSet()
     private var running = false
     private lateinit var listeningSocket : MulticastSocket
     private lateinit var mcIPAddress: InetAddress
@@ -46,7 +44,6 @@ object MulticastListener {
             do {
                 packet = DatagramPacket(ByteArray(1024), 1024)
 
-                //ODLogger.logInfo("Waiting for a  multicast message...")
                 try {
                     listeningSocket.receive(packet)
                 } catch (e: SocketException) {
@@ -57,14 +54,8 @@ object MulticastListener {
                 if (listeningSocket.`interface`.isLoopbackAddress || getHostAddressFromPacket(packet) != localIp) {
                     try {
                         callback?.invoke(ODProto.Worker.parseFrom(ByteArray(packet.length) { pos -> packet.data[pos] }), getHostAddressFromPacket(packet))
-                    } catch (ignore: Exception) {
-                        ignore.printStackTrace()
-                    }
+                    } catch (ignore: Exception) { }
                 }
-                /*if (newClient(packet.address.hostAddress)) {
-                    callback.onNewClient(packet) // getHostAddressFromPacket(packet)
-                    ODLogger.logInfo("Packet received from ${getHostAddressFromPacket(packet)}")
-                }*/
             } while (running)
             if (!listeningSocket.isClosed) {
                 listeningSocket.leaveGroup(mcIPAddress)
