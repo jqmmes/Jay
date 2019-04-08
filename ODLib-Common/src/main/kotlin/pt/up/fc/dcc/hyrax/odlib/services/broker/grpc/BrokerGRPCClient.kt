@@ -149,4 +149,16 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         val call = futureStub.disableBandwidthEstimates(Empty.getDefaultInstance())
         call.addListener(Runnable { println("disableBandwidthEstimates Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
     }
+
+    fun updateSmartSchedulerWeights(computeTime: Float, queueSize: Float, runningJobs: Float, battery: Float,
+                                    bandwidth: Float, callback: ((ODProto.Status?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
+            channel.resetConnectBackoff()
+            callback(ODUtils.genStatus(ODProto.StatusCode.Error))
+        }
+        val call = futureStub.updateSmartSchedulerWeights(ODProto.Weights.newBuilder().setComputeTime(computeTime)
+                .setQueueSize(queueSize).setRunningJobs(runningJobs).setBattery(battery).setBandwidth(bandwidth)
+                .build())
+        call.addListener(Runnable { callback(call.get()) }, AbstractODLib.executorPool)
+    }
 }

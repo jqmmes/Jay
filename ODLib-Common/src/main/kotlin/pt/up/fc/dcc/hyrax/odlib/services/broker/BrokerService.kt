@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker
 
-import pt.up.fc.dcc.hyrax.odlib.structures.Worker
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Job
@@ -16,6 +15,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
+import pt.up.fc.dcc.hyrax.odlib.structures.Worker
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.lang.Thread.sleep
@@ -176,5 +176,9 @@ object BrokerService {
     fun disableBandwidthEstimates(): ODProto.Status? {
         for (key in workers.keys) workers[key]?.stopActiveRTTEstimates()
         return ODUtils.genStatus(ODProto.StatusCode.Success)
+    }
+
+    fun updateSmartSchedulerWeights(weights: ODProto.Weights?, callback: ((Status?) -> Unit)) {
+        scheduler.updateSmartSchedulerWeights(weights) { S -> callback(S) }
     }
 }

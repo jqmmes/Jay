@@ -66,4 +66,13 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
             catch (e: ExecutionException) { callback(ODUtils.genStatus(ODProto.StatusCode.Error)) }
         }, AbstractODLib.executorPool)
     }
+
+    fun updateSmartSchedulerWeights(weights: ODProto.Weights?, callback: ((ODProto.Status?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
+            channel.resetConnectBackoff()
+            callback(ODUtils.genStatus(ODProto.StatusCode.Error))
+        }
+        val call = futureStub.updateSmartSchedulerWeights(weights)
+        call.addListener(Runnable { callback(call.get()) }, AbstractODLib.executorPool)
+    }
 }

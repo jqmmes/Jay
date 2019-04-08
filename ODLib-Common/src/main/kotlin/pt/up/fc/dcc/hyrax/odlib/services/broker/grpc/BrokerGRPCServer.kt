@@ -93,5 +93,9 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun disableBandwidthEstimates(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
             genericComplete(BrokerService.disableBandwidthEstimates(), responseObserver)
         }
+
+        override fun updateSmartSchedulerWeights(request: ODProto.Weights?, responseObserver: StreamObserver<ODProto.Status>?) {
+            BrokerService.updateSmartSchedulerWeights(request) { S -> genericComplete(S, responseObserver) }
+        }
     }
 }

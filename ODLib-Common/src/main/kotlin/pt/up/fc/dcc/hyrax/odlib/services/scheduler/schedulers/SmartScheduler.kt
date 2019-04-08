@@ -8,6 +8,10 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
+/**
+ * TOOD: Actualizam o avg computing e avg bandwidth quando se remove um device... ou então utilizar um avg dos
+ * ultimos x updates
+ */
 class SmartScheduler : Scheduler("SmartScheduler") {
     private val rankedWorkers = LinkedBlockingDeque<RankedWorker>()
     private var maxAvgTimePerJob = 0L
@@ -66,7 +70,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
         rankedWorkers.sortedWith(compareBy {it.score})
     }
 
-    private fun calcScore(worker: ODProto.Worker?) : Float{
+    private fun calcScore(worker: ODProto.Worker?): Float {
         if (worker == null) return 0.0f
         if (maxAvgTimePerJob < worker.avgTimePerJob) maxAvgTimePerJob = worker.avgTimePerJob
         if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
@@ -93,9 +97,13 @@ class SmartScheduler : Scheduler("SmartScheduler") {
 
         val scaledAvgBandwidth = 1f-crossMultiplication(worker.bandwidthEstimate.toFloat(), maxBandwidthEstimate.toFloat())
 
+        val score =
+                scaledAvgTimePerJob * SchedulerService.weights.computeTime +
+                        runningJobs * SchedulerService.weights.runningJobs +
+                        queueSpace * SchedulerService.weights.queueSize +
+                        scaledBattery * SchedulerService.weights.battery +
+                        scaledAvgBandwidth * SchedulerService.weights.bandwidth
 
-
-        val score = scaledAvgTimePerJob*0.20f+runningJobs*0.25f+queueSpace*0.2f+scaledBattery*0.25f+scaledAvgBandwidth*0.10f
         ODLogger.logInfo("New Score for ${worker.id}: $score")
 
         return score

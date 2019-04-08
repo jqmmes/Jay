@@ -35,5 +35,9 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
         override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
             genericComplete(ODUtils.genStatus(SchedulerService.setScheduler(request?.id)), responseObserver)
         }
+
+        override fun updateSmartSchedulerWeights(request: ODProto.Weights?, responseObserver: StreamObserver<ODProto.Status>?) {
+            genericComplete(SchedulerService.updateWeights(request), responseObserver)
+        }
     }
 }

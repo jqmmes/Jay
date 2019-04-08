@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
 import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -26,6 +27,9 @@ object SchedulerService {
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
     private var scheduler : Scheduler? = null
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
+
+    internal var weights: ODProto.Weights = ODProto.Weights.newBuilder().setComputeTime(0.3f).setQueueSize(0.1f)
+            .setRunningJobs(0.1f).setBattery(0.2f).setBandwidth(0.3f).build()
 
     private val schedulers: Array<Scheduler> = arrayOf(
             SingleDeviceScheduler(Worker.Type.LOCAL),
@@ -127,11 +131,19 @@ object SchedulerService {
         brokerGRPC.enableBandwidthEstimates(bandwidthEstimateConfig)
     }
 
-    fun disableHeartBeat() {
+    internal fun disableHeartBeat() {
         brokerGRPC.disableHearBeats()
     }
 
-    fun disableBandwidthEstimates() {
+    internal fun disableBandwidthEstimates() {
         brokerGRPC.disableBandwidthEstimates()
+    }
+
+    internal fun updateWeights(newWeights: ODProto.Weights?): ODProto.Status? {
+        if (newWeights == null || (newWeights.computeTime + newWeights.queueSize + newWeights.runningJobs + newWeights
+                        .bandwidth + newWeights.battery != 1.0f))
+            return ODUtils.genStatus(ODProto.StatusCode.Error)
+        weights = newWeights
+        return ODUtils.genStatus(ODProto.StatusCode.Success)
     }
 }
