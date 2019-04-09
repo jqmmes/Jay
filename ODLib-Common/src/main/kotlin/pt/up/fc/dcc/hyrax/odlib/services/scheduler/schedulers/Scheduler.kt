@@ -23,7 +23,9 @@ abstract class Scheduler(name: String) {
         waitInit.countDown()
     }
 
-    abstract fun destroy()
+    open fun destroy() {
+        waitInit = CountDownLatch(1)
+    }
 
     fun getProto(): ODProto.Scheduler {
         return ODProto.Scheduler.newBuilder().setId(id).setName(getName()).build()

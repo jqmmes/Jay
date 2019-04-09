@@ -31,6 +31,8 @@ object BrokerService {
     private val worker = WorkerGRPCClient("127.0.0.1")
     private val local: Worker = Worker(address = "127.0.0.1", type = Type.LOCAL)
     private val cloud = Worker(address = ODSettings.cloudIp, type = Type.CLOUD)
+    private var heartBeats = false
+    private var bwEstimates = false
 
     init {
         workers[local.id] = local
@@ -128,8 +130,12 @@ object BrokerService {
 
     private fun checkWorker(worker: ODProto.Worker?, address: String) {
         if (worker == null) return
-        if (worker.id !in workers) workers[worker.id] = Worker(worker, address)
-        else workers[worker.id]?.updateStatus(worker)
+        if (worker.id !in workers){
+            workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { StatusUpdate ->
+                if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) {}
+                else scheduler.notifyWorkerFailure(workers[worker.id]?.getProto()) {}
+            }
+        } else workers[worker.id]?.updateStatus(worker)
         scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> println("Notified Scheduler $S")}
     }
 
@@ -147,6 +153,7 @@ object BrokerService {
     }
 
     fun enableHearBeats(types: ODProto.WorkerTypes?): Status? {
+        heartBeats = true
         if (types == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
         for (key in workers.keys)
             if (workers[key]?.type in types.typeList && workers[key]?.type != Type.LOCAL) workers[key]?.enableHeartBeat { StatusUpdate ->
@@ -157,6 +164,7 @@ object BrokerService {
     }
 
     fun enableBandwidthEstimates(method: ODProto.BandwidthEstimate?): Status? {
+        bwEstimates = true
         if (method == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
         if (method.type == ODProto.BandwidthEstimate.Type.ACTIVE) {
             for (key in workers.keys)
@@ -169,11 +177,13 @@ object BrokerService {
     }
 
     fun disableHearBeats(): Status? {
+        heartBeats = false
         for (key in workers.keys) workers[key]?.disableHeartBeat()
         return ODUtils.genStatus(ODProto.StatusCode.Success)
     }
 
     fun disableBandwidthEstimates(): ODProto.Status? {
+        bwEstimates = false
         for (key in workers.keys) workers[key]?.stopActiveRTTEstimates()
         return ODUtils.genStatus(ODProto.StatusCode.Success)
     }

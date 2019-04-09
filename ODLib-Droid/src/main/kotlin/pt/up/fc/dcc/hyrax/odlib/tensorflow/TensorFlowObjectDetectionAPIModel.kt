@@ -68,7 +68,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         fun create (
                 assetManager : AssetManager,
                 modelFilename : String,
-                inputSize : Int) : Classifier {
+                inputSize : Int) : Classifier? {
             val d = TensorFlowObjectDetectionAPIModel()
 
             /*val labelsInput: InputStream?
@@ -84,8 +84,11 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             }
             br.clean()*/
 
-
-            d.inferenceInterface = MyTensorFlowInferenceInterface(assetManager, modelFilename)
+            try {
+                d.inferenceInterface = MyTensorFlowInferenceInterface(assetManager, modelFilename)
+            } catch (e: RuntimeException) {
+                return null
+            }
 
             loadedGraph = d.inferenceInterface.graph()
 

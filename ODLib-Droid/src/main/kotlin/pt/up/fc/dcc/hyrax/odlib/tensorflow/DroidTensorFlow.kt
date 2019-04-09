@@ -112,12 +112,16 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             if (!checkDownloadedModel(model.modelName)) {
                 val tmpFile = downloadModel(model)
                 if (tmpFile != null) {
-                    modelPath = extractModel(tmpFile)
-                    if (File(modelPath) != File(context.cacheDir, "Models/${model.modelName}")) {
-                        File(modelPath).renameTo(File(context.cacheDir, "Models/${model.modelName}"))
-                        ODLogger.logInfo("Renaming model dir to: ${File(context.cacheDir, "Models/${model.modelName}")
-                                .absolutePath}")
-                        modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
+                    try {
+                        modelPath = extractModel(tmpFile)
+                        if (File(modelPath) != File(context.cacheDir, "Models/${model.modelName}")) {
+                            File(modelPath).renameTo(File(context.cacheDir, "Models/${model.modelName}"))
+                            ODLogger.logInfo("Renaming model dir to: ${File(context.cacheDir, "Models/${model.modelName}")
+                                    .absolutePath}")
+                            modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
+                        }
+                    } catch (e: EOFException) {
+                        ODLogger.logError("Failed to load model. BAD EOF")
                     }
                     tmpFile.delete()
                 }

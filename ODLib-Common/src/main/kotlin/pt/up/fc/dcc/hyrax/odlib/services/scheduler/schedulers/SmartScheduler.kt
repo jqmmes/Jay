@@ -26,7 +26,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
                         .addAllWorkerType(getWorkerTypes().typeList)
                         .build()
         )
-        super.init()
+        SchedulerService.enableHeartBeat(ODUtils.genWorkerTypes()){super.init()}
     }
 
     private fun removeWorker(worker: ODProto.Worker?) {
@@ -43,7 +43,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
     override fun destroy() {
         SchedulerService.disableBandwidthEstimates()
         rankedWorkers.clear()
-
+        super.destroy()
     }
 
     override fun getWorkerTypes(): ODProto.WorkerTypes {

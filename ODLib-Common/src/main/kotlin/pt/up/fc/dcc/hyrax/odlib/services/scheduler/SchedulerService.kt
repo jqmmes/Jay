@@ -123,8 +123,8 @@ object SchedulerService {
         return ODProto.StatusCode.Error
     }
 
-    internal fun enableHeartBeat(workerTypes: ODProto.WorkerTypes) {
-        brokerGRPC.enableHearBeats(workerTypes)
+    internal fun enableHeartBeat(workerTypes: ODProto.WorkerTypes, callback: (ODProto.Status) -> Unit) {
+        brokerGRPC.enableHearBeats(workerTypes, callback)
     }
 
     internal fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate) {

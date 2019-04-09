@@ -14,12 +14,10 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     override fun init() {
         if (ODProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
-                SchedulerService.enableHeartBeat(getWorkerTypes())
-                super.init()
+                SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
             }
         } else {
-            SchedulerService.enableHeartBeat(getWorkerTypes())
-            super.init()
+            SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
         }
     }
 
@@ -52,6 +50,7 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
         if (ODProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(false)
         }
+        super.destroy()
     }
 
     override fun getWorkerTypes(): ODProto.WorkerTypes {

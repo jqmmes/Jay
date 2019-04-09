@@ -11,7 +11,7 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
-class Worker(val id: String = UUID.randomUUID().toString(), address: String, val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE){
+class Worker(val id: String = UUID.randomUUID().toString(), address: String, val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE, checkHearBeat: Boolean = false, bwEstimates: Boolean = false, statusChangeCallback: ((Status) -> Unit)? = null){
 
     enum class Status {
         ONLINE,
@@ -48,8 +48,10 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var statusChangeCallback: ((Status) -> Unit)? = null
 
 
-    constructor(proto: ODProto.Worker?, address: String) : this(proto!!.id, address){
+    constructor(proto: ODProto.Worker?, address: String, checkHearBeat: Boolean, bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address){
         updateStatus(proto)
+        if (checkHearBeat) enableHeartBeat(statusChangeCallback)
+        if (bwEstimates) doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
     }
 
     init {
@@ -59,6 +61,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
             ODProto.Worker.Type.CLOUD -> 50
             else -> 15
         }
+        if (checkHearBeat) enableHeartBeat(statusChangeCallback)
+        if (bwEstimates) doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
     }
 
     private fun genProto() {
@@ -125,7 +129,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
         checkingHeartBeat = true
         this.statusChangeCallback = statusChangeCallback
-        smartTimer.scheduleAtFixedRate(RTTTimer(), 0L, ODSettings.RTTDelayMillis)
+        try { smartTimer.scheduleAtFixedRate(RTTTimer(), 0L, ODSettings.RTTDelayMillis) } catch (ignore: IllegalStateException) {}
     }
 
     fun disableHeartBeat() {

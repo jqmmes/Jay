@@ -13,14 +13,12 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
         if (workerType == ODProto.Worker.Type.REMOTE) {
             SchedulerService.listenForWorkers(true) {
                 println("init complete")
-                SchedulerService.enableHeartBeat(getWorkerTypes())
-                super.init()
+                SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
             }
         } else {
-            SchedulerService.enableHeartBeat(getWorkerTypes())
-            super.init()
-        }
+            SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
 
+        }
     }
 
     override fun getName(): String {
@@ -46,6 +44,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
         if (workerType == ODProto.Worker.Type.REMOTE) {
             SchedulerService.listenForWorkers(false)
         }
+        super.destroy()
     }
 
     override fun getWorkerTypes(): ODProto.WorkerTypes {
