@@ -89,6 +89,7 @@ object SchedulerService {
     }
 
     internal fun notifyWorkerFailure(worker: Worker?): ODProto.StatusCode {
+        ODLogger.logInfo("${worker?.id} Failed")
         if (worker!!.id in workers.keys) {
             workers.remove(worker.id)
             for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)

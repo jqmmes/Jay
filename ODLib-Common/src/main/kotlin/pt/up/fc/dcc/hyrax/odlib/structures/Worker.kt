@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.structures
 
 import io.grpc.ConnectivityState
 import org.apache.commons.collections4.queue.CircularFifoQueue
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
@@ -37,7 +38,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
 
     private val smartTimer: Timer = Timer()
     private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
-    private var consecutiveFailedPing = 0
+    private var consecutiveTransientFailurePing = 0
+    private var consecutiveConnectingPing = 0
     private var proto : ODProto.Worker? = null
     private var autoStatusUpdate = false
     private var autoStatusUpdateRunning = CountDownLatch(0)
@@ -129,7 +131,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
         checkingHeartBeat = true
         this.statusChangeCallback = statusChangeCallback
-        try { smartTimer.scheduleAtFixedRate(RTTTimer(), 0L, ODSettings.RTTDelayMillis) } catch (ignore: IllegalStateException) {}
+        try { smartTimer.schedule(RTTTimer(), 0L) } catch (ignore: IllegalStateException) {}
     }
 
     fun disableHeartBeat() {
@@ -173,21 +175,41 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         override fun run() {
             grpc.ping(pingPayloadSize, timeout = ODSettings.pingTimeout, callback = { T ->
                 if (T == -1) {
-                    consecutiveFailedPing++
                     if (status == Status.ONLINE) {
                         status = Status.OFFLINE
                         statusChangeCallback?.invoke(status)
                     }
+                    smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
+                } else if (T == -2) { // TRANSIENT_FAILURE
+                    if (status == Status.ONLINE) {
+                        if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
+                            status = Status.OFFLINE
+                            statusChangeCallback?.invoke(status)
+                            smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
+                            consecutiveTransientFailurePing = 0
+                        } else {
+                            smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillisFailRetry)
+                        }
+                    } else { smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis) }
+
+                } else if (T == -3) { // CONNECTING
+                    if (status == Status.ONLINE) {
+                        if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
+                            status = Status.OFFLINE
+                            statusChangeCallback?.invoke(status)
+                            smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
+                            consecutiveTransientFailurePing = 0
+                        } else { smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillisFailRetry) }
+                    } else { smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis) }
                 } else {
                     if (status == Status.OFFLINE) {
                         status = Status.ONLINE
                         statusChangeCallback?.invoke(status)
                     }
-                    consecutiveFailedPing = 0
+                    smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
                     if (calcRTT) addRTT(T)
                 }
             })
-            //smartTimer.schedule(this, ODSettings.RTTDelayMillis)
         }
     }
 }

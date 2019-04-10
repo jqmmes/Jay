@@ -46,16 +46,26 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     }
 
     fun ping(payload: Int, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
+            channel.resetConnectBackoff()
+            callback?.invoke(-2)
+            return
+        }
         println("BrokerServiceGrpc::ping ${channel.getState(false)}")
+        if (channel.getState(true) == ConnectivityState.CONNECTING) {
+            callback?.invoke(-3)
+            return
+        }
         AbstractODLib.executorPool.submit {
             val timer = System.currentTimeMillis()
             try {
-                @Suppress("UNUSED_VARIABLE") val result = blockingStub
+                val pingData = blockingStub
                         .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS)
                         .ping(ODProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(payload))).setReply(reply).build())
+                println("Ping DataSize ${pingData.data.size()}")
                 callback?.invoke((System.currentTimeMillis() - timer).toInt())
             } catch (e: TimeoutException) {
+                println("Ping TimeoutException")
                 callback?.invoke(-1)
             }
         }

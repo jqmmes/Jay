@@ -16,6 +16,7 @@ import android.content.ComponentName
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.Messenger
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
 
 
@@ -108,20 +109,26 @@ class ODLib(val context : Context) : AbstractODLib() {
 
     override fun stopBroker() {
         if (!serviceRunningBroker()) return
+        stopWorker()
+        stopScheduler()
         context.stopService(Intent(context, BrokerAndroidService::class.java))
     }
 
     override fun stopWorker() {
         if (!serviceRunningWorker()) return
-        context.stopService(Intent(context, WorkerAndroidService::class.java))
-        if (!serviceRunningScheduler()) stopBroker()
+        broker.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(false).build()) {S ->
+            context.stopService(Intent(context, WorkerAndroidService::class.java))
+            if (!serviceRunningScheduler()) stopBroker()
+        }
 
     }
 
     override fun stopScheduler() {
         if (!serviceRunningScheduler()) return
-        context.stopService(Intent(context, SchedulerAndroidService::class.java))
-        if (!serviceRunningWorker()) stopBroker()
+        broker.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {S ->
+            context.stopService(Intent(context, SchedulerAndroidService::class.java))
+            if (!serviceRunningWorker()) stopBroker()
+        }
     }
 
 

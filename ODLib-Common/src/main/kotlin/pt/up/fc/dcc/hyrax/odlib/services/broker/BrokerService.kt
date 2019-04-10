@@ -142,7 +142,6 @@ object BrokerService {
     }
 
     private fun checkWorker(worker: ODProto.Worker?, address: String) {
-        ODLogger.logInfo("checkWorker")
         if (worker == null) return
         if (worker.id !in workers){
             ODLogger.logInfo("New Device found ${worker.id}")
@@ -169,6 +168,7 @@ object BrokerService {
     }
 
     fun enableHearBeats(types: ODProto.WorkerTypes?): Status? {
+        if (heartBeats) return ODUtils.genStatusSuccess()
         heartBeats = true
         if (types == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
         for (key in workers.keys)
@@ -181,6 +181,7 @@ object BrokerService {
     }
 
     fun enableBandwidthEstimates(method: ODProto.BandwidthEstimate?): Status? {
+        if (bwEstimates) return ODUtils.genStatusSuccess()
         bwEstimates = true
         if (method == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
         if (method.type == ODProto.BandwidthEstimate.Type.ACTIVE) {
@@ -195,12 +196,14 @@ object BrokerService {
     }
 
     fun disableHearBeats(): Status? {
+        if (!heartBeats) return ODUtils.genStatusSuccess()
         heartBeats = false
         for (key in workers.keys) workers[key]?.disableHeartBeat()
         return ODUtils.genStatusSuccess()
     }
 
     fun disableBandwidthEstimates(): ODProto.Status? {
+        if (!bwEstimates) return ODUtils.genStatusSuccess()
         bwEstimates = false
         for (key in workers.keys) workers[key]?.stopActiveRTTEstimates()
         return ODUtils.genStatusSuccess()
@@ -214,9 +217,14 @@ object BrokerService {
     fun serviceStatusUpdate(serviceStatus: ODProto.ServiceStatus?, completeCallback: (Status?) -> Unit) {
         if (serviceStatus?.type == ODProto.ServiceStatus.Type.SCHEDULER) {
             schedulerServiceRunning = serviceStatus.running
+            if (!schedulerServiceRunning) {
+                disableHearBeats()
+                disableBandwidthEstimates()
+            }
             completeCallback(ODUtils.genStatusSuccess())
         } else if (serviceStatus?.type == ODProto.ServiceStatus.Type.WORKER) {
             workerServiceRunning = serviceStatus.running
+            if (!workerServiceRunning) announceMulticast(stopAdvertiser = true)
             if (schedulerServiceRunning) {
                 if (serviceStatus.running) scheduler.notifyWorkerUpdate(local.getProto()) { S -> completeCallback(S) }
                 else scheduler.notifyWorkerFailure(local.getProto()) { S -> completeCallback(S) }
