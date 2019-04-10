@@ -187,4 +187,18 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             }, AbstractODLib.executorPool)
         } catch (e: StatusRuntimeException) { }
     }
+
+    fun stopService(callback: (ODProto.Status?) -> Unit) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) callback(ODUtils.genStatusError())
+        val call = futureStub.stopService(Empty.getDefaultInstance())
+        call.addListener(Runnable {
+            try {
+                callback(call.get())
+            } catch (e: Exception) {
+                callback(ODUtils.genStatusError
+                ())
+            }
+        },
+                AbstractODLib.executorPool)
+    }
 }

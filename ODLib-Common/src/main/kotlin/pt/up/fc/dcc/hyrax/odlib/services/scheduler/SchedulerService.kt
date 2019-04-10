@@ -10,7 +10,6 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.MultiDeviceSchedul
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
-import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import kotlin.concurrent.thread
@@ -107,12 +106,21 @@ object SchedulerService {
         else brokerGRPC.listenMulticastWorkers(true, callback)
     }
 
-    fun stop() {
+    fun stop(stopGRPCServer: Boolean = true) {
         running = false
-        if (server != null) server!!.stop()
+        if (stopGRPCServer) server?.stop()
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {
             ODLogger.logInfo("WorkerService Stopped")
         }
+    }
+
+    fun stopService(callback: ((ODProto.Status?) -> Unit)) {
+        stop(false)
+        callback(ODUtils.genStatusSuccess())
+    }
+
+    fun stopServer() {
+        server?.stop()
     }
 
     internal fun listSchedulers() : ODProto.Schedulers {

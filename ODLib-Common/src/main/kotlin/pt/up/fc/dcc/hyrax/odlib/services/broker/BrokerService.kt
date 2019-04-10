@@ -52,9 +52,18 @@ object BrokerService {
         }
     }
 
-    fun stop() {
-        if (server != null) server!!.stop()
+    fun stop(stopGRPCServer: Boolean = true) {
+        if (stopGRPCServer) server?.stop()
         cloud.disableAutoStatusUpdate()
+    }
+
+    fun stopService(callback: ((ODProto.Status?) -> Unit)) {
+        stop(false)
+        callback(ODUtils.genStatusSuccess())
+    }
+
+    fun stopServer() {
+        server?.stop()
     }
 
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {

@@ -2,14 +2,15 @@ package pt.up.fc.dcc.hyrax.odlib.services.worker
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.StatusCode
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.StatusCode
+import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
-import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -62,9 +63,9 @@ object WorkerService {
         }
     }
 
-    fun stop() {
+    fun stop(stopGRPCServer: Boolean = true) {
         running = false
-        server?.stop()
+        if (stopGRPCServer) server?.stop()
         waitingResultsMap.clear()
         jobQueue.clear()
         jobQueue.offer(RunnableJobObjects(null) {})
@@ -85,6 +86,15 @@ object WorkerService {
     }
 
     internal fun isRunning() : Boolean { return running }
+
+    fun stopService(callback: ((ODProto.Status?) -> Unit)) {
+        stop(false)
+        callback(ODUtils.genStatusSuccess())
+    }
+
+    fun stopServer() {
+        server?.stop()
+    }
 
     private class RunnableJobObjects(val job: ODProto.Job?, var callback: ((List<Detection>) -> Unit)?) : Runnable {
         override fun run() {

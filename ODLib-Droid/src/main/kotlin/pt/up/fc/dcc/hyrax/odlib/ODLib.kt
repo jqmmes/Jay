@@ -1,23 +1,23 @@
 package pt.up.fc.dcc.hyrax.odlib
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.support.v4.app.NotificationCompat
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.DroidBatteryDetails
-import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
-import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
-import pt.up.fc.dcc.hyrax.odlib.services.WorkerAndroidService
-import android.app.ActivityManager
-import android.content.ComponentName
 import android.content.ServiceConnection
+import android.os.Build
 import android.os.IBinder
 import android.os.Messenger
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import android.support.v4.app.NotificationCompat
+import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
+import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
+import pt.up.fc.dcc.hyrax.odlib.services.WorkerAndroidService
+import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.DroidBatteryDetails
 
 
 class ODLib(val context : Context) : AbstractODLib() {
@@ -111,22 +111,32 @@ class ODLib(val context : Context) : AbstractODLib() {
         if (!serviceRunningBroker()) return
         stopWorker()
         stopScheduler()
-        context.stopService(Intent(context, BrokerAndroidService::class.java))
+        broker.stopService() { context.stopService(Intent(context, BrokerAndroidService::class.java)) }
+        //context.stopService(Intent(context, BrokerAndroidService::class.java))
     }
 
     override fun stopWorker() {
         if (!serviceRunningWorker()) return
-        broker.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(false).build()) {S ->
+        WorkerGRPCClient("127.0.0.1").stopService() {
             context.stopService(Intent(context, WorkerAndroidService::class.java))
             if (!serviceRunningScheduler()) stopBroker()
         }
-
+        /*broker.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER)
+                .setRunning(false).build()) {S -> context.stopService(Intent(context, WorkerAndroidService::class
+                .java))
+                if (!serviceRunningScheduler()) stopBroker() } */
     }
+
 
     override fun stopScheduler() {
         if (!serviceRunningScheduler()) return
-        broker.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {S ->
+        /*broker.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type
+                .SCHEDULER).setRunning(false).build()) {S ->
             context.stopService(Intent(context, SchedulerAndroidService::class.java))
+            if (!serviceRunningWorker()) stopBroker()
+        }*/
+        WorkerGRPCClient("127.0.0.1").stopService() {
+            context.stopService(Intent(context, WorkerAndroidService::class.java))
             if (!serviceRunningWorker()) stopBroker()
         }
     }

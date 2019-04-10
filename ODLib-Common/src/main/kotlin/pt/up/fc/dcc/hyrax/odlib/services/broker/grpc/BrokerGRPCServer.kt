@@ -101,5 +101,12 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun announceServiceStatus(request: ODProto.ServiceStatus?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.serviceStatusUpdate(request) { S -> genericComplete(S, responseObserver) }
         }
+
+        override fun stopService(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
+            BrokerService.stopService() { S ->
+                genericComplete(S, responseObserver)
+                BrokerService.stopServer()
+            }
+        }
     }
 }

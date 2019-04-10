@@ -2,13 +2,12 @@ package pt.up.fc.dcc.hyrax.odlib.services.worker.grpc
 
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
-import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import java.lang.Exception
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutionException
 
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
@@ -47,5 +46,19 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         if (channel.getState(true) != ConnectivityState.READY) serviceStatus(null)
         val call = futureStub.testService(Empty.getDefaultInstance())
         call.addListener(Runnable { try {serviceStatus(call.get())} catch (e: Exception) {serviceStatus(null)}}, AbstractODLib.executorPool)
+    }
+
+    fun stopService(callback: (ODProto.Status?) -> Unit) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) callback(ODUtils.genStatusError())
+        val call = futureStub.stopService(Empty.getDefaultInstance())
+        call.addListener(Runnable {
+            try {
+                callback(call.get())
+            } catch (e: Exception) {
+                callback(ODUtils.genStatusError
+                ())
+            }
+        },
+                AbstractODLib.executorPool)
     }
 }

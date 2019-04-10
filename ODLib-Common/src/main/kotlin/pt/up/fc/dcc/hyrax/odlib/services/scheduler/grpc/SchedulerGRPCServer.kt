@@ -43,5 +43,12 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
         override fun testService(request: Empty?, responseObserver: StreamObserver<ODProto.ServiceStatus>?) {
             genericComplete(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(SchedulerService.isRunning()).build(), responseObserver)
         }
+
+        override fun stopService(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
+            SchedulerService.stopService() { S ->
+                genericComplete(S, responseObserver)
+                SchedulerService.stopServer()
+            }
+        }
     }
 }

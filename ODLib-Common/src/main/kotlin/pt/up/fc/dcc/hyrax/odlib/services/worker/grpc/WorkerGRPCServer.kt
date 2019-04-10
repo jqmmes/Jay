@@ -6,6 +6,7 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
+import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -30,6 +31,13 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun testService(request: Empty?, responseObserver: StreamObserver<ODProto.ServiceStatus>?) {
             genericComplete(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(WorkerService.isRunning()).build(), responseObserver)
+        }
+
+        override fun stopService(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
+            WorkerService.stopService() { S ->
+                genericComplete(S, responseObserver)
+                BrokerService.stopServer()
+            }
         }
     }
 }
