@@ -1,23 +1,23 @@
 package pt.up.fc.dcc.hyrax.odlib.interfaces
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.structures.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.Detection
+import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import java.io.File
 
 interface DetectObjects {
     var minimumScore: Float
-    val models: List<ODModel>
+    val models: List<Model>
 
     fun extractModel(modelFile: File) : String
-    fun downloadModel(model: ODModel): File?
+    fun downloadModel(model: Model): File?
     fun checkDownloadedModel(name: String): Boolean
 
-    fun loadModel(model: ODModel, completeCallback: ((ODProto.Status) -> Unit)? = null)
-    fun modelLoaded(model: ODModel): Boolean
+    fun loadModel(model: Model, completeCallback: ((ODProto.Status) -> Unit)? = null)
+    fun modelLoaded(model: Model): Boolean
     fun setMinAcceptScore(score: Float)
-    fun detectObjects(imgPath: String) : List<ODDetection>
-    fun detectObjects(imgData: ByteArray) : List<ODDetection>
+    fun detectObjects(imgPath: String) : List<Detection>
+    fun detectObjects(imgData: ByteArray) : List<Detection>
     fun getByteArrayFromImage(imgPath: String) : ByteArray
     fun clean()
 }

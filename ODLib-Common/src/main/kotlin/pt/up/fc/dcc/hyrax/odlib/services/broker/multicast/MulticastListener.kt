@@ -46,14 +46,12 @@ object MulticastListener {
 
                 try {
                     listeningSocket.receive(packet)
-                    ODLogger.logInfo("Packet Received")
                 } catch (e: SocketException) {
                     ODLogger.logWarn("Socket error")
                     running = false
                     continue
                 }
                 if (listeningSocket.`interface`.isLoopbackAddress || getHostAddressFromPacket(packet) != localIp) {
-                    ODLogger.logInfo("Packet is valid")
                     try {
                         callback?.invoke(ODProto.Worker.parseFrom(ByteArray(packet.length) { pos -> packet.data[pos] }), getHostAddressFromPacket(packet))
                     } catch (ignore: Exception) { }

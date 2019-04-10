@@ -2,11 +2,13 @@ package pt.up.fc.dcc.hyrax.odlib.services.worker.grpc
 
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
+import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import java.lang.Exception
 import java.util.concurrent.ExecutionException
 
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
@@ -39,5 +41,11 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
     fun selectModel(request: ODProto.Model?, callback: ((ODProto.Status?) -> Unit)?) {
         val call = futureStub.selectModel(request)
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+    }
+
+    fun testService(serviceStatus: ((ODProto.ServiceStatus?) -> Unit)) {
+        if (channel.getState(true) != ConnectivityState.READY) serviceStatus(null)
+        val call = futureStub.testService(Empty.getDefaultInstance())
+        call.addListener(Runnable { try {serviceStatus(call.get())} catch (e: Exception) {serviceStatus(null)}}, AbstractODLib.executorPool)
     }
 }

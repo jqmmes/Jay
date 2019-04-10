@@ -1,8 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.utils
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.structures.ODDetection
-import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.Detection
+import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.net.DatagramPacket
 import java.net.Inet4Address
@@ -45,14 +45,14 @@ object ODUtils {
         return packet.address.hostAddress.substringBefore("%")
     }
 
-    private fun genDetection(detection: ODDetection?) : ODProto.Detection{
+    private fun genDetection(detection: Detection?) : ODProto.Detection{
         return ODProto.Detection.newBuilder()
                 .setClass_(detection!!.class_)
                 .setScore(detection.score)
                 .build()
     }
 
-    internal fun genResults(id: String, results: List<ODDetection?>) : ODProto.Results {
+    internal fun genResults(id: String, results: List<Detection?>) : ODProto.Results {
         val builder = ODProto.Results.newBuilder()
                 .setId(id)
         for (detection in results) {
@@ -61,7 +61,7 @@ object ODUtils {
         return builder.build()
     }
 
-    fun genModelRequest(listModels: Set<ODModel>): ODProto.Models? {
+    fun genModelRequest(listModels: Set<Model>): ODProto.Models? {
         val models = ODProto.Models.newBuilder()
         for (model in listModels) {
             models.addModels(model.getProto())
@@ -73,10 +73,10 @@ object ODUtils {
         return ODProto.Status.newBuilder().setCode(code).build()
     }
 
-    fun parseModels(models: ODProto.Models?): Set<ODModel> {
-        val modelSet : MutableSet<ODModel> = mutableSetOf()
+    fun parseModels(models: ODProto.Models?): Set<Model> {
+        val modelSet : MutableSet<Model> = mutableSetOf()
         for (model in models!!.modelsList) {
-            modelSet.add(ODModel(model))
+            modelSet.add(Model(model))
         }
         return modelSet.toSet()
     }
@@ -94,4 +94,7 @@ object ODUtils {
     fun genWorkerTypes(types: List<ODProto.Worker.Type>): ODProto.WorkerTypes {
         return ODProto.WorkerTypes.newBuilder().addAllType(types).build()
     }
+
+    fun genStatusSuccess(): ODProto.Status? { return genStatus(ODProto.StatusCode.Success) }
+    fun genStatusError(): ODProto.Status? { return genStatus(ODProto.StatusCode.Success) }
 }

@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import java.util.*
 
-class ODJob {
+class Job {
 
     val id : String
     val data : ByteArray
@@ -23,7 +23,7 @@ class ODJob {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ODJob
+        other as Job
 
         return id == other.id
     }

@@ -1,8 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Job
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCServer
@@ -10,7 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.MultiDeviceSchedul
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
-import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import kotlin.concurrent.thread
@@ -27,6 +27,7 @@ object SchedulerService {
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
     private var scheduler : Scheduler? = null
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
+    private var running = false
 
     internal var weights: ODProto.Weights = ODProto.Weights.newBuilder().setComputeTime(0.3f).setQueueSize(0.1f)
             .setRunningJobs(0.1f).setBattery(0.2f).setBandwidth(0.3f).build()
@@ -65,15 +66,20 @@ object SchedulerService {
     }
 
     fun start(useNettyServer: Boolean = false) {
+        if (running) return
         server = SchedulerGRPCServer(useNettyServer).start()
+        running = true
+        brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(true).build()) {
+            ODLogger.logInfo("WorkerService Running")
+        }
         thread {
             brokerGRPC.updateWorkers{println("Scheduler Initiated")}
         }
     }
 
-    internal fun schedule(request: Job?): ODProto.Worker? {
+    internal fun schedule(request: ODProto.Job?): ODProto.Worker? {
         if (scheduler == null) scheduler = schedulers[0]
-        return scheduler?.scheduleJob(ODJob(request))
+        return scheduler?.scheduleJob(pt.up.fc.dcc.hyrax.odlib.structures.Job(request))
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?) : ODProto.StatusCode {
@@ -101,7 +107,11 @@ object SchedulerService {
     }
 
     fun stop() {
+        running = false
         if (server != null) server!!.stop()
+        brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {
+            ODLogger.logInfo("WorkerService Stopped")
+        }
     }
 
     internal fun listSchedulers() : ODProto.Schedulers {
@@ -146,4 +156,7 @@ object SchedulerService {
         weights = newWeights
         return ODUtils.genStatus(ODProto.StatusCode.Success)
     }
+
+    internal fun isRunning() : Boolean { return running }
+
 }

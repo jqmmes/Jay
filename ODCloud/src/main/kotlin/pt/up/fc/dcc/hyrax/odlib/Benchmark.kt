@@ -28,7 +28,7 @@ object Benchmark {
                     val output = ByteArrayOutputStream()
                     ImageIO.write(img, "jpg", output)
                     val start = System.currentTimeMillis()
-                    val job = ODJob(output.toByteArray())
+                    val job = Job(output.toByteArray())
                     client.executeJob(job)
                     client.asyncDetectObjects(job) {
                         println("${job.id}\t${f.name}\t${System.currentTimeMillis() - start}ms")

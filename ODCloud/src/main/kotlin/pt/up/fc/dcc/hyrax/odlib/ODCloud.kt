@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib
 
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
+import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.lang.Thread.sleep
 
@@ -48,7 +48,7 @@ class ODCloud {
             }
         }
 
-        private class LoggingInterface : ODLog {
+        private class LoggingInterface : LogInterface {
             override fun log(message: String, logLevel: LogLevel) {
                 println("${System.currentTimeMillis()}\t$message")
             }

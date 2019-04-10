@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
@@ -38,8 +38,8 @@ class SmartScheduler : Scheduler("SmartScheduler") {
     }
 
     // Return last ID higher score = Better worker
-    override fun scheduleJob(job: ODJob): ODProto.Worker? {
-        return SchedulerService.getWorker(rankedWorkers.last.id!!)
+    override fun scheduleJob(job: Job): ODProto.Worker? {
+        return SchedulerService.getWorker(rankedWorkers.first.id!!)
     }
 
     override fun destroy() {
@@ -107,7 +107,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
                         scaledBattery * SchedulerService.weights.battery +
                         scaledAvgBandwidth * SchedulerService.weights.bandwidth
 
-        ODLogger.logInfo("New Score for ${worker.id}: $score")
+        ODLogger.logInfo("New Score for ${worker.id}: $score\t | ${worker.runningJobs} | ${worker.queueSize} | ${worker.battery} | ${worker.avgTimePerJob} | ${worker.bandwidthEstimate} |")
 
         return score
     }

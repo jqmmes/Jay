@@ -15,11 +15,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
-import pt.up.fc.dcc.hyrax.odlib.R
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 //import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.*
@@ -29,7 +28,7 @@ import kotlin.concurrent.thread
 @Suppress("UNUSED_PARAMETER")
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var loggingConsole: Logger
+    private lateinit var loggingConsole: LogInterface
     private val requestExternalStorage = 1
     private val permissionsStorage = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     private var schedulersIds : Set<Pair<String, String>> = setOf()
@@ -181,7 +180,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val modelsList = mutableListOf<ODModel>()
+    private val modelsList = mutableListOf<Model>()
     private val modelsArrayList = ArrayList<String>()
     private lateinit var modelArrayAdapter: ArrayAdapter<String>
     private val schedulersArrayList = ArrayList<String>()
@@ -194,7 +193,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        loggingConsole = Logger(this, findViewById(R.id.loggingConsole))
+        loggingConsole = LogInterface(this, findViewById(R.id.loggingConsole))
         loggingConsole.benchmark(this)
         odClient = ODLib(this)
         ODLogger.enableLogs(loggingConsole, LogLevel.Info)

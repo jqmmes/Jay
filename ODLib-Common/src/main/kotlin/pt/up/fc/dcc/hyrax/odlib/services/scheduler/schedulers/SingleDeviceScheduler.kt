@@ -2,7 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
 class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Scheduler("SingleDeviceScheduler") {
@@ -25,7 +25,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
         return "${super.getName()} [${workerType.name}]"
     }
 
-    override fun scheduleJob(job: ODJob) : ODProto.Worker? {
+    override fun scheduleJob(job: Job) : ODProto.Worker? {
         if (worker == null) {
             for (w in SchedulerService.getWorkers().values) {
                 println(w?.type)

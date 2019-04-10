@@ -87,21 +87,13 @@ message Ping {
     bool reply = 2;
 }
 
-message Service {
+message ServiceStatus {
     enum Type {
         SCHEDULER = 0;
         WORKER = 1;
     }
     Type type = 1;
     bool running = 2;
-}
-
-message ServiceStatus {
-    repeated Service service = 1;
-}
-
-message ServiceRequest {
-    repeated Service.Type type = 1;
 }
 
 message Scheduler {
@@ -162,8 +154,8 @@ service BrokerService { // Internal and External communication Broker
                         rpc enableBandwidthEstimates (BandwidthEstimate) returns (Status) {}; // SchedulerService --> Broker (start RTT Estimate)
                         rpc disableHearBeats (google.protobuf.Empty) returns (Status) {}; // SchedulerService --> Broker (start HB)
                         rpc disableBandwidthEstimates (google.protobuf.Empty) returns (Status) {}; // SchedulerService --> Broker (start RTT Estimate)
-                        rpc updateSmartSchedulerWeights (Weights) returns (Status) {
-                        };
+                        rpc updateSmartSchedulerWeights (Weights) returns (Status) {};
+                        rpc announceServiceStatus(ServiceStatus) returns (Status) {};
 }
 
 service SchedulerService { // Broker > SchedulerBase
@@ -172,12 +164,13 @@ service SchedulerService { // Broker > SchedulerBase
                            rpc notifyWorkerFailure (Worker) returns (Status) {}; // Inform about Worker connection failures
                            rpc setScheduler (Scheduler) returns (Status) {}; // Select Scheduler to be used
                            rpc listSchedulers (google.protobuf.Empty) returns (Schedulers) {}; // List available Schedulers
-                           rpc updateSmartSchedulerWeights (Weights) returns (Status) {
-                           };
+                           rpc updateSmartSchedulerWeights (Weights) returns (Status) {};
+                           rpc testService (google.protobuf.Empty) returns (ServiceStatus) {};
 }
 
 service WorkerService {                                           // Broker > WorkerService
     rpc execute (Job) returns (Results) {};                       // Queue a Job for execution
     rpc selectModel (Model) returns (Status) {};                  // Select TF Model to be used
     rpc listModels (google.protobuf.Empty) returns (Models) {};   // List available TF Models
+    rpc testService (google.protobuf.Empty) returns (ServiceStatus) {};
 }

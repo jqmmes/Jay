@@ -5,8 +5,8 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
-import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.Job
+import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import java.lang.Thread.sleep
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -20,7 +20,7 @@ abstract class AbstractODLib {
         val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(5, 30, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>())
     }
 
-    fun listModels(callback: ((Set<ODModel>) -> Unit)? = null) {
+    fun listModels(callback: ((Set<Model>) -> Unit)? = null) {
         broker.getModels(callback)
     }
 
@@ -28,7 +28,7 @@ abstract class AbstractODLib {
         broker.getSchedulers(callback)
     }
 
-    fun setModel(model: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
+    fun setModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {
         broker.selectModel(model, callback)
     }
 
@@ -65,7 +65,7 @@ abstract class AbstractODLib {
     }
 
     fun scheduleJob(data: ByteArray, result: ((ODProto.Results) -> Unit)? = null) {
-        broker.scheduleJob(ODJob(data), result)
+        broker.scheduleJob(Job(data), result)
     }
 
     open fun destroy(keepServices: Boolean = false) {

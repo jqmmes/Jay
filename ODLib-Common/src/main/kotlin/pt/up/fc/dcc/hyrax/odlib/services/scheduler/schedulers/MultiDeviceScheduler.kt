@@ -2,7 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import kotlin.random.Random
 
@@ -28,7 +28,7 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
         return "${super.getName()} [$strategy] [${devs.trimEnd(' ', ',')}]"
     }
 
-    override fun scheduleJob(job: ODJob) : ODProto.Worker? {
+    override fun scheduleJob(job: Job) : ODProto.Worker? {
         println(devices)
         val workers = SchedulerService.getWorkers(devices)
         return when {

@@ -2,6 +2,6 @@ package pt.up.fc.dcc.hyrax.odlib.interfaces
 
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 
-interface ODLog {
+interface LogInterface {
     fun log(message : String, logLevel : LogLevel)
 }

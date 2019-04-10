@@ -34,6 +34,8 @@ object BrokerService {
     private val cloud = Worker(address = ODSettings.cloudIp, type = Type.CLOUD)
     private var heartBeats = false
     private var bwEstimates = false
+    private var schedulerServiceRunning = false
+    private var workerServiceRunning = false
 
     init {
         workers[local.id] = local
@@ -43,6 +45,11 @@ object BrokerService {
 
     fun start(useNettyServer: Boolean = false) {
         server = BrokerGRPCServer(useNettyServer).start()
+        worker.testService { ServiceStatus -> workerServiceRunning = ServiceStatus?.running ?: false}
+        scheduler.testService {
+            ServiceStatus -> schedulerServiceRunning = ServiceStatus?.running ?: false
+            if (schedulerServiceRunning) updateWorkers()
+        }
     }
 
     fun stop() {
@@ -51,13 +58,13 @@ object BrokerService {
     }
 
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
-        worker.execute(request, callback)
+        if (workerServiceRunning) worker.execute(request, callback) else callback?.invoke(Results.getDefaultInstance())
     }
 
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
-        scheduler.schedule(request) { W ->
+        if (schedulerServiceRunning) scheduler.schedule(request) { W ->
             if (W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
-        }
+        } else callback?.invoke(Results.getDefaultInstance())
     }
 
     private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {
@@ -72,17 +79,17 @@ object BrokerService {
     internal fun updateWorkers() {
         val countDownLatch = CountDownLatch(workers.size)
         for (worker in workers.values) {
-            if (worker.isOnline()) updateWorker(worker.getProto(), countDownLatch)
+            if (worker.isOnline() || (worker.type == Type.LOCAL && workerServiceRunning)) updateWorker(worker.getProto(), countDownLatch)
         }
         countDownLatch.await()
     }
 
     internal fun getModels(callback: (Models) -> Unit) {
-        worker.listModels(callback)
+        if (workerServiceRunning) worker.listModels(callback) else callback(Models.getDefaultInstance())
     }
 
     internal fun setModel(request: Model?, callback: ((Status?) -> Unit)? = null) {
-        worker.selectModel(request, callback)
+        if (workerServiceRunning) worker.selectModel(request, callback) else callback?.invoke(ODUtils.genStatusError())
     }
 
     internal fun diffuseWorkerStatus() : CountDownLatch {
@@ -101,10 +108,12 @@ object BrokerService {
         val countDownLatch = CountDownLatch(1)
         if (updateCloud){
             cloud.updateStatus(request)
-            scheduler.notifyWorkerUpdate(cloud.getProto()) {countDownLatch.countDown()}
+            if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(cloud.getProto()) {countDownLatch.countDown()}
+            else countDownLatch.countDown()
         } else {
             announceMulticast(worker = local.updateStatus(request))
-            scheduler.notifyWorkerUpdate(local.getProto()) {countDownLatch.countDown()}
+            if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.getProto()) {countDownLatch.countDown()}
+            else countDownLatch.countDown()
         }
         return countDownLatch
 
@@ -112,16 +121,19 @@ object BrokerService {
 
     internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: (ODProto.Status?) -> Unit) {
         workers[request?.id]?.updateStatus(request)
-        scheduler.notifyWorkerUpdate(request, completeCallback)
+        if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(request, completeCallback)
+        else completeCallback.invoke(ODUtils.genStatusError())
     }
 
     fun getSchedulers(callback: ((Schedulers?) -> Unit)? = null) {
-        scheduler.listSchedulers(callback)
+        if(schedulerServiceRunning) scheduler.listSchedulers(callback)
+        else callback?.invoke(Schedulers.getDefaultInstance())
 
     }
 
     fun setScheduler(request: Scheduler?, callback: ((Status?) -> Unit)? = null) {
-        scheduler.setScheduler(request, callback)
+        if(schedulerServiceRunning) scheduler.setScheduler(request, callback)
+        else callback?.invoke(ODUtils.genStatusError())
     }
 
     internal fun listenMulticast(stopListener: Boolean = false) {
@@ -135,11 +147,12 @@ object BrokerService {
         if (worker.id !in workers){
             ODLogger.logInfo("New Device found ${worker.id}")
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { StatusUpdate ->
+                if(!schedulerServiceRunning) return@Worker
                 if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) {}
                 else scheduler.notifyWorkerFailure(workers[worker.id]?.getProto()) {}
             }
         } else workers[worker.id]?.updateStatus(worker)
-        scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> println("Notified Scheduler $S")}
+        if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> println("Notified Scheduler $S")}
     }
 
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
@@ -160,6 +173,7 @@ object BrokerService {
         if (types == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
         for (key in workers.keys)
             if (workers[key]?.type in types.typeList && workers[key]?.type != Type.LOCAL) workers[key]?.enableHeartBeat { StatusUpdate ->
+                if(!schedulerServiceRunning) return@enableHeartBeat
                 if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto()) {}
                 else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {}
             }
@@ -172,6 +186,7 @@ object BrokerService {
         if (method.type == ODProto.BandwidthEstimate.Type.ACTIVE) {
             for (key in workers.keys)
                 if (workers[key]?.type in method.workerTypeList && workers[key]?.type != Type.LOCAL) workers[key]?.doActiveRTTEstimates {StatusUpdate ->
+                    if(!schedulerServiceRunning) return@doActiveRTTEstimates
                     if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto())  {S -> println("notifyWorkerUpdate ${S?.code?.name}")}
                     else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> println("notifyWorkerFailure ${S?.code?.name}")}
                 }
@@ -182,16 +197,30 @@ object BrokerService {
     fun disableHearBeats(): Status? {
         heartBeats = false
         for (key in workers.keys) workers[key]?.disableHeartBeat()
-        return ODUtils.genStatus(ODProto.StatusCode.Success)
+        return ODUtils.genStatusSuccess()
     }
 
     fun disableBandwidthEstimates(): ODProto.Status? {
         bwEstimates = false
         for (key in workers.keys) workers[key]?.stopActiveRTTEstimates()
-        return ODUtils.genStatus(ODProto.StatusCode.Success)
+        return ODUtils.genStatusSuccess()
     }
 
     fun updateSmartSchedulerWeights(weights: ODProto.Weights?, callback: ((Status?) -> Unit)) {
-        scheduler.updateSmartSchedulerWeights(weights) { S -> callback(S) }
+        if(schedulerServiceRunning) scheduler.updateSmartSchedulerWeights(weights) { S -> callback(S) }
+        else callback(ODUtils.genStatusError())
+    }
+
+    fun serviceStatusUpdate(serviceStatus: ODProto.ServiceStatus?, completeCallback: (Status?) -> Unit) {
+        if (serviceStatus?.type == ODProto.ServiceStatus.Type.SCHEDULER) {
+            schedulerServiceRunning = serviceStatus.running
+            completeCallback(ODUtils.genStatusSuccess())
+        } else if (serviceStatus?.type == ODProto.ServiceStatus.Type.WORKER) {
+            workerServiceRunning = serviceStatus.running
+            if (schedulerServiceRunning) {
+                if (serviceStatus.running) scheduler.notifyWorkerUpdate(local.getProto()) { S -> completeCallback(S) }
+                else scheduler.notifyWorkerFailure(local.getProto()) { S -> completeCallback(S) }
+            } else completeCallback(ODUtils.genStatusSuccess())
+        }
     }
 }

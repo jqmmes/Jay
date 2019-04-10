@@ -4,12 +4,13 @@ import com.google.protobuf.BoolValue
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
+import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
-import pt.up.fc.dcc.hyrax.odlib.structures.ODModel
+import pt.up.fc.dcc.hyrax.odlib.structures.Job
+import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutionException
@@ -32,7 +33,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         futureStub = BrokerServiceGrpc.newFutureStub(channel)
     }
 
-    fun scheduleJob(job: ODJob, callback: ((ODProto.Results) -> Unit)? = null) {
+    fun scheduleJob(job: Job, callback: ((ODProto.Results) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.scheduleJob(job.getProto())
         call.addListener(Runnable{ callback?.invoke(call.get()) }, AbstractODLib.executorPool)//{ J -> AbstractODLib.put(J) })
@@ -66,13 +67,13 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable{ call.get(); callback() }, AbstractODLib.executorPool)
     }
 
-    fun selectModel(model: ODModel, callback: ((ODProto.Status) -> Unit)? = null) {
+    fun selectModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.setModel(model.getProto())
         call.addListener(Runnable{ callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
-    fun getModels(callback: ((Set<ODModel>) -> Unit)? = null) {
+    fun getModels(callback: ((Set<Model>) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.getModels(Empty.getDefaultInstance())
         call.addListener(Runnable{ try { callback?.invoke(ODUtils.parseModels(call.get())) }
@@ -160,5 +161,20 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 .setQueueSize(queueSize).setRunningJobs(runningJobs).setBattery(battery).setBandwidth(bandwidth)
                 .build())
         call.addListener(Runnable { callback(call.get()) }, AbstractODLib.executorPool)
+    }
+
+    fun announceServiceStatus(serviceStatus: ODProto.ServiceStatus, callback: ((ODProto.Status?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE ) {
+            channel.resetConnectBackoff()
+            callback(ODUtils.genStatusError())
+        }
+        try {
+            val call = futureStub.announceServiceStatus(serviceStatus)
+            call.addListener(Runnable {
+                try {
+                    callback.invoke(call.get())
+                } catch (e: StatusRuntimeException) { }
+            }, AbstractODLib.executorPool)
+        } catch (e: StatusRuntimeException) { }
     }
 }

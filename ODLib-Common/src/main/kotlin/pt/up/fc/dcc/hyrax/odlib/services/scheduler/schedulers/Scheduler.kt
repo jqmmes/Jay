@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.structures.ODJob
+import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
@@ -15,7 +15,7 @@ abstract class Scheduler(name: String) {
         return nameId
     }
 
-    abstract fun scheduleJob(job: ODJob) : ODProto.Worker?
+    abstract fun scheduleJob(job: Job) : ODProto.Worker?
 
     abstract fun getWorkerTypes() : ODProto.WorkerTypes
 

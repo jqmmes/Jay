@@ -2,7 +2,6 @@
   <artifact type="jar" name="ODCloud">
     <output-path>$PROJECT_DIR$/out/</output-path>
     <root id="archive" name="ODCloud.jar">
-      <element id="module-output" name="ODLib-Common" />
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/ODCloud/src/main/kotlin/META-INF/MANIFEST.MF" />
       </element>
@@ -55,6 +54,7 @@
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-android/0.23.4/7900bc8c2ca75cfbd1eac1eb403db5a22ac3d334/kotlinx-coroutines-android-0.23.4.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.3.11/4cbc5922a54376018307a731162ccaf3ef851a39/kotlin-stdlib-1.3.11.jar" path-in-jar="/" />
       <element id="library" level="project" name="Gradle: proto-1.10.0" />
+      <element id="module-output" name="ODLib-Common" />
     </root>
   </artifact>
 </component>

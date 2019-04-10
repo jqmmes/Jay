@@ -2,10 +2,10 @@ package pt.up.fc.dcc.hyrax.odlib.structures
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 
-data class ODModel(val modelId: Int,
-                   val modelName: String,
-                   val remoteUrl: String? = null,
-                   var downloaded : Boolean = false) {
+data class Model(val modelId: Int,
+                 val modelName: String,
+                 val remoteUrl: String? = null,
+                 var downloaded : Boolean = false) {
 
     internal constructor(request: ODProto.Model?) : this (request!!.id, request.name, request.url, request.downloaded)
 

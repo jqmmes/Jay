@@ -2,15 +2,15 @@
 
 package pt.up.fc.dcc.hyrax.odlib.logger
 
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
+import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
 import java.lang.Exception
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
 object ODLogger{
-    private lateinit var loggingConsole : ODLog
-    private val logQueue : BlockingQueue<Pair<String, LogLevel>> = LinkedBlockingQueue()
+    private lateinit var loggingConsole : LogInterface
+    private val LOG_QUEUE : BlockingQueue<Pair<String, LogLevel>> = LinkedBlockingQueue()
     private var running: Boolean = false
     private var logLevel : LogLevel = LogLevel.Disabled
 
@@ -29,14 +29,14 @@ object ODLogger{
     private fun log(message : String, logLevel: LogLevel) {
         if (logLevel <= ODLogger.logLevel) {
             if (running) {
-                logQueue.offer(message to logLevel)
+                LOG_QUEUE.offer(message to logLevel)
             } else {
                 loggingConsole.log(message, logLevel)
             }
         }
     }
 
-    fun enableLogs(loggingInterface : ODLog, logLevel: LogLevel = LogLevel.Error){
+    fun enableLogs(loggingInterface : LogInterface, logLevel: LogLevel = LogLevel.Error){
         ODLogger.logLevel = logLevel
         loggingConsole = loggingInterface
     }
@@ -48,7 +48,7 @@ object ODLogger{
     fun stopBackgroundLoggingService() {
         if (running) {
             running = false
-            logQueue.put("" to LogLevel.Disabled)
+            LOG_QUEUE.put("" to LogLevel.Disabled)
         }
     }
 
@@ -58,7 +58,7 @@ object ODLogger{
             running = true
             while (running) {
                 try {
-                    val log = logQueue.take()
+                    val log = LOG_QUEUE.take()
                     loggingConsole.log(log.first, log.second)
                 } catch (_ : Exception) {
                     running = false

@@ -17,7 +17,6 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.Messenger
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
-import java.lang.Thread.sleep
 
 
 class ODLib(val context : Context) : AbstractODLib() {

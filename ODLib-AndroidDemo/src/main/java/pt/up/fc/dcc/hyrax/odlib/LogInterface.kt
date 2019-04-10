@@ -4,12 +4,12 @@ import android.app.Activity
 import android.content.Context
 import android.widget.TextView
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.interfaces.ODLog
+import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
-class Logger(private val activity : Activity, private val loggingConsole : TextView) : ODLog {
+class LogInterface(private val activity : Activity, private val loggingConsole : TextView) : LogInterface {
 
     private lateinit var outputFileOS: FileOutputStream
 
