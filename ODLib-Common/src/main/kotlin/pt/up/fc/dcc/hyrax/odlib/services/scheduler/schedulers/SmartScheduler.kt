@@ -20,13 +20,15 @@ class SmartScheduler : Scheduler("SmartScheduler") {
     override fun init() {
         SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) rankWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
-        SchedulerService.enableBandwidthEstimates(
-                ODProto.BandwidthEstimate.newBuilder()
-                        .setType(ODProto.BandwidthEstimate.Type.ACTIVE)
-                        .addAllWorkerType(getWorkerTypes().typeList)
-                        .build()
-        )
-        SchedulerService.enableHeartBeat(ODUtils.genWorkerTypes()){super.init()}
+        SchedulerService.listenForWorkers(true) {
+            SchedulerService.enableBandwidthEstimates(
+                    ODProto.BandwidthEstimate.newBuilder()
+                            .setType(ODProto.BandwidthEstimate.Type.ACTIVE)
+                            .addAllWorkerType(getWorkerTypes().typeList)
+                            .build()
+            ) { super.init() }
+        }
+        //SchedulerService.enableHeartBeat(ODUtils.genWorkerTypes()){super.init()}
     }
 
     private fun removeWorker(worker: ODProto.Worker?) {
@@ -42,6 +44,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
 
     override fun destroy() {
         SchedulerService.disableBandwidthEstimates()
+        SchedulerService.listenForWorkers(false)
         rankedWorkers.clear()
         super.destroy()
     }
@@ -117,6 +120,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
     * Converter x em 0.0-1.0
     */
     private fun crossMultiplication(A: Float, B: Float, C: Float = 1.0f): Float {
+        if (B == 0.0f) return 0f
         return (C*A)/B
     }
 

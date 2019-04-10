@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Job
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Model
@@ -63,7 +64,7 @@ object BrokerService {
         scheduler.notifyWorkerUpdate(worker) { S ->
             if (S?.code == ODProto.StatusCode.Error) {
                 sleep(50)
-                BrokerService.updateWorker(worker, latch)
+                updateWorker(worker, latch)
             } else (latch.countDown())
         }
     }
@@ -129,8 +130,10 @@ object BrokerService {
     }
 
     private fun checkWorker(worker: ODProto.Worker?, address: String) {
+        ODLogger.logInfo("checkWorker")
         if (worker == null) return
         if (worker.id !in workers){
+            ODLogger.logInfo("New Device found ${worker.id}")
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { StatusUpdate ->
                 if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) {}
                 else scheduler.notifyWorkerFailure(workers[worker.id]?.getProto()) {}

@@ -132,10 +132,10 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { println("enableHearBeats Status: ${call.get().code.name}"); callback(call.get()) }, AbstractODLib.executorPool)
     }
 
-    fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate) {
+    fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate, callback: ((ODProto.Status) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.enableBandwidthEstimates(bandwidthEstimateConfig)
-        call.addListener(Runnable { println("enableBandwidthEstimates Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { println("enableBandwidthEstimates Status: ${call.get().code.name}"); callback(call.get()) }, AbstractODLib.executorPool)
     }
 
     fun disableHearBeats() {

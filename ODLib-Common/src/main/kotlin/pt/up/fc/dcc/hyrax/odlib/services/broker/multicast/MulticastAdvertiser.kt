@@ -60,7 +60,7 @@ object MulticastAdvertiser {
             mcSocket.loopbackMode = true
             mcSocket.joinGroup(mcIPAddress)
             do {
-                synchronized(MESSAGE_LOCK) { if (packet != null) mcSocket.send(packet) }
+                synchronized(MESSAGE_LOCK) { if (packet != null) mcSocket.send(packet)}
                 sleep(multicastFrequency)
             } while (runningLock.get())
 

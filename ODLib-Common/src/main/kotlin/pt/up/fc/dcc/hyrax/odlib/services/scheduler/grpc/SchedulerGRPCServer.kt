@@ -21,11 +21,11 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
         }
 
         override fun notifyWorkerUpdate(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
-            genericComplete(ODProto.Status.newBuilder().setCode(SchedulerService.notifyWorkerUpdate(request)).build(), responseObserver)
+            genericComplete(ODUtils.genStatus(SchedulerService.notifyWorkerUpdate(request)), responseObserver)
         }
 
         override fun notifyWorkerFailure(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
-            genericComplete(ODProto.Status.newBuilder().setCode(SchedulerService.notifyWorkerFailure(request)).build(), responseObserver)
+            genericComplete(ODUtils.genStatus(SchedulerService.notifyWorkerFailure(request)), responseObserver)
         }
 
         override fun listSchedulers(request: Empty?, responseObserver: StreamObserver<ODProto.Schedulers>?) {

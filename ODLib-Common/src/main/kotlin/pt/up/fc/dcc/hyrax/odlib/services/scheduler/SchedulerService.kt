@@ -127,8 +127,8 @@ object SchedulerService {
         brokerGRPC.enableHearBeats(workerTypes, callback)
     }
 
-    internal fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate) {
-        brokerGRPC.enableBandwidthEstimates(bandwidthEstimateConfig)
+    internal fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate, callback: (ODProto.Status) -> Unit) {
+        brokerGRPC.enableBandwidthEstimates(bandwidthEstimateConfig, callback)
     }
 
     internal fun disableHeartBeat() {
