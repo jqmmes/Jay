@@ -40,7 +40,9 @@ object BrokerService {
     init {
         workers[local.id] = local
         workers[cloud.id] = cloud
-        cloud.enableAutoStatusUpdate()
+        cloud.enableAutoStatusUpdate {workerInfo ->
+            if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workerInfo) {}
+        }
     }
 
     fun start(useNettyServer: Boolean = false) {
@@ -63,7 +65,7 @@ object BrokerService {
     }
 
     fun stopServer() {
-        server?.stop()
+        server?.stopNowAndWait()
     }
 
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {

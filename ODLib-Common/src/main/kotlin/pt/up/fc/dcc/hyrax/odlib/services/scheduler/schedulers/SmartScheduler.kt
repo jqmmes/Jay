@@ -13,7 +13,7 @@ import kotlin.random.Random
  * ultimos x updates
  */
 class SmartScheduler : Scheduler("SmartScheduler") {
-    private val rankedWorkers = LinkedBlockingDeque<RankedWorker>()
+    private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
     private var maxAvgTimePerJob = 0L
     private var maxBandwidthEstimate = 0L
 
@@ -39,7 +39,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
 
     // Return last ID higher score = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
-        return SchedulerService.getWorker(rankedWorkers.first.id!!)
+        return SchedulerService.getWorker(rankedWorkers.last.id!!)
     }
 
     override fun destroy() {
@@ -70,7 +70,9 @@ class SmartScheduler : Scheduler("SmartScheduler") {
         } else {
             rankedWorkers.elementAt(rankedWorkers.indexOf(RankedWorker(id=worker?.id))).score = calcScore(worker)
         }
-        rankedWorkers.sortedWith(compareBy {it.score})
+        println(rankedWorkers)
+        rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy {it.score}))
+        println(rankedWorkers)
     }
 
     private fun calcScore(worker: ODProto.Worker?): Float {

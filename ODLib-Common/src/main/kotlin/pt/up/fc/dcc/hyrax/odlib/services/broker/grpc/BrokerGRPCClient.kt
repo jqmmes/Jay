@@ -103,7 +103,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun setScheduler(id: String, callback: ((Boolean) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.setScheduler(ODProto.Scheduler.newBuilder().setId(id).build())
-        call.addListener(Runnable { callback(call.get().code == ODProto.StatusCode.Success) }, AbstractODLib.executorPool)
+        call.addListener(Runnable { try {callback(call.get().code == ODProto.StatusCode.Success)} catch(e: ExecutionException) {callback(false)} }, AbstractODLib.executorPool)
     }
 
     fun advertiseWorkerStatus(request: ODProto.Worker?, completeCallback: () -> Unit) {
@@ -115,7 +115,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun diffuseWorkerStatus(request: ODProto.Worker?) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.diffuseWorkerStatus(request)
-        call.addListener(Runnable { println("diffuseWorkerStatus Status: ${call.get().code.name}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { try {println("diffuseWorkerStatus Status: ${call.get().code.name}")} catch(e: ExecutionException){} }, AbstractODLib.executorPool)
     }
 
     fun requestWorkerStatus(callback: ((ODProto.Worker?) -> Unit)){
@@ -183,7 +183,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             call.addListener(Runnable {
                 try {
                     callback.invoke(call.get())
-                } catch (e: StatusRuntimeException) { }
+                } catch (e: Exception) { }
             }, AbstractODLib.executorPool)
         } catch (e: StatusRuntimeException) { }
     }

@@ -1,3 +1,4 @@
 Manifest-Version: 1.0
-Main-Class: pt.up.fc.dcc.hyrax.odlib.ODCloud
+Class-Path: libs/ODLib-Cloudlet.jar
+Main-Class: pt.up.fc.dcc.hyrax.odcloud.ODCloud
 

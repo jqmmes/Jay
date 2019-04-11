@@ -16,6 +16,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.WorkerAndroidService
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.DroidBatteryDetails
 
@@ -117,7 +118,7 @@ class ODLib(val context : Context) : AbstractODLib() {
 
     override fun stopWorker() {
         if (!serviceRunningWorker()) return
-        WorkerGRPCClient("127.0.0.1").stopService() {
+        WorkerGRPCClient("127.0.0.1").stopService {
             context.stopService(Intent(context, WorkerAndroidService::class.java))
             if (!serviceRunningScheduler()) stopBroker()
         }
@@ -135,8 +136,8 @@ class ODLib(val context : Context) : AbstractODLib() {
             context.stopService(Intent(context, SchedulerAndroidService::class.java))
             if (!serviceRunningWorker()) stopBroker()
         }*/
-        WorkerGRPCClient("127.0.0.1").stopService() {
-            context.stopService(Intent(context, WorkerAndroidService::class.java))
+        SchedulerGRPCClient("127.0.0.1").stopService {
+            context.stopService(Intent(context, SchedulerAndroidService::class.java))
             if (!serviceRunningWorker()) stopBroker()
         }
     }

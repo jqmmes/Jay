@@ -34,9 +34,9 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun stopService(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
-            WorkerService.stopService() { S ->
+            WorkerService.stopService { S ->
                 genericComplete(S, responseObserver)
-                BrokerService.stopServer()
+                WorkerService.stopServer()
             }
         }
     }

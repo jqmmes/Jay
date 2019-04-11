@@ -28,8 +28,8 @@ object SchedulerService {
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
     private var running = false
 
-    internal var weights: ODProto.Weights = ODProto.Weights.newBuilder().setComputeTime(0.3f).setQueueSize(0.1f)
-            .setRunningJobs(0.1f).setBattery(0.2f).setBandwidth(0.3f).build()
+    internal var weights: ODProto.Weights = ODProto.Weights.newBuilder().setComputeTime(0.5f).setQueueSize(0.1f)
+            .setRunningJobs(0.1f).setBattery(0.2f).setBandwidth(0.1f).build()
 
     private val schedulers: Array<Scheduler> = arrayOf(
             SingleDeviceScheduler(Worker.Type.LOCAL),
@@ -110,7 +110,7 @@ object SchedulerService {
         running = false
         if (stopGRPCServer) server?.stop()
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {
-            ODLogger.logInfo("WorkerService Stopped")
+            ODLogger.logInfo("SchedulerService Stopped")
         }
     }
 
@@ -120,7 +120,7 @@ object SchedulerService {
     }
 
     fun stopServer() {
-        server?.stop()
+        server?.stopNowAndWait()
     }
 
     internal fun listSchedulers() : ODProto.Schedulers {

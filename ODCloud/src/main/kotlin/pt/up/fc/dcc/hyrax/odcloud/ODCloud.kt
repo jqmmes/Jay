@@ -1,5 +1,7 @@
-package pt.up.fc.dcc.hyrax.odlib
+package pt.up.fc.dcc.hyrax.odcloud
 
+
+import pt.up.fc.dcc.hyrax.odlib.ODLib
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
@@ -33,7 +35,7 @@ class ODCloud {
             //WorkerService.setWorkingThreads(StatusManager.cpuDetails.getAvailableCores())
             odLib.startWorker()
             sleep(5000)
-            odLib.listModels {ML -> odLib.setModel(ML.first()) }
+            odLib.listModels { ML -> odLib.setModel(ML.first()) }
 
             Runtime.getRuntime().addShutdownHook(object : Thread() {
                 override fun run() {

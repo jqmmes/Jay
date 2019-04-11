@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib
+package pt.up.fc.dcc.hyrax.odcloud
 
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import java.util.concurrent.CountDownLatch

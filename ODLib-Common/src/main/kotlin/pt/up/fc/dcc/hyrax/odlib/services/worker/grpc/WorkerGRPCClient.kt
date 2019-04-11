@@ -2,8 +2,10 @@ package pt.up.fc.dcc.hyrax.odlib.services.worker.grpc
 
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
+import io.grpc.StatusRuntimeException
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -23,7 +25,7 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
     fun execute(job: ODProto.Job?, callback: ((ODProto.Results?) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val futureJob = futureStub.execute(job)
-        futureJob.addListener(Runnable{ callback?.invoke(futureJob.get()) }, AbstractODLib.executorPool)
+        futureJob.addListener(Runnable{ try { callback?.invoke(futureJob.get()) } catch (e: ExecutionException) { ODLogger.logWarn("Execution (id: ${job?.id} canceled")} }, AbstractODLib.executorPool)
     }
 
     fun listModels(callback: ((ODProto.Models) -> Unit)? = null) {
@@ -39,7 +41,7 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
 
     fun selectModel(request: ODProto.Model?, callback: ((ODProto.Status?) -> Unit)?) {
         val call = futureStub.selectModel(request)
-        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
+        call.addListener(Runnable { try {callback?.invoke(call.get())} catch (e: ExecutionException) {} }, AbstractODLib.executorPool)
     }
 
     fun testService(serviceStatus: ((ODProto.ServiceStatus?) -> Unit)) {

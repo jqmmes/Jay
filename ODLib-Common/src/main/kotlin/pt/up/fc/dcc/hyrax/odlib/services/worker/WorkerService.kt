@@ -63,7 +63,7 @@ object WorkerService {
         }
     }
 
-    fun stop(stopGRPCServer: Boolean = true) {
+    fun stop(stopGRPCServer: Boolean = true, callback: ((ODProto.Status?) -> Unit)? = null) {
         running = false
         if (stopGRPCServer) server?.stop()
         waitingResultsMap.clear()
@@ -71,8 +71,9 @@ object WorkerService {
         jobQueue.offer(RunnableJobObjects(null) {})
         executor.shutdownNow()
         WorkerProfiler.destroy()
-        brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(false).build()) {
+        brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(false).build()) {S ->
             ODLogger.logInfo("WorkerService Stopped")
+            callback?.invoke(S)
         }
     }
 
@@ -88,12 +89,11 @@ object WorkerService {
     internal fun isRunning() : Boolean { return running }
 
     fun stopService(callback: ((ODProto.Status?) -> Unit)) {
-        stop(false)
-        callback(ODUtils.genStatusSuccess())
+        stop(false) {S -> callback(S)}
     }
 
     fun stopServer() {
-        server?.stop()
+        server?.stopNowAndWait()
     }
 
     private class RunnableJobObjects(val job: ODProto.Job?, var callback: ((List<Detection>) -> Unit)?) : Runnable {

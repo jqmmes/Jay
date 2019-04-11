@@ -48,6 +48,11 @@ abstract class GRPCServerBase(private val port: Int,
         server?.shutdown()
     }
 
+    fun stopNowAndWait() {
+        server?.shutdownNow()
+        server?.awaitTermination()
+    }
+
     /**
      * Await termination on the main thread since the grpc library uses daemon threads.
      */

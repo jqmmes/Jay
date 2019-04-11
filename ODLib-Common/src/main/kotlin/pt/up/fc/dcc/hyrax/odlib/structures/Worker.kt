@@ -10,6 +10,8 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
 class Worker(val id: String = UUID.randomUUID().toString(), address: String, val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE, checkHearBeat: Boolean = false, bwEstimates: Boolean = false, statusChangeCallback: ((Status) -> Unit)? = null){
@@ -29,17 +31,16 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var batteryStatus : ODProto.Worker.BatteryStatus = BatteryStatus.CHARGED
     private var totalMemory = 0L
     private var freeMemory = 0L
-    private var status = Status.ONLINE
+    private var status = Status.OFFLINE
     private var bandwidthEstimate: Int = 0
     // TODO: Implement more variables
     //private var freeSpace = Long.MAX_VALUE
     //private var computationLoad = 0
     //private var connections = 0
 
-    private val smartTimer: Timer = Timer()
+    private var smartPingScheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
     private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
     private var consecutiveTransientFailurePing = 0
-    private var consecutiveConnectingPing = 0
     private var proto : ODProto.Worker? = null
     private var autoStatusUpdate = false
     private var autoStatusUpdateRunning = CountDownLatch(0)
@@ -48,6 +49,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var checkingHeartBeat = false
 
     private var statusChangeCallback: ((Status) -> Unit)? = null
+    private var workerInforUpdateNotify: ((ODProto.Worker?) -> Unit)? = null
 
 
     constructor(proto: ODProto.Worker?, address: String, checkHearBeat: Boolean, bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address){
@@ -102,16 +104,19 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         return proto
     }
 
-    internal fun enableAutoStatusUpdate() {
+    internal fun enableAutoStatusUpdate(updateNotify: (ODProto.Worker?) -> Unit) {
+        workerInforUpdateNotify = updateNotify
         if (autoStatusUpdate) return
         thread {
             autoStatusUpdate = true
             autoStatusUpdateRunning = CountDownLatch(1)
             var backoffCount = 0
             do {
-                if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE)
-                    grpc.requestWorkerStatus { W -> updateStatus(W) }
-                else if(++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
+                if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
+                    if (isOnline()) grpc.requestWorkerStatus { W -> workerInforUpdateNotify?.invoke(updateStatus(W)) }
+                } else {
+                    if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
+                }
                 sleep(ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS)
             } while (autoStatusUpdate)
             autoStatusUpdateRunning.countDown()
@@ -131,11 +136,12 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
         checkingHeartBeat = true
         this.statusChangeCallback = statusChangeCallback
-        try { smartTimer.schedule(RTTTimer(), 0L) } catch (ignore: IllegalStateException) {}
+        if (smartPingScheduler.isShutdown) smartPingScheduler = ScheduledThreadPoolExecutor(1)
+        smartPingScheduler.schedule(RTTTimer(), 0L, TimeUnit.MILLISECONDS)
     }
 
     fun disableHeartBeat() {
-        smartTimer.cancel()
+        smartPingScheduler.shutdownNow()
         checkingHeartBeat = false
         statusChangeCallback = null
     }
@@ -171,7 +177,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         return status == Status.ONLINE
     }
 
-    private inner class RTTTimer : TimerTask() {
+    private inner class RTTTimer : Runnable {
         override fun run() {
             grpc.ping(pingPayloadSize, timeout = ODSettings.pingTimeout, callback = { T ->
                 if (T == -1) {
@@ -179,34 +185,34 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                         status = Status.OFFLINE
                         statusChangeCallback?.invoke(status)
                     }
-                    smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
+                    if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
                 } else if (T == -2) { // TRANSIENT_FAILURE
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
-                            smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
+                            if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
                             consecutiveTransientFailurePing = 0
                         } else {
-                            smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillisFailRetry)
+                            if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillisFailRetry, TimeUnit.MILLISECONDS)
                         }
-                    } else { smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis) }
+                    } else { if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS) }
 
                 } else if (T == -3) { // CONNECTING
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
-                            smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
+                            if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
                             consecutiveTransientFailurePing = 0
-                        } else { smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillisFailRetry) }
-                    } else { smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis) }
+                        } else { if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillisFailRetry, TimeUnit.MILLISECONDS) }
+                    } else { if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS) }
                 } else {
                     if (status == Status.OFFLINE) {
                         status = Status.ONLINE
                         statusChangeCallback?.invoke(status)
                     }
-                    smartTimer.schedule(RTTTimer(), ODSettings.RTTDelayMillis)
+                    if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
                     if (calcRTT) addRTT(T)
                 }
             })
