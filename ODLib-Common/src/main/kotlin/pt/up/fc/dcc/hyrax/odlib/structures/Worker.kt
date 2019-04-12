@@ -6,6 +6,7 @@ import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.odlib.services.worker.BatteryMonitor
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.lang.Thread.sleep
 import java.util.*
@@ -49,7 +50,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var checkingHeartBeat = false
 
     private var statusChangeCallback: ((Status) -> Unit)? = null
-    private var workerInforUpdateNotify: ((ODProto.Worker?) -> Unit)? = null
+    private var workerInfoUpdateNotify: ((ODProto.Worker?) -> Unit)? = null
+
 
 
     constructor(proto: ODProto.Worker?, address: String, checkHearBeat: Boolean, bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address){
@@ -105,7 +107,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     }
 
     internal fun enableAutoStatusUpdate(updateNotify: (ODProto.Worker?) -> Unit) {
-        workerInforUpdateNotify = updateNotify
+        workerInfoUpdateNotify = updateNotify
         if (autoStatusUpdate) return
         thread {
             autoStatusUpdate = true
@@ -113,7 +115,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
             var backoffCount = 0
             do {
                 if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
-                    if (isOnline()) grpc.requestWorkerStatus { W -> workerInforUpdateNotify?.invoke(updateStatus(W)) }
+                    if (isOnline()) grpc.requestWorkerStatus { W -> workerInfoUpdateNotify?.invoke(updateStatus(W)) }
                 } else {
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
                 }

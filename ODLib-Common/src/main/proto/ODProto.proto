@@ -57,8 +57,8 @@ message Worker {
 
     enum BatteryStatus {
         CHARGED = 0;
-        CHARGING = 1;
-        USB = 2;
+        CHARGING = 1; // AC Charging
+        USB = 2; // USB Charging
         DISCHARGING = 3;
     }
     BatteryStatus batteryStatus = 4;

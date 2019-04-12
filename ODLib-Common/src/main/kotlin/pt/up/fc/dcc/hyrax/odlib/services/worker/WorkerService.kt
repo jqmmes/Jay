@@ -40,10 +40,11 @@ object WorkerService {
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
     }
 
-    fun start(localDetect: DetectObjects, useNettyServer: Boolean = false) {
+    fun start(localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null) {
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(ODSettings.workingThreads)
         this.localDetect = localDetect
+        WorkerProfiler.setBatteryMonitor(batteryMonitor)
 
         server = WorkerGRPCServer(useNettyServer).start()
         WorkerProfiler.start()
@@ -75,6 +76,11 @@ object WorkerService {
             ODLogger.logInfo("WorkerService Stopped")
             callback?.invoke(S)
         }
+    }
+
+    fun monitorBattery() {
+        println("Monitoring Battery")
+        WorkerProfiler.monitorBattery()
     }
 
     fun loadModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {

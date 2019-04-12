@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker
 
 import org.apache.commons.collections4.queue.CircularFifoQueue
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -24,6 +25,8 @@ internal object WorkerProfiler {
     private var queueSize : Int = Int.MAX_VALUE
 
     private var battery: Int = 100
+    private var batteryStatus : ODProto.Worker.BatteryStatus = ODProto.Worker.BatteryStatus.CHARGED
+    private var batteryMonitor: BatteryMonitor? = null
 
 
     internal fun start() {
@@ -61,6 +64,18 @@ internal object WorkerProfiler {
         }
     }
 
+    internal fun setBatteryMonitor(monitor: BatteryMonitor?) {
+        this.batteryMonitor = monitor
+    }
+
+
+    internal fun monitorBattery() {
+        batteryMonitor?.setCallbacks(
+                levelChangeCallback = {level -> this.battery = level },
+                statusChangeCallback= {status -> this.batteryStatus = status })
+        batteryMonitor?.monitor()
+    }
+
     private fun statusNotify() {
         freeMemory = Runtime.getRuntime().freeMemory()
         builder.clear()
@@ -69,6 +84,7 @@ internal object WorkerProfiler {
         builder.freeMemory = freeMemory
         builder.queueSize = queueSize
         builder.battery = battery
+        builder.batteryStatus = batteryStatus
         builder.runningJobs = runningJobs.get()
         builder.avgTimePerJob = if (averageComputationTimes.size > 0) averageComputationTimes.sum()/averageComputationTimes.size else 0
         brokerGRPC.diffuseWorkerStatus(builder.build())

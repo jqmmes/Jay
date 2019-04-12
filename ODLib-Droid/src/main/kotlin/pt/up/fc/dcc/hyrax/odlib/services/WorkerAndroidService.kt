@@ -5,12 +5,15 @@ import android.content.Intent
 import android.os.IBinder
 import pt.up.fc.dcc.hyrax.odlib.ODLib
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
+import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.AndroidBatteryMonitor
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.DroidTensorFlow
 
 internal class WorkerAndroidService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        WorkerService.start(DroidTensorFlow(this), true)
+
+        WorkerService.start(DroidTensorFlow(this), true, batteryMonitor = AndroidBatteryMonitor(this))
+        WorkerService.monitorBattery()
         return super.onStartCommand(intent, flags, startId)
     }
 

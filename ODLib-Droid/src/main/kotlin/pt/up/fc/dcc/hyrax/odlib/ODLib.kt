@@ -18,7 +18,6 @@ import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.WorkerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
-import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.DroidBatteryDetails
 
 
 class ODLib(val context : Context) : AbstractODLib() {
@@ -45,7 +44,6 @@ class ODLib(val context : Context) : AbstractODLib() {
 
 
     init {
-        DroidBatteryDetails.monitorBattery(context)
         Intent(context, ClientAndroidService::class.java).also { intent -> context.bindService(intent, clientConnection, Context.BIND_AUTO_CREATE)}
     }
 
