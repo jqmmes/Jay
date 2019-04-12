@@ -32,8 +32,8 @@ abstract class AbstractODLib {
         broker.selectModel(model, callback)
     }
 
-    fun setScheduler(id: String) {
-        broker.setScheduler(id) {S -> println("schedulerSet $S")}
+    fun setScheduler(id: String, completeCallback: (Boolean) -> Unit) {
+        broker.setScheduler(id, completeCallback)
     }
 
     protected open fun startBroker() {
@@ -73,5 +73,11 @@ abstract class AbstractODLib {
         stopWorker()
         stopScheduler()
         stopBroker()
+    }
+
+    fun updateSmartWeights(computeWeight: Float, jobsWeight: Float, queueWeight: Float, batteryWeight: Float, bandwidthWeight: Float, callback: ((Boolean) -> Unit)) {
+        broker.updateSmartSchedulerWeights(computeWeight, queueWeight, jobsWeight, batteryWeight, bandwidthWeight) {S ->
+            callback(S?.code == ODProto.StatusCode.Success)
+        }
     }
 }

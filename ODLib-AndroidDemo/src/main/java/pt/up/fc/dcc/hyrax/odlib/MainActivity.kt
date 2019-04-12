@@ -15,6 +15,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import com.google.common.primitives.Floats.min
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 //import pt.up.fc.dcc.hyrax.odlib.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
@@ -26,7 +27,188 @@ import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
 @Suppress("UNUSED_PARAMETER")
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
+    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+        when (seekBar?.id) {
+            R.id.computeSeekBar -> updateWeights(computeWeight=progress/100.0f)
+            R.id.jobsSeekBar -> updateWeights(jobsWeight=progress/100.0f)
+            R.id.queueSeekBar -> updateWeights(queueWeight=progress/100.0f)
+            R.id.batterySeekBar -> updateWeights(batteryWeight=progress/100.0f)
+            R.id.bandwidthSeekBar -> updateWeights(bandwidthWeight=progress/100.0f)
+            else -> updateWeights()
+        }
+    }
+
+    private var computeWeight = 0.5f
+    private var jobsWeight = 0.1f
+    private var queueWeight = 0.1f
+    private var batteryWeight = 0.2f
+    private var bandwidthWeight = 0.1f
+
+    private fun updateWeights(computeWeight: Float = this.computeWeight, jobsWeight: Float = this.jobsWeight, queueWeight: Float = this.queueWeight, batteryWeight: Float = this.batteryWeight, bandwidthWeight: Float = this.bandwidthWeight) {
+        when {
+            computeWeight != this.computeWeight -> {
+                this.computeWeight = computeWeight
+                val increment = (1.0f - sumWeights())/4.0f
+                incrementWeights(0f,increment,increment,increment,increment)
+            }
+            jobsWeight != this.jobsWeight -> {
+                this.jobsWeight = jobsWeight
+                val increment = (1.0f - sumWeights())/4.0f
+                incrementWeights(increment,0f,increment,increment,increment)
+            }
+            queueWeight != this.queueWeight -> {
+                this.queueWeight = queueWeight
+                val increment = (1.0f - sumWeights())/4.0f
+                incrementWeights(increment,increment,0f,increment,increment)
+            }
+            batteryWeight != this.batteryWeight -> {
+                this.batteryWeight = batteryWeight
+                val increment = (1.0f - sumWeights())/4.0f
+                incrementWeights(increment,increment,increment,0f,increment)
+            }
+            bandwidthWeight != this.bandwidthWeight -> {
+                this.bandwidthWeight = bandwidthWeight
+                val increment = (1.0f - sumWeights())/4.0f
+                incrementWeights(increment,increment,increment,increment,0f)
+            }
+        }
+    }
+
+    private fun incrementWeights(computeWeight: Float = 0f, jobsWeight: Float = 0f, queueWeight: Float = 0f, batteryWeight: Float = 0f, bandwidthWeight: Float = 0f) {
+        this.computeWeight += computeWeight
+            if (this.computeWeight < 0f) {
+                val additional = -(this.computeWeight/3.0)
+                this.computeWeight = 0f
+                when {
+                    jobsWeight != 0f -> this.jobsWeight + additional
+                    queueWeight != 0f -> this.queueWeight + additional
+                    batteryWeight != 0f -> this.batteryWeight + additional
+                    bandwidthWeight != 0f -> this.bandwidthWeight + additional
+                }
+            }
+        this.jobsWeight += jobsWeight
+        if (this.jobsWeight < 0f) {
+            val additional = -(this.jobsWeight/3.0)
+            this.jobsWeight = 0f
+            when {
+                computeWeight != 0f -> this.computeWeight + additional
+                queueWeight != 0f -> this.queueWeight + additional
+                batteryWeight != 0f -> this.batteryWeight + additional
+                bandwidthWeight != 0f -> this.bandwidthWeight + additional
+            }
+        }
+        this.queueWeight += queueWeight
+        if (this.queueWeight < 0f) {
+            val additional = -(this.queueWeight/3.0)
+            this.queueWeight = 0f
+            when {
+                jobsWeight != 0f -> this.jobsWeight + additional
+                computeWeight != 0f -> this.computeWeight + additional
+                batteryWeight != 0f -> this.batteryWeight + additional
+                bandwidthWeight != 0f -> this.bandwidthWeight + additional
+            }
+        }
+        this.batteryWeight += batteryWeight
+        if (this.batteryWeight < 0f) {
+            val additional = -(this.batteryWeight/3.0)
+            this.batteryWeight = 0f
+            when {
+                jobsWeight != 0f -> this.jobsWeight + additional
+                queueWeight != 0f -> this.queueWeight + additional
+                computeWeight != 0f -> this.computeWeight + additional
+                bandwidthWeight != 0f -> this.bandwidthWeight + additional
+            }
+        }
+        this.bandwidthWeight += bandwidthWeight
+        if (this.bandwidthWeight < 0f) {
+            val additional = -(this.bandwidthWeight/3.0)
+            this.bandwidthWeight = 0f
+            when {
+                jobsWeight != 0f -> this.jobsWeight + additional
+                queueWeight != 0f -> this.queueWeight + additional
+                batteryWeight != 0f -> this.batteryWeight + additional
+                computeWeight != 0f -> this.computeWeight + additional
+            }
+        }
+        val sum = sumWeights()
+        if (sum > 1f) {
+            val excess = sum-1f
+            when {
+                computeWeight == 0f -> removeExcess(excess, compute = true)
+                jobsWeight == 0f -> removeExcess(excess, jobs = true)
+                queueWeight == 0f -> removeExcess(excess, queue = true)
+                batteryWeight == 0f -> removeExcess(excess, battery = true)
+                bandwidthWeight == 0f -> removeExcess(excess, bandwidth = true)
+            }
+        }
+    }
+
+    private fun removeExcess(excess: Float, compute: Boolean = false, jobs: Boolean = false, queue: Boolean = false, battery: Boolean = false, bandwidth: Boolean = false) {
+        var toDiv = 0
+        when {
+            !compute && computeWeight > 0f -> toDiv++
+            !jobs && jobsWeight > 0f -> toDiv++
+            !queue && queueWeight > 0f -> toDiv++
+            !battery && batteryWeight > 0f -> toDiv++
+            !bandwidth && bandwidthWeight > 0f -> toDiv++
+        }
+        val additional = excess/toDiv.toFloat()
+        var newExcess = 0f
+                if (computeWeight > 0f && !compute) {
+                    val toRemove = min(computeWeight, additional)
+                    computeWeight -= toRemove
+                    newExcess += (additional-toRemove)
+                }
+                if (jobsWeight > 0f && !jobs) {
+                    val toRemove = min(jobsWeight, additional)
+                    jobsWeight -= toRemove
+                    newExcess += (additional-toRemove)
+                }
+                if (queueWeight > 0f && !queue) {
+                    val toRemove = min(queueWeight, additional)
+                    queueWeight -= toRemove
+                    newExcess += (additional-toRemove)
+                }
+                if (batteryWeight > 0f && !battery) {
+                    val toRemove = min(batteryWeight, additional)
+                    batteryWeight -= toRemove
+                    newExcess += (additional-toRemove)
+                }
+                if (bandwidthWeight > 0f && !bandwidth) {
+                    val toRemove = min(bandwidthWeight, additional)
+                    bandwidthWeight -= toRemove
+                    newExcess += (additional-toRemove)
+                }
+        if (newExcess > 0) removeExcess(newExcess, compute, jobs, queue, battery, bandwidth)
+    }
+
+    private fun sumWeights() : Float{
+        return computeWeight+jobsWeight+queueWeight+batteryWeight+bandwidthWeight
+    }
+
+    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+    override fun onStopTrackingTouch(seekBar: SeekBar?) {
+        updateSeekBars()
+        if (odClient.serviceRunningScheduler()) odClient.updateSmartWeights(computeWeight, jobsWeight, queueWeight, batteryWeight, bandwidthWeight) {S ->
+            if (S) runOnUiThread { Toast.makeText(applicationContext,"Smart Weights updated",Toast.LENGTH_SHORT).show() }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun updateSeekBars() {
+        findViewById<SeekBar>(R.id.computeSeekBar).progress = (computeWeight*100).toInt()
+        findViewById<SeekBar>(R.id.jobsSeekBar).progress = (jobsWeight*100).toInt()
+        findViewById<SeekBar>(R.id.queueSeekBar).progress = (queueWeight*100).toInt()
+        findViewById<SeekBar>(R.id.batterySeekBar).progress = (batteryWeight*100).toInt()
+        findViewById<SeekBar>(R.id.bandwidthSeekBar).progress = (bandwidthWeight*100).toInt()
+        findViewById<TextView>(R.id.computeWeight).text = "%.2f".format(computeWeight)
+        findViewById<TextView>(R.id.jobWeight).text = "%.2f".format(jobsWeight)
+        findViewById<TextView>(R.id.queueWeight).text = "%.2f".format(queueWeight)
+        findViewById<TextView>(R.id.batteryWeight).text = "%.2f".format(batteryWeight)
+        findViewById<TextView>(R.id.bandwidthWeight).text = "%.2f".format(bandwidthWeight)
+    }
 
     private lateinit var loggingConsole: LogInterface
     private val requestExternalStorage = 1
@@ -224,8 +406,15 @@ class MainActivity : AppCompatActivity() {
                 for (scheduler in schedulersIds)
                     if (scheduler.second == parent?.selectedItem) {
                         thread {
-                            println(parent.selectedItem)
-                            odClient.setScheduler(scheduler.first)
+                            odClient.setScheduler(scheduler.first) {S ->
+                                if(S) {
+                                    runOnUiThread { Toast.makeText(applicationContext,"Scheduler ${parent.selectedItem} set", Toast.LENGTH_SHORT).show() }
+                                    odClient.updateSmartWeights(computeWeight, jobsWeight, queueWeight, batteryWeight, bandwidthWeight) {SS ->
+                                        if (SS) runOnUiThread { Toast.makeText(applicationContext,"Smart Weights updated",Toast.LENGTH_SHORT).show() }
+                                        println("Weights $SS")
+                                    }
+                                }
+                            }
                         }
                     }
             }
@@ -239,6 +428,15 @@ class MainActivity : AppCompatActivity() {
 
         schedulerArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, schedulersArrayList)
         modelArrayAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modelsArrayList)
+
+        findViewById<SeekBar>(R.id.computeSeekBar).setOnSeekBarChangeListener(this)
+        findViewById<SeekBar>(R.id.jobsSeekBar).setOnSeekBarChangeListener(this)
+        findViewById<SeekBar>(R.id.queueSeekBar).setOnSeekBarChangeListener(this)
+        findViewById<SeekBar>(R.id.batterySeekBar).setOnSeekBarChangeListener(this)
+        findViewById<SeekBar>(R.id.bandwidthSeekBar).setOnSeekBarChangeListener(this)
+
+        updateSeekBars()
+
 
         verifyStoragePermissions(this)
         requestBatteryPermissions()

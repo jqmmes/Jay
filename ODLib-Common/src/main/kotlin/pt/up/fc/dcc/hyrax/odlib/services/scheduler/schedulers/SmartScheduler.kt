@@ -39,7 +39,8 @@ class SmartScheduler : Scheduler("SmartScheduler") {
 
     // Return last ID higher score = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
-        return SchedulerService.getWorker(rankedWorkers.last.id!!)
+        if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.last.id!!)
+        return null
     }
 
     override fun destroy() {

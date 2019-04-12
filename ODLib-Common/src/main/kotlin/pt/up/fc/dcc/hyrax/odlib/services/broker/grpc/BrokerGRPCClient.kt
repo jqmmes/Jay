@@ -13,6 +13,7 @@ import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
+import java.lang.RuntimeException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -74,7 +75,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun updateWorkers(callback: (() -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.updateWorkers(Empty.getDefaultInstance())
-        call.addListener(Runnable{ call.get(); callback() }, AbstractODLib.executorPool)
+        call.addListener(Runnable{ try { call.get(); callback() } catch (e: RuntimeException) {callback()} }, AbstractODLib.executorPool)
     }
 
     fun selectModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {
@@ -165,12 +166,12 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                     bandwidth: Float, callback: ((ODProto.Status?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()
-            callback(ODUtils.genStatus(ODProto.StatusCode.Error))
+            callback(ODUtils.genStatusError())
         }
         val call = futureStub.updateSmartSchedulerWeights(ODProto.Weights.newBuilder().setComputeTime(computeTime)
                 .setQueueSize(queueSize).setRunningJobs(runningJobs).setBattery(battery).setBandwidth(bandwidth)
                 .build())
-        call.addListener(Runnable { callback(call.get()) }, AbstractODLib.executorPool)
+        call.addListener(Runnable { try { callback(call.get()) } catch (e: RuntimeException) {callback(ODUtils.genStatusError())} }, AbstractODLib.executorPool)
     }
 
     fun announceServiceStatus(serviceStatus: ODProto.ServiceStatus, callback: ((ODProto.Status?) -> Unit)) {

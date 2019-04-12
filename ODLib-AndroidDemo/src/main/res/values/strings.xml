@@ -27,4 +27,9 @@
     <string name="worker_service_on">Worker On</string>
     <string name="show_models">Show Models</string>
     <string name="show_schedulers">Show Schedulers</string>
+    <string name="computeTime">Compute Time</string>
+    <string name="runnningJobs">Running Jobs</string>
+    <string name="queueSize">Queue Size</string>
+    <string name="battery">Battery</string>
+    <string name="bandwidth">Bandwidth</string>
 </resources>

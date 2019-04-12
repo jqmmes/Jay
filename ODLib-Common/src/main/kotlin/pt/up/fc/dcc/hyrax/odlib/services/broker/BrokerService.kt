@@ -74,7 +74,7 @@ object BrokerService {
 
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
         if (schedulerServiceRunning) scheduler.schedule(request) { W ->
-            if (W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
+            if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
         } else callback?.invoke(Results.getDefaultInstance())
     }
 

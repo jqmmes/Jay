@@ -28,7 +28,6 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
     override fun scheduleJob(job: Job) : ODProto.Worker? {
         if (worker == null) {
             for (w in SchedulerService.getWorkers().values) {
-                println(w?.type)
                 if (w?.type == workerType) {
                     worker = w
                     break

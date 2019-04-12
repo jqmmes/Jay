@@ -23,6 +23,8 @@ internal object WorkerProfiler {
     var totalJobs : AtomicInteger = AtomicInteger(0)
     private var queueSize : Int = Int.MAX_VALUE
 
+    private var battery: Int = 100
+
 
     internal fun start() {
         brokerGRPC.announceMulticast()
@@ -66,6 +68,7 @@ internal object WorkerProfiler {
         builder.totalMemory = totalMemory
         builder.freeMemory = freeMemory
         builder.queueSize = queueSize
+        builder.battery = battery
         builder.runningJobs = runningJobs.get()
         builder.avgTimePerJob = if (averageComputationTimes.size > 0) averageComputationTimes.sum()/averageComputationTimes.size else 0
         brokerGRPC.diffuseWorkerStatus(builder.build())

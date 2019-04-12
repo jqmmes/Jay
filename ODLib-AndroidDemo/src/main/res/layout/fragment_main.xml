@@ -21,6 +21,7 @@
             app:layout_constraintVertical_bias="0.0" android:id="@+id/loggingConsole" android:padding="10dp"
             android:scrollbars="vertical"
             tools:ignore="SmallSp"/>
+
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="0dp"
@@ -29,6 +30,61 @@
             android:layout_marginStart="8dp" android:layout_marginEnd="8dp" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginBottom="8dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <LinearLayout android:layout_width="wrap_content" android:minWidth="60dp" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/computeTime"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/computeWeight"/>
+                <SeekBar
+                        android:id="@+id/computeSeekBar"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"/>
+            </LinearLayout>
+            <android.support.v4.widget.Space android:layout_width="5dp" android:layout_height="wrap_content"/>
+            <LinearLayout android:layout_width="wrap_content" android:minWidth="120dp" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/runnningJobs"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/jobWeight"/>
+                <SeekBar
+                        android:id="@+id/jobsSeekBar"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"/>
+            </LinearLayout>
+            <android.support.v4.widget.Space android:layout_width="5dp" android:layout_height="wrap_content"/>
+            <LinearLayout android:layout_width="wrap_content" android:minWidth="120dp" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/queueSize"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/queueWeight"/>
+                <SeekBar
+                        android:id="@+id/queueSeekBar"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"/>
+            </LinearLayout>
+            <android.support.v4.widget.Space android:layout_width="5dp" android:layout_height="wrap_content"/>
+            <LinearLayout android:layout_width="wrap_content" android:minWidth="120dp" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/battery"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/batteryWeight"/>
+                <SeekBar
+                        android:id="@+id/batterySeekBar"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"/>
+            </LinearLayout>
+            <android.support.v4.widget.Space android:layout_width="5dp" android:layout_height="wrap_content"/>
+            <LinearLayout android:layout_width="wrap_content" android:minWidth="120dp" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/bandwidth"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/bandwidthWeight"/>
+                <SeekBar
+                        android:id="@+id/bandwidthSeekBar"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+
         <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
