@@ -40,8 +40,14 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
     }
 
     fun selectModel(request: ODProto.Model?, callback: ((ODProto.Status?) -> Unit)?) {
+        println("WorkerGRPC::selectModel ...")
         val call = futureStub.selectModel(request)
-        call.addListener(Runnable { try {callback?.invoke(call.get())} catch (e: ExecutionException) {} }, AbstractODLib.executorPool)
+        call.addListener(Runnable { try {callback?.invoke(call.get())
+            println("WorkerGRPC::selectModel OK")
+        } catch (e: ExecutionException) {
+            println("WorkerGRPC::selectModel ERROR")
+            callback?.invoke(ODUtils.genStatusError())}
+        }, AbstractODLib.executorPool)
     }
 
     fun testService(serviceStatus: ((ODProto.ServiceStatus?) -> Unit)) {

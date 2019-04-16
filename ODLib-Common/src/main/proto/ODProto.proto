@@ -66,19 +66,20 @@ message Worker {
     int32 cpuCores = 5;
     int32 queueSize = 6;
     int32 runningJobs = 7;
+    int32 queuedJobs = 8;
 
-    int64 avgTimePerJob = 8;
+    int64 avgTimePerJob = 9;
 
     enum Type {
         LOCAL = 0;
         CLOUD = 1;
         REMOTE = 2;
     }
-    Type type = 9;
+    Type type = 10;
 
-    int32 bandwidthEstimate = 10; // KB/s valor a ser calculado no Broker e enviado para o scheduler
-    int64 totalMemory = 11;
-    int64 freeMemory = 12;
+    float bandwidthEstimate = 11; // KB/s valor a ser calculado no Broker e enviado para o scheduler
+    int64 totalMemory = 12;
+    int64 freeMemory = 13;
 
 }
 

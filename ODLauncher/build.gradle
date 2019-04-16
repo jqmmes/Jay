@@ -55,6 +55,7 @@ dependencies {
     // CURRENT_GRPC_VERSION
     implementation 'javax.annotation:javax.annotation-api:1.2'
     implementation project(':ODLib-Droid')
+    implementation project(':ODLib-Common')
 }
 repositories {
     mavenCentral()

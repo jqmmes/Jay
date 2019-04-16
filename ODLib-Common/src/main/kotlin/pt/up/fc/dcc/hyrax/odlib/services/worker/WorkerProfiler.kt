@@ -83,6 +83,7 @@ internal object WorkerProfiler {
         builder.totalMemory = totalMemory
         builder.freeMemory = freeMemory
         builder.queueSize = queueSize
+        builder.queuedJobs = totalJobs.get() - runningJobs.get()
         builder.battery = battery
         builder.batteryStatus = batteryStatus
         builder.runningJobs = runningJobs.get()

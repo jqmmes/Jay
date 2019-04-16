@@ -6,10 +6,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCServer
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.MultiDeviceScheduler
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SingleDeviceScheduler
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.SmartScheduler
+import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.*
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import kotlin.concurrent.thread
@@ -45,7 +42,8 @@ object SchedulerService {
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.REMOTE),
             MultiDeviceScheduler(false, Worker.Type.CLOUD, Worker.Type.REMOTE),
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE),
-            SmartScheduler()
+            SmartScheduler(),
+            EstimatedTimeScheduler()
     )
 
     internal fun getWorker(id: String) : Worker? {

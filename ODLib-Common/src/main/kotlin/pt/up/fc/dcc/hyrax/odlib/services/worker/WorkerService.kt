@@ -84,6 +84,7 @@ object WorkerService {
     }
 
     fun loadModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {
+        println("WorkerService::loadModel ...")
         if(running) localDetect.loadModel(model, callback)
     }
 

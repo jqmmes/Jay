@@ -12,6 +12,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.io.*
 import java.net.URL
 import java.net.URLConnection
@@ -93,13 +94,16 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     private fun loadModel(path: String) { //, score: Float
+        println("DroidTensorFlow::loadModel ...")
         ODLogger.logInfo("Loading Model from: $path")
         localDetector = null
         try {
             localDetector = TensorFlowObjectDetectionAPIModel.create(
                     Resources.getSystem().assets, path, tfOdApiInputSize)
+            println("DroidTensorFlow::loadModel SUCCESS")
             ODLogger.logInfo("Model loaded successfully")
         } catch (e: IOException) {
+            println("DroidTensorFlow::loadModel ERROR")
             ODLogger.logError("Error loading model")
         }
     }
@@ -128,6 +132,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 else ODLogger.logError("model Download Failed")
             }
             loadModel(File(modelPath, "frozen_inference_graph.pb").absolutePath)
+            completeCallback?.invoke(ODUtils.genStatusSuccess()!!)
         }
     }
 

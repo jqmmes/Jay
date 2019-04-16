@@ -28,19 +28,20 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var battery = 100
     private var cpuCores = 0
     private var queueSize = 1
+    private var queuedJobs = 0
     private var runningJobs = 0
     private var batteryStatus : ODProto.Worker.BatteryStatus = BatteryStatus.CHARGED
     private var totalMemory = 0L
     private var freeMemory = 0L
     private var status = Status.OFFLINE
-    private var bandwidthEstimate: Int = 0
+    private var bandwidthEstimate: Float = 0f
     // TODO: Implement more variables
     //private var freeSpace = Long.MAX_VALUE
     //private var computationLoad = 0
     //private var connections = 0
 
     private var smartPingScheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
-    private var circularFIFO: CircularFifoQueue<Int> = CircularFifoQueue(ODSettings.RTTHistorySize)
+    private var circularFIFO: CircularFifoQueue<Float> = CircularFifoQueue(ODSettings.RTTHistorySize)
     private var consecutiveTransientFailurePing = 0
     private var proto : ODProto.Worker? = null
     private var autoStatusUpdate = false
@@ -62,10 +63,10 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
 
     init {
         bandwidthEstimate = when (type) {
-            ODProto.Worker.Type.LOCAL -> 0
-            ODProto.Worker.Type.REMOTE -> 15
-            ODProto.Worker.Type.CLOUD -> 50
-            else -> 15
+            ODProto.Worker.Type.LOCAL -> 0f
+            ODProto.Worker.Type.REMOTE -> 15f
+            ODProto.Worker.Type.CLOUD -> 50f
+            else -> 15f
         }
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
         if (bwEstimates) doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
@@ -78,12 +79,12 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         worker.avgTimePerJob = avgComputingEstimate // Modified by Worker
         worker.cpuCores = cpuCores // Set by Worker
         worker.queueSize = queueSize // Set by Worker
+        worker.queuedJobs = queuedJobs
         worker.runningJobs = runningJobs // Modified by Worker
         worker.type = type // Set in Broker
         worker.bandwidthEstimate = bandwidthEstimate // Set internally
         worker.totalMemory = totalMemory
         worker.freeMemory = freeMemory
-        worker.bandwidthEstimate = bandwidthEstimate
         proto = worker.build()
     }
 
@@ -94,6 +95,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         runningJobs = proto.runningJobs
         cpuCores = proto.cpuCores
         queueSize = proto.queueSize
+        queuedJobs = proto.queuedJobs
         batteryStatus = proto.batteryStatus
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
@@ -131,8 +133,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     }
 
     private fun addRTT(millis: Int) {
-        circularFIFO.add(millis)
-        bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0
+        circularFIFO.add(millis.toFloat()/pingPayloadSize)
+        bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0f
     }
 
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {

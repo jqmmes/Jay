@@ -69,6 +69,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 assetManager : AssetManager,
                 modelFilename : String,
                 inputSize : Int) : Classifier? {
+            println("TensorFlowObjectDetectionAPIModel::create ...")
             val d = TensorFlowObjectDetectionAPIModel()
 
             /*val labelsInput: InputStream?
@@ -90,7 +91,9 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 return null
             }
 
+
             loadedGraph = d.inferenceInterface.graph()
+
 
             //TensorFlowInferenceInterface(loadedGraph) //create new session
 
@@ -116,6 +119,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             d.outputLocations = FloatArray(MAX_RESULTS * 4)
             d.outputClasses = FloatArray(MAX_RESULTS)
             d.outputNumDetections = FloatArray(1)
+
             return d
         }
 

@@ -91,7 +91,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
         val runningJobs = 1f-crossMultiplication(worker.runningJobs.toFloat(), worker.cpuCores.toFloat())
 
         //val available spots
-        val queueSpace = crossMultiplication(worker.queueSize.toFloat(), Integer.MAX_VALUE.toFloat())
+        val queueSpace = crossMultiplication(worker.queueSize.toFloat() - worker.queuedJobs.toFloat(), Integer.MAX_VALUE.toFloat())
 
         /*
         * Higher the better >= 0
