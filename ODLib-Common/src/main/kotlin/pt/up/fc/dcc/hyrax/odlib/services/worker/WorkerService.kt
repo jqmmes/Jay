@@ -10,7 +10,6 @@ import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -30,17 +29,20 @@ object WorkerService {
 
     init {
         executor.shutdown()
-        ODLogger.logInfo("WorkerService init")
+        ODLogger.logInfo("WorkerService, INIT")
     }
 
     internal fun queueJob(job: ODProto.Job, callback: ((List<Detection>) -> Unit)?): StatusCode {
+        ODLogger.logInfo("WorkerService, QUEUE_JOB")
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(job, callback))
         WorkerProfiler.atomicOperation(WorkerProfiler.totalJobs, increment = true)
+        ODLogger.logInfo("WorkerService, JOB_QUEUED, JOBS_IN_QUEUE=${WorkerProfiler.totalJobs.get() - WorkerProfiler.runningJobs.get()}")
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
     }
 
     fun start(localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null) {
+        ODLogger.logInfo("WorkerService, START")
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(ODSettings.workingThreads)
         this.localDetect = localDetect
@@ -55,6 +57,7 @@ object WorkerService {
                 try {
                     if (!(executor.isShutdown || executor.isTerminated) && running) executor.execute(jobQueue.take())
                     else running = false
+                    ODLogger.logInfo("WorkerService, SEND_FROM_QUEUE_TO_EXECUTOR")
                 } catch (e: Exception) { running = false }
             }
             if (!executor.isShutdown) executor.shutdownNow()
@@ -73,29 +76,31 @@ object WorkerService {
         executor.shutdownNow()
         WorkerProfiler.destroy()
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(false).build()) {S ->
-            ODLogger.logInfo("WorkerService Stopped")
+            ODLogger.logInfo("WorkerService, STOP")
             callback?.invoke(S)
         }
     }
 
     fun monitorBattery() {
-        println("Monitoring Battery")
+        ODLogger.logInfo("WorkerService, MONITOR_BATTERY")
         WorkerProfiler.monitorBattery()
     }
 
     fun loadModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {
-        println("WorkerService::loadModel ...")
+        ODLogger.logInfo("WorkerService, LOAD_MODEL")
         if(running) localDetect.loadModel(model, callback)
     }
 
 
     fun listModels() : Set<Model> {
+        ODLogger.logInfo("WorkerService, LIST_MODELS")
         return localDetect.models.toSet()
     }
 
     internal fun isRunning() : Boolean { return running }
 
     fun stopService(callback: ((ODProto.Status?) -> Unit)) {
+        ODLogger.logInfo("WorkerService, STOP_SERVICE")
         stop(false) {S -> callback(S)}
     }
 
@@ -105,14 +110,19 @@ object WorkerService {
 
     private class RunnableJobObjects(val job: ODProto.Job?, var callback: ((List<Detection>) -> Unit)?) : Runnable {
         override fun run() {
+            ODLogger.logInfo("WorkerService, RUN_JOB, JOB_ID=${job?.id}")
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, increment = true)
             try {
+                ODLogger.logInfo("WorkerService, RUN_JOB_START, JOB_ID=${job?.id}")
                 WorkerProfiler.profileExecution { callback?.invoke(localDetect.detectObjects(job?.data?.toByteArray() ?: ByteArray(0))) }
+                ODLogger.logInfo("WorkerService, RUN_JOB_END, JOB_ID=${job?.id}")
             } catch (e: Exception) {
+                ODLogger.logInfo("WorkerService, RUN_JOB_FAIL, JOB_ID=${job?.id}")
                 ODLogger.logError("Execution_Failed ${e.stackTrace}")
                 callback?.invoke(emptyList())
             }
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs)
+            ODLogger.logInfo("WorkerService, RUN_JOB_COMPLETE, JOB_ID=${job?.id}")
         }
     }
 }

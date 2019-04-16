@@ -1,12 +1,10 @@
 package pt.up.fc.dcc.hyrax.odlib.structures
 
-import io.grpc.ConnectivityState
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
-import pt.up.fc.dcc.hyrax.odlib.services.worker.BatteryMonitor
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.lang.Thread.sleep
 import java.util.*
@@ -89,6 +87,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     }
 
     internal fun updateStatus(proto: ODProto.Worker?) : ODProto.Worker? {
+        ODLogger.logInfo("Worker, UPDATE_STATUS, WORKER_ID=$id")
         if (proto == null) return this.proto
         battery = proto.battery
         avgComputingEstimate = proto.avgTimePerJob
@@ -117,7 +116,11 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
             var backoffCount = 0
             do {
                 if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
-                    if (isOnline()) grpc.requestWorkerStatus { W -> workerInfoUpdateNotify?.invoke(updateStatus(W)) }
+                    ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, INIT, WORKER_ID=$id")
+                    if (isOnline()) grpc.requestWorkerStatus { W ->
+                        workerInfoUpdateNotify?.invoke(updateStatus(W))
+                        ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, COMPLETE, WORKER_ID=$id")
+                    }
                 } else {
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
                 }
@@ -135,6 +138,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private fun addRTT(millis: Int) {
         circularFIFO.add(millis.toFloat()/pingPayloadSize)
         bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0f
+        ODLogger.logInfo("Worker, NEW_BANDWIDTH_ESTIMATE, WORKER_ID=$id, BANDWIDTH_ESTIMATE=$bandwidthEstimate")
     }
 
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
@@ -186,6 +190,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
             grpc.ping(pingPayloadSize, timeout = ODSettings.pingTimeout, callback = { T ->
                 if (T == -1) {
                     if (status == Status.ONLINE) {
+                        ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_OFFLINE")
                         status = Status.OFFLINE
                         statusChangeCallback?.invoke(status)
                     }
@@ -193,6 +198,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                 } else if (T == -2) { // TRANSIENT_FAILURE
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
+                            ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_OFFLINE")
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
                             if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
@@ -205,6 +211,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                 } else if (T == -3) { // CONNECTING
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
+                            ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_OFFLINE")
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
                             if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
@@ -213,6 +220,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                     } else { if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS) }
                 } else {
                     if (status == Status.OFFLINE) {
+                        ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_ONLINE")
                         status = Status.ONLINE
                         statusChangeCallback?.invoke(status)
                     }

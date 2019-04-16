@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
@@ -12,6 +13,8 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     private var roundRobinCount: Int = 0
 
     override fun init() {
+        ODLogger.logInfo("MultiDeviceScheduler, INIT, ${if (roundRobin) "ROUND_ROBIN" else "RANDOM"}")
+        for (device in devices) ODLogger.logInfo("MultiDeviceScheduler, INIT, DEVICE_TYPE=${device.name}")
         if (ODProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
                 SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
@@ -29,6 +32,7 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     }
 
     override fun scheduleJob(job: Job) : ODProto.Worker? {
+        ODLogger.logInfo("MultiDeviceScheduler, SCHEDULE_JOB, JOB_ID=${job.id}")
         val workers = SchedulerService.getWorkers(devices)
         return when {
             workers.isEmpty() -> null
@@ -41,6 +45,7 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     }
 
     override fun destroy() {
+        ODLogger.logInfo("MultiDeviceScheduler, DESTROY")
         devices = emptyList()
         SchedulerService.disableHeartBeat()
         roundRobinCount = 0

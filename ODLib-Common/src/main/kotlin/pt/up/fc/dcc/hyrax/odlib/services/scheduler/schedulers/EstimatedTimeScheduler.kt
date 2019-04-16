@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
@@ -16,9 +17,11 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
 
 
     override fun init() {
+        ODLogger.logInfo("EstimatedTimeScheduler, INIT")
         SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) updateWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
+            ODLogger.logInfo("EstimatedTimeScheduler, LISTEN_FOR_WORKERS, WORKER_ID=$id")
             SchedulerService.enableBandwidthEstimates(
                     ODProto.BandwidthEstimate.newBuilder()
                             .setType(ODProto.BandwidthEstimate.Type.ACTIVE)
@@ -29,6 +32,7 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
     }
 
     private fun removeWorker(worker: ODProto.Worker?) {
+        ODLogger.logInfo("EstimatedTimeScheduler, REMOVE_WORKER, WORKER_ID=${worker.id}")
         val index = rankedWorkers.indexOf(RankedWorker(id=worker?.id))
         if (index == -1) return
         rankedWorkers.remove(rankedWorkers.elementAt(index))
@@ -36,8 +40,12 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
 
     // Return last ID higher estimatedDuration = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
+        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, START, JOB_ID=${job.id}")
         for (worker in rankedWorkers) worker.calcScore(job.data.size)
+        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, START_SORTING, JOB_ID=${job.id}")
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy {it.estimatedDuration}))
+        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, COMPLETE_SORTING, JOB_ID=${job.id}")
+        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, SELECTED_WORKER, JOB_ID=${job.id}, WORKER_ID=${rankedWorkers.first.id}")
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.first.id!!)
         return null
     }
@@ -56,13 +64,6 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
     private fun rankWorkers(workers: List<ODProto.Worker?>) {
         for (worker in workers) updateWorker(worker)
     }
-
-    /*private fun reSortClientList(clientID: Long) {
-        *//*val client = clientList.find { T -> T.second == clientID }
-        if (client != null) clientList.removeAt(clientList.indexOf(client))
-        clientList.add(Pair(calculateClientScore(clientID), clientID))*//*
-                clientList.sortWith(Comparator { lhs, rhs -> java.lang.Float.compare(rhs.first, lhs.first) })
-    }*/
 
     private fun updateWorker(worker: ODProto.Worker?) {
         if (RankedWorker(id=worker?.id) !in rankedWorkers) {
@@ -93,10 +94,13 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
 
             weightQueue = worker.queuedJobs*worker.avgTimePerJob
             estimatedBandwidth = worker.bandwidthEstimate
+            ODLogger.logInfo("EstimatedTimeScheduler, UPDATE_WORKER, WORKER_ID=$id, WEIGHT_QUEUE=$weightQueue, " +
+                    "BANDWIDTH=$estimatedBandwidth")
         }
 
         fun calcScore(dataSize: Int) {
             estimatedDuration = dataSize*estimatedBandwidth + weightQueue
+            ODLogger.logInfo("EstimatedTimeScheduler, CALC_SCORE, WORKER_ID=$id, SCORE=$estimatedDuration")
         }
 
         override fun equals(other: Any?): Boolean {

@@ -7,11 +7,11 @@ import android.graphics.BitmapFactory
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
-import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
+import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.io.*
 import java.net.URL
@@ -74,12 +74,15 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     private fun detectObjects(imgData: Bitmap) : List<Detection> {
+        ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, INIT")
         if (localDetector == null) {
             ODLogger.logWarn("No model has been loaded yet")
+            ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, ERROR, NO_MODEL_LOADED")
             return emptyList()
         }
-        ODLogger.logInfo("DroidTensorFlow detecting objects...")
+        ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, RECOGNIZE_IMAGE, INIT")
         val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(ImageUtils.scaleImage(imgData, tfOdApiInputSize))
+        ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, RECOGNIZE_IMAGE, COMPLETE")
         val mappedRecognitions : MutableList<Detection> = ArrayList()
         for (result : Classifier.Recognition? in results) {
             if (result == null) continue
@@ -89,21 +92,19 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 ().toInt()))
             }
         }
-        ODLogger.logInfo("DroidTensorFlow detecting objects... Complete")
+        ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, COMPLETE")
         return mappedRecognitions
     }
 
     private fun loadModel(path: String) { //, score: Float
-        println("DroidTensorFlow::loadModel ...")
-        ODLogger.logInfo("Loading Model from: $path")
+        ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, START, MODEL_PATH=$path")
         localDetector = null
         try {
             localDetector = TensorFlowObjectDetectionAPIModel.create(
                     Resources.getSystem().assets, path, tfOdApiInputSize)
-            println("DroidTensorFlow::loadModel SUCCESS")
-            ODLogger.logInfo("Model loaded successfully")
+            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, COMPLETE, MODEL_PATH=$path")
         } catch (e: IOException) {
-            println("DroidTensorFlow::loadModel ERROR")
+            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, ERROR, MODEL_PATH=$path")
             ODLogger.logError("Error loading model")
         }
     }
@@ -111,10 +112,13 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     override fun loadModel(model: Model, completeCallback: ((ODProto.Status) -> Unit)?) {
         localDetector = null
         thread(name="DroidTensorflow loadModel") {
+            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, INIT")
             var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
-            println("${model.modelName}\t${model.remoteUrl}")
+            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, MODEL_PATH=$modelPath")
             if (!checkDownloadedModel(model.modelName)) {
+                ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, NEED_TO_DOWNLOAD_MODEL, INIT")
                 val tmpFile = downloadModel(model)
+                ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, NEED_TO_DOWNLOAD_MODEL, COMPLETE")
                 if (tmpFile != null) {
                     try {
                         modelPath = extractModel(tmpFile)
@@ -122,16 +126,22 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                             File(modelPath).renameTo(File(context.cacheDir, "Models/${model.modelName}"))
                             ODLogger.logInfo("Renaming model dir to: ${File(context.cacheDir, "Models/${model.modelName}")
                                     .absolutePath}")
+                            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, RENAME_TO=${File(context.cacheDir, "Models/${model.modelName}").absolutePath}")
                             modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
                         }
                     } catch (e: EOFException) {
+                        ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, ERROR, BAD_EOF")
                         ODLogger.logError("Failed to load model. BAD EOF")
                     }
                     tmpFile.delete()
+                } else {
+                    ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, ERROR, DOWNLOAD_FAILED")
+                    ODLogger.logError("model Download Failed")
                 }
-                else ODLogger.logError("model Download Failed")
             }
+            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, LOADING_MODEL, INIT")
             loadModel(File(modelPath, "frozen_inference_graph.pb").absolutePath)
+            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, LOADING_MODEL, COMPLETE")
             completeCallback?.invoke(ODUtils.genStatusSuccess()!!)
         }
     }
@@ -154,7 +164,8 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun downloadModel(model: Model): File? {
-        ODLogger.logInfo("Downloading model: ${model.modelName}")
+        ODLogger.logInfo("DroidTensorFlow, DOWNLOAD_MODEL, MODEL_ID=${model.modelId}, MODEL_NAME=${model.modelName}, " +
+                "MODEL_URL=${model.remoteUrl}")
         var count: Int
         if (File(context.cacheDir, "Models").exists() || !File(context.cacheDir, "Models").isDirectory) File(context
                 .cacheDir, "Models").mkdirs()
@@ -162,7 +173,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 .cacheDir, "Models"))
         try {
             val url = URL(model.remoteUrl)
-            ODLogger.logInfo("downloading from: $url\t${model.remoteUrl}")
+
             val connection : URLConnection = url.openConnection()
             connection.connect()
 
@@ -174,7 +185,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             val input = BufferedInputStream(url.openStream(),
                     //8192)
                     8192)
-            ODLogger.logInfo("total size: $lengthOfFile")
+            ODLogger.logInfo("DroidTensorFlow, DOWNLOAD_MODEL, MODEL_SIZE=$lengthOfFile")
 
             // Output stream
             val output = FileOutputStream(tmpFile)
@@ -203,21 +214,22 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             input.close()
 
         } catch (e: Exception) {
+            ODLogger.logInfo("DroidTensorFlow, DOWNLOAD_MODEL, ERROR")
             ODLogger.logError(e.message.toString())
         }
-        ODLogger.logInfo("Download Complete")
+        ODLogger.logInfo("DroidTensorFlow, DOWNLOAD_MODEL, COMPLETE")
 
         return tmpFile
     }
 
     override fun extractModel(modelFile: File) : String {
-        ODLogger.logInfo("extracting model: ${modelFile.path}")
+        ODLogger.logInfo("DroidTensorFlow, EXTRACT_MODEL, INIT")
         val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
 
         var basePath = File(context.cacheDir.path, "Models/").absolutePath
         var entry : TarEntry? = tis.nextEntry
         if (entry!= null && entry.isDirectory) {
-            ODLogger.logInfo("mkdir\t${File(context.cacheDir.path, "Models/${entry.name}").path}")
+            ODLogger.logInfo("DroidTensorFlow, EXTRACT_MODEL, MK_DIR=${File(context.cacheDir.path, "Models/${entry.name}").path}")
             File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
             basePath = File(context.cacheDir.path, "Models/${entry.name}").absolutePath
             entry = tis.nextEntry
@@ -228,7 +240,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 continue
             }
             if (entry.isDirectory) {
-                ODLogger.logInfo("mkdir\t${File(context.cacheDir.path, entry.name).path}")
+                ODLogger.logInfo("DroidTensorFlow, EXTRACT_MODEL, MK_DIR=${File(context.cacheDir.path, entry.name).path}")
                 File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
                 entry = tis.nextEntry
                 continue
@@ -239,7 +251,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             }
             var count: Int
             val data = ByteArray(2048)
-            ODLogger.logInfo("extract\t${File(context.cacheDir.path, entry.name).path}")
+            ODLogger.logInfo("DroidTensorFlow, EXTRACT_MODEL, EXTRACT=${File(context.cacheDir.path, entry.name).path}")
             try {
                 File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
                 File(context.cacheDir.path, "Models/${entry.name}").delete()
@@ -256,11 +268,12 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 dest.flush()
                 dest.close()
             } catch (ignore : Exception) {
-                ODLogger.logWarn("Failed extract of ${File(context.cacheDir.path, entry.name).path}")
+                ODLogger.logInfo("DroidTensorFlow, ERROR, EXTRACT=${File(context.cacheDir.path, entry.name).path}")
             }
 
             entry = tis.nextEntry
         }
+        ODLogger.logInfo("DroidTensorFlow, COMPLETE, PATH=$basePath")
         return basePath
     }
 }

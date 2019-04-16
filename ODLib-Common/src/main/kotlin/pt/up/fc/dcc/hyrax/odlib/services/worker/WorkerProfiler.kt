@@ -30,11 +30,13 @@ internal object WorkerProfiler {
 
 
     internal fun start() {
+        ODLogger.logInfo("WorkerProfiler, START")
         brokerGRPC.announceMulticast()
         periodicStatusUpdate()
     }
 
     internal fun destroy() {
+        ODLogger.logInfo("WorkerProfiler, DESTROY")
         updaterRunning = false
         runningJobs.set(0)
         totalJobs.set(0)
@@ -52,9 +54,14 @@ internal object WorkerProfiler {
     }
 
     internal fun profileExecution(code: (() -> Unit)) {
+        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION_START")
         val computationStartTimestamp = System.currentTimeMillis()
         code.invoke()
-        averageComputationTimes.add(System.currentTimeMillis() - computationStartTimestamp)
+        val totalTime = System.currentTimeMillis() - computationStartTimestamp
+        averageComputationTimes.add(totalTime)
+        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION_END, " +
+                "COMPUTATION_TIME=$totalTime, NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() /
+                        averageComputationTimes.size)}")
     }
 
     internal fun atomicOperation(vararg values: AtomicInteger, increment: Boolean = false) {
@@ -71,8 +78,14 @@ internal object WorkerProfiler {
 
     internal fun monitorBattery() {
         batteryMonitor?.setCallbacks(
-                levelChangeCallback = {level -> this.battery = level },
-                statusChangeCallback= {status -> this.batteryStatus = status })
+                levelChangeCallback = { level ->
+                    ODLogger.logInfo("WorkerProfiler, NEW_BATTERY_LEVEL=$level")
+                    this.battery = level
+                },
+                statusChangeCallback = { status ->
+                    ODLogger.logInfo("WorkerProfiler, NEW_BATTERY_STATUS=${status.name}")
+                    this.batteryStatus = status
+                })
         batteryMonitor?.monitor()
     }
 

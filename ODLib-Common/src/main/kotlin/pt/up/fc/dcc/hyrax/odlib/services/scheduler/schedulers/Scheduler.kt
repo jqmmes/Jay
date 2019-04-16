@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import java.util.*
@@ -20,6 +21,7 @@ abstract class Scheduler(name: String) {
     abstract fun getWorkerTypes() : ODProto.WorkerTypes
 
     open fun init() {
+        ODLogger.logInfo("Scheduler, INIT, SCHEDULER_ID=$id, SCHEDULER_NAME=$nameId")
         waitInit.countDown()
     }
 

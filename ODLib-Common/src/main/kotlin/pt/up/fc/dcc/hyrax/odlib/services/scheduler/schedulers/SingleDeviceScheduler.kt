@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers
 
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
@@ -10,9 +11,10 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
     private var worker : ODProto.Worker? = null
 
     override fun init() {
+        ODLogger.logInfo("SingleDeviceScheduler, INIT, WORKER_TYPE=${workerType.name}")
         if (workerType == ODProto.Worker.Type.REMOTE) {
             SchedulerService.listenForWorkers(true) {
-                println("init complete")
+                ODLogger.logInfo("SingleDeviceScheduler, INIT, COMPLETE")
                 SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
             }
         } else {
@@ -26,6 +28,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
     }
 
     override fun scheduleJob(job: Job) : ODProto.Worker? {
+        ODLogger.logInfo("SingleDeviceScheduler, SCHEDULE_JOB, JOB_ID=${job.id}")
         if (worker == null) {
             for (w in SchedulerService.getWorkers().values) {
                 if (w?.type == workerType) {
@@ -34,10 +37,12 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
                 }
             }
         }
+        ODLogger.logInfo("SingleDeviceScheduler, SCHEDULE_JOB, JOB_ID=${job.id}, WORKER_ID=${worker?.id}")
         return worker
     }
 
     override fun destroy() {
+        ODLogger.logInfo("SingleDeviceScheduler, DESTROY")
         worker = null
         SchedulerService.disableHeartBeat()
         if (workerType == ODProto.Worker.Type.REMOTE) {
