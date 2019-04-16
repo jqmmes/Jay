@@ -75,7 +75,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun updateWorkers(callback: (() -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.updateWorkers(Empty.getDefaultInstance())
-        call.addListener(Runnable{ try { call.get(); callback() } catch (e: RuntimeException) {callback()} }, AbstractODLib.executorPool)
+        call.addListener(Runnable{ try { call.get(); callback() } catch (e: Exception) {callback()} }, AbstractODLib.executorPool)
     }
 
     fun selectModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {

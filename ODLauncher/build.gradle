@@ -1,0 +1,124 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.protobuf'
+
+android {
+    compileSdkVersion 28
+    packagingOptions {
+        exclude 'META-INF/io.netty.versions.properties'
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+    }
+    defaultConfig {
+        applicationId "pt.up.fc.dcc.hyrax.od_launcher"
+        minSdkVersion 23
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    buildToolsVersion '28.0.3'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "io.grpc:grpc-netty:${GRPC_VERSION}"
+    //implementation 'io.grpc:grpc-protobuf-lite:1.20.0' // CURRENT_GRPC_VERSION
+    implementation "io.grpc:grpc-protobuf:${GRPC_VERSION}"
+    implementation "io.grpc:grpc-stub:${GRPC_VERSION}"
+    // CURRENT_GRPC_VERSION
+    implementation 'javax.annotation:javax.annotation-api:1.2'
+    implementation project(':ODLib-Droid')
+}
+repositories {
+    mavenCentral()
+}
+
+
+protobuf {
+    protoc { artifact = 'com.google.protobuf:protoc:3.7.1' }
+    plugins {
+        java { artifact = "com.google.protobuf:protoc:3.7.1" }
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${GRPC_VERSION}" }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                // In most cases you don't need the full Java output
+                // if you use the lite output.
+                //remove java
+                java
+            }
+            task.plugins {
+                java {}
+                //java{}
+                grpc { // Options added to --grpc_out
+                    //option 'lite'
+                }
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+/*protobuf {
+    protoc { artifact = 'com.google.protobuf:protoc:3.7.1' }
+    plugins {
+        //java {artifact = "'io.grpc:protoc-gen:3.0.0"}
+        //javalite { artifact = "com.google.protobuf:protoc-gen-java:3.0.0" }
+        grpc { artifact = 'io.grpc:protoc-gen-grpc-java:1.20.0' // CURRENT_GRPC_VERSION
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins{ grpc() }
+        /*all().each { task ->
+            task.builtins {
+                // In most cases you don't need the full Java output
+                // if you use the lite output.
+                //remove java
+                java
+            }
+            task.plugins {
+                //javalite {}
+                //java{}
+                grpc { // Options added to --grpc_out
+                    //option 'lite'
+                }
+            }
+        }
+    }
+}*/

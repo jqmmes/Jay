@@ -440,7 +440,8 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
 
         verifyStoragePermissions(this)
         requestBatteryPermissions()
-        //registerBroadcastReceiver()
+
+        registerBroadcastReceiver()
     }
 
 

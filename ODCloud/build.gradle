@@ -1,9 +1,12 @@
+
 plugins {
     id 'org.jetbrains.kotlin.jvm'
-    id 'com.github.johnrengelman.shadow'
+    //id 'com.github.johnrengelman.shadow'
 }
-apply plugin: 'kotlin'
 apply plugin: 'application'
+apply plugin: 'kotlin'
+mainClassName = 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
+apply plugin: 'com.github.johnrengelman.shadow'
 //apply plugin: "com.github.johnrengelman.shadow"
 
 repositories {
@@ -11,14 +14,17 @@ repositories {
     flatDir { dirs '../out/libs' }
 }
 
+
 dependencies {
     //noinspection DifferentStdlibGradleVersion
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     //implementation 'ODLib-Cloudlet:'
     compile(name: 'ODLib-Cloudlet', ext: 'jar')
-    implementation project(':ODLib-Common')
-    implementation project(':ODLib-Cloudlet')
+    //implementation project(':ODLib-Common')
+    //implementation project(':ODLib-Cloudlet')
 }
+
+//mainClassName = 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
 
 shadowJar {
     baseName = 'ODCloud'
@@ -27,11 +33,9 @@ shadowJar {
 }
 
 
-mainClassName = 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
-
 jar {
     manifest {
-        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.odlib.ODCloudKt'
+        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.odcloud.ODCloud'
         attributes 'Class-Path': 'libs/ODLib-Cloudlet.jar'
     }
 }

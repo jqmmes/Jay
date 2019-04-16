@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_package = "pt.up.fc.dcc.hyrax.od_launcher.protoc";
+option java_outer_classname = "ODLauncher";
+
+package launcherservice;
+
+message BoolValue {
+    // The bool value.
+    bool value = 1;
+}
+
+message Empty {}
+
+service LauncherService {
+    //rpc StartBroker(Empty) returns (BoolValue) {};
+    rpc StartScheduler(Empty) returns (BoolValue) {};
+    rpc StartWorker(Empty) returns (BoolValue) {};
+}

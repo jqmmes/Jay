@@ -27,6 +27,7 @@ dependencies {
     implementation "io.grpc:grpc-stub:${GRPC_VERSION}"
     // Circular FIFO
     implementation 'org.apache.commons:commons-collections4:4.2'
+    implementation 'javax.annotation:javax.annotation-api:1.2'
 }
 
 
