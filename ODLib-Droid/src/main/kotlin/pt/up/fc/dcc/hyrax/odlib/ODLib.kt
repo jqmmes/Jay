@@ -66,6 +66,7 @@ class ODLib(val context : Context) : AbstractODLib() {
 
 
     override fun startBroker() {
+        ODLogger.logInfo("ODLib, START_BROKER, INIT")
         if (serviceRunningBroker()) return
         val brokerIntent = Intent(context, BrokerAndroidService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -73,10 +74,12 @@ class ODLib(val context : Context) : AbstractODLib() {
         } else {
             context.startService(brokerIntent)
         }
+        ODLogger.logInfo("ODLib, START_BROKER, COMPLETE")
     }
 
     override fun startScheduler() {
         startBroker()
+        ODLogger.logInfo("ODLib, START_SCHEDULER, INIT")
         if (serviceRunningScheduler()) return
         val schedulerIntent = Intent(context, SchedulerAndroidService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -84,10 +87,12 @@ class ODLib(val context : Context) : AbstractODLib() {
         } else {
             context.startService(schedulerIntent)
         }
+        ODLogger.logInfo("ODLib, START_SCHEDULER, COMPLETE")
     }
 
     override fun startWorker() {
         startBroker()
+        ODLogger.logInfo("ODLib, START_WORKER, INIT")
         if (serviceRunningWorker()) return
         val workerIntent = Intent(context, WorkerAndroidService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -95,6 +100,7 @@ class ODLib(val context : Context) : AbstractODLib() {
         } else {
             context.startService(workerIntent)
         }
+        ODLogger.logInfo("ODLib, START_WORKER, COMPLETE")
     }
 
     private fun serviceRunningBroker() : Boolean {

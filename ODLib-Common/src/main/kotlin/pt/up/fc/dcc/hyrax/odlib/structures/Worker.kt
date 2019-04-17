@@ -29,7 +29,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var queueSize = 1
     private var queuedJobs = 0
     private var runningJobs = 0
-    private var batteryStatus : ODProto.Worker.BatteryStatus = BatteryStatus.CHARGED
+    private var batteryStatus : BatteryStatus = BatteryStatus.CHARGED
     private var totalMemory = 0L
     private var freeMemory = 0L
     private var status = Status.OFFLINE
@@ -69,6 +69,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         }
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
         if (bwEstimates) doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
+        ODLogger.logInfo("Worker, INIT, WORKER_ID=$id, WORKER_TYPE=${type.name}")
     }
 
     private fun genProto() {
@@ -124,6 +125,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                     }
                 } else {
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
+                    ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, FAIL, WORKER_ID=$id")
                 }
                 sleep(ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS)
             } while (autoStatusUpdate)

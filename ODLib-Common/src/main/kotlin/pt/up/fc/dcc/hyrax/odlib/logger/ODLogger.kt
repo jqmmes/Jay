@@ -13,6 +13,7 @@ object ODLogger{
     private val LOG_QUEUE : BlockingQueue<Pair<String, LogLevel>> = LinkedBlockingQueue()
     private var running: Boolean = false
     private var logLevel : LogLevel = LogLevel.Disabled
+    private val LOCK = Object()
 
     fun logInfo(message: String) {
         log(message, LogLevel.Info)
@@ -31,7 +32,9 @@ object ODLogger{
             if (running) {
                 LOG_QUEUE.offer(message to logLevel)
             } else {
-                loggingConsole.log(message, logLevel)
+                synchronized(LOCK) {
+                    loggingConsole.log(message, logLevel)
+                }
             }
         }
     }
