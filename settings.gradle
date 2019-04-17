@@ -1,2 +1,2 @@
 rootProject.name = 'ODLib'
-include ':ODLib-Common', ':ODLib-Droid', ':ODLib-Cloudlet', ':ODCloud', ':ODCloudlet', ':ODLib-AndroidDemo', ':ODLauncher'
+include ':ODLib-Common', ':ODLib-Droid', ':ODLib-Cloudlet', ':ODCloud', ':ODCloudlet', ':ODLauncher', ':ODLib-AndroidDemo'

@@ -9,7 +9,7 @@
                  android:icon="@mipmap/ic_launcher"
                  android:roundIcon="@mipmap/ic_launcher_round"
                  android:supportsRtl="true"
-                 android:theme="@style/AppTheme" tools:ignore="GoogleAppIndexingWarning" android:fullBackupContent="">
+                 android:theme="@style/AppTheme" tools:ignore="GoogleAppIndexingWarning">
 
         <receiver android:name=".AutoStart">
             <intent-filter>
@@ -25,6 +25,6 @@
         </activity>
 
         <service android:enabled="true" android:name=".ODLauncherService" android:exported="true"
-                 tools:ignore="ExportedService"/>
+                 android:permission="android.permission.INTERNET"/>
     </application>
 </manifest>
