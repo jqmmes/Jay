@@ -12,6 +12,9 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Messenger
 import android.support.v4.app.NotificationCompat
+import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
+import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService

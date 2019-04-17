@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.grpc
 
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.concurrent.TimeUnit
 
@@ -16,7 +17,7 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
                 .usePlaintext()
                 .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                 .build()
-        println("Channel Built $host:$port\tState:${channel.getState(true).name}")
+        ODLogger.logInfo("GRPCClientBase, INIT, CHANNEL_BUILT, HOST=$host, PORT=$port, CHANNEL_STATE=${channel.getState(true).name}")
     }
 
     abstract fun reconnectStubs()

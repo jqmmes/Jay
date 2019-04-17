@@ -76,8 +76,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     private fun detectObjects(imgData: Bitmap) : List<Detection> {
         ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, INIT")
         if (localDetector == null) {
-            ODLogger.logWarn("No model has been loaded yet")
-            ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, ERROR, NO_MODEL_LOADED")
+            ODLogger.logWarn("DroidTensorFlow, DETECT_OBJECTS, ERROR, NO_MODEL_LOADED")
             return emptyList()
         }
         ODLogger.logInfo("DroidTensorFlow, DETECT_OBJECTS, RECOGNIZE_IMAGE, INIT")
@@ -104,8 +103,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                     Resources.getSystem().assets, path, tfOdApiInputSize)
             ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, COMPLETE, MODEL_PATH=$path")
         } catch (e: IOException) {
-            ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, ERROR, MODEL_PATH=$path")
-            ODLogger.logError("Error loading model")
+            ODLogger.logError("DroidTensorFlow, LOAD_MODEL, ERROR, MODEL_PATH=$path")
         }
     }
 
@@ -124,19 +122,15 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                         modelPath = extractModel(tmpFile)
                         if (File(modelPath) != File(context.cacheDir, "Models/${model.modelName}")) {
                             File(modelPath).renameTo(File(context.cacheDir, "Models/${model.modelName}"))
-                            ODLogger.logInfo("Renaming model dir to: ${File(context.cacheDir, "Models/${model.modelName}")
-                                    .absolutePath}")
                             ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, RENAME_TO=${File(context.cacheDir, "Models/${model.modelName}").absolutePath}")
                             modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
                         }
                     } catch (e: EOFException) {
-                        ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, ERROR, BAD_EOF")
-                        ODLogger.logError("Failed to load model. BAD EOF")
+                        ODLogger.logError("DroidTensorFlow, LOAD_MODEL, ERROR, BAD_EOF")
                     }
                     tmpFile.delete()
                 } else {
-                    ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, ERROR, DOWNLOAD_FAILED")
-                    ODLogger.logError("model Download Failed")
+                    ODLogger.logError("DroidTensorFlow, LOAD_MODEL, ERROR, DOWNLOAD_FAILED")
                 }
             }
             ODLogger.logInfo("DroidTensorFlow, LOAD_MODEL, LOADING_MODEL, INIT")
@@ -214,8 +208,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             input.close()
 
         } catch (e: Exception) {
-            ODLogger.logInfo("DroidTensorFlow, DOWNLOAD_MODEL, ERROR")
-            ODLogger.logError(e.message.toString())
+            ODLogger.logError("DroidTensorFlow, DOWNLOAD_MODEL, ERROR")
         }
         ODLogger.logInfo("DroidTensorFlow, DOWNLOAD_MODEL, COMPLETE")
 

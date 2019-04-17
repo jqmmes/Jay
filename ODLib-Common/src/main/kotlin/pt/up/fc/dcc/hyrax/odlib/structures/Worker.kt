@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.structures
 
+import io.grpc.ConnectivityState
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto

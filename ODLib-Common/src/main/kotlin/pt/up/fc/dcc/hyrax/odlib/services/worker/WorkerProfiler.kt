@@ -54,14 +54,12 @@ internal object WorkerProfiler {
     }
 
     internal fun profileExecution(code: (() -> Unit)) {
-        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION_START")
+        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION, START")
         val computationStartTimestamp = System.currentTimeMillis()
         code.invoke()
         val totalTime = System.currentTimeMillis() - computationStartTimestamp
         averageComputationTimes.add(totalTime)
-        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION_END, " +
-                "COMPUTATION_TIME=$totalTime, NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() /
-                        averageComputationTimes.size)}")
+        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION, END, COMPUTATION_TIME=$totalTime, NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() / averageComputationTimes.size)}")
     }
 
     internal fun atomicOperation(vararg values: AtomicInteger, increment: Boolean = false) {
@@ -79,11 +77,11 @@ internal object WorkerProfiler {
     internal fun monitorBattery() {
         batteryMonitor?.setCallbacks(
                 levelChangeCallback = { level ->
-                    ODLogger.logInfo("WorkerProfiler, NEW_BATTERY_LEVEL=$level")
+                    ODLogger.logInfo("WorkerProfiler, MONITOR_BATTERY, NEW_BATTERY_LEVEL=$level")
                     this.battery = level
                 },
                 statusChangeCallback = { status ->
-                    ODLogger.logInfo("WorkerProfiler, NEW_BATTERY_STATUS=${status.name}")
+                    ODLogger.logInfo("WorkerProfiler, MONITOR_BATTERY, NEW_BATTERY_STATUS=${status.name}")
                     this.batteryStatus = status
                 })
         batteryMonitor?.monitor()

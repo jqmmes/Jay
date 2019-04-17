@@ -19,7 +19,7 @@ object ODUtils {
             if (!netInt.isLoopback && !netInt.isPointToPoint && netInt.isUp && netInt.supportsMulticast()) {
                 for (address in netInt.inetAddresses)
                     if (address is T) {
-                        ODLogger.logInfo("Available Multicast interface: ${netInt.name}")
+                        ODLogger.logInfo("ODUtils,  GET_COMPATIBLE_INTERFACES, INTERFACE_AVAILABLE, INTERFACE=${netInt.name}")
                         interfaceList.add(netInt)
                     }
             }

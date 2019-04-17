@@ -20,6 +20,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     //implementation 'ODLib-Cloudlet:'
     compile(name: 'ODLib-Cloudlet', ext: 'jar')
+    compile project(path: ':ODLib-Cloudlet')
     //implementation project(':ODLib-Common')
     //implementation project(':ODLib-Cloudlet')
 }

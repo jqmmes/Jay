@@ -25,7 +25,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun ping(request: ODProto.Ping, responseObserver: StreamObserver<ODProto.Ping>?) {
-            println("BrokerGRPCServer::ping")
             if (request.hasField(request.descriptorForType.findFieldByName("reply")))
                 if (request.reply) return genericComplete(request, responseObserver)
             genericComplete(ODProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(0))).build(), responseObserver)

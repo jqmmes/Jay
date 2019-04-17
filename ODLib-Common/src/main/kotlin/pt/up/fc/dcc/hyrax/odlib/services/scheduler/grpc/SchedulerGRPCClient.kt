@@ -4,6 +4,7 @@ import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -31,9 +32,8 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         val call = futureStub.listSchedulers(Empty.getDefaultInstance())
         call.addListener(Runnable {
             try {
-                println("${call.isDone}\t${call.isCancelled}")
                 callback?.invoke(call.get())
-            } catch (e: ExecutionException) { println("listSchedulers Unavailable") }
+            } catch (e: ExecutionException) { ODLogger.logError("SchedulerGRPCClient, LIST_SCHEDULERS, UNAVAILABLE") }
         }, AbstractODLib.executorPool)
     }
 

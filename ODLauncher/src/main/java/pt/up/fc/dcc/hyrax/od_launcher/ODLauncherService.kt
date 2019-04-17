@@ -15,25 +15,49 @@ import io.grpc.stub.StreamObserver
 import io.netty.util.internal.logging.InternalLoggerFactory
 import io.netty.util.internal.logging.JdkLoggerFactory
 import pt.up.fc.dcc.hyrax.od_launcher.protoc.LauncherServiceGrpc.LauncherServiceImplBase
+import pt.up.fc.dcc.hyrax.od_launcher.protoc.ODLauncher
 import pt.up.fc.dcc.hyrax.od_launcher.protoc.ODLauncher.Empty
 import pt.up.fc.dcc.hyrax.od_launcher.protoc.ODLauncher.BoolValue
 import pt.up.fc.dcc.hyrax.odlib.ODLib
+import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
+import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import java.io.File
+import java.io.FileOutputStream
 
+@Suppress("PrivatePropertyName")
 class ODLauncherService : Service() {
 
-    internal class GrpcImpl(val odClient: ODLib) : LauncherServiceImplBase() {
+    internal class GrpcImpl(private val odClient: ODLib, private val context: Context) : LauncherServiceImplBase() {
+
+        private var logName = "logs"
+        private var logging = false
 
         override fun startScheduler(request: Empty?, responseObserver: StreamObserver<BoolValue>?) {
+            enableLogs()
             odClient.startScheduler()
             genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
         }
 
         override fun startWorker(request: Empty?, responseObserver: StreamObserver<BoolValue>?) {
+            enableLogs()
             odClient.startWorker()
             genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
         }
 
-        fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
+        override fun setLogName(request: ODLauncher.String?, responseObserver: StreamObserver<BoolValue>?) {
+            logName = request?.str ?: "logs"
+            genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
+        }
+
+
+        private fun enableLogs() {
+            if (logging) return
+            logging = true
+            ODLogger.enableLogs(Logs(FileOutputStream(File("${context.getExternalFilesDir(null)}/$logName.csv"), false)), LogLevel.Info)
+        }
+
+        private fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
             if (!io.grpc.Context.current().isCancelled) {
                 responseObserver!!.onNext(request)
                 responseObserver.onCompleted()
@@ -41,8 +65,25 @@ class ODLauncherService : Service() {
         }
     }
 
-    private lateinit var odClient: ODLib
+    internal class Logs(private val logFile: FileOutputStream) : LogInterface {
 
+        override fun close() {
+            logFile.flush()
+            logFile.close()
+        }
+
+        init {
+            logFile.write("TIMESTAMP, LOG_LEVEL, CLASS, FUNCTION, ACTIONS...\n".toByteArray())
+            logFile.flush()
+        }
+
+        override fun log(message : String, logLevel: LogLevel) {
+            logFile.write("${System.currentTimeMillis()}, ${logLevel.name}, $message\n".toByteArray())
+            logFile.flush()
+        }
+    }
+
+    private lateinit var odClient: ODLib
 
     private val CHANNEL_ID = "ODLauncherService"// The id of the channel.
     private val name = "OD Launcher Service"// The user-visible name of the channel.
@@ -60,17 +101,13 @@ class ODLauncherService : Service() {
 
     private fun startServer() {
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
-        server = NettyServerBuilder.forPort(50000).addService(GrpcImpl(odClient))
+        server = NettyServerBuilder.forPort(50000).addService(GrpcImpl(odClient, applicationContext))
                         .maxInboundMessageSize(100)
                         .build()
                         .start()
     }
 
-    fun stopServer() {
-        server?.shutdown()
-    }
-
-    fun stopNowAndWait() {
+    private fun stopNowAndWait() {
         server?.shutdownNow()
         server?.awaitTermination()
     }
@@ -110,7 +147,6 @@ class ODLauncherService : Service() {
         odClient = ODLib(this)
 
         startServer()
-
     }
 
     override fun onBind(intent: Intent?): IBinder? {

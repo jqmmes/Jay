@@ -37,12 +37,12 @@ object MulticastAdvertiser {
 
     fun start(networkInterface: NetworkInterface? = null) {
         if (runningLock.get()) {
-            ODLogger.logWarn("MulticastServer already running")
+            ODLogger.logWarn("MulticastAdvertiser, START, ALREADY_RUNNING")
             return
         }
 
         thread(isDaemon=true, name="Multicast Advertiser") {
-            ODLogger.logInfo("Starting Multicast Advertiser")
+            ODLogger.logInfo("MulticastAdvertiser, START, INIT_THREAD")
             if(runningLock.getAndSet(true)) return@thread
             mcSocket = MulticastSocket()
             if (networkInterface != null) {
@@ -50,10 +50,10 @@ object MulticastAdvertiser {
             } else {
                 val interfaces = ODUtils.getCompatibleInterfaces<Inet4Address>()
                 if (!interfaces.isEmpty()) {
-                    ODLogger.logInfo("Using default interface (${interfaces[0]}) to advertise")
+                    ODLogger.logInfo("MulticastAdvertiser, START, USING_DEFAULT_INTERFACE, ADVERTISE_INTERFACE=${interfaces[0]}")
                     mcSocket.networkInterface = interfaces[0]
                 } else {
-                    ODLogger.logWarn("Not suitable Multicast interface found")
+                    ODLogger.logWarn("MulticastAdvertiser, START, NO_SUITABLE_INTERFACE_FOUND")
                     return@thread
                 }
             }
@@ -78,6 +78,7 @@ object MulticastAdvertiser {
     }
 
     fun stop() {
+        ODLogger.logInfo("MulticastAdvertiser, STOP")
         runningLock.set(false)
         packet = null
     }

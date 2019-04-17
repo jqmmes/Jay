@@ -59,7 +59,7 @@ object BrokerService {
         cloud.disableAutoStatusUpdate()
     }
 
-    fun stopService(callback: ((ODProto.Status?) -> Unit)) {
+    fun stopService(callback: ((Status?) -> Unit)) {
         stop(false)
         callback(ODUtils.genStatusSuccess())
     }
@@ -130,7 +130,7 @@ object BrokerService {
 
     }
 
-    internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: (ODProto.Status?) -> Unit) {
+    internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: (Status?) -> Unit) {
         workers[request?.id]?.updateStatus(request)
         if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(request, completeCallback)
         else completeCallback.invoke(ODUtils.genStatusError())
@@ -155,14 +155,14 @@ object BrokerService {
     private fun checkWorker(worker: ODProto.Worker?, address: String) {
         if (worker == null) return
         if (worker.id !in workers){
-            ODLogger.logInfo("New Device found ${worker.id}")
+            ODLogger.logInfo("BrokerService, CHECK_WORKER, NEW_DEVICE, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { StatusUpdate ->
                 if(!schedulerServiceRunning) return@Worker
                 if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) {}
                 else scheduler.notifyWorkerFailure(workers[worker.id]?.getProto()) {}
             }
         } else workers[worker.id]?.updateStatus(worker)
-        if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> println("Notified Scheduler $S")}
+        if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> ODLogger.logInfo("BrokerService, CHECK_WORKER, SCHEDULER_NOTIFIED, STATUS_CODE=$S")}
     }
 
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
@@ -199,8 +199,8 @@ object BrokerService {
             for (key in workers.keys)
                 if (workers[key]?.type in method.workerTypeList && workers[key]?.type != Type.LOCAL) workers[key]?.doActiveRTTEstimates {StatusUpdate ->
                     if(!schedulerServiceRunning) return@doActiveRTTEstimates
-                    if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto())  {S -> println("notifyWorkerUpdate ${S?.code?.name}")}
-                    else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> println("notifyWorkerFailure ${S?.code?.name}")}
+                    if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto())  {S -> ODLogger.logInfo("BrokerService, ENABLE_BANDWIDTH_ESTIMATES, WORKER_UPDATE_NOTIFIED, STATUS_CODE=$S")}
+                    else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> ODLogger.logInfo("BrokerService, ENABLE_BANDWIDTH_ESTIMATES, WORKER_FAILURE_NOTIFIED, STATUS_CODE=$S")}
                 }
         }
         return ODUtils.genStatus(ODProto.StatusCode.Success)
@@ -213,7 +213,7 @@ object BrokerService {
         return ODUtils.genStatusSuccess()
     }
 
-    fun disableBandwidthEstimates(): ODProto.Status? {
+    fun disableBandwidthEstimates(): Status? {
         if (!bwEstimates) return ODUtils.genStatusSuccess()
         bwEstimates = false
         for (key in workers.keys) workers[key]?.stopActiveRTTEstimates()

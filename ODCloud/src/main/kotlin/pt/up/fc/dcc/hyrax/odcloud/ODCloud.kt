@@ -51,8 +51,11 @@ class ODCloud {
         }
 
         private class LoggingInterface : LogInterface {
+            override fun close() {
+
+            }
+
             override fun log(message: String, logLevel: LogLevel) {
-                println("${System.currentTimeMillis()}\t$message")
             }
         }
     }

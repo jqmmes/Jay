@@ -1,6 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker.grpc
 
 import com.google.protobuf.Empty
+import io.grpc.BindableService
+import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto

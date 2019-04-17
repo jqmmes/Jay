@@ -67,10 +67,10 @@ object SchedulerService {
         server = SchedulerGRPCServer(useNettyServer).start()
         running = true
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(true).build()) {
-            ODLogger.logInfo("WorkerService Running")
+            ODLogger.logInfo("SchedulerService, START, RUNNING")
         }
         thread {
-            brokerGRPC.updateWorkers{println("Scheduler Initiated")}
+            brokerGRPC.updateWorkers{ODLogger.logInfo("SchedulerService, START, RUNNING")}
         }
     }
 
@@ -86,7 +86,7 @@ object SchedulerService {
     }
 
     internal fun notifyWorkerFailure(worker: Worker?): ODProto.StatusCode {
-        ODLogger.logInfo("${worker?.id} Failed")
+        ODLogger.logInfo("SchedulerService, NOTIFY_WORKER_FAILURE, WORKER_ID=${worker?.id}")
         if (worker!!.id in workers.keys) {
             workers.remove(worker.id)
             for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)
@@ -108,7 +108,7 @@ object SchedulerService {
         running = false
         if (stopGRPCServer) server?.stop()
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {
-            ODLogger.logInfo("SchedulerService Stopped")
+            ODLogger.logInfo("SchedulerService, STOP")
         }
     }
 

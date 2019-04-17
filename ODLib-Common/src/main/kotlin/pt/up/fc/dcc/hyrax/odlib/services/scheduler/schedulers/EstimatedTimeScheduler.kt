@@ -32,7 +32,7 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
     }
 
     private fun removeWorker(worker: ODProto.Worker?) {
-        ODLogger.logInfo("EstimatedTimeScheduler, REMOVE_WORKER, WORKER_ID=${worker.id}")
+        ODLogger.logInfo("EstimatedTimeScheduler, REMOVE_WORKER, WORKER_ID=${worker?.id}")
         val index = rankedWorkers.indexOf(RankedWorker(id=worker?.id))
         if (index == -1) return
         rankedWorkers.remove(rankedWorkers.elementAt(index))

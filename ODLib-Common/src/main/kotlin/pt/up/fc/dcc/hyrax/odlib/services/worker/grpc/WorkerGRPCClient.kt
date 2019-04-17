@@ -9,6 +9,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutionException
+import io.grpc.ConnectivityState
 
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
 (host, ODSettings.workerPort) {
@@ -29,8 +30,7 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
                 callback?.invoke(futureJob.get())
                 ODLogger.logInfo("WorkerGRPCClient, EXECUTE, COMPLETE, JOB_ID=${job?.id}")
             } catch (e: ExecutionException) {
-                ODLogger.logWarn("Execution (id: ${job?.id} canceled")
-                ODLogger.logInfo("WorkerGRPCClient, EXECUTE, ERROR, JOB_ID=${job?.id}")
+                ODLogger.logWarn("WorkerGRPCClient, EXECUTE, ERROR, JOB_ID=${job?.id}")
             }
         }, AbstractODLib.executorPool)
     }

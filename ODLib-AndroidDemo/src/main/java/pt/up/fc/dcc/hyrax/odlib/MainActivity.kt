@@ -411,7 +411,6 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
                                     runOnUiThread { Toast.makeText(applicationContext,"Scheduler ${parent.selectedItem} set", Toast.LENGTH_SHORT).show() }
                                     odClient.updateSmartWeights(computeWeight, jobsWeight, queueWeight, batteryWeight, bandwidthWeight) {SS ->
                                         if (SS) runOnUiThread { Toast.makeText(applicationContext,"Smart Weights updated",Toast.LENGTH_SHORT).show() }
-                                        println("Weights $SS")
                                     }
                                 }
                             }
@@ -476,7 +475,6 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
     private fun requestBatteryPermissions() {
         val permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.BATTERY_STATS)
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            println("No battery stats")
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.BATTERY_STATS), 3)
         }
     }

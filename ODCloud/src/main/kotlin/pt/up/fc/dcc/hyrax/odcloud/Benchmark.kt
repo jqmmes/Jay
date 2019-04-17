@@ -12,7 +12,6 @@ object Benchmark {
         var countDownLatch = CountDownLatch(1)
         /*for (model in client.getModels(false, true).reversed()) {
             if (model.modelName == mModel || mModel == "all") {
-                println("Model:\t${model.modelName}")
                 client.selectModel(model)
                 Thread.sleep(1000)
                 while (!client.modelLoaded(model)) Thread.sleep(1000)
@@ -31,13 +30,11 @@ object Benchmark {
                     val job = Job(output.toByteArray())
                     client.executeJob(job)
                     client.asyncDetectObjects(job) {
-                        println("${job.id}\t${f.name}\t${System.currentTimeMillis() - start}ms")
                         countDownLatch.countDown()
                     }
                     countDownLatch.await()
                     countDownLatch = CountDownLatch(1)
                 }
-                println("---------------------------------------")
             }
         }*/
     }

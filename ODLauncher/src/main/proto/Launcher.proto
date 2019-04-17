@@ -12,8 +12,12 @@ message BoolValue {
 
 message Empty {}
 
+message String {
+    string str = 1;
+}
+
 service LauncherService {
-    //rpc StartBroker(Empty) returns (BoolValue) {};
     rpc StartScheduler(Empty) returns (BoolValue) {};
     rpc StartWorker(Empty) returns (BoolValue) {};
+    rpc SetLogName(String) returns (BoolValue) {};
 }

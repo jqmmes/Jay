@@ -1,9 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
-import io.grpc.BindableService
-import io.grpc.Context
-import io.grpc.Server
-import io.grpc.ServerBuilder
+import io.grpc.*
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import io.netty.util.internal.logging.InternalLoggerFactory
@@ -20,7 +17,7 @@ abstract class GRPCServerBase(private val port: Int,
 
     @Throws(IOException::class)
     fun start(): GRPCServerBase {
-        ODLogger.logInfo("will start server on port $port")
+        ODLogger.logInfo("GRPCServerBase, START, PORT=$port")
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
         server =
                 if (useNettyServer) NettyServerBuilder.forPort(port)
@@ -36,9 +33,10 @@ abstract class GRPCServerBase(private val port: Int,
 
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
-                ODLogger.logError("*** shutting down gRPC server since JVM is shutting down")
+
+                ODLogger.logError("GRPCServerBase, RUN, ERROR, *** shutting down gRPC server since JVM is shutting down")
                 this@GRPCServerBase.stop()
-                ODLogger.logError("*** server shut down")
+                ODLogger.logError("GRPCServerBase, RUN, ERROR, *** server shut down")
             }
         })
         return this
@@ -64,10 +62,14 @@ abstract class GRPCServerBase(private val port: Int,
 
     protected open fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
         if (!Context.current().isCancelled) {
-            responseObserver!!.onNext(request)
-            responseObserver.onCompleted()
+            try {
+                responseObserver!!.onNext(request)
+                responseObserver.onCompleted()
+            } catch (e: StatusRuntimeException) {
+                ODLogger.logError("GRPCServerBase. GENERIC_COMPLETE, CONTEXT_CANCELED")
+            }
         } else {
-            ODLogger.logError("GRPCServer context canceled")
+            ODLogger.logError("GRPCServerBase. GENERIC_COMPLETE, CONTEXT_CANCELED")
         }
     }
 }

@@ -10,6 +10,10 @@ import java.io.FileOutputStream
 import java.util.*
 
 class LogInterface(private val activity : Activity, private val loggingConsole : TextView) : LogInterface {
+    override fun close() {
+        outputFileOS.flush()
+        outputFileOS.close()
+    }
 
     private lateinit var outputFileOS: FileOutputStream
 
