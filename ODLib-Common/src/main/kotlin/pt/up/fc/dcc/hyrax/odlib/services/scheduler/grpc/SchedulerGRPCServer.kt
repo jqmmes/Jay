@@ -4,6 +4,7 @@ import com.google.protobuf.Empty
 import io.grpc.BindableService
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
@@ -29,7 +30,9 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
         }
 
         override fun listSchedulers(request: Empty?, responseObserver: StreamObserver<ODProto.Schedulers>?) {
+            ODLogger.logInfo("SchedulerGRPCServer, GET_SCHEDULERS, INIT")
             genericComplete(SchedulerService.listSchedulers(), responseObserver)
+            ODLogger.logInfo("SchedulerGRPCServer, GET_SCHEDULERS, COMPLETE")
         }
 
         override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {

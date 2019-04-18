@@ -92,7 +92,7 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
             if (maxAvgTimePerJob < worker.avgTimePerJob) maxAvgTimePerJob = worker.avgTimePerJob
             if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
 
-            weightQueue = worker.queuedJobs*worker.avgTimePerJob
+            weightQueue = (worker.queuedJobs+1)*worker.avgTimePerJob
             estimatedBandwidth = worker.bandwidthEstimate
             ODLogger.logInfo("EstimatedTimeScheduler, UPDATE_WORKER, WORKER_ID=$id, WEIGHT_QUEUE=$weightQueue, " +
                     "BANDWIDTH=$estimatedBandwidth")

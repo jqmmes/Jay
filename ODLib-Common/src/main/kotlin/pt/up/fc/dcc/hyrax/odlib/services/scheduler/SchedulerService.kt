@@ -33,11 +33,15 @@ object SchedulerService {
             SingleDeviceScheduler(Worker.Type.CLOUD),
             SingleDeviceScheduler(Worker.Type.REMOTE),
             MultiDeviceScheduler(true, Worker.Type.LOCAL),
+            MultiDeviceScheduler(true, Worker.Type.REMOTE),
+            MultiDeviceScheduler(true, Worker.Type.CLOUD),
             MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.CLOUD),
             MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.REMOTE),
             MultiDeviceScheduler(true, Worker.Type.CLOUD, Worker.Type.REMOTE),
             MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE),
             MultiDeviceScheduler(false, Worker.Type.LOCAL),
+            MultiDeviceScheduler(false, Worker.Type.REMOTE),
+            MultiDeviceScheduler(false, Worker.Type.CLOUD),
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD),
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.REMOTE),
             MultiDeviceScheduler(false, Worker.Type.CLOUD, Worker.Type.REMOTE),
@@ -122,8 +126,13 @@ object SchedulerService {
     }
 
     internal fun listSchedulers() : ODProto.Schedulers {
+        ODLogger.logInfo("SchedulerService, LIST_SCHEDULERS, INIT")
         val schedulersProto = ODProto.Schedulers.newBuilder()
-        for (scheduler in schedulers) schedulersProto.addScheduler(scheduler.getProto())
+        for (scheduler in schedulers) {
+            ODLogger.logInfo("SchedulerService, LIST_SCHEDULERS, SCHEDULER_NAME=${scheduler.getName().replace(",", ";")}, SCHEDULER_ID=${scheduler.id}")
+            schedulersProto.addScheduler(scheduler.getProto())
+        }
+        ODLogger.logInfo("SchedulerService, LIST_SCHEDULERS, COMPLETE")
         return schedulersProto.build()
 
     }

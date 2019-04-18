@@ -154,7 +154,9 @@ class ODLauncherService : Service() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        odClient.stopScheduler()
+        odClient.stopWorker()
         stopNowAndWait()
+        super.onDestroy()
     }
 }

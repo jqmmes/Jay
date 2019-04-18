@@ -120,8 +120,11 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                 if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
                     ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, INIT, WORKER_ID=$id")
                     if (isOnline()) grpc.requestWorkerStatus { W ->
+                        ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, ONLINE, WORKER_ID=$id")
                         workerInfoUpdateNotify?.invoke(updateStatus(W))
                         ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, COMPLETE, WORKER_ID=$id")
+                    } else {
+                        ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, OFFLINE, WORKER_ID=$id")
                     }
                 } else {
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()

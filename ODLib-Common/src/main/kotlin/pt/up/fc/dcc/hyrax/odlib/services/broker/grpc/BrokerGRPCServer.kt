@@ -6,6 +6,7 @@ import com.google.protobuf.Empty
 import io.grpc.BindableService
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
@@ -56,7 +57,11 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun getSchedulers(request: Empty?, responseObserver: StreamObserver<ODProto.Schedulers>?) {
-            BrokerService.getSchedulers {S -> genericComplete(S, responseObserver)}
+            ODLogger.logInfo("BrokerGRPCServer, GET_SCHEDULERS, INIT")
+            BrokerService.getSchedulers {S ->
+                ODLogger.logInfo("BrokerGRPCServer, GET_SCHEDULERS, COMPLETE")
+                genericComplete(S, responseObserver)
+            }
         }
 
         override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
