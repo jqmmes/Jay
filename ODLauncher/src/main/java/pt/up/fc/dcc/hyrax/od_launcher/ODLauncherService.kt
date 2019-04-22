@@ -77,7 +77,7 @@ class ODLauncherService : Service() {
             logFile.flush()
         }
 
-        override fun log(message : String, logLevel: LogLevel) {
+        override fun log(message: String, logLevel: LogLevel, callerInfo: String) {
             logFile.write("${System.currentTimeMillis()}, ${logLevel.name}, $message\n".toByteArray())
             logFile.flush()
         }

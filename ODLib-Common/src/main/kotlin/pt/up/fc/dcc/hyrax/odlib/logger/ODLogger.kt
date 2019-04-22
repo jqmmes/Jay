@@ -15,25 +15,30 @@ object ODLogger{
     private var logLevel : LogLevel = LogLevel.Disabled
     private val LOCK = Object()
 
+    private fun buildCallerInfo(stackTrace: java.lang.StackTraceElement): String {
+        val i = 2
+        return "${stackTrace[i].className}::${stackTrace[i].methodName}[${stackTrace[i].lineNumber}]"
+    }
+
     fun logInfo(message: String) {
-        log(message, LogLevel.Info)
+        log(message, LogLevel.Info, buildCallerInfo(Thread.currentThread().getStackTrace()))
     }
 
     fun logError(message: String) {
-        log(message, LogLevel.Error)
+        log(message, LogLevel.Error, buildCallerInfo(Thread.currentThread().getStackTrace()))
     }
 
     fun logWarn(message: String) {
-        log(message, LogLevel.Warn)
+        log(message, LogLevel.Warn, buildCallerInfo(Thread.currentThread().getStackTrace()))
     }
 
-    private fun log(message : String, logLevel: LogLevel) {
+    private fun log(message: String, logLevel: LogLevel, callerInfo: String = "") {
         if (logLevel <= ODLogger.logLevel) {
             if (running) {
                 LOG_QUEUE.offer(message to logLevel)
             } else {
                 synchronized(LOCK) {
-                    loggingConsole.log(message, logLevel)
+                    loggingConsole.log(message, logLevel, callerInfo)
                 }
             }
         }
