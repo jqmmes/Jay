@@ -11,10 +11,10 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
     private var worker : ODProto.Worker? = null
 
     override fun init() {
-        ODLogger.logInfo("SingleDeviceScheduler, INIT, WORKER_TYPE=${workerType.name}")
+        ODLogger.logInfo("WORKER_TYPE=${workerType.name}")
         if (workerType == ODProto.Worker.Type.REMOTE) {
             SchedulerService.listenForWorkers(true) {
-                ODLogger.logInfo("SingleDeviceScheduler, INIT, COMPLETE")
+                ODLogger.logInfo("COMPLETE")
                 SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
             }
         } else {
@@ -28,7 +28,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
     }
 
     override fun scheduleJob(job: Job) : ODProto.Worker? {
-        ODLogger.logInfo("SingleDeviceScheduler, SCHEDULE_JOB, JOB_ID=${job.id}")
+        ODLogger.logInfo("INIT", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${worker?.id}"))
         if (worker == null) {
             for (w in SchedulerService.getWorkers().values) {
                 if (w?.type == workerType) {
@@ -37,17 +37,18 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
                 }
             }
         }
-        ODLogger.logInfo("SingleDeviceScheduler, SCHEDULE_JOB, JOB_ID=${job.id}, WORKER_ID=${worker?.id}")
+        ODLogger.logInfo("COMPLETE", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${worker?.id}"))
         return worker
     }
 
     override fun destroy() {
-        ODLogger.logInfo("SingleDeviceScheduler, DESTROY")
+        ODLogger.logInfo("INIT")
         worker = null
         SchedulerService.disableHeartBeat()
         if (workerType == ODProto.Worker.Type.REMOTE) {
             SchedulerService.listenForWorkers(false)
         }
+        ODLogger.logInfo("COMPLETE")
         super.destroy()
     }
 

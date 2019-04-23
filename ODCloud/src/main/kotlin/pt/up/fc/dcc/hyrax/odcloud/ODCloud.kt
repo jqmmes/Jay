@@ -39,9 +39,9 @@ class ODCloud {
 
             Runtime.getRuntime().addShutdownHook(object : Thread() {
                 override fun run() {
-                    ODLogger.logError("*** shutting down server since JVM is shutting down")
+                    ODLogger.logError("ERROR", actions = *arrayOf("ERROR='*** shutting down server since JVM is shutting down'"))
                     odLib.destroy()
-                    ODLogger.logError("*** server shut down")
+                    ODLogger.logError("ERROR", actions = *arrayOf("ERROR='*** server shut down'"))
                 }
             })
 

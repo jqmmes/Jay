@@ -38,7 +38,7 @@ class MainActivityFragment : Fragment() {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == AppCompatActivity.RESULT_OK) {
             val imageBitmap = data.extras!!.get("data") as Bitmap
             MainActivity.odClient.scheduleJob(ImageUtils.getByteArrayFromBitmap(imageBitmap)) {R ->
-                ODLogger.logInfo("New Result: $R")
+
             }
         }
     }
@@ -53,6 +53,5 @@ class MainActivityFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        ODLogger.logInfo("Fragment onCreateView")
     }
 }

@@ -13,26 +13,32 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     private var roundRobinCount: Int = 0
 
     override fun init() {
-        ODLogger.logInfo("MultiDeviceScheduler, INIT, ${if (roundRobin) "ROUND_ROBIN" else "RANDOM"}")
-        for (device in devices) ODLogger.logInfo("MultiDeviceScheduler, INIT, DEVICE_TYPE=${device.name}")
+        ODLogger.logInfo("INIT",actions = *arrayOf("SCHEDULE_STRATEGY=${if (roundRobin) "ROUND_ROBIN" else "RANDOM"}"))
+        for (device in devices) ODLogger.logInfo("DEVICES",actions = *arrayOf("DEVICE_TYPE=${device.name}"))
         if (ODProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
-                SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
+                SchedulerService.enableHeartBeat(getWorkerTypes()) {
+                    ODLogger.logInfo("COMPLETE")
+                    super.init()
+                }
             }
         } else {
-            SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
+            SchedulerService.enableHeartBeat(getWorkerTypes()) {
+                ODLogger.logInfo("COMPLETE")
+                super.init()
+            }
         }
     }
 
     override fun getName(): String {
         val strategy = if (roundRobin) "RoundRobin" else "Random"
-        var devs = ""
-        for (devType in devices) devs += "$devType, "
-        return "${super.getName()} [$strategy] [${devs.trimEnd(' ', ',')}]"
+        var devices = ""
+        for (devType in this.devices) devices += "$devType, "
+        return "${super.getName()} [$strategy] [${devices.trimEnd(' ', ',')}]"
     }
 
     override fun scheduleJob(job: Job) : ODProto.Worker? {
-        ODLogger.logInfo("MultiDeviceScheduler, SCHEDULE_JOB, JOB_ID=${job.id}")
+        ODLogger.logInfo("INIT", actions = *arrayOf("JOB_ID=${job.id}"))
         val workers = SchedulerService.getWorkers(devices)
         return when {
             workers.isEmpty() -> null
@@ -45,13 +51,14 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     }
 
     override fun destroy() {
-        ODLogger.logInfo("MultiDeviceScheduler, DESTROY")
+        ODLogger.logInfo("INIT")
         devices = emptyList()
         SchedulerService.disableHeartBeat()
         roundRobinCount = 0
         if (ODProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(false)
         }
+        ODLogger.logInfo("COMPLETE")
         super.destroy()
     }
 

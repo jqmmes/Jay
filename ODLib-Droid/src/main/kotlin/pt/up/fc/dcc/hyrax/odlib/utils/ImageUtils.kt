@@ -39,18 +39,18 @@ object ImageUtils {
 
     fun scaleImage(image : Bitmap, maxSize : Int) : Bitmap {
         if (image.width == maxSize && image.height == maxSize) return image
-        ODLogger.logInfo("ImageUtils, RESIZE_IMAGE, INIT")
+        ODLogger.logInfo("INIT")
         val scale = maxSize.toFloat()/ max(image.width, image.height)
         val scaledImage = Bitmap.createScaledBitmap(image, floor(image.width*scale).toInt(), floor(image
                 .height*scale).toInt(), false)
         val scaledData = Bitmap.createBitmap(maxSize, maxSize, scaledImage.config)
-        ODLogger.logInfo("ImageUtils, RESIZE_IMAGE, NEW_DIMENSIONS_WIDTH=${scaledImage.width}, MEW_DIMENSIONS_HEIGHT=${scaledImage.height}")
+        ODLogger.logInfo("RESIZE_IMAGE", actions = *arrayOf("NEW_DIMENSIONS_WIDTH=${scaledImage.width}, MEW_DIMENSIONS_HEIGHT=${scaledImage.height}"))
         val pixels = IntArray(scaledImage.width * scaledImage.height)
         scaledImage.getPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
         scaledData.setPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
         image.recycle()
         scaledImage.recycle()
-        ODLogger.logInfo("ImageUtils, RESIZE_IMAGE, COMPLETE")
+        ODLogger.logInfo("COMPLETE")
         return  scaledData
     }
 

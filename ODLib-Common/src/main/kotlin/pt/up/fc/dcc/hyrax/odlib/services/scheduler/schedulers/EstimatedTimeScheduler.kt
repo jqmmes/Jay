@@ -17,35 +17,39 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
 
 
     override fun init() {
-        ODLogger.logInfo("EstimatedTimeScheduler, INIT")
+        ODLogger.logInfo("INIT")
         SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) updateWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
-            ODLogger.logInfo("EstimatedTimeScheduler, LISTEN_FOR_WORKERS, WORKER_ID=$id")
+            ODLogger.logInfo("LISTEN_FOR_WORKERS", actions = *arrayOf("WORKER_ID=$id"))
             SchedulerService.enableBandwidthEstimates(
                     ODProto.BandwidthEstimate.newBuilder()
                             .setType(ODProto.BandwidthEstimate.Type.ACTIVE)
                             .addAllWorkerType(getWorkerTypes().typeList)
                             .build()
-            ) { super.init() }
+            ) {
+                ODLogger.logInfo("COMPLETE")
+                super.init()
+            }
         }
     }
 
     private fun removeWorker(worker: ODProto.Worker?) {
-        ODLogger.logInfo("EstimatedTimeScheduler, REMOVE_WORKER, WORKER_ID=${worker?.id}")
+        ODLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${worker?.id}"))
         val index = rankedWorkers.indexOf(RankedWorker(id=worker?.id))
         if (index == -1) return
         rankedWorkers.remove(rankedWorkers.elementAt(index))
+        ODLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${worker?.id}"))
     }
 
     // Return last ID higher estimatedDuration = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
-        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, START, JOB_ID=${job.id}")
+        ODLogger.logInfo("INIT", actions = *arrayOf("JOB_ID=${job.id}"))
         for (worker in rankedWorkers) worker.calcScore(job.data.size)
-        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, START_SORTING, JOB_ID=${job.id}")
+        ODLogger.logInfo("START_SORTING", actions = *arrayOf("JOB_ID=${job.id}"))
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy {it.estimatedDuration}))
-        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, COMPLETE_SORTING, JOB_ID=${job.id}")
-        ODLogger.logInfo("EstimatedTimeScheduler, SCHEDULE_JOB, SELECTED_WORKER, JOB_ID=${job.id}, WORKER_ID=${rankedWorkers.first.id}")
+        ODLogger.logInfo("COMPLETE_SORTING", actions = *arrayOf("JOB_ID=${job.id}"))
+        ODLogger.logInfo("SELECTED_WORKER", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${rankedWorkers.first.id}"))
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.first.id!!)
         return null
     }
@@ -88,19 +92,21 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
         private var estimatedBandwidth = 0f
 
         fun updateWorker(worker: ODProto.Worker?) {
+            ODLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=$id"))
             if (worker == null) return
             if (maxAvgTimePerJob < worker.avgTimePerJob) maxAvgTimePerJob = worker.avgTimePerJob
             if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
 
             weightQueue = (worker.queuedJobs+1)*worker.avgTimePerJob
             estimatedBandwidth = worker.bandwidthEstimate
-            ODLogger.logInfo("EstimatedTimeScheduler, UPDATE_WORKER, WORKER_ID=$id, WEIGHT_QUEUE=$weightQueue, " +
-                    "BANDWIDTH=$estimatedBandwidth")
+            ODLogger.logInfo("WEIGHT_UPDATED", actions = *arrayOf("WORKER_ID=$id", "WEIGHT_QUEUE=$weightQueue" , "BANDWIDTH=$estimatedBandwidth"))
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=$id"))
         }
 
         fun calcScore(dataSize: Int) {
+            ODLogger.logInfo("INIT",actions = *arrayOf("WORKER_ID=$id"))
             estimatedDuration = dataSize*estimatedBandwidth + weightQueue
-            ODLogger.logInfo("EstimatedTimeScheduler, CALC_SCORE, WORKER_ID=$id, SCORE=$estimatedDuration")
+            ODLogger.logInfo("COMPLETE",actions = *arrayOf("WORKER_ID=$id", "SCORE=$estimatedDuration"))
         }
 
         override fun equals(other: Any?): Boolean {

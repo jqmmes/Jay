@@ -18,6 +18,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
     private var maxBandwidthEstimate = 0L
 
     override fun init() {
+        ODLogger.logInfo("INIT")
         SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) rankWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
@@ -26,7 +27,10 @@ class SmartScheduler : Scheduler("SmartScheduler") {
                             .setType(ODProto.BandwidthEstimate.Type.ACTIVE)
                             .addAllWorkerType(getWorkerTypes().typeList)
                             .build()
-            ) { super.init() }
+            ) {
+                ODLogger.logInfo("COMPLETE")
+                super.init()
+            }
         }
         //SchedulerService.enableHeartBeat(ODUtils.genWorkerTypes()){super.init()}
     }
@@ -39,14 +43,18 @@ class SmartScheduler : Scheduler("SmartScheduler") {
 
     // Return last ID higher score = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
+        ODLogger.logInfo("INIT", actions = *arrayOf("JOB_ID=${job.id}"))
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.last.id!!)
+        ODLogger.logInfo("COMPLETE", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${rankedWorkers.last.id}"))
         return null
     }
 
     override fun destroy() {
+        ODLogger.logInfo("INIT")
         SchedulerService.disableBandwidthEstimates()
         SchedulerService.listenForWorkers(false)
         rankedWorkers.clear()
+        ODLogger.logInfo("COMPLETE")
         super.destroy()
     }
 
@@ -101,8 +109,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
                         scaledBattery * SchedulerService.weights.battery +
                         scaledAvgBandwidth * SchedulerService.weights.bandwidth
 
-        ODLogger.logInfo("New Score for ${worker.id}: $score\t | ${worker.runningJobs} | ${worker.queueSize} | ${worker.battery} | ${worker.avgTimePerJob} | ${worker.bandwidthEstimate} |")
-
+        ODLogger.logInfo("NEW_SCORE", actions = *arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score", "RUNNING_JOBS=${worker.runningJobs}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${worker.battery}", "AVG_TIME_PER_JOB=${worker.avgTimePerJob}", "BANDWIDTH_ESTIMATE=${worker.bandwidthEstimate}"))
         return score
     }
 

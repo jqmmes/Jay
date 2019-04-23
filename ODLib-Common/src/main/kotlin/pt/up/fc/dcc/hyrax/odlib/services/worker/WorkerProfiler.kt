@@ -30,13 +30,13 @@ internal object WorkerProfiler {
 
 
     internal fun start() {
-        ODLogger.logInfo("WorkerProfiler, START")
+        ODLogger.logInfo("START")
         brokerGRPC.announceMulticast()
         periodicStatusUpdate()
     }
 
     internal fun destroy() {
-        ODLogger.logInfo("WorkerProfiler, DESTROY")
+        ODLogger.logInfo("DESTROY")
         updaterRunning = false
         runningJobs.set(0)
         totalJobs.set(0)
@@ -54,12 +54,12 @@ internal object WorkerProfiler {
     }
 
     internal fun profileExecution(code: (() -> Unit)) {
-        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION, START")
+        ODLogger.logInfo("START")
         val computationStartTimestamp = System.currentTimeMillis()
         code.invoke()
         val totalTime = System.currentTimeMillis() - computationStartTimestamp
         averageComputationTimes.add(totalTime)
-        ODLogger.logInfo("WorkerProfiler, PROFILE_EXECUTION, END, COMPUTATION_TIME=$totalTime, NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() / averageComputationTimes.size)}")
+        ODLogger.logInfo("END",  actions = *arrayOf("COMPUTATION_TIME=$totalTime", "NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() / averageComputationTimes.size)}"))
     }
 
     internal fun atomicOperation(vararg values: AtomicInteger, increment: Boolean = false) {
@@ -77,11 +77,11 @@ internal object WorkerProfiler {
     internal fun monitorBattery() {
         batteryMonitor?.setCallbacks(
                 levelChangeCallback = { level ->
-                    ODLogger.logInfo("WorkerProfiler, MONITOR_BATTERY, NEW_BATTERY_LEVEL=$level")
+                    ODLogger.logInfo( "LEVEL_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_LEVEL=$level"))
                     this.battery = level
                 },
                 statusChangeCallback = { status ->
-                    ODLogger.logInfo("WorkerProfiler, MONITOR_BATTERY, NEW_BATTERY_STATUS=${status.name}")
+                    ODLogger.logInfo("STATUS_CHANGE_CB",  actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
                     this.batteryStatus = status
                 })
         batteryMonitor?.monitor()

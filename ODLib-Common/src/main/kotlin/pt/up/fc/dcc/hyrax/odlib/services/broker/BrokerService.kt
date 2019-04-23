@@ -69,13 +69,19 @@ object BrokerService {
     }
 
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
+        ODLogger.logInfo("INIT", request?.id ?: "")
         if (workerServiceRunning) worker.execute(request, callback) else callback?.invoke(Results.getDefaultInstance())
+        ODLogger.logInfo("COMPLETE", request?.id ?: "")
     }
 
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
+        ODLogger.logInfo("INIT", request?.id ?: "")
         if (schedulerServiceRunning) scheduler.schedule(request) { W ->
+            ODLogger.logInfo("SCHEDULED", request?.id ?: "", "WORKER_ID=${W?.id}")
             if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
+            ODLogger.logInfo("EXECUTION_COMPLETE", request?.id ?: "", "WORKER_ID=${W?.id}")
         } else callback?.invoke(Results.getDefaultInstance())
+        ODLogger.logInfo("COMPLETE", request?.id ?: "")
     }
 
     private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {
@@ -116,15 +122,15 @@ object BrokerService {
     }
 
     internal fun updateWorker(request: ODWorker?, updateCloud: Boolean = false) : CountDownLatch {
-        ODLogger.logInfo("BrokerService, UPDATE_WORKER, INIT, WORKER_ID=${request?.id}, UPDATE_CLOUD=$updateCloud")
+        ODLogger.logInfo("INIT, WORKER_ID=${request?.id}, UPDATE_CLOUD=$updateCloud")
         val countDownLatch = CountDownLatch(1)
         if (updateCloud){
-            ODLogger.logInfo("BrokerService, UPDATE_WORKER, UPDATE_STATUS_CLOUD, WORKER_ID=${request?.id}, UPDATE_CLOUD=$updateCloud")
+            ODLogger.logInfo("UPDATE_STATUS_CLOUD", actions = *arrayOf("WORKER_ID=${request?.id}", "UPDATE_CLOUD=$updateCloud"))
             cloud.updateStatus(request)
             if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(cloud.getProto()) {countDownLatch.countDown()}
             else countDownLatch.countDown()
         } else {
-            ODLogger.logInfo("BrokerService, UPDATE_WORKER, ANNOUNCE_MULTICAST, UPDATE_STATUS, WORKER_ID=${request?.id}, UPDATE_CLOUD=$updateCloud")
+            ODLogger.logInfo("UPDATE_STATUS", actions=*arrayOf("WORKER_ID=${request?.id}", "UPDATE_CLOUD=$updateCloud"))
             announceMulticast(worker = local.updateStatus(request))
             if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.getProto()) {countDownLatch.countDown()}
             else countDownLatch.countDown()
@@ -134,24 +140,24 @@ object BrokerService {
     }
 
     internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: (Status?) -> Unit) {
-        ODLogger.logInfo("BrokerService, RECEIVE_WORKER_STATUS, INIT, WORKER_ID=${request?.id}")
+        ODLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}"))
         workers[request?.id]?.updateStatus(request)
         if(schedulerServiceRunning) {
-            ODLogger.logInfo("BrokerService, RECEIVE_WORKER_STATUS, COMPLETE, WORKER_ID=${request?.id}")
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${request?.id}"))
             scheduler.notifyWorkerUpdate(request, completeCallback)
         } else {
             completeCallback.invoke(ODUtils.genStatusError())
-            ODLogger.logInfo("BrokerService, RECEIVE_WORKER_STATUS, SCHEDULER_NOT_RUNNING, WORKER_ID=${request?.id}")
+            ODLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("WORKER_ID=${request?.id}"))
         }
     }
 
     fun getSchedulers(callback: ((Schedulers?) -> Unit)? = null) {
-        ODLogger.logInfo("BrokerService, GET_SCHEDULERS, INIT")
+        ODLogger.logInfo("INIT")
         if(schedulerServiceRunning) {
-            ODLogger.logInfo("BrokerService, GET_SCHEDULERS, COMPLETE")
+            ODLogger.logInfo("COMPLETE")
             scheduler.listSchedulers(callback)
         } else {
-            ODLogger.logInfo("BrokerService, GET_SCHEDULERS, SCHEDULER_NOT_RUNNING")
+            ODLogger.logWarn("SCHEDULER_NOT_RUNNING")
             callback?.invoke(Schedulers.getDefaultInstance())
         }
 
@@ -168,30 +174,30 @@ object BrokerService {
     }
 
     private fun checkWorker(worker: ODProto.Worker?, address: String) {
-        ODLogger.logInfo("BrokerService, CHECK_WORKER, INIT, DEVICE_IP=$address. DEVICE_ID=${worker?.id}")
+        ODLogger.logInfo("INIT", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker?.id}"))
         if (worker == null) return
         if (worker.id !in workers){
-            ODLogger.logInfo("BrokerService, CHECK_WORKER, NEW_DEVICE, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
+            ODLogger.logInfo("NEW_DEVICE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { StatusUpdate ->
-                ODLogger.logInfo("BrokerService, CHECK_WORKER, STATUS_UPDATE, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
+                ODLogger.logInfo("STATUS_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
                 if(!schedulerServiceRunning) {
-                    ODLogger.logInfo("BrokerService, CHECK_WORKER, SCHEDULER_NOT_RUNNING, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
+                    ODLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
                     return@Worker
                 }
-                ODLogger.logInfo("BrokerService, CHECK_WORKER, SCHEDULER_RUNNING, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
+                ODLogger.logInfo("SCHEDULER_RUNNING", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
                 if (StatusUpdate == Worker.Status.ONLINE) {
-                    ODLogger.logInfo("BrokerService, CHECK_WORKER, NOTIFY_WORKER_UPDATE, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
+                    ODLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
                     scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) {}
                 } else {
-                    ODLogger.logInfo("BrokerService, CHECK_WORKER, NOTIFY_WORKER_FAILURE, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
+                    ODLogger.logInfo("NOTIFY_WORKER_FAILURE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
                     scheduler.notifyWorkerFailure(workers[worker.id]?.getProto()) {}
                 }
             }
         } else {
-            ODLogger.logInfo("BrokerService, CHECK_WORKER, NOTIFY_WORKER_UPDATE, DEVICE_IP=$address. DEVICE_ID=${worker.id}")
+            ODLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id]?.updateStatus(worker)
         }
-        if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> ODLogger.logInfo("BrokerService, CHECK_WORKER, SCHEDULER_NOTIFIED, STATUS_CODE=$S")}
+        if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> ODLogger.logInfo("SCHEDULER_NOTIFIED", actions = *arrayOf("STATUS_CODE=$S"))}
     }
 
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
@@ -228,8 +234,8 @@ object BrokerService {
             for (key in workers.keys)
                 if (workers[key]?.type in method.workerTypeList && workers[key]?.type != Type.LOCAL) workers[key]?.doActiveRTTEstimates {StatusUpdate ->
                     if(!schedulerServiceRunning) return@doActiveRTTEstimates
-                    if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto())  {S -> ODLogger.logInfo("BrokerService, ENABLE_BANDWIDTH_ESTIMATES, WORKER_UPDATE_NOTIFIED, STATUS_CODE=$S")}
-                    else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> ODLogger.logInfo("BrokerService, ENABLE_BANDWIDTH_ESTIMATES, WORKER_FAILURE_NOTIFIED, STATUS_CODE=$S")}
+                    if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto())  {S -> ODLogger.logInfo("WORKER_UPDATE_NOTIFIED", actions = *arrayOf("STATUS_CODE=$S"))}
+                    else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> ODLogger.logInfo("WORKER_FAILURE_NOTIFIED", actions = *arrayOf("STATUS_CODE=$S"))}
                 }
         }
         return ODUtils.genStatus(ODProto.StatusCode.Success)

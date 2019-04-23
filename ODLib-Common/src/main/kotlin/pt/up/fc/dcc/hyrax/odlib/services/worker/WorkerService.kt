@@ -29,20 +29,20 @@ object WorkerService {
 
     init {
         executor.shutdown()
-        ODLogger.logInfo("WorkerService, INIT")
+        ODLogger.logInfo("COMPLETE")
     }
 
     internal fun queueJob(job: ODProto.Job, callback: ((List<Detection>) -> Unit)?): StatusCode {
-        ODLogger.logInfo("WorkerService, QUEUE_JOB, init")
+        ODLogger.logInfo("INIT", job.id)
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(job, callback))
         WorkerProfiler.atomicOperation(WorkerProfiler.totalJobs, increment = true)
-        ODLogger.logInfo("WorkerService, QUEUE_JOB, JOB_QUEUED, JOBS_IN_QUEUE=${WorkerProfiler.totalJobs.get() - WorkerProfiler.runningJobs.get()}")
+        ODLogger.logInfo("JOB_QUEUED", job.id,"JOBS_IN_QUEUE=${WorkerProfiler.totalJobs.get() - WorkerProfiler.runningJobs.get()}")
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
     }
 
     fun start(localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null) {
-        ODLogger.logInfo("WorkerService, START, INIT")
+        ODLogger.logInfo("INIT")
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(ODSettings.workingThreads)
         this.localDetect = localDetect
@@ -55,19 +55,23 @@ object WorkerService {
             running = true
             while (running) {
                 try {
-                    if (!(executor.isShutdown || executor.isTerminated) && running) executor.execute(jobQueue.take())
-                    else running = false
-                    ODLogger.logInfo("WorkerService, START, SEND_FROM_QUEUE_TO_EXECUTOR")
+                    if (!(executor.isShutdown || executor.isTerminated) && running) {
+                        val job = jobQueue.take()
+                        ODLogger.logInfo("DEQUEUE_TO_EXECUTOR", job.job?.id ?: "")
+                        executor.execute(job)
+                    } else running = false
+
                 } catch (e: Exception) { running = false }
             }
             if (!executor.isShutdown) executor.shutdownNow()
         }
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(true).build()) {
-            ODLogger.logInfo("WorkerService, START, RUNNING")
+            ODLogger.logInfo("RUNNING")
         }
     }
 
     fun stop(stopGRPCServer: Boolean = true, callback: ((ODProto.Status?) -> Unit)? = null) {
+        ODLogger.logInfo("INIT")
         running = false
         if (stopGRPCServer) server?.stop()
         waitingResultsMap.clear()
@@ -76,32 +80,36 @@ object WorkerService {
         executor.shutdownNow()
         WorkerProfiler.destroy()
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(false).build()) {S ->
-            ODLogger.logInfo("WorkerService, STOP")
+            ODLogger.logInfo("COMPLETE")
             callback?.invoke(S)
         }
     }
 
     fun monitorBattery() {
-        ODLogger.logInfo("WorkerService, MONITOR_BATTERY")
+        ODLogger.logInfo("INIT")
         WorkerProfiler.monitorBattery()
+        ODLogger.logInfo("COMPLETE")
     }
 
     fun loadModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {
-        ODLogger.logInfo("WorkerService, LOAD_MODEL")
+        ODLogger.logInfo("INIT")
         if(running) localDetect.loadModel(model, callback)
+        ODLogger.logInfo("COMPLETE")
     }
 
 
     fun listModels() : Set<Model> {
-        ODLogger.logInfo("WorkerService, LIST_MODELS")
+        ODLogger.logInfo("INIT")
         return localDetect.models.toSet()
     }
 
     internal fun isRunning() : Boolean { return running }
 
     fun stopService(callback: ((ODProto.Status?) -> Unit)) {
-        ODLogger.logInfo("WorkerService, STOP_SERVICE")
-        stop(false) {S -> callback(S)}
+        ODLogger.logInfo("INIT")
+        stop(false) {S ->
+            callback(S)
+            ODLogger.logInfo("COMPLETE")}
     }
 
     fun stopServer() {
@@ -110,18 +118,18 @@ object WorkerService {
 
     private class RunnableJobObjects(val job: ODProto.Job?, var callback: ((List<Detection>) -> Unit)?) : Runnable {
         override fun run() {
-            ODLogger.logInfo("WorkerService, RUN_JOB, JOB_ID=${job?.id}")
+            ODLogger.logInfo("INIT", job?.id ?: "")
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, increment = true)
             try {
-                ODLogger.logInfo("WorkerService, RUN_JOB, START, JOB_ID=${job?.id}")
+                ODLogger.logInfo("START", job?.id ?: "")
                 WorkerProfiler.profileExecution { callback?.invoke(localDetect.detectObjects(job?.data?.toByteArray() ?: ByteArray(0))) }
-                ODLogger.logInfo("WorkerService, RUN_JOB, END, JOB_ID=${job?.id}")
+                ODLogger.logInfo("END", job?.id ?: "")
             } catch (e: Exception) {
-                ODLogger.logError("WorkerService, RUN_JOB, FAIL, JOB_ID=${job?.id}")
+                ODLogger.logError("FAIL",  job?.id ?: "")
                 callback?.invoke(emptyList())
             }
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs)
-            ODLogger.logInfo("WorkerService, RUN_JOB, COMPLETE, JOB_ID=${job?.id}")
+            ODLogger.logInfo("COMPLETE",job?.id ?: "")
         }
     }
 }

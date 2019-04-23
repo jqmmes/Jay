@@ -45,8 +45,8 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.executeJob(job)
         call.addListener(Runnable{
-            try { callback?.invoke(call.get()); ODLogger.logInfo("BrokerGRPCClient, EXECUTE_JOB, COMPLETE") }
-                catch (e: ExecutionException) {callback?.invoke(ODProto.Results.getDefaultInstance()); ODLogger.logError("BrokerGRPCClient, EXECUTE_JOB, ERROR")}
+            try { callback?.invoke(call.get()); ODLogger.logInfo("COMPLETE",  job?.id ?: "") }
+                catch (e: ExecutionException) {callback?.invoke(ODProto.Results.getDefaultInstance()); ODLogger.logError("ERROR",  job?.id ?: "")}
             }, AbstractODLib.executorPool)
     }
 
@@ -66,10 +66,10 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 val pingData = blockingStub
                         .withDeadlineAfter(timeout, TimeUnit.MILLISECONDS)
                         .ping(ODProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(payload))).setReply(reply).build())
-                ODLogger.logInfo("BrokerGRPCClient, PING, DATA_SIZE=${pingData.data.size()}")
+                ODLogger.logInfo("SEND_PING", actions = *arrayOf("DATA_SIZE=${pingData.data.size()}"))
                 callback?.invoke((System.currentTimeMillis() - timer).toInt())
             } catch (e: TimeoutException) {
-                ODLogger.logError("BrokerGRPCClient, PING, TIMEOUT")
+                ODLogger.logError("TIMEOUT")
                 callback?.invoke(-1)
             }
         }
@@ -91,7 +91,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.getModels(Empty.getDefaultInstance())
         call.addListener(Runnable{ try { callback?.invoke(ODUtils.parseModels(call.get())) }
-        catch (e: ExecutionException) { ODLogger.logError("BrokerGRPCClient, GET_MODELS, UNAVAILABLE") }
+        catch (e: ExecutionException) { ODLogger.logError("UNAVAILABLE") }
         }, AbstractODLib.executorPool)
     }
 
@@ -100,7 +100,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         val call = futureStub.getSchedulers(Empty.getDefaultInstance())
         call.addListener(Runnable{
             try { callback?.invoke(ODUtils.parseSchedulers(call.get())) }
-            catch (e: ExecutionException) { ODLogger.logError("BrokerGRPCClient, GET_SCHEDULERS, UNAVAILABLE") }
+            catch (e: ExecutionException) { ODLogger.logError("UNAVAILABLE") }
         }, AbstractODLib.executorPool)
     }
 
@@ -119,7 +119,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun diffuseWorkerStatus(request: ODProto.Worker?) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.diffuseWorkerStatus(request)
-        call.addListener(Runnable { try {ODLogger.logInfo("BrokerGRPCClient, DIFFUSE_WORKER_STATUS, STATUS_CODE=${call.get().code.name}")} catch(e: ExecutionException){} }, AbstractODLib.executorPool)
+        call.addListener(Runnable { try {ODLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}"))} catch(e: ExecutionException){} }, AbstractODLib.executorPool)
     }
 
     fun requestWorkerStatus(callback: ((ODProto.Worker?) -> Unit)){
@@ -138,31 +138,31 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun announceMulticast() {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.announceMulticast(Empty.getDefaultInstance())
-        call.addListener(Runnable { ODLogger.logInfo("BrokerGRPCClient, ANNOUNCE_MULTICAST, STATUS_CODE=${call.get().code.name}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { ODLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")) }, AbstractODLib.executorPool)
     }
 
     fun enableHearBeats(workerTypes: ODProto.WorkerTypes, callback: ((ODProto.Status) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.enableHearBeats(workerTypes)
-        call.addListener(Runnable { ODLogger.logInfo("BrokerGRPCClient, ENABLE_HEARTBEATS, STATUS_CODE=${call.get().code.name}"); callback(call.get()) }, AbstractODLib.executorPool)
+        call.addListener(Runnable { ODLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")); callback(call.get()) }, AbstractODLib.executorPool)
     }
 
     fun enableBandwidthEstimates(bandwidthEstimateConfig: ODProto.BandwidthEstimate, callback: ((ODProto.Status) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.enableBandwidthEstimates(bandwidthEstimateConfig)
-        call.addListener(Runnable { ODLogger.logInfo("BrokerGRPCClient, ENABLE_BANDWIDTH_ESTIMATES, STATUS_CODE=${call.get().code.name}"); callback(call.get()) }, AbstractODLib.executorPool)
+        call.addListener(Runnable { ODLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")); callback(call.get()) }, AbstractODLib.executorPool)
     }
 
     fun disableHearBeats() {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.disableHearBeats(Empty.getDefaultInstance())
-        call.addListener(Runnable { ODLogger.logInfo("BrokerGRPCClient, DISABLE_HEARTBEATS, STATUS_CODE=${call.get().code.name}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { ODLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")) }, AbstractODLib.executorPool)
     }
 
     fun disableBandwidthEstimates() {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.disableBandwidthEstimates(Empty.getDefaultInstance())
-        call.addListener(Runnable { ODLogger.logInfo("BrokerGRPCClient, DISABLE_BANDWIDTH_ESTIMATES, STATUS_CODE=${call.get().code.name}") }, AbstractODLib.executorPool)
+        call.addListener(Runnable { ODLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")) }, AbstractODLib.executorPool)
     }
 
     fun updateSmartSchedulerWeights(computeTime: Float, queueSize: Float, runningJobs: Float, battery: Float,

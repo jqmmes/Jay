@@ -37,19 +37,20 @@ internal class CloudletTensorFlow : DetectObjects {
         val modelPath = File(modelCacheDir, model.modelName)
         if (!checkDownloadedModel(model.modelName)) {
             val tmpFile = downloadModel(model)
-            ODLogger.logInfo("Extraction Model....")
+            ODLogger.logInfo("EXTRACT_MODEL_INIT")
             if (tmpFile != null) {
                 val newModel = File(extractModel(tmpFile))
-                ODLogger.logInfo("Extracted...")
+                ODLogger.logInfo("EXTRACT_MODEL_COMPLETE")
                 if (modelPath != newModel) {
                     newModel.renameTo(modelPath)
-                    ODLogger.logInfo("Renaming model dir to: ${modelPath.absolutePath}")
+                    ODLogger.logInfo("RENAME_MODEL_DIR", actions = *arrayOf("NEW_NAME=${modelPath.absolutePath}"))
                 }
             }
             tmpFile?.delete()
         }
-        ODLogger.logInfo("Loading model.. ${model.modelName}")
+        ODLogger.logInfo("LOADING_MODEL_INIT", actions = *arrayOf("MODEL_NAME=${model.modelName}"))
         loadModel(File(modelPath, "saved_model/").absolutePath, completeCallback = completeCallback)
+        ODLogger.logInfo("LOADING_MODEL_COMPLETE", actions = *arrayOf("MODEL_NAME=${model.modelName}"))
         //Files.delete(File(modelCacheDir+model.modelName+".tar.gz").toPath())
     }
 
@@ -109,17 +110,21 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
     private fun resizeImage(imgData: ByteArray, maxSize: Int = 300): Image {
+        ODLogger.logInfo("INIT")
+        ODLogger.logInfo("READ_IMAGE_DATA_INIT", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
         val image = ImageIO.read(ByteArrayInputStream(imgData))
+        ODLogger.logInfo("READ_IMAGE_DATA_COMPLETE", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
         if (image.width == maxSize && image.height <= maxSize ||
                 image.width <= maxSize && image.height == maxSize) return image
-        ODLogger.logInfo("Resizing Image...")
         val scale = maxSize.toFloat() / max(image.width, image.height)
+        ODLogger.logInfo("SCALE_IMAGE", actions = *arrayOf("IMAGE_SCALE=$scale"))
         return image.getScaledInstance(floor(image.width * scale).toInt(), floor(image.height * scale).toInt(),
                 SCALE_FAST)
     }
 
     private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>): List<Detection> {
-        ODLogger.logInfo("processOutputs\tRUNNING")
+        ODLogger.logInfo("INIT")
+        ODLogger.logInfo("RUN_MODEL_INIT")
         var outputs: List<Tensor<*>>? = null
         tensor.use { input ->
             outputs = model
@@ -131,7 +136,7 @@ internal class CloudletTensorFlow : DetectObjects {
                     .fetch("detection_boxes")
                     .run()
         }
-        ODLogger.logInfo("processOutputs\tDONE")
+        ODLogger.logInfo("RUN_MODEL_COMPLETE")
 
         val returnList: MutableList<Detection> = LinkedList()
 
@@ -157,6 +162,7 @@ internal class CloudletTensorFlow : DetectObjects {
                 }
             }
         }
+        ODLogger.logInfo("COMPLETE")
         return returnList
     }
 
@@ -195,7 +201,7 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
     private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
-        ODLogger.logInfo("Making image tensor")
+        ODLogger.logInfo("INIT")
         //val img = convertBufferedImageType(ImageIO.read(ByteArrayInputStream(imageData)))
         //val img = ImageIO.read(ByteArrayInputStream(imageData))
 
@@ -210,13 +216,13 @@ internal class CloudletTensorFlow : DetectObjects {
         val channels: Long = 3
         val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
         val tensor = Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
-        ODLogger.logInfo("Making image tensor\tCOMPLETE")
+        ODLogger.logInfo("COMPLETE")
         return tensor
     }
 
     @Throws(IOException::class)
     private fun makeImageTensor(filename: String): Tensor<UInt8> {
-        ODLogger.logInfo("Making image tensor")
+        ODLogger.logInfo("INIT")
         val img = ImageIO.read(File(filename))
         if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
             throw IOException(
@@ -230,15 +236,18 @@ internal class CloudletTensorFlow : DetectObjects {
         val batchSize: Long = 1
         val channels: Long = 3
         val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
-        return Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
+        val tensor =  Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
+        ODLogger.logInfo("COMPLETE")
+        return tensor
     }
 
     @Suppress("unused")
     private fun convertBufferedImageType(bufferedImage: BufferedImage): BufferedImage {
-        ODLogger.logInfo("Checking image format...")
+        ODLogger.logInfo("INIT")
         val converted = BufferedImage(300, 300, BufferedImage.TYPE_3BYTE_BGR)
         if (bufferedImage.type == BufferedImage.TYPE_4BYTE_ABGR) {
             ODLogger.logInfo("Converting image to correct type (YPE_3BYTE_BGR)")
+            ODLogger.logInfo("CONVERT_IMAGE_INIT", actions = *arrayOf("IMAGE_FORMAT=TYPE_3BYTE_BGR"))
             for (y in 0 until bufferedImage.height) {
                 for (x in 0 until bufferedImage.width) {
                     val argb = bufferedImage.getRGB(x, y)
@@ -249,41 +258,41 @@ internal class CloudletTensorFlow : DetectObjects {
                     }
                 }
             }
+            ODLogger.logInfo("CONVERT_IMAGE_COMPLETE", actions = *arrayOf("IMAGE_FORMAT=TYPE_3BYTE_BGR"))
         }
-        ODLogger.logInfo("Checking image format... done")
+        ODLogger.logInfo("COMPLETE")
         return converted
     }
 
     override fun checkDownloadedModel(name: String): Boolean {
-        ODLogger.logInfo("Checking if model has been downloaded...")
+        ODLogger.logInfo("INIT")
         val cacheDir = File(modelCacheDir)
         if (!cacheDir.exists()) return false
         for (file in cacheDir.listFiles())
             if (file.isDirectory && file.name == name) {
-                ODLogger.logInfo("Model already downloaded")
+                ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_LOADED=TRUE"))
                 return true
             }
+        ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_LOADED=FALSE"))
         return false
     }
 
     override fun downloadModel(model: Model): File? {
-        ODLogger.logInfo("Downloading model from " + model.remoteUrl)
+        ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}"))
         if (!File(modelCacheDir).exists()) File(modelCacheDir).mkdirs()
         val modelUrl = URL(model.remoteUrl)
         val rbc = Channels.newChannel(modelUrl.openStream())
-        ODLogger.logInfo("Downloading from ${model.remoteUrl}")
         val tmpFile = File.createTempFile(modelCacheDir + model.modelName, ".tar.gz")
-        ODLogger.logInfo("Downloading to... ${tmpFile.absolutePath}")
+        ODLogger.logInfo("DOWNLOAD_INIT", actions = *arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}", "DOWNLOAD_LOCATION=${tmpFile.absolutePath}"))
         val fos = FileOutputStream(tmpFile)
         fos.channel.transferFrom(rbc, 0, java.lang.Long.MAX_VALUE)
-        ODLogger.logInfo("Downloaded....")
         model.downloaded = true
+        ODLogger.logInfo("DOWNLOAD_COMPLETE", actions = *arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}", "DOWNLOAD_LOCATION=${tmpFile.absolutePath}"))
         return tmpFile
-        //model.graphLocation = modelCacheDir + model.modelName + "/"
     }
 
     override fun extractModel(modelFile: File): String {
-        ODLogger.logInfo("Extracting model...")
+        ODLogger.logInfo("INIT")
         var basePath = modelCacheDir
         val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
 
@@ -293,7 +302,7 @@ internal class CloudletTensorFlow : DetectObjects {
             entry = tis.nextEntry
         }
         while (entry != null) {
-            ODLogger.logInfo("Extract ${entry.name}")
+            ODLogger.logInfo("EXTRACT", actions = *arrayOf("FILE_NAME=${entry.name}"))
             if (entry.name.contains("PaxHeader")) {
                 entry = tis.nextEntry
                 continue
@@ -327,7 +336,7 @@ internal class CloudletTensorFlow : DetectObjects {
 
             entry = tis.nextEntry
         }
-        ODLogger.logInfo("Extracting model... Complete")
+        ODLogger.logInfo("COMPLETE")
         return basePath
     }
 

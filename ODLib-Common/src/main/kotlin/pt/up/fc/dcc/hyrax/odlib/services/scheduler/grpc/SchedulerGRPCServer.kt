@@ -30,9 +30,9 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
         }
 
         override fun listSchedulers(request: Empty?, responseObserver: StreamObserver<ODProto.Schedulers>?) {
-            ODLogger.logInfo("SchedulerGRPCServer, GET_SCHEDULERS, INIT")
+            ODLogger.logInfo("INIT")
             genericComplete(SchedulerService.listSchedulers(), responseObserver)
-            ODLogger.logInfo("SchedulerGRPCServer, GET_SCHEDULERS, COMPLETE")
+            ODLogger.logInfo("COMPLETE")
         }
 
         override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {

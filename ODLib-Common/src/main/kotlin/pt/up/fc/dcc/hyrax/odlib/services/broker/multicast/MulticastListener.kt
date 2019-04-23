@@ -15,10 +15,10 @@ object MulticastListener {
 
     fun listen(callback: ((ODProto.Worker?, String) -> Unit)? = null, networkInterface: NetworkInterface? = null) {
         if (running) {
-            ODLogger.logWarn("MulticastListener, ALREADY_RUNNING")
+            ODLogger.logWarn("ALREADY_RUNNING")
             return
         }
-        ODLogger.logInfo("MulticastListener, LISTEN, INIT")
+        ODLogger.logInfo("INIT")
         thread(isDaemon = true, name="Multicast Listener") {
             val localIp = getLocalIpV4()
             val mcPort = 50000
@@ -30,14 +30,14 @@ object MulticastListener {
             } else {
                 val interfaces = ODUtils.getCompatibleInterfaces<Inet4Address>()
                 if (!interfaces.isEmpty()) {
-                    ODLogger.logInfo("MulticastListener, LISTEN, USING_DEFAULT_INTERFACE, ADVERTISE_INTERFACE=${interfaces[0]}")
+                    ODLogger.logInfo("USING_DEFAULT_INTERFACE",  actions = *arrayOf("ADVERTISE_INTERFACE=${interfaces[0]}"))
                     listeningSocket.networkInterface = interfaces[0]
                 } else {
-                    ODLogger.logError("MulticastListener, LISTEN, NO_SUITABLE_INTERFACE_FOUND")
+                    ODLogger.logError("NO_SUITABLE_INTERFACE_FOUND")
                     return@thread
                 }
             }
-            ODLogger.logInfo("MulticastListener, LISTEN, RECEIVER, RUNNING_AT=${listeningSocket.localSocketAddress}")
+            ODLogger.logInfo("RECEIVER",  actions = *arrayOf("RUNNING_AT=${listeningSocket.localSocketAddress}"))
             listeningSocket.joinGroup(mcIPAddress)
 
             running = true
@@ -48,7 +48,7 @@ object MulticastListener {
                 try {
                     listeningSocket.receive(packet)
                 } catch (e: SocketException) {
-                    ODLogger.logWarn("MulticastListener, CLOSE, SOCKET_EXCEPTION")
+                    ODLogger.logWarn("CLOSE",  actions = *arrayOf("ERROR=SOCKET_EXCEPTION"))
                     running = false
                     continue
                 }
@@ -59,7 +59,7 @@ object MulticastListener {
                 }
             } while (running)
             if (!listeningSocket.isClosed) {
-                ODLogger.logInfo("MulticastListener, SOCKET_CLOSED")
+                ODLogger.logInfo("SOCKET_CLOSED")
                 listeningSocket.leaveGroup(mcIPAddress)
                 listeningSocket.close()
             }
@@ -67,11 +67,12 @@ object MulticastListener {
     }
 
     fun stop() {
-        ODLogger.logInfo("MulticastListener, STOP")
+        ODLogger.logInfo("INIT")
         running = false
         try {
             listeningSocket.leaveGroup(mcIPAddress)
             listeningSocket.close()
         } catch (ignore: Exception) {}
+        ODLogger.logInfo("COMPLETE")
     }
 }

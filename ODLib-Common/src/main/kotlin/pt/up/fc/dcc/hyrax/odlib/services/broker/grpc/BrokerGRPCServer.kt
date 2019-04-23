@@ -53,19 +53,23 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun setModel(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>?) {
+            ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${request?.id}"))
             BrokerService.setModel(request) {S -> genericComplete(S, responseObserver)}
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request?.id}"))
         }
 
         override fun getSchedulers(request: Empty?, responseObserver: StreamObserver<ODProto.Schedulers>?) {
-            ODLogger.logInfo("BrokerGRPCServer, GET_SCHEDULERS, INIT")
+            ODLogger.logInfo("INIT")
             BrokerService.getSchedulers {S ->
-                ODLogger.logInfo("BrokerGRPCServer, GET_SCHEDULERS, COMPLETE")
+                ODLogger.logInfo("COMPLETE")
                 genericComplete(S, responseObserver)
             }
         }
 
         override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
+            ODLogger.logInfo("INIT", actions = *arrayOf("SCHEDULER_ID=${request?.id}"))
             BrokerService.setScheduler(request) {S -> genericComplete(S, responseObserver)}
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("SCHEDULER_ID=${request?.id}"))
         }
 
         override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<ODProto.Status>?) {

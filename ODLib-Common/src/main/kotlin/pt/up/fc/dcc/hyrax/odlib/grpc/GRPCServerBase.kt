@@ -17,7 +17,7 @@ abstract class GRPCServerBase(private val port: Int,
 
     @Throws(IOException::class)
     fun start(): GRPCServerBase {
-        ODLogger.logInfo("GRPCServerBase, START, PORT=$port")
+        ODLogger.logInfo("INIT", actions = *arrayOf("PORT=$port", "USING_NETTY=$useNettyServer"))
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
         server =
                 if (useNettyServer) NettyServerBuilder.forPort(port)
@@ -34,9 +34,9 @@ abstract class GRPCServerBase(private val port: Int,
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
 
-                ODLogger.logError("GRPCServerBase, RUN, ERROR, *** shutting down gRPC server since JVM is shutting down")
+                ODLogger.logError("ERROR", actions = *arrayOf("ERROR='*** shutting down gRPC server since JVM is shutting down'"))
                 this@GRPCServerBase.stop()
-                ODLogger.logError("GRPCServerBase, RUN, ERROR, *** server shut down")
+                ODLogger.logError("ERROR",  actions = *arrayOf("'*** server shut down'")
             }
         })
         return this
@@ -66,10 +66,10 @@ abstract class GRPCServerBase(private val port: Int,
                 responseObserver!!.onNext(request)
                 responseObserver.onCompleted()
             } catch (e: StatusRuntimeException) {
-                ODLogger.logError("GRPCServerBase. GENERIC_COMPLETE, CONTEXT_CANCELED")
+                ODLogger.logError("CONTEXT_CANCELED")
             }
         } else {
-            ODLogger.logError("GRPCServerBase. GENERIC_COMPLETE, CONTEXT_CANCELED")
+            ODLogger.logError("CONTEXT_CANCELED")
         }
     }
 }

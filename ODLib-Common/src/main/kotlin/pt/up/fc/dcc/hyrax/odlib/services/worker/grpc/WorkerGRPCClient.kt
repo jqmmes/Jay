@@ -22,41 +22,41 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
     }
 
     fun execute(job: ODProto.Job?, callback: ((ODProto.Results?) -> Unit)? = null) {
-        ODLogger.logInfo("WorkerGRPCClient, EXECUTE, START, JOB_ID=${job?.id}")
+        ODLogger.logInfo("INIT", job?.id ?: "")
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val futureJob = futureStub.execute(job)
         futureJob.addListener(Runnable {
             try {
                 callback?.invoke(futureJob.get())
-                ODLogger.logInfo("WorkerGRPCClient, EXECUTE, COMPLETE, JOB_ID=${job?.id}")
+                ODLogger.logInfo("COMPLETE", job?.id ?: "")
             } catch (e: ExecutionException) {
-                ODLogger.logWarn("WorkerGRPCClient, EXECUTE, ERROR, JOB_ID=${job?.id}")
+                ODLogger.logWarn("ERROR", job?.id ?: "")
             }
         }, AbstractODLib.executorPool)
     }
 
     fun listModels(callback: ((ODProto.Models) -> Unit)? = null) {
-        ODLogger.logInfo("WorkerGRPCClient, LIST_MODELS, START")
+        ODLogger.logInfo("INIT")
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.listModels(Empty.getDefaultInstance())
         call.addListener(Runnable {
             try {
                 callback?.invoke(call.get())
-                ODLogger.logInfo("WorkerGRPCClient, LIST_MODELS, COMPLETE")
+                ODLogger.logInfo("COMPLETE")
             } catch (e: ExecutionException) {
-                ODLogger.logInfo("WorkerGRPCClient, LIST_MODELS, ERROR")
+                ODLogger.logInfo("ERROR")
             }
 
         }, AbstractODLib.executorPool)
     }
 
     fun selectModel(request: ODProto.Model?, callback: ((ODProto.Status?) -> Unit)?) {
-        ODLogger.logInfo("WorkerGRPCClient, SELECT_MODEL, START")
+        ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${request?.id}"))
         val call = futureStub.selectModel(request)
         call.addListener(Runnable { try {callback?.invoke(call.get())
-            ODLogger.logInfo("WorkerGRPCClient, SELECT_MODEL, COMPLETE")
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request?.id}"))
         } catch (e: ExecutionException) {
-            ODLogger.logInfo("WorkerGRPCClient, SELECT_MODEL, ERROR")
+            ODLogger.logInfo("ERROR", actions = *arrayOf("MODEL_ID=${request?.id}"))
             callback?.invoke(ODUtils.genStatusError())}
         }, AbstractODLib.executorPool)
     }

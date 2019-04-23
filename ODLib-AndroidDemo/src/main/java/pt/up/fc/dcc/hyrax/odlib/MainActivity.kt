@@ -225,8 +225,6 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
     }
 
     private fun toggleScheduler(start: Boolean) {
-        ODLogger.logInfo("Toggle Server $start")
-
         if (start) {
             odClient.startScheduler()
         } else {
@@ -261,9 +259,7 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
 
     fun chooseImage(target: View) {
         thread(name = "chooseImage CreateJob") {
-            odClient.scheduleJob(loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}"))) {R ->
-                ODLogger.logInfo("New Result: $R")
-            }
+            odClient.scheduleJob(loadAssetImage(assets.open("benchmark-small/${assets.list("benchmark-small")!![0]}"))) {R -> }
 
             return@thread
         }
@@ -284,7 +280,7 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
             if (getScheduler() is CloudScheduler) client = ClientManager.getCloudClient()
             val models = client.getModels(false, true)
             models.forEach { model ->
-                ODLogger.logInfo("Model_Name\t${model.modelName}")
+
                 if ((getScheduler() is LocalScheduler) or (getScheduler() is CloudScheduler)) {
                     client.selectModel(model)
                     sleep(1000)
@@ -306,10 +302,10 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
                 startBenchmark = System.currentTimeMillis()
                 assetImages.forEach { asset ->
                     val job = SchedulerBase.createJob(asset)
-                    ODLogger.logInfo("Battery_Start\t${job.id}\t${SystemStats.getBatteryEnergyCounter(this)
+
                     }\t${SystemStats.getBatteryPercentage(this)}")
                     SchedulerBase.addResultsCallback { _, _ ->
-                        ODLogger.logInfo("Battery_End\t${job.id}\t${SystemStats.getBatteryEnergyCounter
+
                         (this)}\t${SystemStats.getBatteryPercentage(this)}")
                         synchronizingLatch.countDown()
                     }
@@ -334,7 +330,6 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
         if (assetType == LARGE_ASSETS)
             assetDirectory = "benchmark-large"
         assets.list(assetDirectory)!!.forEach { asset ->
-            ODLogger.logInfo(asset)
             ret.addLast(loadAssetImage(assets.open("$assetDirectory/$asset")))
         }
         return ret
@@ -389,7 +384,6 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
                 for (model in modelsList) {
                     if (model.modelName == parent?.selectedItem) {
                         odClient.setModel(model)
-                        ODLogger.logInfo("${model.modelName}\t\tloaded: ${model.downloaded}")
                         return
                     }
                 }

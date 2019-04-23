@@ -33,7 +33,7 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         call.addListener(Runnable {
             try {
                 callback?.invoke(call.get())
-            } catch (e: ExecutionException) { ODLogger.logError("SchedulerGRPCClient, LIST_SCHEDULERS, UNAVAILABLE") }
+            } catch (e: ExecutionException) { ODLogger.logError("UNAVAILABLE") }
         }, AbstractODLib.executorPool)
     }
 
