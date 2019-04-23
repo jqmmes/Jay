@@ -69,7 +69,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 assetManager : AssetManager,
                 modelFilename : String,
                 inputSize : Int) : Classifier? {
-            ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, CREATE, INIT")
+            ODLogger.logInfo("INIT")
             val d = TensorFlowObjectDetectionAPIModel()
 
             /*val labelsInput: InputStream?
@@ -88,7 +88,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             try {
                 d.inferenceInterface = MyTensorFlowInferenceInterface(assetManager, modelFilename)
             } catch (e: RuntimeException) {
-                ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, CREATE, ERROR")
+                ODLogger.logInfo("ERROR")
                 return null
             }
 
@@ -121,7 +121,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
             d.outputClasses = FloatArray(MAX_RESULTS)
             d.outputNumDetections = FloatArray(1)
 
-            ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, CREATE, COMPLETE")
+            ODLogger.logInfo("COMPLETE")
             return d
         }
 
@@ -133,7 +133,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
 
 
     override fun recognizeImage(bitmap : Bitmap) : List<Classifier.Recognition>{
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, INIT")
+        ODLogger.logInfo("INIT")
         // Log this method so that it can be analyzed with systrace.
         //Trace.beginSection("recognizeImage")
 
@@ -152,20 +152,20 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         //Copy the input data into TensorFlow.
         //Trace.beginSection("feed")
         //inputName: String!, src: ByteArray!, vararg dims: Long
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, CREATE_SESSION, INIT")
+        ODLogger.logInfo("CREATE_SESSION, INIT")
         val sessionInferenceInterface = MyTensorFlowInferenceInterface(loadedGraph)
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, CREATE_SESSION, COMPLETE")
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, FEED_INTERFACE, INIT")
+        ODLogger.logInfo("CREATE_SESSION, COMPLETE")
+        ODLogger.logInfo("FEED_INTERFACE, INIT")
         sessionInferenceInterface.feed(inputName, byteValues, 1L, inputSize.toLong(), inputSize.toLong(), 3L)
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, FEED_INTERFACE, COMPLETE")
+        ODLogger.logInfo("FEED_INTERFACE, COMPLETE")
         //inferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
         //Trace.endSection()
 
         //Run the inference call.
         //Trace.beginSection("run")
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, RUN, INIT")
+        ODLogger.logInfo("RUN, INIT")
         sessionInferenceInterface.run(outputNames, logStats)
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, RUN, COMPLETE")
+        ODLogger.logInfo("RUN, COMPLETE")
         //inferenceInterface.run(outputNames, logStats)
         //Trace.endSection()
 
@@ -192,7 +192,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 PriorityQueue(
                         1, kotlin.Comparator<Classifier.Recognition> { lhs, rhs -> compareValues(rhs.confidence, lhs.confidence) })
 
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, CHECK_RESULTS, INIT")
+        ODLogger.logInfo("CHECK_RESULTS, INIT")
         //Scale them back to the input size.
         for (i : Int in 0..(outputScores.size-1)) {
             val detection =
@@ -203,7 +203,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                             outputLocations[4 * i + 2] * inputSize)
             pq.add(Classifier.Recognition("" + i, outputClasses[i].toString(), outputScores[i], detection))
             if (outputScores[i] >= 0.3f)
-                ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, CHECK_RESULTS, " +
+                ODLogger.logInfo("CHECK_RESULTS, " +
                         "RESULT_CLASS=${COCODataLabels.label(outputClasses[i].toInt())}, " +
                         "RESULT_SCORE=${outputScores[i]}")
         }
@@ -212,13 +212,13 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         for (i : Int in 0..Math.min(pq.size, maxResults)) {
             recognitions.add(pq.poll())
         }
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, CHECK_RESULTS, COMPLETE")
+        ODLogger.logInfo("CHECK_RESULTS, COMPLETE")
         //Trace.endSection() //"recognizeImage"
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, CLOSE_SESSION, INIT")
+        ODLogger.logInfo("CLOSE_SESSION, INIT")
         //sessionInferenceInterface.clean()
         sessionInferenceInterface.closeSession()
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, CLOSE_SESSION, COMPLETE")
-        ODLogger.logInfo("TensorFlowObjectDetectionAPIModel, RECOGNIZE_IMAGE, COMPLETE")
+        ODLogger.logInfo("CLOSE_SESSION, COMPLETE")
+        ODLogger.logInfo("COMPLETE")
         return recognitions
     }
 

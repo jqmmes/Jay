@@ -10,35 +10,35 @@ import kotlin.concurrent.thread
 
 object ODLogger{
     private lateinit var loggingConsole : LogInterface
-    private val LOG_QUEUE : BlockingQueue<Pair<String, LogLevel>> = LinkedBlockingQueue()
+    private val LOG_QUEUE : BlockingQueue<Pair<Pair<String, String>, Pair<Long, LogLevel>>> = LinkedBlockingQueue()
     private var running: Boolean = false
     private var logLevel : LogLevel = LogLevel.Disabled
     private val LOCK = Object()
 
-    private fun buildCallerInfo(stackTrace: java.lang.StackTraceElement): String {
-        val i = 2
-        return "${stackTrace[i].className}::${stackTrace[i].methodName}[${stackTrace[i].lineNumber}]"
+    private fun buildCallerInfo(stackTrace: Array<StackTraceElement>): String {
+        val i = 3
+        return "${stackTrace[i].className.removePrefix("pt.up.fc.dcc.hyrax.odlib.")}::${stackTrace[i].methodName}[${stackTrace[i].lineNumber}]"
     }
 
     fun logInfo(message: String) {
-        log(message, LogLevel.Info, buildCallerInfo(Thread.currentThread().getStackTrace()))
+        log(message, LogLevel.Info, buildCallerInfo(Thread.currentThread().stackTrace))
     }
 
     fun logError(message: String) {
-        log(message, LogLevel.Error, buildCallerInfo(Thread.currentThread().getStackTrace()))
+        log(message, LogLevel.Error, buildCallerInfo(Thread.currentThread().stackTrace))
     }
 
     fun logWarn(message: String) {
-        log(message, LogLevel.Warn, buildCallerInfo(Thread.currentThread().getStackTrace()))
+        log(message, LogLevel.Warn, buildCallerInfo(Thread.currentThread().stackTrace))
     }
 
     private fun log(message: String, logLevel: LogLevel, callerInfo: String = "") {
         if (logLevel <= ODLogger.logLevel) {
             if (running) {
-                LOG_QUEUE.offer(message to logLevel)
+                LOG_QUEUE.offer((message to callerInfo) to (System.currentTimeMillis() to logLevel))
             } else {
                 synchronized(LOCK) {
-                    loggingConsole.log(message, logLevel, callerInfo)
+                    loggingConsole.log(message, logLevel, callerInfo, System.currentTimeMillis())
                 }
             }
         }
@@ -56,7 +56,7 @@ object ODLogger{
     fun stopBackgroundLoggingService() {
         if (running) {
             running = false
-            LOG_QUEUE.put("" to LogLevel.Disabled)
+            LOG_QUEUE.put(("" to "") to (0L to LogLevel.Disabled))
         }
     }
 
@@ -67,7 +67,7 @@ object ODLogger{
             while (running) {
                 try {
                     val log = LOG_QUEUE.take()
-                    loggingConsole.log(log.first, log.second)
+                    loggingConsole.log(log.first.first, log.second.second, log.first.second, log.second.first)
                 } catch (_ : Exception) {
                     running = false
                 }

@@ -65,7 +65,7 @@ class ODLauncherService : Service() {
         }
     }
 
-    internal class Logs(private val logFile: FileOutputStream) : LogInterface {
+    internal class Logs(private val logFile: FileOutputStream, private val nodeName: String = "", private val nodeId: String = "", private val nodeType: String = "") : LogInterface {
 
         override fun close() {
             logFile.flush()
@@ -73,12 +73,12 @@ class ODLauncherService : Service() {
         }
 
         init {
-            logFile.write("TIMESTAMP, LOG_LEVEL, CLASS, FUNCTION, ACTIONS...\n".toByteArray())
+            logFile.write("NODE_NAME, NODE_ID, NODE_TYPE, TIMESTAMP, LOG_LEVEL, CLASS::METHOD [LINE], OPERATION, JOB_ID, ACTIONS...\n".toByteArray())
             logFile.flush()
         }
 
-        override fun log(message: String, logLevel: LogLevel, callerInfo: String) {
-            logFile.write("${System.currentTimeMillis()}, ${logLevel.name}, $message\n".toByteArray())
+        override fun log(message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
+            logFile.write("$nodeName, $nodeId, $nodeType, $timestamp, ${logLevel.name}, $callerInfo, $message\n".toByteArray())
             logFile.flush()
         }
     }

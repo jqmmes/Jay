@@ -55,7 +55,7 @@ class ODCloud {
 
             }
 
-            override fun log(message: String, logLevel: LogLevel) {
+            override fun log(message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
             }
         }
     }

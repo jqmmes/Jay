@@ -24,7 +24,7 @@ class LogInterface(private val activity : Activity, private val loggingConsole :
                         ".txt"), false)
     }
 
-    override fun log(message : String, logLevel: LogLevel) {
+    override fun log(message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
         outputFileOS.write("B:\t${System.currentTimeMillis()}\t$message\n".toByteArray())
         outputFileOS.flush()
         activity.runOnUiThread {
