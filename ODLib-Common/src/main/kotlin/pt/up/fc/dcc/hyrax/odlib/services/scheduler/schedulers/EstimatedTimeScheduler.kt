@@ -44,12 +44,12 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
 
     // Return last ID higher estimatedDuration = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
-        ODLogger.logInfo("INIT", actions = *arrayOf("JOB_ID=${job.id}"))
+        ODLogger.logInfo("INIT",job.id)
         for (worker in rankedWorkers) worker.calcScore(job.data.size)
-        ODLogger.logInfo("START_SORTING", actions = *arrayOf("JOB_ID=${job.id}"))
+        ODLogger.logInfo("START_SORTING", job.id)
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy {it.estimatedDuration}))
-        ODLogger.logInfo("COMPLETE_SORTING", actions = *arrayOf("JOB_ID=${job.id}"))
-        ODLogger.logInfo("SELECTED_WORKER", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${rankedWorkers.first.id}"))
+        ODLogger.logInfo("COMPLETE_SORTING", job.id)
+        ODLogger.logInfo("SELECTED_WORKER", job.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.first.id!!)
         return null
     }

@@ -20,6 +20,8 @@ object ODSettings {
     const val RTTDelayMillisFailRetry: Long = 500 // 0.5s
     const val RTTDelayMillisFailAttempts: Long = 5
 
+    var MY_ID : String = ""
+
     /*const val grpcTimeout: Long = 10 //Seconds
     const val grpcLongTimeout: Long = 120 //Seconds
     const val grpcShortTimeout: Long = 500 //Milliseconds*/

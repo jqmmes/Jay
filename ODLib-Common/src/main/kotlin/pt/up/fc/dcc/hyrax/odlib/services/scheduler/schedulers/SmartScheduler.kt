@@ -43,9 +43,9 @@ class SmartScheduler : Scheduler("SmartScheduler") {
 
     // Return last ID higher score = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
-        ODLogger.logInfo("INIT", actions = *arrayOf("JOB_ID=${job.id}"))
+        ODLogger.logInfo("INIT", job.id)
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.last.id!!)
-        ODLogger.logInfo("COMPLETE", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${rankedWorkers.last.id}"))
+        ODLogger.logInfo("COMPLETE", job.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.last.id}"))
         return null
     }
 

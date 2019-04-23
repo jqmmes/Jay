@@ -21,7 +21,7 @@ abstract class Scheduler(name: String) {
     abstract fun getWorkerTypes() : ODProto.WorkerTypes
 
     open fun init() {
-        ODLogger.logInfo("Scheduler, INIT, SCHEDULER_ID=$id, SCHEDULER_NAME=$nameId")
+        ODLogger.logInfo("INIT", actions = *arrayOf("SCHEDULER_ID=$id", "SCHEDULER_NAME=$nameId"))
         waitInit.countDown()
     }
 

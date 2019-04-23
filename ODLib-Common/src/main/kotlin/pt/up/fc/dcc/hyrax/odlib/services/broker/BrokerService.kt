@@ -30,7 +30,7 @@ object BrokerService {
     private val workers: MutableMap<String, Worker> = hashMapOf()
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
     private val worker = WorkerGRPCClient("127.0.0.1")
-    private val local: Worker = Worker(address = "127.0.0.1", type = Type.LOCAL)
+    private val local: Worker = if (ODSettings.MY_ID != "") Worker(id = ODSettings.MY_ID, address = "127.0.0.1", type = Type.LOCAL) else Worker(address = "127.0.0.1", type = Type.LOCAL)
     private val cloud = Worker(address = ODSettings.cloudIp, type = Type.CLOUD)
     private var heartBeats = false
     private var bwEstimates = false
@@ -122,7 +122,7 @@ object BrokerService {
     }
 
     internal fun updateWorker(request: ODWorker?, updateCloud: Boolean = false) : CountDownLatch {
-        ODLogger.logInfo("INIT, WORKER_ID=${request?.id}, UPDATE_CLOUD=$updateCloud")
+        ODLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}", "UPDATE_CLOUD=$updateCloud"))
         val countDownLatch = CountDownLatch(1)
         if (updateCloud){
             ODLogger.logInfo("UPDATE_STATUS_CLOUD", actions = *arrayOf("WORKER_ID=${request?.id}", "UPDATE_CLOUD=$updateCloud"))

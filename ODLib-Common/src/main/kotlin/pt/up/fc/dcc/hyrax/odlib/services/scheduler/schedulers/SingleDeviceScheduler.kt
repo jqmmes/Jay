@@ -28,7 +28,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
     }
 
     override fun scheduleJob(job: Job) : ODProto.Worker? {
-        ODLogger.logInfo("INIT", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${worker?.id}"))
+        ODLogger.logInfo("INIT", job.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
         if (worker == null) {
             for (w in SchedulerService.getWorkers().values) {
                 if (w?.type == workerType) {
@@ -37,7 +37,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
                 }
             }
         }
-        ODLogger.logInfo("COMPLETE", actions = *arrayOf("JOB_ID=${job.id}", "WORKER_ID=${worker?.id}"))
+        ODLogger.logInfo("COMPLETE", job.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
         return worker
     }
 

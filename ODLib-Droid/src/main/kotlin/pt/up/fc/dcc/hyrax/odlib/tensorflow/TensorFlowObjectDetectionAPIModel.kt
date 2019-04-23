@@ -152,20 +152,20 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         //Copy the input data into TensorFlow.
         //Trace.beginSection("feed")
         //inputName: String!, src: ByteArray!, vararg dims: Long
-        ODLogger.logInfo("CREATE_SESSION, INIT")
+        ODLogger.logInfo("CREATE_SESSION_INIT")
         val sessionInferenceInterface = MyTensorFlowInferenceInterface(loadedGraph)
-        ODLogger.logInfo("CREATE_SESSION, COMPLETE")
-        ODLogger.logInfo("FEED_INTERFACE, INIT")
+        ODLogger.logInfo("CREATE_SESSION_COMPLETE")
+        ODLogger.logInfo("FEED_INTERFACE_INIT")
         sessionInferenceInterface.feed(inputName, byteValues, 1L, inputSize.toLong(), inputSize.toLong(), 3L)
-        ODLogger.logInfo("FEED_INTERFACE, COMPLETE")
+        ODLogger.logInfo("FEED_INTERFACE_COMPLETE")
         //inferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
         //Trace.endSection()
 
         //Run the inference call.
         //Trace.beginSection("run")
-        ODLogger.logInfo("RUN, INIT")
+        ODLogger.logInfo("RUN_INIT")
         sessionInferenceInterface.run(outputNames, logStats)
-        ODLogger.logInfo("RUN, COMPLETE")
+        ODLogger.logInfo("RUN_COMPLETE")
         //inferenceInterface.run(outputNames, logStats)
         //Trace.endSection()
 
@@ -192,7 +192,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 PriorityQueue(
                         1, kotlin.Comparator<Classifier.Recognition> { lhs, rhs -> compareValues(rhs.confidence, lhs.confidence) })
 
-        ODLogger.logInfo("CHECK_RESULTS, INIT")
+        ODLogger.logInfo("CHECK_RESULTS_INIT")
         //Scale them back to the input size.
         for (i : Int in 0..(outputScores.size-1)) {
             val detection =
@@ -203,21 +203,19 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                             outputLocations[4 * i + 2] * inputSize)
             pq.add(Classifier.Recognition("" + i, outputClasses[i].toString(), outputScores[i], detection))
             if (outputScores[i] >= 0.3f)
-                ODLogger.logInfo("CHECK_RESULTS, " +
-                        "RESULT_CLASS=${COCODataLabels.label(outputClasses[i].toInt())}, " +
-                        "RESULT_SCORE=${outputScores[i]}")
+                ODLogger.logInfo("CHECK_RESULTS", actions = *arrayOf("RESULT_CLASS=${COCODataLabels.label(outputClasses[i].toInt())}", "RESULT_SCORE=${outputScores[i]}"))
         }
 
         val recognitions : ArrayList<Classifier.Recognition> = ArrayList()
         for (i : Int in 0..Math.min(pq.size, maxResults)) {
             recognitions.add(pq.poll())
         }
-        ODLogger.logInfo("CHECK_RESULTS, COMPLETE")
+        ODLogger.logInfo("CHECK_RESULTS_COMPLETE")
         //Trace.endSection() //"recognizeImage"
-        ODLogger.logInfo("CLOSE_SESSION, INIT")
+        ODLogger.logInfo("CLOSE_SESSION_INIT")
         //sessionInferenceInterface.clean()
         sessionInferenceInterface.closeSession()
-        ODLogger.logInfo("CLOSE_SESSION, COMPLETE")
+        ODLogger.logInfo("CLOSE_SESSION_COMPLETE")
         ODLogger.logInfo("COMPLETE")
         return recognitions
     }

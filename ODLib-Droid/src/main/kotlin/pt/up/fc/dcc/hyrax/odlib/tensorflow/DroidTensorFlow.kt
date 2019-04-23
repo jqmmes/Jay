@@ -126,7 +126,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                             modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
                         }
                     } catch (e: EOFException) {
-                        ODLogger.logError("ERROR", ,  actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=BAD_EOF"))
+                        ODLogger.logError("ERROR",  actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=BAD_EOF"))
                     }
                     tmpFile.delete()
                 } else {
@@ -158,7 +158,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun downloadModel(model: Model): File? {
-        ODLogger.logInfo("INIT", ,  actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_NAME=${model.modelName}", "MODEL_URL=${model.remoteUrl}"))
+        ODLogger.logInfo("INIT",  actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_NAME=${model.modelName}", "MODEL_URL=${model.remoteUrl}"))
         var count: Int
         if (File(context.cacheDir, "Models").exists() || !File(context.cacheDir, "Models").isDirectory) File(context
                 .cacheDir, "Models").mkdirs()
@@ -178,7 +178,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
             val input = BufferedInputStream(url.openStream(),
                     //8192)
                     8192)
-            ODLogger.logInfo("MODEL_INFO", ,  actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_SIZE=$lengthOfFile"))
+            ODLogger.logInfo("MODEL_INFO", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_SIZE=$lengthOfFile"))
 
             // Output stream
             val output = FileOutputStream(tmpFile)
@@ -260,7 +260,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
                 dest.flush()
                 dest.close()
             } catch (ignore : Exception) {
-                ODLogger.logWarn("ERROR", ,  actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "EXTRACT=${File(context.cacheDir.path, entry.name).path}"))
+                ODLogger.logWarn("ERROR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "EXTRACT=${File(context.cacheDir.path, entry.name).path}"))
             }
 
             entry = tis.nextEntry

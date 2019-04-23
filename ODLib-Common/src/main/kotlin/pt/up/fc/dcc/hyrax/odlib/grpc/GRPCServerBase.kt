@@ -36,7 +36,7 @@ abstract class GRPCServerBase(private val port: Int,
 
                 ODLogger.logError("ERROR", actions = *arrayOf("ERROR='*** shutting down gRPC server since JVM is shutting down'"))
                 this@GRPCServerBase.stop()
-                ODLogger.logError("ERROR",  actions = *arrayOf("'*** server shut down'")
+                ODLogger.logError("ERROR",  actions = *arrayOf("'*** server shut down'"))
             }
         })
         return this

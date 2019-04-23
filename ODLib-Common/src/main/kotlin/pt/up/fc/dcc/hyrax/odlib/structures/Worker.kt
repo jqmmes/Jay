@@ -69,7 +69,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         }
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
         if (bwEstimates) doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
-        ODLogger.logInfo("Worker, INIT, WORKER_ID=$id, WORKER_TYPE=${type.name}")
+        ODLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
     }
 
     private fun genProto() {
@@ -89,7 +89,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     }
 
     internal fun updateStatus(proto: ODProto.Worker?) : ODProto.Worker? {
-        ODLogger.logInfo("Worker, UPDATE_STATUS, WORKER_ID=$id")
+        ODLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
         if (proto == null) return this.proto
         battery = proto.battery
         avgComputingEstimate = proto.avgTimePerJob
@@ -118,17 +118,17 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
             var backoffCount = 0
             do {
                 if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
-                    ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, INIT, WORKER_ID=$id")
+                    ODLogger.logInfo("REQUEST_WORKER_STATUS_INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     if (isOnline()) grpc.requestWorkerStatus { W ->
-                        ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, ONLINE, WORKER_ID=$id")
+                        ODLogger.logInfo("REQUEST_WORKER_STATUS_ONLINE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                         workerInfoUpdateNotify?.invoke(updateStatus(W))
-                        ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, COMPLETE, WORKER_ID=$id")
+                        ODLogger.logInfo("REQUEST_WORKER_STATUS_COMPLETE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     } else {
-                        ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, OFFLINE, WORKER_ID=$id")
+                        ODLogger.logInfo("REQUEST_WORKER_STATUS_OFFLINE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     }
                 } else {
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
-                    ODLogger.logInfo("Worker, REQUEST_WORKER_STATUS, FAIL, WORKER_ID=$id")
+                    ODLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                 }
                 sleep(ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS)
             } while (autoStatusUpdate)
@@ -144,7 +144,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private fun addRTT(millis: Int) {
         circularFIFO.add(millis.toFloat()/pingPayloadSize)
         bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0f
-        ODLogger.logInfo("Worker, NEW_BANDWIDTH_ESTIMATE, WORKER_ID=$id, BANDWIDTH_ESTIMATE=$bandwidthEstimate")
+        ODLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = * arrayOf("WORKER_ID =$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))
     }
 
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
@@ -196,7 +196,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
             grpc.ping(pingPayloadSize, timeout = ODSettings.pingTimeout, callback = { T ->
                 if (T == -1) {
                     if (status == Status.ONLINE) {
-                        ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_OFFLINE")
+                        ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
                         status = Status.OFFLINE
                         statusChangeCallback?.invoke(status)
                     }
@@ -204,7 +204,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                 } else if (T == -2) { // TRANSIENT_FAILURE
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
-                            ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_OFFLINE")
+                            ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
                             if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
@@ -217,7 +217,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                 } else if (T == -3) { // CONNECTING
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
-                            ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_OFFLINE")
+                            ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
                             if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
@@ -226,7 +226,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                     } else { if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS) }
                 } else {
                     if (status == Status.OFFLINE) {
-                        ODLogger.logInfo("Worker, HEARTBEAT, WORKER_ID=$id, DEVICE_ONLINE")
+                        ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_ONLINE"))
                         status = Status.ONLINE
                         statusChangeCallback?.invoke(status)
                     }

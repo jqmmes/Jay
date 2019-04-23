@@ -54,11 +54,11 @@ object SchedulerService {
         return if (workers.containsKey(id)) workers[id] else null
     }
 
-    internal fun getWorkers(vararg filter: ODProto.Worker.Type): HashMap<String, Worker?> {
+    internal fun getWorkers(vararg filter: Worker.Type): HashMap<String, Worker?> {
         return getWorkers(filter.asList())
     }
 
-    internal fun getWorkers(filter: List<ODProto.Worker.Type>): HashMap<String, Worker?> {
+    internal fun getWorkers(filter: List<Worker.Type>): HashMap<String, Worker?> {
         if (filter.isEmpty()) return workers as HashMap<String, Worker?>
         val filteredWorkers = mutableMapOf<String, Worker?>()
         for (worker in workers)
@@ -67,18 +67,19 @@ object SchedulerService {
     }
 
     fun start(useNettyServer: Boolean = false) {
+        ODLogger.logInfo("INIT")
         if (running) return
         server = SchedulerGRPCServer(useNettyServer).start()
         running = true
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(true).build()) {
-            ODLogger.logInfo("SchedulerService, START, RUNNING")
+            ODLogger.logInfo("COMPLETE")
         }
         thread {
-            brokerGRPC.updateWorkers{ODLogger.logInfo("SchedulerService, START, RUNNING")}
+            brokerGRPC.updateWorkers{ODLogger.logInfo("COMPLETE")}
         }
     }
 
-    internal fun schedule(request: ODProto.Job?): ODProto.Worker? {
+    internal fun schedule(request: ODProto.Job?): Worker? {
         if (scheduler == null) scheduler = schedulers[0]
         return scheduler?.scheduleJob(pt.up.fc.dcc.hyrax.odlib.structures.Job(request))
     }
@@ -90,7 +91,7 @@ object SchedulerService {
     }
 
     internal fun notifyWorkerFailure(worker: Worker?): ODProto.StatusCode {
-        ODLogger.logInfo("SchedulerService, NOTIFY_WORKER_FAILURE, WORKER_ID=${worker?.id}")
+        ODLogger.logInfo("WORKER_FAILED", actions = *arrayOf("WORKER_ID=${worker?.id}"))
         if (worker!!.id in workers.keys) {
             workers.remove(worker.id)
             for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)
@@ -112,7 +113,7 @@ object SchedulerService {
         running = false
         if (stopGRPCServer) server?.stop()
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {
-            ODLogger.logInfo("SchedulerService, STOP")
+            ODLogger.logInfo("STOP")
         }
     }
 
@@ -126,13 +127,13 @@ object SchedulerService {
     }
 
     internal fun listSchedulers() : ODProto.Schedulers {
-        ODLogger.logInfo("SchedulerService, LIST_SCHEDULERS, INIT")
+        ODLogger.logInfo("INIT")
         val schedulersProto = ODProto.Schedulers.newBuilder()
         for (scheduler in schedulers) {
-            ODLogger.logInfo("SchedulerService, LIST_SCHEDULERS, SCHEDULER_NAME=${scheduler.getName().replace(",", ";")}, SCHEDULER_ID=${scheduler.id}")
+            ODLogger.logInfo("SCHEDULER_INFO", actions = *arrayOf("SCHEDULER_NAME=${scheduler.getName()}", "SCHEDULER_ID=${scheduler.id}")) //.replace(",", ";")
             schedulersProto.addScheduler(scheduler.getProto())
         }
-        ODLogger.logInfo("SchedulerService, LIST_SCHEDULERS, COMPLETE")
+        ODLogger.logInfo("COMPLETE")
         return schedulersProto.build()
 
     }

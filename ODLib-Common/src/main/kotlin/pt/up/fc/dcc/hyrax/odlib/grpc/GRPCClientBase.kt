@@ -17,7 +17,7 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
                 .usePlaintext()
                 .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
                 .build()
-        ODLogger.logInfo("GRPCClientBase, INIT, CHANNEL_BUILT, HOST=$host, PORT=$port, CHANNEL_STATE=${channel.getState(true).name}")
+        ODLogger.logInfo("CHANNEL_BUILT", actions = *arrayOf("HOST=$host", "PORT=$port", "CHANNEL_STATE=${channel.getState(true).name}"))
     }
 
     abstract fun reconnectStubs()
