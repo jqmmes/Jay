@@ -1,13 +1,13 @@
 package pt.up.fc.dcc.hyrax.od_launcher
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.support.v4.app.ActivityCompat
 import android.support.v4.app.NotificationCompat
 import io.grpc.Server
 import io.grpc.netty.NettyServerBuilder
@@ -54,7 +54,7 @@ class ODLauncherService : Service() {
         private fun enableLogs() {
             if (logging) return
             logging = true
-            ODLogger.enableLogs(Logs(FileOutputStream(File("${context.getExternalFilesDir(null)}/$logName.csv"), false)), LogLevel.Info)
+            ODLogger.enableLogs(Logs(FileOutputStream(File("${context.getExternalFilesDir(null)}/$logName.csv"), false), context = context), LogLevel.Info)
         }
 
         private fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
@@ -65,7 +65,7 @@ class ODLauncherService : Service() {
         }
     }
 
-    internal class Logs(private val logFile: FileOutputStream, private val nodeName: String = "", private val nodeId: String = "", private val nodeType: String = "") : LogInterface {
+    internal class Logs(private val logFile: FileOutputStream, private val nodeId: String = "", private val context: Context) : LogInterface {
 
         override fun close() {
             logFile.flush()
@@ -77,8 +77,14 @@ class ODLauncherService : Service() {
             logFile.flush()
         }
 
+        @SuppressLint("HardwareIds")
         override fun log(message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
-            logFile.write("$nodeName, $nodeId, $nodeType, $timestamp, ${logLevel.name}, $callerInfo, $message\n".toByteArray())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
+                logFile.write("${Build.getSerial()}, $nodeId, ANDROID, $timestamp, ${logLevel.name}, $callerInfo, $message\n".toByteArray())
+            } else {
+                logFile.write("${Build.SERIAL}, $nodeId, ANDROID, $timestamp, ${logLevel.name}, $callerInfo, $message\n".toByteArray())
+            }
             logFile.flush()
         }
     }
