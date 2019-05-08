@@ -95,31 +95,3 @@ sourceSets {
         }
     }
 }
-
-/*protobuf {
-    protoc { artifact = 'com.google.protobuf:protoc:3.7.1' }
-    plugins {
-        //java {artifact = "'io.grpc:protoc-gen:3.0.0"}
-        //javalite { artifact = "com.google.protobuf:protoc-gen-java:3.0.0" }
-        grpc { artifact = 'io.grpc:protoc-gen-grpc-java:1.20.0' // CURRENT_GRPC_VERSION
-        }
-    }
-    generateProtoTasks {
-        all()*.plugins{ grpc() }
-        /*all().each { task ->
-            task.builtins {
-                // In most cases you don't need the full Java output
-                // if you use the lite output.
-                //remove java
-                java
-            }
-            task.plugins {
-                //javalite {}
-                //java{}
-                grpc { // Options added to --grpc_out
-                    //option 'lite'
-                }
-            }
-        }
-    }
-}*/

@@ -2,7 +2,6 @@
   <artifact type="jar" name="ODLib-Common:jar">
     <output-path>$PROJECT_DIR$/out/libs/</output-path>
     <root id="archive" name="ODLib-Common.jar">
-      <element id="module-output" name="ODLib-Common" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-protobuf/1.15.0/3fd81064ee583fc7613f14323f79edb43c29643b/grpc-protobuf-1.15.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.27.Final/aafe2b9fb0d8f3b200cf10b9fd6486c6a722d7a1/netty-buffer-4.1.27.Final.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-protobuf-lite/1.15.0/aa410544171ac19ce9c7a764a492e4d34d84c8e7/grpc-protobuf-lite-1.15.0.jar" path-in-jar="/" />
@@ -44,6 +43,7 @@
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/nl.komponents.kovenant/kovenant-core/3.3.0/52326e409512569abb6b52099ab1ace21f886013/kovenant-core-3.3.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/nl.komponents.kovenant/kovenant-functional/3.3.0/eca255c1dd58dbd7e1fe1dbd59b3deb810adcbf6/kovenant-functional-3.3.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/nl.komponents.kovenant/kovenant-jvm/3.3.0/9b1c431992980b81e52db47ac3e1e6171a2ea9eb/kovenant-jvm-3.3.0.jar" path-in-jar="/" />
+      <element id="module-output" name="ODCloud" />
     </root>
   </artifact>
 </component>

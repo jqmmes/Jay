@@ -65,6 +65,7 @@ class ODLauncherService : Service() {
         }
     }
 
+    @Suppress("DEPRECATION")
     internal class Logs(private val logFile: FileOutputStream, private val context: Context) : LogInterface {
 
         override fun close() {

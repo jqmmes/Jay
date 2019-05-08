@@ -1,62 +1,119 @@
 package pt.up.fc.dcc.hyrax.odcloud
 
 
+import io.grpc.Server
+import io.grpc.ServerBuilder
+import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.ODLib
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odcloud.protoc.LauncherServiceGrpc
+import pt.up.fc.dcc.hyrax.odcloud.protoc.ODCloudGRPC
+import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import java.io.File
+import java.io.FileOutputStream
 import java.lang.Thread.sleep
+import java.net.InetAddress
+import kotlin.concurrent.thread
 
 class ODCloud {
     companion object {
         private var odLib = ODLib()
+        private var cloudlet = false
+        private val hostname = InetAddress.getLocalHost().hostName
+        private var server: Server? = null
+        private var running = false
 
         @JvmStatic
         fun main(args: Array<String>) {
-            // Benchmark
             if (args.isNotEmpty()) {
-                var mModel = "all"
-                if (args.size > 1) mModel = args[1]
-                if (args[0] == "benchmark" || args[0] == "benchmark-small") {
-                    Benchmark.run(mModel = mModel)
-                    return
-                }
-                if (args[0] == "benchmark-large") {
-                    Benchmark.run("large", mModel)
-                    return
-                }
                 if (args[0] == "cloudlet") {
-                    //MulticastAdvertiser.advertise()
-                    //MulticastListener.listen()
+                    cloudlet = true
                 }
             }
-
-            ODLogger.enableLogs(LoggingInterface(), LogLevel.Info)
-            //WorkerService.setWorkingThreads(StatusManager.cpuDetails.getAvailableCores())
-            odLib.startWorker()
-            sleep(5000)
-            odLib.listModels { ML -> odLib.setModel(ML.first()) }
 
             Runtime.getRuntime().addShutdownHook(object : Thread() {
                 override fun run() {
                     ODLogger.logError("ERROR", actions = *arrayOf("ERROR='*** shutting down server since JVM is shutting down'"))
                     odLib.destroy()
+                    stopNowAndWait()
+                    running = false
                     ODLogger.logError("ERROR", actions = *arrayOf("ERROR='*** server shut down'"))
                 }
             })
 
+            startServer()
+
+            running = true
+
             while (true) {
-                Thread.sleep(1000)
+                sleep(1000)
             }
         }
 
-        private class LoggingInterface : LogInterface {
-            override fun close() {
 
+        private fun startServer() {
+            server = ServerBuilder.forPort(50000)
+                    .addService(GrpcImpl(odLib))
+                    .maxInboundMessageSize(100)
+                    .build()
+                    .start()
+        }
+
+        private fun stopNowAndWait() {
+            server?.shutdownNow()
+            server?.awaitTermination()
+        }
+
+        internal class GrpcImpl(private val odClient: ODLib) : LauncherServiceGrpc.LauncherServiceImplBase() {
+
+            private var logName = "logs"
+            private var logging = false
+
+            override fun setLogName(request: ODCloudGRPC.String?, responseObserver: StreamObserver<ODCloudGRPC.BoolValue>?) {
+                logName = request?.str ?: "logs"
+                genericComplete(ODCloudGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
             }
 
-            override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
+            override fun startWorker(request: ODCloudGRPC.Empty?, responseObserver: StreamObserver<ODCloudGRPC.BoolValue>?) {
+                enableLogs()
+                thread(start = true) {
+                    odClient.startWorker()
+                    do ( sleep(1) ) while (running)
+                }
+                genericComplete(ODCloudGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
             }
+
+            private fun enableLogs() {
+                if (logging) return
+                logging = true
+                ODLogger.enableLogs(LoggingInterface(FileOutputStream(File("logs/$logName"), false)), LogLevel.Info)
+            }
+
+            private fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
+                if (!io.grpc.Context.current().isCancelled) {
+                    responseObserver!!.onNext(request)
+                    responseObserver.onCompleted()
+                }
+            }
+        }
+    }
+
+    private class LoggingInterface(private val logFile: FileOutputStream) : LogInterface {
+        override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
+            logFile.write("$hostname, $id, ${if (cloudlet) "CLOUDLET" else "CLOUD" }, $timestamp, ${logLevel.name}, $callerInfo, $message\n".toByteArray())
+            logFile.flush()
+        }
+
+        override fun close() {
+            logFile.flush()
+            logFile.close()
+        }
+
+        init {
+            logFile.write("NODE_NAME, NODE_ID, NODE_TYPE, TIMESTAMP, LOG_LEVEL, CLASS::METHOD [LINE], OPERATION, JOB_ID, ACTIONS...\n".toByteArray())
+            logFile.flush()
         }
     }
 }

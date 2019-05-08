@@ -33,7 +33,6 @@
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.mojo/animal-sniffer-annotations/1.17/f97ce6decaea32b36101e37979f8b647f00681fb/animal-sniffer-annotations-1.17.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.grpc/grpc-netty/1.15.0/91d3d80801917e34fcbfa0a7efbd8ded61bb704/grpc-netty-1.15.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.tensorflow/tensorflow/1.10.0/f9289bf479ffaca47dc5c226affa47f6002e59ef/tensorflow-1.10.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/out/libs/ODLib-Common.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/atomicfu-common/0.10.3/95970a5b355bb19908bf8ee7380af7e40211de1a/atomicfu-common-0.10.3.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.1.27.Final/a1722d6bcbbef1c4c7877e8bf38b07a3db5ed07f/netty-codec-http-4.1.27.Final.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http2/4.1.27.Final/3769790a2033667d663f9a526d5b63cfecdbdf4e/netty-codec-http2-4.1.27.Final.jar" path-in-jar="/" />

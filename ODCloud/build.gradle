@@ -5,8 +5,9 @@ plugins {
 }
 apply plugin: 'application'
 apply plugin: 'kotlin'
-mainClassName = 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
+mainClassName = 'pt.up.fc.dcc.hyrax.odcloud.ODCloud'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.google.protobuf'
 //apply plugin: "com.github.johnrengelman.shadow"
 
 repositories {
@@ -19,13 +20,50 @@ dependencies {
     //noinspection DifferentStdlibGradleVersion
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     //implementation 'ODLib-Cloudlet:'
-    compile(name: 'ODLib-Cloudlet', ext: 'jar')
-    compile project(path: ':ODLib-Cloudlet')
+
+    //implementation "io.grpc:grpc-netty:${GRPC_VERSION}"
+    implementation "io.grpc:grpc-okhttp:${GRPC_VERSION}"
+    implementation "io.grpc:grpc-protobuf:${GRPC_VERSION}"
+    implementation "io.grpc:grpc-stub:${GRPC_VERSION}"
+    implementation 'javax.annotation:javax.annotation-api:1.2'
+    //compile(name: 'ODLib-Cloudlet', ext: 'jar')
+    implementation project(path: ':ODLib-Cloudlet')
     //implementation project(':ODLib-Common')
     //implementation project(':ODLib-Cloudlet')
 }
 
-//mainClassName = 'pt.up.fc.dcc.hyrax.odlib.ODCloud'
+protobuf {
+    protoc {
+        // The artifact spec for the Protobuf Compiler
+        artifact = 'com.google.protobuf:protoc:3.7.1'
+    }
+    plugins {
+        // Optional: an artifact spec for a protoc plugin, with "grpc" as
+        // the identifier, which can be referred to in the "plugins"
+        // container of the "generateProtoTasks" closure.
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${GRPC_VERSION}"
+        }
+    }
+    generateProtoTasks {
+        ofSourceSet('main')*.plugins {
+            // Apply the "grpc" plugin whose spec is defined above, without
+            // options.  Note the braces cannot be omitted, otherwise the
+            // plugin will not be added. This is because of the implicit way
+            // NamedDomainObjectContainer binds the methods.
+            grpc { }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
 
 shadowJar {
     baseName = 'ODCloud'
@@ -37,8 +75,17 @@ shadowJar {
 jar {
     manifest {
         attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.odcloud.ODCloud'
-        attributes 'Class-Path': 'libs/ODLib-Cloudlet.jar'
+        attributes 'Class-Path': 'libs/ODLib-Cloudlet.jar libs/ODLib-Common.jar'
     }
+
+    //manifest {
+    //    attributes 'Main-Class': 'com.preslavrachev.imdbparser.MainKt'
+    //}
+
+    // This line of code recursively collects and copies all of a project's files
+    // and adds them to the JAR itself. One can extend this task, to skip certain
+    // files or particular types at will
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
 artifacts {

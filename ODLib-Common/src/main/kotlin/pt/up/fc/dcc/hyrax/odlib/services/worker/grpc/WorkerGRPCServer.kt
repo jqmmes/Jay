@@ -34,7 +34,7 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun selectModel(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>?) {
             ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${request?.id}"))
             WorkerService.loadModel(Model(request!!.id, request.name, request.url, request.downloaded)) { S ->
-                ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request?.id}"))
+                ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request.id}"))
                 genericComplete(S, responseObserver)}
         }
 

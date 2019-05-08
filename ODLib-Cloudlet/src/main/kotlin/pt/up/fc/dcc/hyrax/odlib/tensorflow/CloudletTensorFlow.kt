@@ -72,7 +72,7 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
 
-    private fun loadModel(path: String, score: Float = minimumScore, completeCallback: ((ODProto.Status) -> Unit)?) {
+    private fun loadModel(path: String, score: Float = minimumScore, @Suppress("UNUSED_PARAMETER") completeCallback: ((ODProto.Status) -> Unit)?) {
         clean()
         loadedModel = SavedModelBundle.load(path, "serve")
         val tensor = Tensor.create(UInt8::class.java, longArrayOf(1L, 1L, 1L, 3), ByteBuffer.wrap(ByteArray(3)))
