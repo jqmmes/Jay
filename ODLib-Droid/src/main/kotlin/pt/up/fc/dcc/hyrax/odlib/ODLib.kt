@@ -49,7 +49,6 @@ class ODLib(val context : Context) : AbstractODLib() {
 
 
     init {
-        ODSettings.MY_ID = UUID.randomUUID().toString()
         Intent(context, ClientAndroidService::class.java).also { intent -> context.bindService(intent, clientConnection, Context.BIND_AUTO_CREATE)}
     }
 
