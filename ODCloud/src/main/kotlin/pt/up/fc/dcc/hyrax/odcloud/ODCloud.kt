@@ -45,8 +45,6 @@ class ODCloud {
 
             startServer()
 
-            running = true
-
             while (true) {
                 sleep(1000)
             }
@@ -77,6 +75,7 @@ class ODCloud {
             }
 
             override fun startWorker(request: ODCloudGRPC.Empty?, responseObserver: StreamObserver<ODCloudGRPC.BoolValue>?) {
+                running = true
                 enableLogs()
                 thread(start = true) {
                     odClient.startWorker()
@@ -85,11 +84,25 @@ class ODCloud {
                 genericComplete(ODCloudGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
             }
 
+            override fun stop(request: ODCloudGRPC.Empty?, responseObserver: StreamObserver<ODCloudGRPC.BoolValue>?) {
+                odClient.destroy()
+                running = false
+                disableLogs()
+                genericComplete(ODCloudGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
+            }
+
             private fun enableLogs() {
                 if (logging) return
                 logging = true
                 ODLogger.enableLogs(LoggingInterface(FileOutputStream(File("logs/$logName"), false)), LogLevel.Info)
             }
+
+            private fun disableLogs() {
+                if (logging) return
+                logging = false
+                ODLogger.enableLogs(LoggingInterface(), LogLevel.Disabled)
+            }
+
 
             private fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
                 if (!io.grpc.Context.current().isCancelled) {
@@ -100,20 +113,30 @@ class ODCloud {
         }
     }
 
-    private class LoggingInterface(private val logFile: FileOutputStream) : LogInterface {
+    private class LoggingInterface() : LogInterface {
+        private lateinit var logFile: FileOutputStream
+        private var logging = false
+
+        constructor(logFile: FileOutputStream) : this(){
+            this.logFile = logFile
+            logging = true
+            this.logFile.write("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION,JOB_ID,ACTIONS\n".toByteArray())
+            this.logFile.flush()
+        }
+
         override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
-            logFile.write("$hostname, $id, ${if (cloudlet) "CLOUDLET" else "CLOUD" }, $timestamp, ${logLevel.name}, $callerInfo, $message\n".toByteArray())
-            logFile.flush()
+            if (logging) {
+                logFile.write("$hostname,$id,${if (cloudlet) "CLOUDLET" else "CLOUD"},$timestamp,${logLevel.name},$callerInfo,$message\n".toByteArray())
+                logFile.flush()
+            }
         }
 
         override fun close() {
-            logFile.flush()
-            logFile.close()
-        }
-
-        init {
-            logFile.write("NODE_NAME, NODE_ID, NODE_TYPE, TIMESTAMP, LOG_LEVEL, CLASS::METHOD [LINE], OPERATION, JOB_ID, ACTIONS...\n".toByteArray())
-            logFile.flush()
+            if (logging) {
+                logFile.flush()
+                logFile.close()
+            }
+            logging = false
         }
     }
 }

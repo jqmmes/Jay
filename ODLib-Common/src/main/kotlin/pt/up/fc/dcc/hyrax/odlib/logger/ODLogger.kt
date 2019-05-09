@@ -21,7 +21,7 @@ object ODLogger{
     private fun buildCallerInfo(stackTrace: Array<StackTraceElement>): String {
         var i = 3
         if (stackTrace[i].className.removePrefix("pt.up.fc.dcc.hyrax.odlib.") == "logger.ODLogger") i++
-        return "${stackTrace[i].className.removePrefix("pt.up.fc.dcc.hyrax.odlib.")}::${stackTrace[i].methodName} [${stackTrace[i].lineNumber}]"
+        return "${stackTrace[i].className.removePrefix("pt.up.fc.dcc.hyrax.odlib.")}_${stackTrace[i].methodName}_${stackTrace[i].lineNumber}"
     }
 
     private fun buildMessage(operation: String, jobId: String = "", actions: Array<out String>): String {

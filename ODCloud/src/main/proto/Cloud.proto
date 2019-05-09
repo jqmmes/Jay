@@ -18,5 +18,6 @@ message String {
 
 service LauncherService {
     rpc StartWorker(Empty) returns (BoolValue) {};
+    rpc Stop(Empty) returns (BoolValue) {};
     rpc SetLogName(String) returns (BoolValue) {};
 }
