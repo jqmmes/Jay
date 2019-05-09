@@ -10,6 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.awt.Image
 import java.awt.Image.SCALE_FAST
 import java.awt.image.BufferedImage
@@ -72,7 +73,7 @@ internal class CloudletTensorFlow : DetectObjects {
     }
 
 
-    private fun loadModel(path: String, score: Float = minimumScore, @Suppress("UNUSED_PARAMETER") completeCallback: ((ODProto.Status) -> Unit)?) {
+    private fun loadModel(path: String, score: Float = minimumScore, completeCallback: ((ODProto.Status) -> Unit)?) {
         clean()
         loadedModel = SavedModelBundle.load(path, "serve")
         val tensor = Tensor.create(UInt8::class.java, longArrayOf(1L, 1L, 1L, 3), ByteBuffer.wrap(ByteArray(3)))
@@ -84,6 +85,7 @@ internal class CloudletTensorFlow : DetectObjects {
                 .run()
         modelClosed = false
         if (score != minimumScore) setMinAcceptScore(score)
+        completeCallback?.invoke(ODUtils.genStatusSuccess()!!)
     }
 
     override fun setMinAcceptScore(score: Float) {
