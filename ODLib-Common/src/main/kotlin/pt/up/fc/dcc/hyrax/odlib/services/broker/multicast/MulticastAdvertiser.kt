@@ -60,7 +60,14 @@ object MulticastAdvertiser {
             mcSocket.loopbackMode = true
             mcSocket.joinGroup(mcIPAddress)
             do {
-                synchronized(MESSAGE_LOCK) { if (packet != null) mcSocket.send(packet)}
+                synchronized(MESSAGE_LOCK) { if (packet != null)
+                    try {
+                        mcSocket.send(packet)
+                        ODLogger.logInfo("SENT_MULTICAST_PACKET", actions = *arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
+                    } catch(e: SocketException) {
+                        ODLogger.logError("MULTICAST_SOCKET_ERROR", actions = *arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
+                    }
+                }
                 sleep(multicastFrequency)
             } while (runningLock.get())
 

@@ -128,7 +128,7 @@ object WorkerService {
                 ODLogger.logError("FAIL",  job?.id ?: "")
                 callback?.invoke(emptyList())
             }
-            WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs)
+            WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs, increment=false)
             ODLogger.logInfo("COMPLETE",job?.id ?: "")
         }
     }
