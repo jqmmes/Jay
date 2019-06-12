@@ -94,7 +94,8 @@ class ODCloud {
             private fun enableLogs() {
                 if (logging) return
                 logging = true
-                ODLogger.enableLogs(LoggingInterface(FileOutputStream(File("logs/$logName"), false)), LogLevel.Info)
+
+                ODLogger.enableLogs(LoggingInterface(FileOutputStream(File(ODCloud::class.java.protectionDomain.codeSource.location.toURI().path.substringBefore("ODCloud.jar")+"/logs/$logName"), false)), LogLevel.Info)
             }
 
             private fun disableLogs() {
