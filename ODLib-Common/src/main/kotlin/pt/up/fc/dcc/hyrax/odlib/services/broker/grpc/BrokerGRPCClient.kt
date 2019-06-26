@@ -50,6 +50,16 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             }, AbstractODLib.executorPool)
     }
 
+    fun calibrateWorker(job: ODProto.Job?, callback: (() -> Unit)? = null) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.calibrateWorker(job)
+        call.addListener(Runnable{
+            try { callback?.invoke(); ODLogger.logInfo("COMPLETE",  job?.id ?: "") }
+            catch (e: ExecutionException) {callback?.invoke(); ODLogger.logError("ERROR",  job?.id ?: "")}
+        }, AbstractODLib.executorPool)
+    }
+
+
     fun ping(payload: Int, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()

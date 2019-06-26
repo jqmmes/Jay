@@ -157,8 +157,9 @@ service BrokerService { // Internal and External communication Broker
                         rpc disableBandwidthEstimates (google.protobuf.Empty) returns (Status) {}; // SchedulerService --> Broker (start RTT Estimate)
                         rpc updateSmartSchedulerWeights (Weights) returns (Status) {};
                         rpc announceServiceStatus (ServiceStatus) returns (Status) {};
-                        rpc stopService (google.protobuf.Empty) returns (Status) {
-                        };
+                        rpc stopService (google.protobuf.Empty) returns (Status) {};
+
+                        rpc calibrateWorker(Job) returns (google.protobuf.Empty) {};
 }
 
 service SchedulerService { // Broker > SchedulerBase

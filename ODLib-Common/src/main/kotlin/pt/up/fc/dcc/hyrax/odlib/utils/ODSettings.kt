@@ -15,8 +15,8 @@ object ODSettings {
     const val pingPayloadSize: Int = 32000 // 32Kb
     const val averageComputationTimesToStore: Int = 10
     const val workingThreads: Int = 1
-    const val workerStatusUpdateInterval: Long = 1000 // 5s
-    const val AUTO_STATUS_UPDATE_INTERVAL_MS: Long = 1000 // 5s
+    const val workerStatusUpdateInterval: Long = 5000 // 5s
+    const val AUTO_STATUS_UPDATE_INTERVAL_MS: Long = 5000 // 5s
     const val RTTDelayMillisFailRetry: Long = 500 // 0.5s
     const val RTTDelayMillisFailAttempts: Long = 5
 

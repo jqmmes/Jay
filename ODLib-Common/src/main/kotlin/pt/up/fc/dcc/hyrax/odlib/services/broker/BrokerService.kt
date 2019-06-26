@@ -277,4 +277,8 @@ object BrokerService {
             } else completeCallback(ODUtils.genStatusSuccess())
         }
     }
+
+    fun calibrateWorker(job: Job?, function: () -> Unit) {
+        executeJob(job) { function() }
+    }
 }

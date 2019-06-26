@@ -25,6 +25,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             BrokerService.scheduleJob(request) {R -> genericComplete(R, responseObserver)}
         }
 
+        override fun calibrateWorker(request: ODProto.Job?, responseObserver: StreamObserver<Empty>?) {
+            BrokerService.calibrateWorker(request) { genericComplete(Empty.getDefaultInstance(), responseObserver) }
+        }
+
         override fun ping(request: ODProto.Ping, responseObserver: StreamObserver<ODProto.Ping>?) {
             if (request.hasField(request.descriptorForType.findFieldByName("reply")))
                 if (request.reply) return genericComplete(request, responseObserver)
