@@ -99,7 +99,7 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
 
             weightQueue = (worker.queuedJobs+1)*worker.avgTimePerJob
             estimatedBandwidth = worker.bandwidthEstimate
-            ODLogger.logInfo("WEIGHT_UPDATED", actions = *arrayOf("WORKER_ID=$id", "WEIGHT_QUEUE=$weightQueue" , "BANDWIDTH=$estimatedBandwidth"))
+            ODLogger.logInfo("WEIGHT_UPDATED", actions = *arrayOf("WORKER_ID=$id", "QUEUE_SIZE=${worker.queuedJobs}+1", "AVG_TIME_PER_JOB=${worker.avgTimePerJob}", "WEIGHT_QUEUE=$weightQueue", "BANDWIDTH=$estimatedBandwidth"))
             ODLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=$id"))
         }
 

@@ -116,12 +116,17 @@ internal class CloudletTensorFlow : DetectObjects {
         ODLogger.logInfo("READ_IMAGE_DATA_INIT", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
         val image = ImageIO.read(ByteArrayInputStream(imgData))
         ODLogger.logInfo("READ_IMAGE_DATA_COMPLETE", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
-        if (image.width == maxSize && image.height <= maxSize ||
-                image.width <= maxSize && image.height == maxSize) return image
-        val scale = maxSize.toFloat() / max(image.width, image.height)
-        ODLogger.logInfo("SCALE_IMAGE", actions = *arrayOf("IMAGE_SCALE=$scale"))
-        return image.getScaledInstance(floor(image.width * scale).toInt(), floor(image.height * scale).toInt(),
-                SCALE_FAST)
+        try {
+            if (image.width == maxSize && image.height <= maxSize ||
+                    image.width <= maxSize && image.height == maxSize) return image
+            val scale = maxSize.toFloat() / max(image.width, image.height)
+            ODLogger.logInfo("SCALE_IMAGE", actions = *arrayOf("IMAGE_SCALE=$scale"))
+            return image.getScaledInstance(floor(image.width * scale).toInt(), floor(image.height * scale).toInt(),
+                    SCALE_FAST)
+        } catch (e: Exception) {
+            ODLogger.logError("INVALID_IMAGE")
+            return BufferedImage(maxSize, maxSize, BufferedImage.TYPE_INT_RGB)
+        }
     }
 
     private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>): List<Detection> {
