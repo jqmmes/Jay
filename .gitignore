@@ -11,3 +11,4 @@ out/
 /.idea/caches/
 /captures
 .externalNativeBuild
+local.properties
