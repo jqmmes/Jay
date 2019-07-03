@@ -12,7 +12,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/ODCloud" />
-            <option value="$PROJECT_DIR$/ODCloudlet" />
             <option value="$PROJECT_DIR$/ODLauncher" />
             <option value="$PROJECT_DIR$/ODLib-AndroidDemo" />
             <option value="$PROJECT_DIR$/ODLib-Cloudlet" />
