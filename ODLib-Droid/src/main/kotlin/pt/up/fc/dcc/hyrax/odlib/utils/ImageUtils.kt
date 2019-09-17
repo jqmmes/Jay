@@ -8,6 +8,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.max
+import com.arthenica.mobileffmpeg.FFmpeg
 
 object ImageUtils {
 

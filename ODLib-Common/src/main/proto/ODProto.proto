@@ -119,6 +119,10 @@ message BandwidthEstimate {
     repeated Worker.Type workerType = 2;
 }
 
+message String {
+    string str = 1;
+}
+
 message Weights {
     float computeTime = 1;
     float queueSize = 2;
@@ -160,6 +164,7 @@ service BrokerService { // Internal and External communication Broker
                         rpc stopService (google.protobuf.Empty) returns (Status) {};
 
                         rpc calibrateWorker(Job) returns (google.protobuf.Empty) {};
+                        rpc createJob(String) returns (Results) {};
 }
 
 service SchedulerService { // Broker > SchedulerBase

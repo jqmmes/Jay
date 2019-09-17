@@ -120,6 +120,7 @@ internal class CloudletTensorFlow : DetectObjects {
             if (image.width == maxSize && image.height <= maxSize ||
                     image.width <= maxSize && image.height == maxSize) return image
             val scale = maxSize.toFloat() / max(image.width, image.height)
+            //val scale = 1.0
             ODLogger.logInfo("SCALE_IMAGE", actions = *arrayOf("IMAGE_SCALE=$scale"))
             return image.getScaledInstance(floor(image.width * scale).toInt(), floor(image.height * scale).toInt(),
                     SCALE_FAST)
@@ -165,6 +166,7 @@ internal class CloudletTensorFlow : DetectObjects {
                             continue
                         }
                         returnList.add(Detection(scores[i], classes[i].toInt()))
+                        ODLogger.logInfo("CHECK_RESULTS", actions = *arrayOf("RESULT_CLASS=${COCODataLabels.label(classes[i].toInt())}", "RESULT_SCORE=${scores[i]}"))
                     }
                 }
             }

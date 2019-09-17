@@ -6,12 +6,15 @@ import com.google.protobuf.Empty
 import io.grpc.BindableService
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
+import pt.up.fc.dcc.hyrax.odlib.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
+import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
+import java.io.File
 
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.brokerPort, useNettyServer) {
 
@@ -119,6 +122,22 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 genericComplete(S, responseObserver)
                 BrokerService.stopServer()
             }
+        }
+
+        override fun createJob(request: ODProto.String?, responseObserver: StreamObserver<ODProto.Results>?) {
+            // TODO: Criar o Job através do request String
+            // Criar função getFileByteArray Multiplataforma
+            /*
+            val root = File(getExternalFilesDir(null)!!.absolutePath)
+            println(getExternalFilesDir(null)!!.absolutePath)
+            println(root.canRead())
+            for (x: String in root.list())
+                println(x)
+
+             */
+            //FileSystemAssistant.getByteArrayFromId(request.str)
+            Job(ByteArray(0)).getProto()
+            scheduleJob(ODProto.Job.getDefaultInstance(), responseObserver)
         }
     }
 }

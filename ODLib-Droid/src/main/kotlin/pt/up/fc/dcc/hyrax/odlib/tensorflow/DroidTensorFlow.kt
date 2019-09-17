@@ -29,7 +29,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     override var minimumScore: Float = 0f
 
     private var localDetector : Classifier? = null
-    private val tfOdApiInputSize : Int = 300
+    private val tfOdApiInputSize : Int = 500
     private var minimumConfidence : Float = 0.1f
     override val models: List<Model>
         get() = listOf(

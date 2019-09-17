@@ -50,7 +50,6 @@ class ODLauncherService : Service() {
             genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
         }
 
-
         private fun enableLogs() {
             if (logging) return
             logging = true
@@ -154,6 +153,7 @@ class ODLauncherService : Service() {
         odClient = ODLib(this)
 
         startServer()
+        odClient.startWorker()
     }
 
     override fun onBind(intent: Intent?): IBinder? {

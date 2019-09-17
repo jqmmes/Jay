@@ -49,7 +49,7 @@ object MulticastAdvertiser {
                 mcSocket.networkInterface = networkInterface
             } else {
                 val interfaces = ODUtils.getCompatibleInterfaces<Inet4Address>()
-                if (!interfaces.isEmpty()) {
+                if (interfaces.isNotEmpty()) {
                     ODLogger.logInfo("USING_DEFAULT_INTERFACE",  actions = *arrayOf("ADVERTISE_INTERFACE=${interfaces[0]}"))
                     mcSocket.networkInterface = interfaces[0]
                 } else {
