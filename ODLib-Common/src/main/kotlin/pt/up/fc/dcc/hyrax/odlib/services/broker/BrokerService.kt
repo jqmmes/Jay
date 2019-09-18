@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.services.broker
 
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.odlib.interfaces.FileSystemAssistant
+import pt.up.fc.dcc.hyrax.odlib.interfaces.VideoUtils
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Job
@@ -37,6 +38,7 @@ object BrokerService {
     private var bwEstimates = false
     private var schedulerServiceRunning = false
     private var workerServiceRunning = false
+    private var fsAssistant: FileSystemAssistant? = null
 
     init {
         workers[local.id] = local
@@ -46,7 +48,8 @@ object BrokerService {
         }
     }
 
-    fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null) {
+    fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, videoUtils: VideoUtils? = null) {
+        this.fsAssistant = fsAssistant
         server = BrokerGRPCServer(useNettyServer).start()
         worker.testService { ServiceStatus -> workerServiceRunning = ServiceStatus?.running ?: false}
         scheduler.testService {
@@ -67,6 +70,13 @@ object BrokerService {
 
     fun stopServer() {
         server?.stopNowAndWait()
+    }
+
+    internal fun getByteArrayFromId(id: String?) : ByteArray? {
+        ODLogger.logInfo("READING_IMAGE_BYTE_ARRAY", actions = *arrayOf("IMAGE_ID=$id"))
+        if (id != null)
+            return fsAssistant?.getByteArrayFromId(id)
+        return null
     }
 
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {

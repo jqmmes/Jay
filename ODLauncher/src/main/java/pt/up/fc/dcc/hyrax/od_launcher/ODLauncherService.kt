@@ -153,7 +153,8 @@ class ODLauncherService : Service() {
         odClient = ODLib(this)
 
         startServer()
-        odClient.startWorker()
+        // To test only
+        //odClient.startWorker()
     }
 
     override fun onBind(intent: Intent?): IBinder? {

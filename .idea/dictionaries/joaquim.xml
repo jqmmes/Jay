@@ -3,6 +3,7 @@
     <words>
       <w>cloudlet</w>
       <w>cloulet</w>
+      <w>ffmpeg</w>
       <w>grpc</w>
       <w>hyrax</w>
       <w>interno</w>
@@ -13,6 +14,7 @@
       <w>resnet</w>
       <w>ssdlite</w>
       <w>tensorflow</w>
+      <w>vframes</w>
     </words>
   </dictionary>
 </component>

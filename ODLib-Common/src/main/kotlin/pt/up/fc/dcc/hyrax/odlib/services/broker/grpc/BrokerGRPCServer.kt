@@ -125,19 +125,9 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun createJob(request: ODProto.String?, responseObserver: StreamObserver<ODProto.Results>?) {
-            // TODO: Criar o Job através do request String
-            // Criar função getFileByteArray Multiplataforma
-            /*
-            val root = File(getExternalFilesDir(null)!!.absolutePath)
-            println(getExternalFilesDir(null)!!.absolutePath)
-            println(root.canRead())
-            for (x: String in root.list())
-                println(x)
-
-             */
-            //FileSystemAssistant.getByteArrayFromId(request.str)
-            Job(ByteArray(0)).getProto()
-            scheduleJob(ODProto.Job.getDefaultInstance(), responseObserver)
+            ODLogger.logInfo("START", actions = *arrayOf("IMAGE_ID=${request?.str}"))
+            scheduleJob(Job(BrokerService.getByteArrayFromId(request?.str) ?: ByteArray(0)).getProto(), responseObserver)
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("IMAGE_ID=${request?.str}"))
         }
     }
 }

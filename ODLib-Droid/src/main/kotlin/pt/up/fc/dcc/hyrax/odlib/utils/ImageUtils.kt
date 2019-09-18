@@ -8,7 +8,6 @@ import java.io.File
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.max
-import com.arthenica.mobileffmpeg.FFmpeg
 
 object ImageUtils {
 
@@ -28,7 +27,8 @@ object ImageUtils {
         return stream.toByteArray()
     }
 
-    fun getByteArrayFromBitmapFast(imgBitmap: Bitmap) : ByteArray {
+    fun getByteArrayFromBitmapFast(imgBitmap: Bitmap?) : ByteArray {
+        if (imgBitmap == null) return ByteArray(0)
         val byteBuffer = ByteBuffer.allocate(imgBitmap.byteCount)
         imgBitmap.copyPixelsToBuffer(byteBuffer)
         return byteBuffer.array()
