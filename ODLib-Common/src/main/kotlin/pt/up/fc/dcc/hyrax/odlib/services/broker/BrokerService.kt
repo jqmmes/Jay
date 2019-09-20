@@ -97,8 +97,9 @@ object BrokerService {
         if (schedulerServiceRunning) scheduler.schedule(request) { W ->
             ODLogger.logInfo("SCHEDULED", request?.id ?: "", "WORKER_ID=${W?.id}")
             if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
-            ODLogger.logInfo("EXECUTION_COMPLETE", request?.id ?: "", "WORKER_ID=${W?.id}")
-        } else callback?.invoke(Results.getDefaultInstance())
+        } else {
+            callback?.invoke(Results.getDefaultInstance())
+        }
         ODLogger.logInfo("COMPLETE", request?.id ?: "")
     }
 

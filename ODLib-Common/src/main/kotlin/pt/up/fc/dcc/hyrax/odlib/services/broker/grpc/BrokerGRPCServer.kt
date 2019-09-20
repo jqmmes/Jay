@@ -19,11 +19,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
         override fun executeJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
             BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver)}
-
         }
 
         override fun scheduleJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
-            BrokerService.scheduleJob(request) {R -> genericComplete(R, responseObserver)}
+            BrokerService.scheduleJob(request) {R -> genericComplete(R, responseObserver) }
         }
 
         override fun calibrateWorker(request: ODProto.Job?, responseObserver: StreamObserver<Empty>?) {
@@ -59,8 +58,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun setModel(request: ODProto.Model?, responseObserver: StreamObserver<ODProto.Status>?) {
             ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${request?.id}"))
-            BrokerService.setModel(request) {S -> genericComplete(S, responseObserver)}
-            ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request?.id}"))
+            BrokerService.setModel(request) {S ->
+                ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request?.id}"))
+                genericComplete(S, responseObserver)
+            }
         }
 
         override fun getSchedulers(request: Empty?, responseObserver: StreamObserver<ODProto.Schedulers>?) {
@@ -73,8 +74,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun setScheduler(request: ODProto.Scheduler?, responseObserver: StreamObserver<ODProto.Status>?) {
             ODLogger.logInfo("INIT", actions = *arrayOf("SCHEDULER_ID=${request?.id}"))
-            BrokerService.setScheduler(request) {S -> genericComplete(S, responseObserver)}
-            ODLogger.logInfo("COMPLETE", actions = *arrayOf("SCHEDULER_ID=${request?.id}"))
+            BrokerService.setScheduler(request) {S ->
+                ODLogger.logInfo("COMPLETE", actions = *arrayOf("SCHEDULER_ID=${request?.id}"))
+                genericComplete(S, responseObserver)
+            }
         }
 
         override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<ODProto.Status>?) {
@@ -123,14 +126,18 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun createJob(request: ODProto.String?, responseObserver: StreamObserver<ODProto.Results>?) {
-            ODLogger.logInfo("START", actions = *arrayOf("IMAGE_ID=${request?.str}"))
+            ODLogger.logInfo("INIT", actions = *arrayOf("REQUEST_ID=${request?.str}"))
             if (request?.str?.contains(".mp4") == true) {
+                ODLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("INIT"," REQUEST_TYPE=VIDEO", "REQUEST_ID=${request.str}"))
                 BrokerService.extractVideoFrames(request.str)
+                ODLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("COMPLETE", "REQUEST_TYPE=VIDEO", "REQUEST_ID=${request.str}"))
             } else {
+                ODLogger.logInfo("SUBMITTING_JOB", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=${request?.str}"))
                 scheduleJob(Job(BrokerService.getByteArrayFromId(request?.str)
                         ?: ByteArray(0)).getProto(), responseObserver)
+                ODLogger.logInfo("JOB_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=${request?.str}"))
             }
-            ODLogger.logInfo("COMPLETE", actions = *arrayOf("IMAGE_ID=${request?.str}"))
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=${request?.str}"))
         }
     }
 }
