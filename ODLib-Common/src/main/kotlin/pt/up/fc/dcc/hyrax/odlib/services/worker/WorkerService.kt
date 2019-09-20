@@ -125,6 +125,7 @@ object WorkerService {
                 WorkerProfiler.profileExecution { callback?.invoke(localDetect.detectObjects(job?.data?.toByteArray() ?: ByteArray(0))) }
                 ODLogger.logInfo("END", job?.id ?: "")
             } catch (e: Exception) {
+                e.printStackTrace()
                 ODLogger.logError("FAIL",  job?.id ?: "")
                 callback?.invoke(emptyList())
             }
