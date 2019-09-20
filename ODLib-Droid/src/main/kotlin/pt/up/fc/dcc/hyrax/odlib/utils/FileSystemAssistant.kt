@@ -8,6 +8,10 @@ import java.io.File
 
 class FileSystemAssistant(private val brokerAndroidService: BrokerAndroidService) : FileSystemAssistant {
 
+    override fun getAbsolutePath(): String {
+        return brokerAndroidService.getExternalFilesDir(null)!!.absolutePath
+    }
+
     override fun getByteArrayFromId(id: String): ByteArray {
         ODLogger.logInfo("START", actions = *arrayOf("FILE_ID=$id"))
         val root = File(brokerAndroidService.getExternalFilesDir(null)!!.absolutePath)
@@ -18,4 +22,6 @@ class FileSystemAssistant(private val brokerAndroidService: BrokerAndroidService
         ODLogger.logInfo("COMPLETE", actions = *arrayOf("FILE_ID=$id", "DATA_SIZE=${data.size}"))
         return data
     }
+
+
 }

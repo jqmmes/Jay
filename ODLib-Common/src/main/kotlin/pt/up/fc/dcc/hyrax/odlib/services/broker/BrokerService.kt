@@ -39,6 +39,7 @@ object BrokerService {
     private var schedulerServiceRunning = false
     private var workerServiceRunning = false
     private var fsAssistant: FileSystemAssistant? = null
+    private var videoUtils: VideoUtils? = null
 
     init {
         workers[local.id] = local
@@ -50,6 +51,7 @@ object BrokerService {
 
     fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, videoUtils: VideoUtils? = null) {
         this.fsAssistant = fsAssistant
+        this.videoUtils = videoUtils
         server = BrokerGRPCServer(useNettyServer).start()
         worker.testService { ServiceStatus -> workerServiceRunning = ServiceStatus?.running ?: false}
         scheduler.testService {
@@ -70,6 +72,11 @@ object BrokerService {
 
     fun stopServer() {
         server?.stopNowAndWait()
+    }
+
+    internal fun extractVideoFrames(id: String?) {
+        videoUtils?.extractFrames("${fsAssistant?.getAbsolutePath()}/$id", 1, (fsAssistant?.getAbsolutePath() ?: ""), (id?.dropLast(4) ?: "thumb"))
+        //videoUtils?.extractFrameAt("${fsAssistant?.getAbsolutePath()}/$id",0,4,0,(fsAssistant?.getAbsolutePath() ?: ""), (id?.dropLast(4) ?: "thumb"))
     }
 
     internal fun getByteArrayFromId(id: String?) : ByteArray? {

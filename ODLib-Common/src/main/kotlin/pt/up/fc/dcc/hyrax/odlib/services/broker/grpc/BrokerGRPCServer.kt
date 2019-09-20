@@ -6,7 +6,6 @@ import com.google.protobuf.Empty
 import io.grpc.BindableService
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCServerBase
-import pt.up.fc.dcc.hyrax.odlib.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
@@ -14,7 +13,6 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import java.io.File
 
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.brokerPort, useNettyServer) {
 
@@ -118,7 +116,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun stopService(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
-            BrokerService.stopService() { S ->
+            BrokerService.stopService { S ->
                 genericComplete(S, responseObserver)
                 BrokerService.stopServer()
             }
@@ -126,7 +124,12 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun createJob(request: ODProto.String?, responseObserver: StreamObserver<ODProto.Results>?) {
             ODLogger.logInfo("START", actions = *arrayOf("IMAGE_ID=${request?.str}"))
-            scheduleJob(Job(BrokerService.getByteArrayFromId(request?.str) ?: ByteArray(0)).getProto(), responseObserver)
+            if (request?.str?.contains(".mp4") == true) {
+                BrokerService.extractVideoFrames(request.str)
+            } else {
+                scheduleJob(Job(BrokerService.getByteArrayFromId(request?.str)
+                        ?: ByteArray(0)).getProto(), responseObserver)
+            }
             ODLogger.logInfo("COMPLETE", actions = *arrayOf("IMAGE_ID=${request?.str}"))
         }
     }
