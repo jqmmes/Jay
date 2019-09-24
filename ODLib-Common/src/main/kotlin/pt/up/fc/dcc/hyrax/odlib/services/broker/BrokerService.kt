@@ -80,11 +80,13 @@ object BrokerService {
         return null
     }
 
-    // TODO: Save byteArray to SDCard instead of passing Buffer. generate uID and pass this.
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
-        ODLogger.logInfo("INIT", request?.id ?: "")
-        if (workerServiceRunning) worker.execute(request, callback) else callback?.invoke(Results.getDefaultInstance())
-        ODLogger.logInfo("COMPLETE", request?.id ?: "")
+        val jobId = request?.id ?: ""
+        ODLogger.logInfo("INIT", jobId)
+        val workerJob = ODProto.WorkerJob.newBuilder().setId(jobId).setFileId(fsAssistant?.createTempFile(request?.data?.toByteArray())).build()
+        if (workerServiceRunning) worker.execute(workerJob, callback) else callback?.invoke(Results
+                .getDefaultInstance())
+        ODLogger.logInfo("COMPLETE", jobId)
     }
 
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {

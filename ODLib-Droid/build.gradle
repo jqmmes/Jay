@@ -46,5 +46,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
     implementation 'com.google.api.grpc:proto-google-common-protos:1.12.0'
     implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.2.2'
+    api 'com.google.guava:guava:28.1-android'
     api project(':ODLib-Common')
 }

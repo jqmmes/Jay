@@ -17,7 +17,7 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
     override val grpcImpl: BindableService = object : WorkerServiceGrpc.WorkerServiceImplBase() {
 
-        override fun execute(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
+        override fun execute(request: ODProto.WorkerJob?, responseObserver: StreamObserver<ODProto.Results>?) {
             ODLogger.logInfo("INIT", request?.id ?: "")
             WorkerService.queueJob(request!!) { detectionList ->
                 ODLogger.logInfo("COMPLETE", request.id ?: "")

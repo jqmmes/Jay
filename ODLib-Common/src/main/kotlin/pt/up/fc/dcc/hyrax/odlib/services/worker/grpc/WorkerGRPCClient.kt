@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker.grpc
 
 import com.google.protobuf.Empty
+import io.grpc.ConnectivityState
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
@@ -9,7 +10,6 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutionException
-import io.grpc.ConnectivityState
 
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
 (host, ODSettings.workerPort) {
@@ -21,7 +21,7 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         futureStub = WorkerServiceGrpc.newFutureStub(channel)
     }
 
-    fun execute(job: ODProto.Job?, callback: ((ODProto.Results?) -> Unit)? = null) {
+    fun execute(job: ODProto.WorkerJob?, callback: ((ODProto.Results?) -> Unit)? = null) {
         ODLogger.logInfo("INIT", job?.id ?: "")
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val futureJob = futureStub.execute(job)
