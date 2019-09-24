@@ -2,5 +2,6 @@ package pt.up.fc.dcc.hyrax.odlib.interfaces
 
 interface FileSystemAssistant {
     fun getByteArrayFromId(id: String) : ByteArray
+    fun getByteArrayFast(id: String): ByteArray
     fun getAbsolutePath() : String
 }

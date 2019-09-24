@@ -126,18 +126,19 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun createJob(request: ODProto.String?, responseObserver: StreamObserver<ODProto.Results>?) {
-            ODLogger.logInfo("INIT", actions = *arrayOf("REQUEST_ID=${request?.str}"))
-            if (request?.str?.contains(".mp4") == true) {
-                ODLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("INIT"," REQUEST_TYPE=VIDEO", "REQUEST_ID=${request.str}"))
-                BrokerService.extractVideoFrames(request.str)
-                ODLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("COMPLETE", "REQUEST_TYPE=VIDEO", "REQUEST_ID=${request.str}"))
+            val reqId = request?.str ?: ""
+            ODLogger.logInfo("INIT", actions = *arrayOf("REQUEST_ID=$reqId"))
+            if (reqId.contains(".mp4")) {
+                ODLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("INIT", " REQUEST_TYPE=VIDEO", "REQUEST_ID=$reqId"))
+                BrokerService.extractVideoFrames(reqId)
+                ODLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("COMPLETE", "REQUEST_TYPE=VIDEO", "REQUEST_ID=$reqId"))
             } else {
-                ODLogger.logInfo("SUBMITTING_JOB", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=${request?.str}"))
-                scheduleJob(Job(BrokerService.getByteArrayFromId(request?.str)
+                ODLogger.logInfo("SUBMITTING_JOB", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
+                scheduleJob(Job(BrokerService.getByteArrayFromId(reqId)
                         ?: ByteArray(0)).getProto(), responseObserver)
-                ODLogger.logInfo("JOB_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=${request?.str}"))
+                ODLogger.logInfo("JOB_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
-            ODLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=${request?.str}"))
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=$reqId"))
         }
     }
 }

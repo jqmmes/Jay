@@ -5,24 +5,48 @@ import android.graphics.BitmapFactory
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.lang.Thread.sleep
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.max
 
 object ImageUtils {
 
+    private val LOCK = Any()
+    private val LOCK_2 = Any()
+
     fun getBitmapFromByteArray(imgData: ByteArray) : Bitmap {
-        return BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
+        var data: Bitmap? = null
+        synchronized(LOCK_2) {
+            while ((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()) + Runtime.getRuntime().freeMemory
+                    () < imgData.size * 2) {
+                sleep(100)
+            }
+            ODLogger.logError("DECODE_BITMAP", actions = *arrayOf("BITMAP_SIZE=${imgData.size}", "MAX_HEAP_SIZE=${Runtime
+                    .getRuntime().maxMemory()}", "FREE_HEAP_SIZE=${Runtime
+                    .getRuntime().freeMemory()}"))
+            data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
+        }
+        return data!!
     }
 
     fun getByteArrayFromImage(imgPath: String): ByteArray {
+        ODLogger.logInfo("INIT")
         val stream = ByteArrayOutputStream()
-        BitmapFactory.decodeFile(imgPath).compress(Bitmap.CompressFormat.PNG, 100, stream)
+        synchronized(LOCK) {
+            while ((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()) + Runtime.getRuntime().freeMemory
+                    () < 150000000) {
+                sleep(100)
+            }
+            BitmapFactory.decodeFile(imgPath).compress(Bitmap.CompressFormat.PNG, 100, stream)
+        }
+        ODLogger.logInfo("COMPLETE")
         return stream.toByteArray()
     }
 
     fun getByteArrayFromBitmap(imgBitmap: Bitmap): ByteArray {
         val stream = ByteArrayOutputStream()
+        //imgBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
         imgBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
     }

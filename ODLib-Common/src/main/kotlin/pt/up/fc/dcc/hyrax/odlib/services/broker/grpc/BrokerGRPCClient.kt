@@ -14,7 +14,6 @@ import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
-import java.lang.RuntimeException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -44,9 +43,14 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun executeJob(job: ODProto.Job?, callback: ((ODProto.Results) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.executeJob(job)
+        val jobId = job?.id ?: ""
         call.addListener(Runnable{
-            try { callback?.invoke(call.get()); ODLogger.logInfo("COMPLETE",  job?.id ?: "") }
-                catch (e: ExecutionException) {callback?.invoke(ODProto.Results.getDefaultInstance()); ODLogger.logError("ERROR",  job?.id ?: "")}
+            try {
+                callback?.invoke(call.get()); ODLogger.logInfo("COMPLETE", jobId)
+            } catch (e: ExecutionException) {
+                callback?.invoke(ODProto.Results.getDefaultInstance()); ODLogger
+                        .logError("ERROR", jobId)
+            }
             }, AbstractODLib.executorPool)
     }
 

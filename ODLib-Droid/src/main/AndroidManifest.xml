@@ -7,8 +7,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
 
-
-    <application>
+    <application
+            android:largeHeap="true">
         <service android:name=".services.BrokerAndroidService" android:exported="true" android:permission="android.permission.INTERNET"/>
         <service android:name=".services.WorkerAndroidService" android:exported="true" android:permission="android.permission.INTERNET"/>
         <service android:name=".services.SchedulerAndroidService" android:exported="true" android:permission="android.permission.INTERNET"/>

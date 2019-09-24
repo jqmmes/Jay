@@ -116,6 +116,7 @@ object WorkerService {
         server?.stopNowAndWait()
     }
 
+    // TODO: Read file from SDCard instead of Buffer. Using ID and ImageUtils.decodeFromFile()
     private class RunnableJobObjects(val job: ODProto.Job?, var callback: ((List<Detection>) -> Unit)?) : Runnable {
         override fun run() {
             ODLogger.logInfo("INIT", job?.id ?: "")

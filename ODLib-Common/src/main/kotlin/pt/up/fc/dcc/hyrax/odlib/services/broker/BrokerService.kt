@@ -5,13 +5,7 @@ import pt.up.fc.dcc.hyrax.odlib.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.odlib.interfaces.VideoUtils
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Job
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Model
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Models
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Results
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Scheduler
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Schedulers
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Status
+import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.*
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.Type
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.services.broker.multicast.MulticastAdvertiser
@@ -82,10 +76,11 @@ object BrokerService {
     internal fun getByteArrayFromId(id: String?) : ByteArray? {
         ODLogger.logInfo("READING_IMAGE_BYTE_ARRAY", actions = *arrayOf("IMAGE_ID=$id"))
         if (id != null)
-            return fsAssistant?.getByteArrayFromId(id)
+            return fsAssistant?.getByteArrayFast(id)
         return null
     }
 
+    // TODO: Save byteArray to SDCard instead of passing Buffer. generate uID and pass this.
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
         ODLogger.logInfo("INIT", request?.id ?: "")
         if (workerServiceRunning) worker.execute(request, callback) else callback?.invoke(Results.getDefaultInstance())
@@ -93,14 +88,15 @@ object BrokerService {
     }
 
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
-        ODLogger.logInfo("INIT", request?.id ?: "")
+        val jobId = request?.id ?: ""
+        ODLogger.logInfo("INIT", jobId)
         if (schedulerServiceRunning) scheduler.schedule(request) { W ->
-            ODLogger.logInfo("SCHEDULED", request?.id ?: "", "WORKER_ID=${W?.id}")
+            ODLogger.logInfo("SCHEDULED", jobId, "WORKER_ID=${W?.id}")
             if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
         } else {
             callback?.invoke(Results.getDefaultInstance())
         }
-        ODLogger.logInfo("COMPLETE", request?.id ?: "")
+        ODLogger.logInfo("COMPLETE", jobId)
     }
 
     private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {

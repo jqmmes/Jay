@@ -53,6 +53,7 @@ dependencies {
     implementation "io.grpc:grpc-protobuf:${GRPC_VERSION}"
     implementation "io.grpc:grpc-stub:${GRPC_VERSION}"
     // CURRENT_GRPC_VERSION
+    
     implementation 'javax.annotation:javax.annotation-api:1.2'
     implementation project(':ODLib-Droid')
     implementation project(':ODLib-Common')
