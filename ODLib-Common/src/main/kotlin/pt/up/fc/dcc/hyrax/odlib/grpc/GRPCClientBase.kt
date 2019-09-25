@@ -2,6 +2,8 @@ package pt.up.fc.dcc.hyrax.odlib.grpc
 
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.netty.util.internal.logging.InternalLoggerFactory
+import io.netty.util.internal.logging.JdkLoggerFactory
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.util.concurrent.TimeUnit
@@ -13,6 +15,7 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
     abstract var futureStub: T2
 
     init {
+        InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE);
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)

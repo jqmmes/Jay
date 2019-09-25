@@ -40,6 +40,7 @@ internal object WorkerProfiler {
         updaterRunning = false
         runningJobs.set(0)
         totalJobs.set(0)
+        batteryMonitor?.destroy()
     }
 
     private fun periodicStatusUpdate() {

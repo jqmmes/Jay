@@ -12,7 +12,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.genStatus
 
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.brokerPort, useNettyServer) {
 
@@ -25,7 +25,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             BrokerService.scheduleJob(request) {R -> genericComplete(R, responseObserver) }
         }
 
-        override fun calibrateWorker(request: ODProto.Job?, responseObserver: StreamObserver<Empty>?) {
+        override fun calibrateWorker(request: ODProto.String?, responseObserver: StreamObserver<Empty>?) {
             BrokerService.calibrateWorker(request) { genericComplete(Empty.getDefaultInstance(), responseObserver) }
         }
 
@@ -82,12 +82,12 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.listenMulticast(request?.value ?: false)
-            genericComplete(ODUtils.genStatus(ODProto.StatusCode.Success), responseObserver)
+            genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)
         }
 
         override fun announceMulticast(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.announceMulticast()
-            genericComplete(ODUtils.genStatus(ODProto.StatusCode.Success), responseObserver)
+            genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)
         }
 
         override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<ODProto.Worker>?) {
@@ -139,6 +139,33 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 ODLogger.logInfo("JOB_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
             ODLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=$reqId"))
+        }
+
+        override fun setSettings(request: ODProto.Settings?, responseObserver: StreamObserver<ODProto.Status>?) {
+            if (request == null) genericComplete(genStatus(ODProto.StatusCode.Error), responseObserver)
+            try {
+                val settingsMap = request!!.settingMap
+                settingsMap.forEach { (K, V) ->
+                    when (K) {
+                        "cloudIp" -> ODSettings.cloudIp = V //: String = "odcloud.duckdns.org"
+                        "ODSettings." -> ODSettings.grpcMaxMessageSize = V.toInt() //: Int = 150000000
+                        "RTTHistorySize" -> ODSettings.RTTHistorySize = V.toInt() //: Int = 5
+                        "pingTimeout" -> ODSettings.pingTimeout = V.toLong() //: Long = 10000L // 15s
+                        "RTTDelayMillis" -> ODSettings.RTTDelayMillis = V.toLong() //: Long = 10000L // 10s
+                        "pingPayloadSize" -> ODSettings.pingPayloadSize = V.toInt() //: Int = 32000 // 32Kb
+                        "averageComputationTimesToStore" -> ODSettings.averageComputationTimesToStore = V.toInt() //: Int = 10
+                        "workingThreads" -> ODSettings.workingThreads = V.toInt() //: Int = 1
+                        "workerStatusUpdateInterval" -> ODSettings.workerStatusUpdateInterval = V.toLong() //: Long = 5000 // 5s
+                        "AUTO_STATUS_UPDATE_INTERVAL_MS" -> ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS = V.toLong() //: Long = 5000 // 5s
+                        "RTTDelayMillisFailRetry" -> ODSettings.RTTDelayMillisFailRetry = V.toLong() //: Long = 500 // 0.5s
+                        "RTTDelayMillisFailAttempts" -> ODSettings.RTTDelayMillisFailAttempts = V.toLong() //: Long = 5
+                        "MY_ID" -> ODSettings.MY_ID = V
+                    }
+                }
+                genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)
+            } catch (e: Exception) {
+                genericComplete(genStatus(ODProto.StatusCode.Error), responseObserver)
+            }
         }
     }
 }

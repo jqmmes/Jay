@@ -103,7 +103,7 @@ object BrokerService {
 
     private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {
         scheduler.notifyWorkerUpdate(worker) { S ->
-            if (S?.code == ODProto.StatusCode.Error) {
+            if (S?.code == StatusCode.Error) {
                 sleep(50)
                 updateWorker(worker, latch)
             } else (latch.countDown())
@@ -230,24 +230,24 @@ object BrokerService {
         return local.getProto()
     }
 
-    fun enableHearBeats(types: ODProto.WorkerTypes?): Status? {
+    fun enableHearBeats(types: WorkerTypes?): Status? {
         if (heartBeats) return ODUtils.genStatusSuccess()
         heartBeats = true
-        if (types == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
+        if (types == null) return ODUtils.genStatus(StatusCode.Error)
         for (key in workers.keys)
             if (workers[key]?.type in types.typeList && workers[key]?.type != Type.LOCAL) workers[key]?.enableHeartBeat { StatusUpdate ->
                 if(!schedulerServiceRunning) return@enableHeartBeat
                 if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto()) {}
                 else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {}
             }
-        return ODUtils.genStatus(ODProto.StatusCode.Success)
+        return ODUtils.genStatus(StatusCode.Success)
     }
 
-    fun enableBandwidthEstimates(method: ODProto.BandwidthEstimate?): Status? {
+    fun enableBandwidthEstimates(method: BandwidthEstimate?): Status? {
         if (bwEstimates) return ODUtils.genStatusSuccess()
         bwEstimates = true
-        if (method == null) return ODUtils.genStatus(ODProto.StatusCode.Error)
-        if (method.type == ODProto.BandwidthEstimate.Type.ACTIVE) {
+        if (method == null) return ODUtils.genStatus(StatusCode.Error)
+        if (method.type == BandwidthEstimate.Type.ACTIVE) {
             for (key in workers.keys)
                 if (workers[key]?.type in method.workerTypeList && workers[key]?.type != Type.LOCAL) workers[key]?.doActiveRTTEstimates {StatusUpdate ->
                     if(!schedulerServiceRunning) return@doActiveRTTEstimates
@@ -255,7 +255,7 @@ object BrokerService {
                     else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> ODLogger.logInfo("WORKER_FAILURE_NOTIFIED", actions = *arrayOf("STATUS_CODE=$S"))}
                 }
         }
-        return ODUtils.genStatus(ODProto.StatusCode.Success)
+        return ODUtils.genStatus(StatusCode.Success)
     }
 
     fun disableHearBeats(): Status? {
@@ -272,20 +272,20 @@ object BrokerService {
         return ODUtils.genStatusSuccess()
     }
 
-    fun updateSmartSchedulerWeights(weights: ODProto.Weights?, callback: ((Status?) -> Unit)) {
+    fun updateSmartSchedulerWeights(weights: Weights?, callback: ((Status?) -> Unit)) {
         if(schedulerServiceRunning) scheduler.updateSmartSchedulerWeights(weights) { S -> callback(S) }
         else callback(ODUtils.genStatusError())
     }
 
-    fun serviceStatusUpdate(serviceStatus: ODProto.ServiceStatus?, completeCallback: (Status?) -> Unit) {
-        if (serviceStatus?.type == ODProto.ServiceStatus.Type.SCHEDULER) {
+    fun serviceStatusUpdate(serviceStatus: ServiceStatus?, completeCallback: (Status?) -> Unit) {
+        if (serviceStatus?.type == ServiceStatus.Type.SCHEDULER) {
             schedulerServiceRunning = serviceStatus.running
             if (!schedulerServiceRunning) {
                 disableHearBeats()
                 disableBandwidthEstimates()
             }
             completeCallback(ODUtils.genStatusSuccess())
-        } else if (serviceStatus?.type == ODProto.ServiceStatus.Type.WORKER) {
+        } else if (serviceStatus?.type == ServiceStatus.Type.WORKER) {
             workerServiceRunning = serviceStatus.running
             if (!workerServiceRunning) announceMulticast(stopAdvertiser = true)
             if (schedulerServiceRunning) {
@@ -295,7 +295,10 @@ object BrokerService {
         }
     }
 
-    fun calibrateWorker(job: Job?, function: () -> Unit) {
-        executeJob(job) { function() }
+    fun calibrateWorker(job: ODProto.String?, function: () -> Unit) {
+        ODLogger.logInfo("INIT", "CALIBRATION")
+        val workerJob = ODProto.WorkerJob.newBuilder().setId("CALIBRATION").setFileId(fsAssistant?.createTempFile(fsAssistant?.getByteArrayFast(job?.str ?: "") ?: ByteArray(0))).build()
+        if (workerServiceRunning) worker.execute(workerJob) {function()} else function()
+        ODLogger.logInfo("COMPLETE", "CALIBRATION")
     }
 }

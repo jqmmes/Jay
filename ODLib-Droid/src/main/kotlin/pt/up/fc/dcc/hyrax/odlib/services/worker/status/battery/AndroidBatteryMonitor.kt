@@ -76,13 +76,15 @@ class AndroidBatteryMonitor(val context: Context) : BatteryMonitor() {
 
     override fun monitor() {
         context.registerReceiver( levelMonitor, IntentFilter( ACTION_BATTERY_CHANGED ) )
-
-
         chargingStateMonitor.setContext(context)
         val filterRefreshUpdate = IntentFilter()
         filterRefreshUpdate.addAction(ACTION_POWER_CONNECTED)
         filterRefreshUpdate.addAction(ACTION_POWER_DISCONNECTED)
         context.registerReceiver(chargingStateMonitor, filterRefreshUpdate)
+    }
+
+    override fun destroy() {
+        context.unregisterReceiver(chargingStateMonitor)
     }
 
 }

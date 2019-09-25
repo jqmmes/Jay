@@ -124,6 +124,7 @@ object WorkerService {
             ODLogger.logInfo("INIT", job?.id ?: "")
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, increment = true)
             try {
+                ODLogger.logInfo("READ_IMAGE_DATA", job?.id ?: "")
                 val imgData = fsAssistant?.readTempFile(job?.fileId) ?: ByteArray(0)
                 ODLogger.logInfo("START", job?.id ?: "")
                 WorkerProfiler.profileExecution { callback?.invoke(localDetect.detectObjects(imgData)) }

@@ -6,5 +6,6 @@ abstract class BatteryMonitor {
 
     abstract fun setCallbacks(levelChangeCallback: (Int) -> Unit, statusChangeCallback: (ODProto.Worker.BatteryStatus) -> Unit)
     abstract fun monitor()
+    abstract fun destroy()
 
 }

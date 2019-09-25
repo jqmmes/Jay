@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib
 
+import pt.up.fc.dcc.hyrax.odlib.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
@@ -42,12 +43,12 @@ abstract class AbstractODLib {
         broker.setScheduler(id, completeCallback)
     }
 
-    protected open fun startBroker() {
-        BrokerService.start()
+    protected open fun startBroker(fsAssistant: FileSystemAssistant? = null) {
+        BrokerService.start(fsAssistant = fsAssistant)
     }
 
-    open fun startScheduler() {
-        startBroker()
+    open fun startScheduler(fsAssistant: FileSystemAssistant? = null) {
+        startBroker(fsAssistant)
         sleep(500)
         SchedulerService.start()
     }

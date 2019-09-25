@@ -46,20 +46,8 @@ object ImageUtils {
 
     fun getByteArrayFromBitmap(imgBitmap: Bitmap): ByteArray {
         val stream = ByteArrayOutputStream()
-        //imgBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
         imgBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
-    }
-
-    fun getByteArrayFromBitmapFast(imgBitmap: Bitmap?) : ByteArray {
-        if (imgBitmap == null) return ByteArray(0)
-        val byteBuffer = ByteBuffer.allocate(imgBitmap.byteCount)
-        imgBitmap.copyPixelsToBuffer(byteBuffer)
-        return byteBuffer.array()
-    }
-
-    fun getImageBitmapFromFile(imgPath: File): Bitmap? {
-        return BitmapFactory.decodeFile(imgPath.absolutePath)
     }
 
     fun scaleImage(image : Bitmap, maxSize : Int) : Bitmap {
@@ -77,9 +65,5 @@ object ImageUtils {
         scaledImage.recycle()
         ODLogger.logInfo("COMPLETE")
         return  scaledData
-    }
-
-    fun scaleImage(imgData: ByteArray, maxSize: Int) : Bitmap {
-        return scaleImage(getBitmapFromByteArray(imgData), maxSize)
     }
 }

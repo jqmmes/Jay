@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Messenger
 import android.support.v4.app.NotificationCompat
+import pt.up.fc.dcc.hyrax.odlib.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
 import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
@@ -67,7 +68,7 @@ class ODLib(val context : Context) : AbstractODLib() {
     }
 
 
-    override fun startBroker() {
+    override fun startBroker(fsAssistant: FileSystemAssistant?) {
         ODLogger.logInfo("INIT")
         if (serviceRunningBroker()) return
         val brokerIntent = Intent(context, BrokerAndroidService::class.java)
@@ -79,7 +80,7 @@ class ODLib(val context : Context) : AbstractODLib() {
         ODLogger.logInfo("COMPLETE")
     }
 
-    override fun startScheduler() {
+    override fun startScheduler(fsAssistant: FileSystemAssistant?) {
         startBroker()
         ODLogger.logInfo("INIT")
         if (serviceRunningScheduler()) return

@@ -24,5 +24,6 @@ dependencies {
     implementation "org.tensorflow:proto:${TENSORFLOW_VERSION}"
     //noinspection DifferentStdlibGradleVersion
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
+    compile 'com.google.guava:guava:28.1-jre'
     compile project(path: ':ODLib-Common')
 }
