@@ -7,6 +7,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings.PING_PAYLOAD_SIZE
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
@@ -45,7 +46,6 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var proto : ODProto.Worker? = null
     private var autoStatusUpdate = false
     private var autoStatusUpdateRunning = CountDownLatch(0)
-    private var pingPayloadSize = 0
     private var calcRTT = false
     private var checkingHeartBeat = false
 
@@ -57,7 +57,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     constructor(proto: ODProto.Worker?, address: String, checkHearBeat: Boolean, bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address){
         updateStatus(proto)
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
-        if (bwEstimates) doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
+        if (bwEstimates && ODSettings.BANDWIDTH_ESTIMATE_TYPE == "ACTIVE") doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
     }
 
     init {
@@ -141,10 +141,10 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         if (wait) autoStatusUpdateRunning.await()
     }
 
-    private fun addRTT(millis: Int) {
-        circularFIFO.add(millis.toFloat()/pingPayloadSize)
+    fun addRTT(millis: Int, payloadSize: Int = PING_PAYLOAD_SIZE) {
+        circularFIFO.add(millis.toFloat()/payloadSize)
         bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0f
-        ODLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = * arrayOf("WORKER_ID =$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))
+        ODLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = * arrayOf("WORKER_ID=$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))
     }
 
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
@@ -160,15 +160,13 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         statusChangeCallback = null
     }
 
-    fun doActiveRTTEstimates(payload: Int = ODSettings.pingPayloadSize, statusChangeCallback: ((Status) -> Unit)? = null) {
-        pingPayloadSize = payload
+    fun doActiveRTTEstimates(statusChangeCallback: ((Status) -> Unit)? = null) {
         calcRTT = true
         if (!checkingHeartBeat) enableHeartBeat(statusChangeCallback)
     }
 
     fun stopActiveRTTEstimates() {
         if (checkingHeartBeat) disableHeartBeat()
-        pingPayloadSize = 0
         calcRTT = false
     }
 
@@ -193,7 +191,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
 
     private inner class RTTTimer : Runnable {
         override fun run() {
-            grpc.ping(pingPayloadSize, timeout = ODSettings.pingTimeout, callback = { T ->
+            grpc.ping(PING_PAYLOAD_SIZE, timeout = ODSettings.pingTimeout, callback = { T ->
                 if (T == -1) {
                     if (status == Status.ONLINE) {
                         ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))

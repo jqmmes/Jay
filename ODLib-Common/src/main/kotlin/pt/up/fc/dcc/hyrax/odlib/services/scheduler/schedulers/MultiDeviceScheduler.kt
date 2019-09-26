@@ -46,7 +46,7 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
                 roundRobinCount %= workers.size
                 workers.values.toTypedArray()[roundRobinCount++]
             }
-            else -> workers.values.toTypedArray()[Random.nextInt(workers.values.size - 1)]
+            else -> workers.values.toTypedArray()[if (workers.values.size > 1) Random.nextInt(workers.values.size - 1) else 0]
         }
         ODLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${worker?.id}"))
         return worker

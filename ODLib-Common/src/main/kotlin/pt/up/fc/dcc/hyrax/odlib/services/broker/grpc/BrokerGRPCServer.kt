@@ -18,6 +18,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
         override fun executeJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
+            responseObserver?.onNext(ODProto.Results.newBuilder().setStatus(ODProto.StatusCode.Received).build())
             BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver)}
         }
 
@@ -147,19 +148,20 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 val settingsMap = request!!.settingMap
                 settingsMap.forEach { (K, V) ->
                     when (K) {
-                        "cloudIp" -> ODSettings.cloudIp = V //: String = "odcloud.duckdns.org"
-                        "ODSettings." -> ODSettings.grpcMaxMessageSize = V.toInt() //: Int = 150000000
+                        "CLOUD_IP" -> ODSettings.CLOUD_IP = V //: String = "odcloud.duckdns.org"
+                        "GRPC_MAX_MESSAGE_SIZE" -> ODSettings.GRPC_MAX_MESSAGE_SIZE = V.toInt() //: Int = 150000000
                         "RTTHistorySize" -> ODSettings.RTTHistorySize = V.toInt() //: Int = 5
                         "pingTimeout" -> ODSettings.pingTimeout = V.toLong() //: Long = 10000L // 15s
                         "RTTDelayMillis" -> ODSettings.RTTDelayMillis = V.toLong() //: Long = 10000L // 10s
-                        "pingPayloadSize" -> ODSettings.pingPayloadSize = V.toInt() //: Int = 32000 // 32Kb
+                        "PING_PAYLOAD_SIZE" -> ODSettings.PING_PAYLOAD_SIZE = V.toInt() //: Int = 32000 // 32Kb
                         "averageComputationTimesToStore" -> ODSettings.averageComputationTimesToStore = V.toInt() //: Int = 10
                         "workingThreads" -> ODSettings.workingThreads = V.toInt() //: Int = 1
                         "workerStatusUpdateInterval" -> ODSettings.workerStatusUpdateInterval = V.toLong() //: Long = 5000 // 5s
                         "AUTO_STATUS_UPDATE_INTERVAL_MS" -> ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS = V.toLong() //: Long = 5000 // 5s
                         "RTTDelayMillisFailRetry" -> ODSettings.RTTDelayMillisFailRetry = V.toLong() //: Long = 500 // 0.5s
                         "RTTDelayMillisFailAttempts" -> ODSettings.RTTDelayMillisFailAttempts = V.toLong() //: Long = 5
-                        "MY_ID" -> ODSettings.MY_ID = V
+                        "DEVICE_ID" -> ODSettings.DEVICE_ID = V
+                        "BANDWIDTH_ESTIMATE_TYPE" -> ODSettings.BANDWIDTH_ESTIMATE_TYPE = V
                     }
                 }
                 genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)

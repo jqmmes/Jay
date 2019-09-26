@@ -24,10 +24,11 @@ object BrokerService {
 
     private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker> = hashMapOf()
+    private val assignedJobs: MutableMap<String, String> = hashMapOf()
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
     private val worker = WorkerGRPCClient("127.0.0.1")
-    private val local: Worker = if (ODSettings.MY_ID != "") Worker(id = ODSettings.MY_ID, address = "127.0.0.1", type = Type.LOCAL) else Worker(address = "127.0.0.1", type = Type.LOCAL)
-    private val cloud = Worker(address = ODSettings.cloudIp, type = Type.CLOUD)
+    private val local: Worker = if (ODSettings.DEVICE_ID != "") Worker(id = ODSettings.DEVICE_ID, address = "127.0.0.1", type = Type.LOCAL) else Worker(address = "127.0.0.1", type = Type.LOCAL)
+    private val cloud = Worker(address = ODSettings.CLOUD_IP, type = Type.CLOUD)
     private var heartBeats = false
     private var bwEstimates = false
     private var schedulerServiceRunning = false
@@ -93,12 +94,19 @@ object BrokerService {
         val jobId = request?.id ?: ""
         ODLogger.logInfo("INIT", jobId)
         if (schedulerServiceRunning) scheduler.schedule(request) { W ->
+            if (request != null) assignedJobs[request.id] = W?.id ?: ""
             ODLogger.logInfo("SCHEDULED", jobId, "WORKER_ID=${W?.id}")
             if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
         } else {
             callback?.invoke(Results.getDefaultInstance())
         }
         ODLogger.logInfo("COMPLETE", jobId)
+    }
+
+    internal fun passiveBandwidthUpdate(jobId: String, dataSize: Int, duration: Long) {
+        if (jobId in assignedJobs && assignedJobs[jobId] != "") {
+            workers[assignedJobs[jobId]]?.addRTT(duration.toInt(), dataSize)
+        }
     }
 
     private fun updateWorker(worker: ODProto.Worker?, latch: CountDownLatch) {

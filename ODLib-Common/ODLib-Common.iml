@@ -177,5 +177,6 @@
     <orderEntry type="library" exported="" name="Gradle: viewmodel-1.1.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: runtime-1.1.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: common-1.1.0" level="project" />
+    <orderEntry type="library" name="Bundled Protobuf Distribution" level="application" />
   </component>
 </module>

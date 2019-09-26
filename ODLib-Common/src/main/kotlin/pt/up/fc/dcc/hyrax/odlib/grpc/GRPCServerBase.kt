@@ -22,12 +22,12 @@ abstract class GRPCServerBase(private val port: Int,
         server =
                 if (useNettyServer) NettyServerBuilder.forPort(port)
                     .addService(grpcImpl)
-                    .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
+                    .maxInboundMessageSize(ODSettings.GRPC_MAX_MESSAGE_SIZE)
                     .build()
                     .start()
                 else ServerBuilder.forPort(port)
                     .addService(grpcImpl)
-                    .maxInboundMessageSize(ODSettings.grpcMaxMessageSize)
+                    .maxInboundMessageSize(ODSettings.GRPC_MAX_MESSAGE_SIZE)
                     .build()
                     .start()
 

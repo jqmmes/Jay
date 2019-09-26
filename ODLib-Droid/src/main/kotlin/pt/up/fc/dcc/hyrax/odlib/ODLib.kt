@@ -13,8 +13,6 @@ import android.os.IBinder
 import android.os.Messenger
 import android.support.v4.app.NotificationCompat
 import pt.up.fc.dcc.hyrax.odlib.interfaces.FileSystemAssistant
-import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
-import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.services.BrokerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.ClientAndroidService
@@ -22,11 +20,9 @@ import pt.up.fc.dcc.hyrax.odlib.services.SchedulerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.WorkerAndroidService
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCClient
-import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import java.util.*
 
 
-class ODLib(val context : Context) : AbstractODLib() {
+class ODLib(private val context : Context) : AbstractODLib() {
 
 
     private val clientConnection = object : ServiceConnection {
@@ -110,11 +106,11 @@ class ODLib(val context : Context) : AbstractODLib() {
         return isMyServiceRunning(BrokerAndroidService::class.java)
     }
 
-    fun serviceRunningWorker() : Boolean {
+    private fun serviceRunningWorker() : Boolean {
         return isMyServiceRunning(WorkerAndroidService::class.java)
     }
 
-    fun serviceRunningScheduler() : Boolean {
+    private fun serviceRunningScheduler() : Boolean {
         return isMyServiceRunning(SchedulerAndroidService::class.java)
     }
 
@@ -122,7 +118,7 @@ class ODLib(val context : Context) : AbstractODLib() {
         if (!serviceRunningBroker()) return
         stopWorker()
         stopScheduler()
-        broker.stopService() { context.stopService(Intent(context, BrokerAndroidService::class.java)) }
+        broker.stopService { context.stopService(Intent(context, BrokerAndroidService::class.java)) }
         //context.stopService(Intent(context, BrokerAndroidService::class.java))
     }
 
@@ -165,8 +161,8 @@ class ODLib(val context : Context) : AbstractODLib() {
 
     internal companion object {
         private var notifyID = 1
-        private val CHANNEL_ID = "my_channel_01"// The id of the channel.
-        private val name = "BrokerChannel"// The user-visible name of the channel.
+        private const val CHANNEL_ID = "my_channel_01"// The id of the channel.
+        private const val name = "BrokerChannel"// The user-visible name of the channel.
         @Suppress("DEPRECATION")
         private val importance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             NotificationManager.IMPORTANCE_MIN

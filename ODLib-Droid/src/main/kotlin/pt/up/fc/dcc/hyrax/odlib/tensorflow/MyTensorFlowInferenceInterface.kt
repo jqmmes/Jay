@@ -126,7 +126,7 @@ class MyTensorFlowInferenceInterface {
         while (var6 < var5) {
             t = var4[var6]
             this.fetchNames.add(t)
-            val tid = MyTensorFlowInferenceInterface.TensorId.parse(t)
+            val tid = TensorId.parse(t)
             this.runner!!.fetch(tid.name, tid.outputIndex)
             ++var6
         }
@@ -329,7 +329,7 @@ class MyTensorFlowInferenceInterface {
     }
 
     private fun addFeed(inputName: String, t: Tensor<*>) {
-        val tid = MyTensorFlowInferenceInterface.TensorId.parse(inputName)
+        val tid = TensorId.parse(inputName)
         this.runner!!.feed(tid.name, tid.outputIndex, t)
         this.feedNames.add(inputName)
         this.feedTensors.add(t)
@@ -379,8 +379,8 @@ class MyTensorFlowInferenceInterface {
 
         companion object {
 
-            fun parse(name: String): MyTensorFlowInferenceInterface.TensorId {
-                val tid = MyTensorFlowInferenceInterface.TensorId()
+            fun parse(name: String): TensorId {
+                val tid = TensorId()
                 // val colonIndex = name.lastIndexOf(58)
                 val colonIndex = name.lastIndexOf(58.toChar())
                 return if (colonIndex < 0) {

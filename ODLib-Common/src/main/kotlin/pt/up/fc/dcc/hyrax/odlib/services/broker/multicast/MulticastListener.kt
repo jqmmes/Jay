@@ -12,6 +12,7 @@ object MulticastListener {
     private var running = false
     private lateinit var listeningSocket : MulticastSocket
     private lateinit var mcIPAddress: InetAddress
+    private var isStopping = false
 
     fun listen(callback: ((ODProto.Worker?, String) -> Unit)? = null, networkInterface: NetworkInterface? = null) {
         if (running) {
@@ -59,7 +60,10 @@ object MulticastListener {
                 }
             } while (running)
             if (!listeningSocket.isClosed) {
-                ODLogger.logInfo("SOCKET_CLOSED")
+                if (isStopping) {
+                    ODLogger.logInfo("SOCKET_CLOSED")
+                    isStopping = false
+                }
                 listeningSocket.leaveGroup(mcIPAddress)
                 listeningSocket.close()
             }
@@ -69,10 +73,12 @@ object MulticastListener {
     fun stop() {
         ODLogger.logInfo("INIT")
         running = false
+        isStopping = true
         try {
             listeningSocket.leaveGroup(mcIPAddress)
             listeningSocket.close()
         } catch (ignore: Exception) {}
+        isStopping = true
         ODLogger.logInfo("COMPLETE")
     }
 }

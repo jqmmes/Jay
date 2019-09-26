@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutionException
 
+@Suppress("DuplicatedCode")
 class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.SchedulerServiceBlockingStub, SchedulerServiceGrpc.SchedulerServiceFutureStub>
 (host, ODSettings.schedulerPort) {
     override var blockingStub: SchedulerServiceGrpc.SchedulerServiceBlockingStub = SchedulerServiceGrpc.newBlockingStub(channel)
@@ -91,7 +92,6 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
             } catch (e: Exception) {
                 callback(ODUtils.genStatusError())
             }
-        },
-                AbstractODLib.executorPool)
+        }, AbstractODLib.executorPool)
     }
 }

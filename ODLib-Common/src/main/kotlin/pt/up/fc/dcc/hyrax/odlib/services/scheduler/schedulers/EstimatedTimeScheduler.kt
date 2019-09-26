@@ -15,13 +15,12 @@ import kotlin.random.Random
 class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
 
-
     override fun init() {
         ODLogger.logInfo("INIT")
         SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) updateWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
-            ODLogger.logInfo("LISTEN_FOR_WORKERS", actions = *arrayOf("WORKER_ID=$id"))
+            ODLogger.logInfo("LISTEN_FOR_WORKERS", actions = *arrayOf("SCHEDULER_ID=$id"))
             SchedulerService.enableBandwidthEstimates(
                     ODProto.BandwidthEstimate.newBuilder()
                             .setType(ODProto.BandwidthEstimate.Type.ACTIVE)

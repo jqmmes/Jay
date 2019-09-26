@@ -20,7 +20,7 @@ abstract class AbstractODLib {
     protected val broker = BrokerGRPCClient("127.0.0.1")
 
     init {
-        ODSettings.MY_ID = UUID.randomUUID().toString()
+        ODSettings.DEVICE_ID = UUID.randomUUID().toString()
     }
 
     internal companion object {

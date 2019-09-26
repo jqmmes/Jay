@@ -47,10 +47,10 @@ object ODLogger{
     private fun log(message: String, logLevel: LogLevel, callerInfo: String = "") {
         if (logLevel <= ODLogger.logLevel) {
             if (running) {
-                LOG_QUEUE.offer(ODSettings.MY_ID to ((message to callerInfo) to (System.currentTimeMillis() to logLevel)))
+                LOG_QUEUE.offer(ODSettings.DEVICE_ID to ((message to callerInfo) to (System.currentTimeMillis() to logLevel)))
             } else {
                 synchronized(LOCK) {
-                    loggingConsole.log(ODSettings.MY_ID, message, logLevel, callerInfo, System.currentTimeMillis())
+                    loggingConsole.log(ODSettings.DEVICE_ID, message, logLevel, callerInfo, System.currentTimeMillis())
                 }
             }
         }
@@ -68,7 +68,7 @@ object ODLogger{
     fun stopBackgroundLoggingService() {
         if (running) {
             running = false
-            LOG_QUEUE.put(ODSettings.MY_ID to (("" to "") to (0L to LogLevel.Disabled)))
+            LOG_QUEUE.put(ODSettings.DEVICE_ID to (("" to "") to (0L to LogLevel.Disabled)))
         }
     }
 

@@ -5,11 +5,13 @@ import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
 import io.grpc.StatusRuntimeException
+import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
+import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -18,16 +20,19 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
+
 /**
  * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
  * TRANSIENT_FAILURE
  *
  */
 
+@Suppress("DuplicatedCode")
 class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerServiceBlockingStub, BrokerServiceGrpc.BrokerServiceFutureStub>
 (host, ODSettings.brokerPort) {
     override var blockingStub: BrokerServiceGrpc.BrokerServiceBlockingStub = BrokerServiceGrpc.newBlockingStub(channel)
     override var futureStub: BrokerServiceGrpc.BrokerServiceFutureStub = BrokerServiceGrpc.newFutureStub(channel)
+    private var asyncStub: BrokerServiceGrpc.BrokerServiceStub = BrokerServiceGrpc.newStub(channel)
 
     override fun reconnectStubs() {
         blockingStub = BrokerServiceGrpc.newBlockingStub(channel)
@@ -42,16 +47,34 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
     fun executeJob(job: ODProto.Job?, callback: ((ODProto.Results) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.executeJob(job)
         val jobId = job?.id ?: ""
-        call.addListener(Runnable{
-            try {
-                callback?.invoke(call.get()); ODLogger.logInfo("COMPLETE", jobId)
-            } catch (e: ExecutionException) {
-                callback?.invoke(ODProto.Results.getDefaultInstance()); ODLogger
-                        .logError("ERROR", jobId)
-            }
-            }, AbstractODLib.executorPool)
+        AbstractODLib.executorPool.submit {
+            val startTime = System.currentTimeMillis()
+            ODLogger.logInfo("INIT", jobId)
+            asyncStub.executeJob(job, object : StreamObserver<ODProto.Results> {
+                private var lastResult : ODProto.Results? = null
+                override fun onNext(results: ODProto.Results) {
+                    lastResult = results
+                    if (ODSettings.BANDWIDTH_ESTIMATE_TYPE == "PASSIVE" && results.status == ODProto.StatusCode.Received) {
+                        ODLogger.logInfo("DATA_REACHED_SERVER", jobId, "DATA_SIZE=${job?.toByteArray()?.size};DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
+                        BrokerService.passiveBandwidthUpdate(jobId, job?.toByteArray()?.size ?: -1, System.currentTimeMillis()-startTime)
+                    } else if (results.status == ODProto.StatusCode.Error) {
+                        onError(Throwable("Error Received onNext for jobId: $jobId"))
+                    }
+                }
+
+                override fun onError(t: Throwable) {
+                    ODLogger.logError("ERROR", jobId)
+                    callback?.invoke(ODProto.Results.getDefaultInstance()); ODLogger.logError("ERROR", jobId)
+                    t.printStackTrace()
+                }
+
+                override fun onCompleted() {
+                    ODLogger.logInfo("COMPLETE", jobId, "DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
+                    callback?.invoke(lastResult ?: ODProto.Results.getDefaultInstance()); ODLogger.logInfo("COMPLETE", jobId)
+                }
+            })
+        }
     }
 
      fun ping(payload: Int, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
@@ -208,10 +231,8 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             try {
                 callback(call.get())
             } catch (e: Exception) {
-                callback(ODUtils.genStatusError
-                ())
+                callback(ODUtils.genStatusError())
             }
-        },
-                AbstractODLib.executorPool)
+        }, AbstractODLib.executorPool)
     }
 }

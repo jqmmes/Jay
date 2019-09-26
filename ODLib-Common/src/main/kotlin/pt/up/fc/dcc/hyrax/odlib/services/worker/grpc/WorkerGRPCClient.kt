@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.ExecutionException
 
+@Suppress("DuplicatedCode")
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
 (host, ODSettings.workerPort) {
     override var blockingStub: WorkerServiceGrpc.WorkerServiceBlockingStub = WorkerServiceGrpc.newBlockingStub(channel)
@@ -74,10 +75,8 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
             try {
                 callback(call.get())
             } catch (e: Exception) {
-                callback(ODUtils.genStatusError
-                ())
+                callback(ODUtils.genStatusError())
             }
-        },
-                AbstractODLib.executorPool)
+        }, AbstractODLib.executorPool)
     }
 }

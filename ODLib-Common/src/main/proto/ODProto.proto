@@ -25,6 +25,7 @@ enum StatusCode {
     Success = 0;
     Error = 1;
     Waiting = 2;
+    Received = 3;
 }
 
 message Status {
@@ -143,7 +144,7 @@ message Settings {
 service BrokerService { // Internal and External communication Broker
                         rpc ping (Ping) returns (Ping) {}; // ExternalBroker > Broker
 
-                        rpc executeJob (Job) returns (Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
+                        rpc executeJob (Job) returns (stream Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
                         rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
 
                         rpc advertiseWorkerStatus (Worker) returns (Status) {}; // ExternalBroker > Broker
