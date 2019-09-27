@@ -4,9 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.lang.Thread.sleep
-import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.max
 
@@ -16,7 +14,7 @@ object ImageUtils {
     private val LOCK_2 = Any()
 
     fun getBitmapFromByteArray(imgData: ByteArray) : Bitmap {
-        var data: Bitmap? = null
+        var data: Bitmap?
         synchronized(LOCK_2) {
             while ((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()) + Runtime.getRuntime().freeMemory
                     () < imgData.size * 2) {

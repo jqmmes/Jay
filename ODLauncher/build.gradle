@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.10'
+    }
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
@@ -6,6 +15,7 @@ apply plugin: 'com.google.protobuf'
 
 android {
     compileSdkVersion 28
+    //noinspection GroovyMissingReturnStatement
     packagingOptions {
         exclude 'META-INF/io.netty.versions.properties'
         exclude 'META-INF/INDEX.LIST'
@@ -47,7 +57,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION"
     implementation "io.grpc:grpc-netty:${GRPC_VERSION}"
     //implementation 'io.grpc:grpc-protobuf-lite:1.20.0' // CURRENT_GRPC_VERSION
     implementation "io.grpc:grpc-protobuf:${GRPC_VERSION}"
@@ -63,9 +73,9 @@ repositories {
 }
 
 protobuf {
-    protoc { artifact = 'com.google.protobuf:protoc:3.7.1' }
+    protoc { artifact = 'com.google.protobuf:protoc:3.10.0' }
     plugins {
-        java { artifact = "com.google.protobuf:protoc:3.7.1" }
+        java { artifact = "com.google.protobuf:protoc:3.10.0" }
         grpc { artifact = "io.grpc:protoc-gen-grpc-java:${GRPC_VERSION}" }
     }
     generateProtoTasks {

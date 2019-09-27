@@ -22,7 +22,7 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         futureStub = SchedulerServiceGrpc.newFutureStub(channel)
     }
 
-    fun schedule(request: ODProto.Job?, callback: ((ODProto.Worker?) -> Unit)? = null) {
+    fun schedule(request: ODProto.JobDetails?, callback: ((ODProto.Worker?) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.schedule(request)
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)

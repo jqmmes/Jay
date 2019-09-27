@@ -87,6 +87,11 @@ object ODUtils {
         return schedulerSet
     }
 
+    fun getJobDetails(job: ODProto.Job?) : ODProto.JobDetails? {
+        if (job == null) return ODProto.JobDetails.getDefaultInstance()
+        return ODProto.JobDetails.newBuilder().setId(job.id).setDataSize(job.data.size()).build()
+    }
+
     fun genWorkerTypes(vararg types: ODProto.Worker.Type): ODProto.WorkerTypes {
         return ODProto.WorkerTypes.newBuilder().addAllType(types.asIterable()).build()
     }

@@ -84,7 +84,7 @@ object BrokerService {
     internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
         val jobId = request?.id ?: ""
         ODLogger.logInfo("INIT", jobId)
-        val workerJob = ODProto.WorkerJob.newBuilder().setId(jobId).setFileId(fsAssistant?.createTempFile(request?.data?.toByteArray())).build()
+        val workerJob = WorkerJob.newBuilder().setId(jobId).setFileId(fsAssistant?.createTempFile(request?.data?.toByteArray())).build()
         if (workerServiceRunning) worker.execute(workerJob, callback) else callback?.invoke(Results
                 .getDefaultInstance())
         ODLogger.logInfo("COMPLETE", jobId)
@@ -93,7 +93,7 @@ object BrokerService {
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
         val jobId = request?.id ?: ""
         ODLogger.logInfo("INIT", jobId)
-        if (schedulerServiceRunning) scheduler.schedule(request) { W ->
+        if (schedulerServiceRunning) scheduler.schedule(ODUtils.getJobDetails(request)) { W ->
             if (request != null) assignedJobs[request.id] = W?.id ?: ""
             ODLogger.logInfo("SCHEDULED", jobId, "WORKER_ID=${W?.id}")
             if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
@@ -310,7 +310,7 @@ object BrokerService {
 
     fun calibrateWorker(job: ODProto.String?, function: () -> Unit) {
         ODLogger.logInfo("INIT", "CALIBRATION")
-        val workerJob = ODProto.WorkerJob.newBuilder().setId("CALIBRATION").setFileId(fsAssistant?.createTempFile(fsAssistant?.getByteArrayFast(job?.str ?: "") ?: ByteArray(0))).build()
+        val workerJob = WorkerJob.newBuilder().setId("CALIBRATION").setFileId(fsAssistant?.createTempFile(fsAssistant?.getByteArrayFast(job?.str ?: "") ?: ByteArray(0))).build()
         if (workerServiceRunning) worker.execute(workerJob) {function()} else function()
         ODLogger.logInfo("COMPLETE", "CALIBRATION")
     }

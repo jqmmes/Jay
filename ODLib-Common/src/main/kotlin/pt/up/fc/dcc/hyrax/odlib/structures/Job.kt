@@ -8,15 +8,24 @@ class Job {
 
     val id : String
     val data : ByteArray
+    val dataSize : Int
 
     constructor(jobData: ByteArray) {
         id = UUID.randomUUID().toString()
         data = jobData
+        dataSize = data.size
     }
 
     internal constructor(jobData: ODProto.Job?) {
         id = jobData!!.id
         data = jobData.data.toByteArray()
+        dataSize = data.size
+    }
+
+    internal constructor(jobData: ODProto.JobDetails?) {
+        id = jobData!!.id
+        data = ByteArray(0)
+        dataSize = jobData.dataSize
     }
 
     override fun equals(other: Any?): Boolean {

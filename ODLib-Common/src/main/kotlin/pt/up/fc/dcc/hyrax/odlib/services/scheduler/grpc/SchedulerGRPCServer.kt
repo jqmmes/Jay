@@ -16,7 +16,7 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
 
     override val grpcImpl: BindableService = object : SchedulerServiceGrpc.SchedulerServiceImplBase() {
 
-        override fun schedule(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Worker>?) {
+        override fun schedule(request: ODProto.JobDetails?, responseObserver: StreamObserver<ODProto.Worker>?) {
             val worker = SchedulerService.schedule(request)
             genericComplete(worker, responseObserver)
         }

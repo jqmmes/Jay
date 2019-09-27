@@ -79,7 +79,7 @@ object SchedulerService {
         }
     }
 
-    internal fun schedule(request: ODProto.Job?): Worker? {
+    internal fun schedule(request: ODProto.JobDetails?): Worker? {
         if (scheduler == null) scheduler = schedulers[0]
         return scheduler?.scheduleJob(pt.up.fc.dcc.hyrax.odlib.structures.Job(request))
     }

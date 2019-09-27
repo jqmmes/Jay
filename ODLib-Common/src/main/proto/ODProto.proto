@@ -16,6 +16,11 @@ message Job {
     bytes data = 2;
 }
 
+message JobDetails {
+    string id = 1;
+    int32 dataSize = 2;
+}
+
 message WorkerJob {
     string id = 1; // uuid
     string fileId = 2;
@@ -179,7 +184,7 @@ service BrokerService { // Internal and External communication Broker
 }
 
 service SchedulerService { // Broker > SchedulerBase
-                           rpc schedule (Job) returns (Worker) {}; // Schedule a Job
+                           rpc schedule (JobDetails) returns (Worker) {}; // Schedule a Job
                            rpc notifyWorkerUpdate (Worker) returns (Status) {}; // Inform about Worker updates
                            rpc notifyWorkerFailure (Worker) returns (Status) {}; // Inform about Worker connection failures
                            rpc setScheduler (Scheduler) returns (Status) {}; // Select Scheduler to be used

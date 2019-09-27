@@ -44,7 +44,7 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
     // Return last ID higher estimatedDuration = Better worker
     override fun scheduleJob(job: Job): ODProto.Worker? {
         ODLogger.logInfo("INIT",job.id)
-        for (worker in rankedWorkers) worker.calcScore(job.data.size)
+        for (worker in rankedWorkers) worker.calcScore(job.dataSize)
         ODLogger.logInfo("START_SORTING", job.id)
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy {it.estimatedDuration}))
         ODLogger.logInfo("COMPLETE_SORTING", job.id)

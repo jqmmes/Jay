@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -44,7 +44,7 @@ dependencies {
     implementation 'org.kamranzafar:jtar:2.3'
     implementation "org.tensorflow:tensorflow-android:${TENSORFLOW_VERSION}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
-    implementation 'com.google.api.grpc:proto-google-common-protos:1.12.0'
+    implementation 'com.google.api.grpc:proto-google-common-protos:1.16.0'
     implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.2.2'
     api 'com.google.guava:guava:28.1-android'
     api project(':ODLib-Common')
