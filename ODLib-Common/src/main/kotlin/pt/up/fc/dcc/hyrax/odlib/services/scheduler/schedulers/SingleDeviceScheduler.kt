@@ -19,7 +19,6 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
             }
         } else {
             SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
-
         }
     }
 
@@ -30,7 +29,7 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
     override fun scheduleJob(job: Job) : ODProto.Worker? {
         ODLogger.logInfo("INIT", job.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
         if (worker == null) {
-            for (w in SchedulerService.getWorkers().values) {
+            for (w in SchedulerService.getWorkers(workerType).values) {
                 if (w?.type == workerType) {
                     worker = w
                     break

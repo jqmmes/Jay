@@ -167,12 +167,17 @@ object BrokerService {
     internal fun receiveWorkerStatus(request: ODProto.Worker?, completeCallback: (Status?) -> Unit) {
         ODLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}"))
         workers[request?.id]?.updateStatus(request)
-        if(schedulerServiceRunning) {
-            ODLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${request?.id}"))
+        if(schedulerServiceRunning && request?.id != null && request.id in workers) {
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${request.id}"))
             scheduler.notifyWorkerUpdate(request, completeCallback)
         } else {
             completeCallback.invoke(ODUtils.genStatusError())
-            ODLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("WORKER_ID=${request?.id}"))
+            if (!schedulerServiceRunning)
+                ODLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("WORKER_ID=${request?.id}"))
+            else if (request?.id != null && request.id in workers)
+                ODLogger.logInfo("INVALID_REQUEST")
+            else
+                ODLogger.logInfo("UNKNOWN_ERROR", actions = *arrayOf("WORKER_ID=${request?.id}"))
         }
     }
 

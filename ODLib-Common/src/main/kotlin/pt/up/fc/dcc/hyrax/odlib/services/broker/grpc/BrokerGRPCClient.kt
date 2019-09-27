@@ -55,8 +55,12 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 private var lastResult : ODProto.Results? = null
                 override fun onNext(results: ODProto.Results) {
                     lastResult = results
+                    when (results.status) {
+                        ODProto.StatusCode.Received -> ODLogger.logInfo("DATA_REACHED_SERVER", jobId, "DATA_SIZE=${job?.toByteArray()?.size};DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
+                        ODProto.StatusCode.Success -> ODLogger.logInfo("EXECUTION_COMPLETE", jobId, "DATA_SIZE=${job?.toByteArray()?.size};DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
+                        else -> onError(Throwable("Error Received onNext for jobId: $jobId"))
+                    }
                     if (ODSettings.BANDWIDTH_ESTIMATE_TYPE == "PASSIVE" && results.status == ODProto.StatusCode.Received) {
-                        ODLogger.logInfo("DATA_REACHED_SERVER", jobId, "DATA_SIZE=${job?.toByteArray()?.size};DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
                         BrokerService.passiveBandwidthUpdate(jobId, job?.toByteArray()?.size ?: -1, System.currentTimeMillis()-startTime)
                     } else if (results.status == ODProto.StatusCode.Error) {
                         onError(Throwable("Error Received onNext for jobId: $jobId"))
@@ -71,7 +75,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
                 override fun onCompleted() {
                     ODLogger.logInfo("COMPLETE", jobId, "DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
-                    callback?.invoke(lastResult ?: ODProto.Results.getDefaultInstance()); ODLogger.logInfo("COMPLETE", jobId)
+                    callback?.invoke(lastResult ?: ODProto.Results.getDefaultInstance())
                 }
             })
         }
