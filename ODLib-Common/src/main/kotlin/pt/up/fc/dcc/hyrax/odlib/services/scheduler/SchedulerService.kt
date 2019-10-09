@@ -47,7 +47,8 @@ object SchedulerService {
             MultiDeviceScheduler(false, Worker.Type.CLOUD, Worker.Type.REMOTE),
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE),
             SmartScheduler(),
-            EstimatedTimeScheduler()
+            EstimatedTimeScheduler(),
+            ComputationEstimateScheduler()
     )
 
     internal fun getWorker(id: String) : Worker? {
