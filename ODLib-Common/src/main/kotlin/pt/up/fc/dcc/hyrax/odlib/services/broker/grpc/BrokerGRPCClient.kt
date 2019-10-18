@@ -42,10 +42,10 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun scheduleJob(job: Job, callback: ((ODProto.Results) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.scheduleJob(job.getProto())
-        call.addListener(Runnable{ callback?.invoke(call.get()) }, AbstractODLib.executorPool)//{ J -> AbstractODLib.put(J) })
+        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
-    fun executeJob(job: ODProto.Job?, callback: ((ODProto.Results) -> Unit)? = null) {
+    fun executeJob(job: ODProto.Job?, callback: ((ODProto.Results) -> Unit)? = null, schedulerInformCallback: (() -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val jobId = job?.id ?: ""
         AbstractODLib.executorPool.submit {
@@ -60,7 +60,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                         ODProto.StatusCode.Success -> ODLogger.logInfo("EXECUTION_COMPLETE", jobId, "DATA_SIZE=${job?.toByteArray()?.size};DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
                         else -> onError(Throwable("Error Received onNext for jobId: $jobId"))
                     }
-                    if (ODSettings.BANDWIDTH_ESTIMATE_TYPE == "PASSIVE" && results.status == ODProto.StatusCode.Received) {
+                    if (ODSettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("PASSIVE", "ALL") && results.status == ODProto.StatusCode.Received) {
                         BrokerService.passiveBandwidthUpdate(jobId, job?.toByteArray()?.size ?: -1, System.currentTimeMillis()-startTime)
                     } else if (results.status == ODProto.StatusCode.Error) {
                         onError(Throwable("Error Received onNext for jobId: $jobId"))
@@ -76,6 +76,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 override fun onCompleted() {
                     ODLogger.logInfo("COMPLETE", jobId, "DURATION_MILLIS=${startTime-System.currentTimeMillis()}")
                     callback?.invoke(lastResult ?: ODProto.Results.getDefaultInstance())
+                    schedulerInformCallback?.invoke()
                 }
             })
         }

@@ -12,10 +12,10 @@ class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Sched
 
     override fun init() {
         ODLogger.logInfo("WORKER_TYPE=${workerType.name}")
-        if (workerType == ODProto.Worker.Type.REMOTE) {
+        if (workerType != ODProto.Worker.Type.LOCAL) {
             SchedulerService.listenForWorkers(true) {
                 ODLogger.logInfo("COMPLETE")
-                SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}
+                SchedulerService.enableHeartBeat(getWorkerTypes()) { super.init() }
             }
         } else {
             SchedulerService.enableHeartBeat(getWorkerTypes()) {super.init()}

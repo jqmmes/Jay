@@ -21,6 +21,11 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
             genericComplete(worker, responseObserver)
         }
 
+        override fun notifyJobComplete(request: ODProto.JobDetails?, responseObserver: StreamObserver<Empty>?) {
+            SchedulerService.notifyJobComplete(request?.id)
+            genericComplete(Empty.getDefaultInstance(), responseObserver)
+        }
+
         override fun notifyWorkerUpdate(request: ODProto.Worker?, responseObserver: StreamObserver<ODProto.Status>?) {
             genericComplete(ODUtils.genStatus(SchedulerService.notifyWorkerUpdate(request)), responseObserver)
         }

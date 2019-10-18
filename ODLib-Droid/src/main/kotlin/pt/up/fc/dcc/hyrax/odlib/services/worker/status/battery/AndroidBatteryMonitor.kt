@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,7 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.worker.BatteryMonitor
 import kotlin.math.roundToInt
 
-class AndroidBatteryMonitor(val context: Context) : BatteryMonitor() {
+class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor() {
     private val levelMonitor = BatteryLevelUpdatesReceiver()
     private val chargingStateMonitor = BatteryChargeStateUpdatesReceiver()
 
@@ -28,14 +29,14 @@ class AndroidBatteryMonitor(val context: Context) : BatteryMonitor() {
             val action = intent?.action
             var batteryStatus: Intent? = null
             var status = 0
-            if ((action == Intent.ACTION_POWER_CONNECTED) || (action == Intent.ACTION_POWER_DISCONNECTED)) {
-                batteryStatus = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
+            if ((action == ACTION_POWER_CONNECTED) || (action == ACTION_POWER_DISCONNECTED)) {
+                batteryStatus = IntentFilter(ACTION_BATTERY_CHANGED).let { ifilter ->
                     context?.registerReceiver(null, ifilter)
                 }
                 status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: 0
             }
 
-            if (action == Intent.ACTION_POWER_CONNECTED) {
+            if (action == ACTION_POWER_CONNECTED) {
                 val chargePlug: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: 0
                 val usbCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_USB
                 val acCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_AC
@@ -44,7 +45,9 @@ class AndroidBatteryMonitor(val context: Context) : BatteryMonitor() {
                 if ((status == BatteryManager.BATTERY_STATUS_CHARGING) && acCharge) statusChangeCallback?.invoke(ODProto.Worker.BatteryStatus.CHARGING)
                 if ((status == BatteryManager.BATTERY_STATUS_CHARGING) && usbCharge) statusChangeCallback?.invoke(ODProto.Worker.BatteryStatus.USB)
 
-            } else if ((action == Intent.ACTION_POWER_DISCONNECTED) && (status == BatteryManager.BATTERY_STATUS_DISCHARGING)) { statusChangeCallback?.invoke(ODProto.Worker.BatteryStatus.DISCHARGING) }
+            } else if ((action == ACTION_POWER_DISCONNECTED) && (status == BatteryManager.BATTERY_STATUS_DISCHARGING)) {
+                statusChangeCallback?.invoke(ODProto.Worker.BatteryStatus.DISCHARGING)
+            }
         }
 
         private var statusChangeCallback: ((ODProto.Worker.BatteryStatus) -> Unit)? = null
@@ -62,7 +65,9 @@ class AndroidBatteryMonitor(val context: Context) : BatteryMonitor() {
 
         private var levelChangeCallback: ((Int) -> Unit)? = null
 
+        @SuppressLint("UnsafeProtectedBroadcastReceiver")
         override fun onReceive(context: Context?, intent: Intent?) {
+            // TODO: validar o receiver com o intent?.action
             val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: 0
             val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: 0
             levelChangeCallback?.invoke(((level.toFloat() / scale.toFloat())*100f).roundToInt())
@@ -84,7 +89,10 @@ class AndroidBatteryMonitor(val context: Context) : BatteryMonitor() {
     }
 
     override fun destroy() {
-        context.unregisterReceiver(chargingStateMonitor)
+        try {
+            context.unregisterReceiver(chargingStateMonitor)
+        } catch (ignore: Exception) {
+        }
     }
 
 }

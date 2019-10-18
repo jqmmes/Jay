@@ -125,6 +125,7 @@ message BandwidthEstimate {
     enum Type {
         ACTIVE = 0;
         PASSIVE = 1;
+        ALL = 2;
     }
     Type type = 1;
     repeated Worker.Type workerType = 2;
@@ -185,6 +186,8 @@ service BrokerService { // Internal and External communication Broker
 
 service SchedulerService { // Broker > SchedulerBase
                            rpc schedule (JobDetails) returns (Worker) {}; // Schedule a Job
+                           rpc notifyJobComplete (JobDetails) returns (google.protobuf.Empty) {
+                           }; // Report jobcompletion to scheduler
                            rpc notifyWorkerUpdate (Worker) returns (Status) {}; // Inform about Worker updates
                            rpc notifyWorkerFailure (Worker) returns (Status) {}; // Inform about Worker connection failures
                            rpc setScheduler (Scheduler) returns (Status) {}; // Select Scheduler to be used

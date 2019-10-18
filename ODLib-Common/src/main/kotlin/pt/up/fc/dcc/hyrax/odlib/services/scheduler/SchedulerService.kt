@@ -23,6 +23,7 @@ object SchedulerService {
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
     private var scheduler : Scheduler? = null
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
+    private var jobCompleteListener: ((String) -> Unit)? = null
     private var running = false
 
     internal var weights: ODProto.Weights = ODProto.Weights.newBuilder().setComputeTime(0.5f).setQueueSize(0.1f)
@@ -86,13 +87,14 @@ object SchedulerService {
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?) : ODProto.StatusCode {
+        ODLogger.logInfo("WORKER_UPDATE", actions = *arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
         workers[worker!!.id] = worker
         for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
         return ODProto.StatusCode.Success
     }
 
     internal fun notifyWorkerFailure(worker: Worker?): ODProto.StatusCode {
-        ODLogger.logInfo("WORKER_FAILED", actions = *arrayOf("WORKER_ID=${worker?.id}"))
+        ODLogger.logInfo("WORKER_FAILED", actions = *arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
         if (worker!!.id in workers.keys) {
             workers.remove(worker.id)
             for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)
@@ -103,6 +105,10 @@ object SchedulerService {
 
     internal fun registerNotifyListener(listener: ((Worker?, WorkerConnectivityStatus) -> Unit)) {
         notifyListeners.addLast(listener)
+    }
+
+    internal fun registerNotifyJobListener(listener: ((String) -> Unit)) {
+        this.jobCompleteListener = listener
     }
 
     internal fun listenForWorkers(listen: Boolean, callback: ((ODProto.Status) -> Unit)? = null) {
@@ -176,5 +182,9 @@ object SchedulerService {
     }
 
     internal fun isRunning() : Boolean { return running }
+
+    internal fun notifyJobComplete(id: String?) {
+        jobCompleteListener?.invoke(id ?: "")
+    }
 
 }

@@ -28,7 +28,6 @@ object BrokerService {
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
     private val worker = WorkerGRPCClient("127.0.0.1")
     private val local: Worker = if (ODSettings.DEVICE_ID != "") Worker(id = ODSettings.DEVICE_ID, address = "127.0.0.1", type = Type.LOCAL) else Worker(address = "127.0.0.1", type = Type.LOCAL)
-    private val cloud = Worker(address = ODSettings.CLOUD_IP, type = Type.CLOUD)
     private var heartBeats = false
     private var bwEstimates = false
     private var schedulerServiceRunning = false
@@ -38,10 +37,6 @@ object BrokerService {
 
     init {
         workers[local.id] = local
-        workers[cloud.id] = cloud
-        cloud.enableAutoStatusUpdate {workerInfo ->
-            if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workerInfo) {}
-        }
     }
 
     fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, videoUtils: VideoUtils? = null) {
@@ -57,7 +52,7 @@ object BrokerService {
 
     fun stop(stopGRPCServer: Boolean = true) {
         if (stopGRPCServer) server?.stop()
-        cloud.disableAutoStatusUpdate()
+        workers.values.filter { w -> w.type == Type.CLOUD }.forEach { w -> w.disableAutoStatusUpdate() }
     }
 
     fun stopService(callback: ((Status?) -> Unit)) {
@@ -93,10 +88,11 @@ object BrokerService {
     internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
         val jobId = request?.id ?: ""
         ODLogger.logInfo("INIT", jobId)
-        if (schedulerServiceRunning) scheduler.schedule(ODUtils.getJobDetails(request)) { W ->
+        val jobDetails = ODUtils.getJobDetails(request)
+        if (schedulerServiceRunning) scheduler.schedule(jobDetails) { W ->
             if (request != null) assignedJobs[request.id] = W?.id ?: ""
             ODLogger.logInfo("SCHEDULED", jobId, "WORKER_ID=${W?.id}")
-            if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback)
+            if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback) { scheduler.notifyJobComplete(jobDetails) }
         } else {
             callback?.invoke(Results.getDefaultInstance())
         }
@@ -146,20 +142,13 @@ object BrokerService {
         return countDownLatch
     }
 
-    internal fun updateWorker(request: ODWorker?, updateCloud: Boolean = false) : CountDownLatch {
-        ODLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}", "UPDATE_CLOUD=$updateCloud"))
+    internal fun updateWorker(request: ODWorker?): CountDownLatch {//, updateCloud: Boolean = false) : CountDownLatch {
+        ODLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}"))//, "UPDATE_CLOUD=$updateCloud"))
         val countDownLatch = CountDownLatch(1)
-        if (updateCloud){
-            ODLogger.logInfo("UPDATE_STATUS_CLOUD", actions = *arrayOf("WORKER_ID=${request?.id}", "UPDATE_CLOUD=$updateCloud"))
-            cloud.updateStatus(request)
-            if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(cloud.getProto()) {countDownLatch.countDown()}
-            else countDownLatch.countDown()
-        } else {
-            ODLogger.logInfo("UPDATE_STATUS", actions=*arrayOf("WORKER_ID=${request?.id}", "UPDATE_CLOUD=$updateCloud"))
-            announceMulticast(worker = local.updateStatus(request))
-            if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.getProto()) {countDownLatch.countDown()}
-            else countDownLatch.countDown()
-        }
+        ODLogger.logInfo("UPDATE_STATUS", actions = *arrayOf("WORKER_ID=${request?.id}"))//, "UPDATE_CLOUD=$updateCloud"))
+        announceMulticast(worker = local.updateStatus(request))
+        if (schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.getProto()) { countDownLatch.countDown() }
+        else countDownLatch.countDown()
         return countDownLatch
 
     }
@@ -200,34 +189,36 @@ object BrokerService {
 
     internal fun listenMulticast(stopListener: Boolean = false) {
         if (stopListener) MulticastListener.stop()
-        else MulticastListener.listen(callback = { W, A -> checkWorker(W, A) })
+        else MulticastListener.listen(callback = { W, A -> addOrUpdateWorker(W, A) })
     }
 
-    private fun checkWorker(worker: ODProto.Worker?, address: String) {
+    private fun statusUpdate(statusUpdate: Worker.Status, workerId: String) {
+        ODLogger.logInfo("STATUS_UPDATE", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+        if (!schedulerServiceRunning) {
+            ODLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+            return
+        }
+        ODLogger.logInfo("SCHEDULER_RUNNING", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+        if (statusUpdate == Worker.Status.ONLINE) {
+            ODLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+            scheduler.notifyWorkerUpdate(workers[workerId]?.getProto()) {}
+        } else {
+            ODLogger.logInfo("NOTIFY_WORKER_FAILURE", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+            scheduler.notifyWorkerFailure(workers[workerId]?.getProto()) {}
+        }
+    }
+
+    private fun addOrUpdateWorker(worker: ODProto.Worker?, address: String) {
         ODLogger.logInfo("INIT", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker?.id}"))
         if (worker == null) return
         if (worker.id !in workers){
             ODLogger.logInfo("NEW_DEVICE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-            workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { StatusUpdate ->
-                ODLogger.logInfo("STATUS_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-                if(!schedulerServiceRunning) {
-                    ODLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-                    return@Worker
-                }
-                ODLogger.logInfo("SCHEDULER_RUNNING", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-                if (StatusUpdate == Worker.Status.ONLINE) {
-                    ODLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-                    scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) {}
-                } else {
-                    ODLogger.logInfo("NOTIFY_WORKER_FAILURE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-                    scheduler.notifyWorkerFailure(workers[worker.id]?.getProto()) {}
-                }
-            }
+            workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { status -> statusUpdate(status, worker.id) }
         } else {
             ODLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id]?.updateStatus(worker)
         }
-        if(schedulerServiceRunning) scheduler.notifyWorkerUpdate(workers[worker.id]?.getProto()) { S -> ODLogger.logInfo("SCHEDULER_NOTIFIED", actions = *arrayOf("STATUS_CODE=$S"))}
+        statusUpdate(Worker.Status.ONLINE, worker.id)
     }
 
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
@@ -247,12 +238,9 @@ object BrokerService {
         if (heartBeats) return ODUtils.genStatusSuccess()
         heartBeats = true
         if (types == null) return ODUtils.genStatus(StatusCode.Error)
-        for (key in workers.keys)
-            if (workers[key]?.type in types.typeList && workers[key]?.type != Type.LOCAL) workers[key]?.enableHeartBeat { StatusUpdate ->
-                if(!schedulerServiceRunning) return@enableHeartBeat
-                if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto()) {}
-                else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {}
-            }
+        for (worker in workers.values)
+            if (worker.type in types.typeList && worker.type != Type.LOCAL)
+                worker.enableHeartBeat { status -> statusUpdate(status, worker.id) }
         return ODUtils.genStatus(StatusCode.Success)
     }
 
@@ -260,13 +248,13 @@ object BrokerService {
         if (bwEstimates) return ODUtils.genStatusSuccess()
         bwEstimates = true
         if (method == null) return ODUtils.genStatus(StatusCode.Error)
-        if (method.type == BandwidthEstimate.Type.ACTIVE) {
-            for (key in workers.keys)
-                if (workers[key]?.type in method.workerTypeList && workers[key]?.type != Type.LOCAL) workers[key]?.doActiveRTTEstimates {StatusUpdate ->
-                    if(!schedulerServiceRunning) return@doActiveRTTEstimates
-                    if (StatusUpdate == Worker.Status.ONLINE) scheduler.notifyWorkerUpdate(workers[key]?.getProto())  {S -> ODLogger.logInfo("WORKER_UPDATE_NOTIFIED", actions = *arrayOf("STATUS_CODE=$S"))}
-                    else scheduler.notifyWorkerFailure(workers[key]?.getProto()) {S -> ODLogger.logInfo("WORKER_FAILURE_NOTIFIED", actions = *arrayOf("STATUS_CODE=$S"))}
+        for (worker in workers.values) {
+            if (worker.type in method.workerTypeList && worker.type != Type.LOCAL) {
+                when (ODSettings.BANDWIDTH_ESTIMATE_TYPE) {
+                    in arrayOf("ACTIVE", "ALL") -> worker.doActiveRTTEstimates { status -> statusUpdate(status, worker.id) }
+                    else -> worker.enableHeartBeat { status -> statusUpdate(status, worker.id) }
                 }
+            }
         }
         return ODUtils.genStatus(StatusCode.Success)
     }
@@ -274,14 +262,14 @@ object BrokerService {
     fun disableHearBeats(): Status? {
         if (!heartBeats) return ODUtils.genStatusSuccess()
         heartBeats = false
-        for (key in workers.keys) workers[key]?.disableHeartBeat()
+        for (worker in workers.values) worker.disableHeartBeat()
         return ODUtils.genStatusSuccess()
     }
 
     fun disableBandwidthEstimates(): Status? {
         if (!bwEstimates) return ODUtils.genStatusSuccess()
         bwEstimates = false
-        for (key in workers.keys) workers[key]?.stopActiveRTTEstimates()
+        for (worker in workers.values) worker.stopActiveRTTEstimates()
         return ODUtils.genStatusSuccess()
     }
 
@@ -313,5 +301,25 @@ object BrokerService {
         val workerJob = WorkerJob.newBuilder().setId("CALIBRATION").setFileId(fsAssistant?.createTempFile(fsAssistant?.getByteArrayFast(job?.str ?: "") ?: ByteArray(0))).build()
         if (workerServiceRunning) worker.execute(workerJob) {function()} else function()
         ODLogger.logInfo("COMPLETE", "CALIBRATION")
+    }
+
+    fun addCloud(cloud_ip: String) {
+        ODLogger.logInfo("INIT", "", "CLOUD_IP=$cloud_ip")
+        if (workers.values.find { w -> w.type == Type.CLOUD && w.address == cloud_ip } == null) {
+            ODLogger.logInfo("NEW_CLOUD", "", "CLOUD_IP=$cloud_ip")
+            val cloud = Worker(address = cloud_ip, type = Type.CLOUD, checkHearBeat = true, bwEstimates = bwEstimates)
+            cloud.enableAutoStatusUpdate { workerProto ->
+                if (!schedulerServiceRunning) {
+                    ODLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=$cloud_ip", "DEVICE_ID=${cloud.id}", "WORKER_TYPE=${cloud.type.name}"))
+                    return@enableAutoStatusUpdate
+                }
+                scheduler.notifyWorkerUpdate(workerProto) { status ->
+                    ODLogger.logInfo("CLOUD_TO_SCHEDULER_WORKER_UPDATE_COMPLETE", "",
+                            "STATUS=${status?.code?.name}", "CLOUD_ID=$cloud.id", "CLOUD_IP=$cloud_ip")
+                }
+            }
+            workers[cloud.id] = cloud
+        }
+        ODLogger.logInfo("COMPLETE", "", "CLOUD_IP=$cloud_ip")
     }
 }

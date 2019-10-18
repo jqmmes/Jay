@@ -12,8 +12,10 @@ import kotlin.random.Random
  * TOOD: Actualizam o avg computing e avg bandwidth quando se remove um device... ou então utilizar um avg dos
  * ultimos x updates
  */
+@Suppress("DuplicatedCode")
 class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
+    private val assignedJob = LinkedHashMap<String, String>()
 
     override fun init() {
         ODLogger.logInfo("INIT")
@@ -30,6 +32,10 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
                 ODLogger.logInfo("COMPLETE")
                 super.init()
             }
+        }
+        SchedulerService.registerNotifyJobListener { jobId ->
+            if (jobId == "" || (jobId !in assignedJob.keys)) return@registerNotifyJobListener
+            assignedJob.remove(jobId)
         }
     }
 
@@ -49,7 +55,10 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy {it.estimatedDuration}))
         ODLogger.logInfo("COMPLETE_SORTING", job.id)
         ODLogger.logInfo("SELECTED_WORKER", job.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
-        if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.first.id!!)
+        if (rankedWorkers.isNotEmpty()) {
+            assignedJob[job.id] = rankedWorkers.first.id!!
+            return SchedulerService.getWorker(rankedWorkers.first.id!!)
+        }
         return null
     }
 
@@ -95,7 +104,6 @@ class EstimatedTimeScheduler : Scheduler("EstimatedTimeScheduler") {
             if (worker == null) return
             if (maxAvgTimePerJob < worker.avgTimePerJob) maxAvgTimePerJob = worker.avgTimePerJob
             if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
-
             weightQueue = (worker.queuedJobs+1)*worker.avgTimePerJob
             estimatedBandwidth = worker.bandwidthEstimate
             ODLogger.logInfo("WEIGHT_UPDATED", actions = *arrayOf("WORKER_ID=$id", "QUEUE_SIZE=${worker.queuedJobs}+1", "AVG_TIME_PER_JOB=${worker.avgTimePerJob}", "WEIGHT_QUEUE=$weightQueue", "BANDWIDTH=$estimatedBandwidth"))

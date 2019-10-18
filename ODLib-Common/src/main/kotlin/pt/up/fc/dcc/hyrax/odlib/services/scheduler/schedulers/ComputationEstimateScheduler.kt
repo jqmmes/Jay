@@ -8,6 +8,7 @@ import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
+@Suppress("DuplicatedCode")
 class ComputationEstimateScheduler : Scheduler("ComputationEstimateScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
 
@@ -18,8 +19,8 @@ class ComputationEstimateScheduler : Scheduler("ComputationEstimateScheduler") {
         SchedulerService.listenForWorkers(true) {
             ODLogger.logInfo("LISTEN_FOR_WORKERS", actions = *arrayOf("SCHEDULER_ID=$id"))
             SchedulerService.enableHeartBeat(getWorkerTypes()){
-                    ODLogger.logInfo("COMPLETE")
-                    super.init()
+                ODLogger.logInfo("COMPLETE")
+                super.init()
             }
         }
     }

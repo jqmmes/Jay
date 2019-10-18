@@ -148,7 +148,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 val settingsMap = request!!.settingMap
                 settingsMap.forEach { (K, V) ->
                     when (K) {
-                        "CLOUD_IP" -> ODSettings.CLOUD_IP = V //: String = "odcloud.duckdns.org"
+                        //ODSettings.CLOUD_IP = V //: String = "odcloud.duckdns.org"
+                        "CLOUD_IP" -> {
+                            V.split("/").forEach { ip -> BrokerService.addCloud(ip) }
+                        }
                         "GRPC_MAX_MESSAGE_SIZE" -> ODSettings.GRPC_MAX_MESSAGE_SIZE = V.toInt() //: Int = 150000000
                         "RTTHistorySize" -> ODSettings.RTTHistorySize = V.toInt() //: Int = 5
                         "pingTimeout" -> ODSettings.pingTimeout = V.toLong() //: Long = 10000L // 15s
@@ -162,6 +165,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "RTTDelayMillisFailAttempts" -> ODSettings.RTTDelayMillisFailAttempts = V.toLong() //: Long = 5
                         "DEVICE_ID" -> ODSettings.DEVICE_ID = V
                         "BANDWIDTH_ESTIMATE_TYPE" -> ODSettings.BANDWIDTH_ESTIMATE_TYPE = V
+                        "MCAST_INTERFACE" -> ODSettings.MCAST_INTERFACE = V
                     }
                 }
                 genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)

@@ -70,7 +70,8 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
     }
 
     override fun detectObjects(imgData: ByteArray) : List<Detection> {
-        return detectObjects(ImageUtils.getBitmapFromByteArray(imgData))
+        if (imgData.isNotEmpty()) return detectObjects(ImageUtils.getBitmapFromByteArray(imgData))
+        return listOf()
     }
 
     private fun detectObjects(imgData: Bitmap) : List<Detection> {

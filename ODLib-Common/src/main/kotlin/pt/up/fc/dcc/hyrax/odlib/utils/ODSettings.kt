@@ -6,7 +6,7 @@ object ODSettings {
     var workerPort : Int = 50053
     var schedulerPort : Int = 50055
 
-    var CLOUD_IP: String = "odcloud.duckdns.org"
+    //var CLOUD_IP: String = "odcloud.duckdns.org"
 
     var GRPC_MAX_MESSAGE_SIZE: Int = 150000000
     var RTTHistorySize: Int = 5
@@ -19,10 +19,11 @@ object ODSettings {
     var AUTO_STATUS_UPDATE_INTERVAL_MS: Long = 5000 // 5s
     var RTTDelayMillisFailRetry: Long = 500 // 0.5s
     var RTTDelayMillisFailAttempts: Long = 5
+    var MCAST_INTERFACE: String? = null
 
     var DEVICE_ID : String = ""
 
-    var BANDWIDTH_ESTIMATE_TYPE = "ACTIVE"
+    var BANDWIDTH_ESTIMATE_TYPE = "ACTIVE" // ACTIVE/PASSIVE/ALL
 
     /*var grpcTimeout: Long = 10 //Seconds
     var grpcLongTimeout: Long = 120 //Seconds

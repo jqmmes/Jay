@@ -28,6 +28,14 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
+    fun notifyJobComplete(request: ODProto.JobDetails?) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
+            channel.resetConnectBackoff()
+            return
+        }
+        AbstractODLib.executorPool.submit { blockingStub.notifyJobComplete(request) }
+    }
+
     fun listSchedulers(callback: ((ODProto.Schedulers?) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.listSchedulers(Empty.getDefaultInstance())

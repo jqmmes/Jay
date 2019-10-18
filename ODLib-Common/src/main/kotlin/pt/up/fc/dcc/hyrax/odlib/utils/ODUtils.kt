@@ -1,9 +1,9 @@
 package pt.up.fc.dcc.hyrax.odlib.utils
 
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
-import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.net.DatagramPacket
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -19,8 +19,11 @@ object ODUtils {
             if (!netInt.isLoopback && !netInt.isPointToPoint && netInt.isUp && netInt.supportsMulticast()) {
                 for (address in netInt.inetAddresses)
                     if (address is T) {
-                        ODLogger.logInfo("INTERFACE_AVAILABLE", actions = *arrayOf("INTERFACE=${netInt.name}"))
-                        interfaceList.add(netInt)
+                        if (ODSettings.MCAST_INTERFACE == null || (ODSettings.MCAST_INTERFACE != null && netInt.name ==
+                                        ODSettings.MCAST_INTERFACE)) {
+                            ODLogger.logInfo("INTERFACE_AVAILABLE", actions = *arrayOf("INTERFACE=${netInt.name}"))
+                            interfaceList.add(netInt)
+                        }
                     }
             }
         }

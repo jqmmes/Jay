@@ -15,7 +15,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class Worker(val id: String = UUID.randomUUID().toString(), address: String, val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE, checkHearBeat: Boolean = false, bwEstimates: Boolean = false, statusChangeCallback: ((Status) -> Unit)? = null){
+class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
+             val type: ODProto.Worker.Type = ODProto.Worker.Type.REMOTE,
+             checkHearBeat: Boolean = false, bwEstimates: Boolean = false,
+             statusChangeCallback: ((Status) -> Unit)? = null) {
 
     enum class Status {
         ONLINE,
@@ -35,7 +38,6 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var freeMemory = 0L
     private var status = Status.OFFLINE
     private var bandwidthEstimate: Float = 0f
-    // TODO: Implement more variables
     //private var freeSpace = Long.MAX_VALUE
     //private var computationLoad = 0
     //private var connections = 0
@@ -44,20 +46,19 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
     private var circularFIFO: CircularFifoQueue<Float> = CircularFifoQueue(ODSettings.RTTHistorySize)
     private var consecutiveTransientFailurePing = 0
     private var proto : ODProto.Worker? = null
-    private var autoStatusUpdate = false
+    private var autoStatusUpdateEnabledFlag = false
     private var autoStatusUpdateRunning = CountDownLatch(0)
     private var calcRTT = false
     private var checkingHeartBeat = false
 
     private var statusChangeCallback: ((Status) -> Unit)? = null
-    private var workerInfoUpdateNotify: ((ODProto.Worker?) -> Unit)? = null
 
-
-
-    constructor(proto: ODProto.Worker?, address: String, checkHearBeat: Boolean, bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address){
+    constructor(proto: ODProto.Worker?, address: String, checkHearBeat: Boolean,
+                bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address) {
         updateStatus(proto)
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
-        if (bwEstimates && ODSettings.BANDWIDTH_ESTIMATE_TYPE == "ACTIVE") doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
+        if (bwEstimates && ODSettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("ACTIVE", "ALL"))
+            doActiveRTTEstimates(statusChangeCallback = statusChangeCallback)
     }
 
     init {
@@ -68,7 +69,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
             else -> 15f
         }
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
-        if (bwEstimates) doActiveRTTEstimates(statusChangeCallback=statusChangeCallback)
+        if (bwEstimates && ODSettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("ACTIVE", "ALL"))
+            doActiveRTTEstimates(statusChangeCallback = statusChangeCallback)
         ODLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
     }
 
@@ -109,11 +111,14 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
         return proto
     }
 
+    /**
+     * Request Worker Current Status Automatically. When receives the new status, updates this class information
+     * Only request worker status when remote worker is online.
+     */
     internal fun enableAutoStatusUpdate(updateNotify: (ODProto.Worker?) -> Unit) {
-        workerInfoUpdateNotify = updateNotify
-        if (autoStatusUpdate) return
+        if (autoStatusUpdateEnabledFlag) return
         thread {
-            autoStatusUpdate = true
+            autoStatusUpdateEnabledFlag = true
             autoStatusUpdateRunning = CountDownLatch(1)
             var backoffCount = 0
             do {
@@ -121,7 +126,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                     ODLogger.logInfo("REQUEST_WORKER_STATUS_INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     if (isOnline()) grpc.requestWorkerStatus { W ->
                         ODLogger.logInfo("REQUEST_WORKER_STATUS_ONLINE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
-                        workerInfoUpdateNotify?.invoke(updateStatus(W))
+                        updateNotify.invoke(updateStatus(W))
                         ODLogger.logInfo("REQUEST_WORKER_STATUS_COMPLETE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     } else {
                         ODLogger.logInfo("REQUEST_WORKER_STATUS_OFFLINE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
@@ -131,13 +136,13 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
                     ODLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                 }
                 sleep(ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS)
-            } while (autoStatusUpdate)
+            } while (autoStatusUpdateEnabledFlag)
             autoStatusUpdateRunning.countDown()
         }
     }
 
     internal fun disableAutoStatusUpdate(wait: Boolean = true) {
-        autoStatusUpdate = false
+        autoStatusUpdateEnabledFlag = false
         if (wait) autoStatusUpdateRunning.await()
     }
 
@@ -187,6 +192,10 @@ class Worker(val id: String = UUID.randomUUID().toString(), address: String, val
 
     fun isOnline(): Boolean {
         return status == Status.ONLINE
+    }
+
+    fun getStatus(): Status {
+        return status
     }
 
     private inner class RTTTimer : Runnable {
