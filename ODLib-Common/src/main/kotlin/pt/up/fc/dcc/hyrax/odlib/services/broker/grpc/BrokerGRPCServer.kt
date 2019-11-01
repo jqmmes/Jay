@@ -148,7 +148,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 val settingsMap = request!!.settingMap
                 settingsMap.forEach { (K, V) ->
                     when (K) {
-                        //ODSettings.CLOUD_IP = V //: String = "odcloud.duckdns.org"
                         "CLOUD_IP" -> {
                             V.split("/").forEach { ip -> BrokerService.addCloud(ip) }
                         }
@@ -166,6 +165,9 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "DEVICE_ID" -> ODSettings.DEVICE_ID = V
                         "BANDWIDTH_ESTIMATE_TYPE" -> ODSettings.BANDWIDTH_ESTIMATE_TYPE = V
                         "MCAST_INTERFACE" -> ODSettings.MCAST_INTERFACE = V
+                        "BANDWIDTH_ESTIMATE_CALC_METHOD" -> {
+                            if (V.toLowerCase() in arrayOf("mean", "median")) ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase()
+                        }
                     }
                 }
                 genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)

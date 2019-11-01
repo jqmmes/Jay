@@ -76,7 +76,6 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor() {
         fun setCallback(levelChangeCallback: (Int) -> Unit) {
             this.levelChangeCallback = levelChangeCallback
         }
-
     }
 
     override fun monitor() {

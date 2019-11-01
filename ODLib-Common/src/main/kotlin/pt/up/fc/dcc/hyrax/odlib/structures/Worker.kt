@@ -64,9 +64,9 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     init {
         bandwidthEstimate = when (type) {
             ODProto.Worker.Type.LOCAL -> 0f
-            ODProto.Worker.Type.REMOTE -> 15f
-            ODProto.Worker.Type.CLOUD -> 50f
-            else -> 15f
+            ODProto.Worker.Type.REMOTE -> 0.05f
+            ODProto.Worker.Type.CLOUD -> 0.1f
+            else -> 0.07f
         }
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
         if (bwEstimates && ODSettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("ACTIVE", "ALL"))
@@ -147,8 +147,16 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     fun addRTT(millis: Int, payloadSize: Int = PING_PAYLOAD_SIZE) {
-        circularFIFO.add(millis.toFloat()/payloadSize)
-        bandwidthEstimate = if (circularFIFO.size > 0) circularFIFO.sum()/circularFIFO.size else 0f
+        bandwidthEstimate = if (ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD == "mean") {
+            circularFIFO.add(millis.toFloat() / payloadSize)
+            if (circularFIFO.size > 0) circularFIFO.sum() / circularFIFO.size else 0f
+        } else {
+            when {
+                circularFIFO.size == 0 -> 0f
+                circularFIFO.size % 2 == 0 -> (circularFIFO.sorted()[circularFIFO.size / 2] + circularFIFO.sorted()[(circularFIFO.size / 2) - 1]) / 2.0f
+                else -> circularFIFO.sorted()[(circularFIFO.size - 1) / 2]
+            }
+        }
         ODLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = * arrayOf("WORKER_ID=$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))
     }
 
