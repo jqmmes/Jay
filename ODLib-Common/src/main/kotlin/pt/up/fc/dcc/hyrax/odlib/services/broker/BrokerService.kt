@@ -133,12 +133,15 @@ object BrokerService {
     internal fun diffuseWorkerStatus() : CountDownLatch {
         val countDownLatch = CountDownLatch(1)
         val atomicLock = AtomicInteger(0)
+        var remoteWorkers = 0
         for (client in workers.values) {
             if (client.type == Type.REMOTE) {
+                remoteWorkers++
                 atomicLock.incrementAndGet()
-                client.grpc.advertiseWorkerStatus(local.getProto()) {if (atomicLock.decrementAndGet() == 0) countDownLatch.countDown()}
+                client.grpc.advertiseWorkerStatus(local.getProto()) { if (atomicLock.decrementAndGet() == 0) countDownLatch.countDown() }
             }
         }
+        if (remoteWorkers == 0) countDownLatch.countDown()
         return countDownLatch
     }
 

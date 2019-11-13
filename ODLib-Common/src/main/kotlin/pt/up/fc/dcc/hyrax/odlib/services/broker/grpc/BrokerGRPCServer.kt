@@ -86,10 +86,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)
         }
 
-        override fun announceMulticast(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
+        /*override fun announceMulticast(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
             BrokerService.announceMulticast()
             genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)
-        }
+        }*/
 
         override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<ODProto.Worker>?) {
             genericComplete(BrokerService.requestWorkerStatus(), responseObserver)
@@ -168,6 +168,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "BANDWIDTH_ESTIMATE_CALC_METHOD" -> {
                             if (V.toLowerCase() in arrayOf("mean", "median")) ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase()
                         }
+                        "ADVERTISE_WORKER_STATUS" -> if (V.toLowerCase() != "false") ODSettings.ADVERTISE_WORKER_STATUS = true
                     }
                 }
                 genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)

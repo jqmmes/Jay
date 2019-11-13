@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 object ODSettings {
 
+    var ADVERTISE_WORKER_STATUS: Boolean = false
     var BANDWIDTH_ESTIMATE_CALC_METHOD: String = "mean"
     var brokerPort : Int = 50051
     var workerPort : Int = 50053

@@ -31,7 +31,7 @@ internal object WorkerProfiler {
 
     internal fun start() {
         ODLogger.logInfo("START")
-        brokerGRPC.announceMulticast()
+        //brokerGRPC.announceMulticast()
         periodicStatusUpdate()
     }
 

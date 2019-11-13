@@ -167,7 +167,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractODLib.executorPool)
     }
 
-    fun announceMulticast() {
+    /*fun announceMulticast() {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.announceMulticast(Empty.getDefaultInstance())
         call.addListener(Runnable {
@@ -176,7 +176,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             } catch (e: ExecutionException) {
                 ODLogger.logError("ERROR")
             }}, AbstractODLib.executorPool)
-    }
+    }*/
 
     fun enableHearBeats(workerTypes: ODProto.WorkerTypes, callback: ((ODProto.Status) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()

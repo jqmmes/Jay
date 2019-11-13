@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.odlib.services.broker.multicast
 
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.lang.Thread.sleep
 import java.net.*
@@ -35,7 +36,7 @@ object MulticastAdvertiser {
         start(networkInterface)
     }
 
-    fun start(networkInterface: NetworkInterface? = null) {
+    private fun start(networkInterface: NetworkInterface? = null) {
         if (runningLock.get()) {
             ODLogger.logWarn("ALREADY_RUNNING")
             return
@@ -60,7 +61,8 @@ object MulticastAdvertiser {
             mcSocket.loopbackMode = true
             mcSocket.joinGroup(mcIPAddress)
             do {
-                synchronized(MESSAGE_LOCK) { if (packet != null)
+                synchronized(MESSAGE_LOCK) {
+                    if (packet != null && ODSettings.ADVERTISE_WORKER_STATUS)
                     try {
                         mcSocket.send(packet)
                         ODLogger.logInfo("SENT_MULTICAST_PACKET", actions = *arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
