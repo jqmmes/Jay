@@ -9,8 +9,6 @@ object ODSettings {
     var workerPort : Int = 50053
     var schedulerPort : Int = 50055
 
-    //var CLOUD_IP: String = "odcloud.duckdns.org"
-
     var GRPC_MAX_MESSAGE_SIZE: Int = 150000000
     var RTTHistorySize: Int = 5
     var pingTimeout: Long = 10000L // 15s
@@ -26,9 +24,5 @@ object ODSettings {
 
     var DEVICE_ID : String = ""
 
-    var BANDWIDTH_ESTIMATE_TYPE = "ACTIVE" // ACTIVE/PASSIVE/ALL
-
-    /*var grpcTimeout: Long = 10 //Seconds
-    var grpcLongTimeout: Long = 120 //Seconds
-    var grpcShortTimeout: Long = 500 //Milliseconds*/
+    var BANDWIDTH_ESTIMATE_TYPE = "ALL" // ACTIVE/PASSIVE/ALL
 }
