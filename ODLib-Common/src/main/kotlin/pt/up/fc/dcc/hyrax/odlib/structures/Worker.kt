@@ -147,7 +147,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     fun addRTT(millis: Int, payloadSize: Int = PING_PAYLOAD_SIZE) {
-        bandwidthEstimate = if (ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD == "mean") {
+        bandwidthEstimate = ODSettings.BANDWIDTH_SCALING_FACTOR * if (ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD == "mean") {
             circularFIFO.add(millis.toFloat() / payloadSize)
             if (circularFIFO.size > 0) circularFIFO.sum() / circularFIFO.size else 0f
         } else {

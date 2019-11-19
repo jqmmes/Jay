@@ -143,10 +143,12 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun setSettings(request: ODProto.Settings?, responseObserver: StreamObserver<ODProto.Status>?) {
+            ODLogger.logInfo("INIT")
             if (request == null) genericComplete(genStatus(ODProto.StatusCode.Error), responseObserver)
             try {
                 val settingsMap = request!!.settingMap
                 settingsMap.forEach { (K, V) ->
+                    ODLogger.logInfo("SET_SETTING", "", "SETTING[$K]=$V")
                     when (K) {
                         "CLOUD_IP" -> {
                             V.split("/").forEach { ip -> BrokerService.addCloud(ip) }
@@ -164,6 +166,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "RTTDelayMillisFailAttempts" -> ODSettings.RTTDelayMillisFailAttempts = V.toLong() //: Long = 5
                         "DEVICE_ID" -> ODSettings.DEVICE_ID = V
                         "BANDWIDTH_ESTIMATE_TYPE" -> ODSettings.BANDWIDTH_ESTIMATE_TYPE = V
+                        "BANDWIDTH_SCALING_FACTOR" -> ODSettings.BANDWIDTH_SCALING_FACTOR = V.toFloatOrNull() ?: 1.0f
                         "MCAST_INTERFACE" -> ODSettings.MCAST_INTERFACE = V
                         "BANDWIDTH_ESTIMATE_CALC_METHOD" -> {
                             if (V.toLowerCase() in arrayOf("mean", "median")) ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase()
@@ -175,6 +178,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             } catch (e: Exception) {
                 genericComplete(genStatus(ODProto.StatusCode.Error), responseObserver)
             }
+            ODLogger.logInfo("COMPLETE")
         }
     }
 }

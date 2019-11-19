@@ -4,6 +4,7 @@ object ODSettings {
 
     var ADVERTISE_WORKER_STATUS: Boolean = false
     var BANDWIDTH_ESTIMATE_CALC_METHOD: String = "mean"
+    var BANDWIDTH_SCALING_FACTOR: Float = 1.0f
     var brokerPort : Int = 50051
     var workerPort : Int = 50053
     var schedulerPort : Int = 50055
