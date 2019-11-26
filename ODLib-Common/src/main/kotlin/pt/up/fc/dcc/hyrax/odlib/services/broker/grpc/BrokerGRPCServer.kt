@@ -172,6 +172,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                             if (V.toLowerCase() in arrayOf("mean", "median")) ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase()
                         }
                         "ADVERTISE_WORKER_STATUS" -> if (V.toLowerCase() != "false") ODSettings.ADVERTISE_WORKER_STATUS = true
+                        "SINGLE_REMOTE_IP" -> ODSettings.SINGLE_REMOTE_IP = V
                     }
                 }
                 genericComplete(genStatus(ODProto.StatusCode.Success), responseObserver)

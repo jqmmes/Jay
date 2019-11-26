@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.odlib.utils
 
 object ODSettings {
 
+    var SINGLE_REMOTE_IP: String = "0.0.0.0"
     var ADVERTISE_WORKER_STATUS: Boolean = false
     var BANDWIDTH_ESTIMATE_CALC_METHOD: String = "mean"
     var BANDWIDTH_SCALING_FACTOR: Float = 1.0f

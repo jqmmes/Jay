@@ -92,7 +92,15 @@ object BrokerService {
         if (schedulerServiceRunning) scheduler.schedule(jobDetails) { W ->
             if (request != null) assignedJobs[request.id] = W?.id ?: ""
             ODLogger.logInfo("SCHEDULED", jobId, "WORKER_ID=${W?.id}")
-            if (W?.id == "" || W == null) callback?.invoke(null) else workers[W.id]!!.grpc.executeJob(request, callback) { scheduler.notifyJobComplete(jobDetails) }
+            if (W?.id == "" || W == null) {
+                callback?.invoke(null)
+            } else {
+                if (ODSettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.REMOTE || ODSettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
+                    workers[W.id]!!.grpc.executeJob(request, callback) { scheduler.notifyJobComplete(jobDetails) }
+                } else {
+                    workers[local.id]!!.grpc.executeJob(request, callback) { scheduler.notifyJobComplete(jobDetails) }
+                }
+            }
         } else {
             callback?.invoke(Results.getDefaultInstance())
         }
