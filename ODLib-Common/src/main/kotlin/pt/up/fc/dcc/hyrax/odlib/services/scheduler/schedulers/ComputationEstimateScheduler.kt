@@ -4,6 +4,7 @@ import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
@@ -60,6 +61,8 @@ class ComputationEstimateScheduler : Scheduler("ComputationEstimateScheduler") {
     }
 
     private fun updateWorker(worker: ODProto.Worker?) {
+        if (worker?.type == ODProto.Worker.Type.REMOTE && ODSettings.CLOUDLET_ID != "" && ODSettings.CLOUDLET_ID != worker.id)
+            return
         if (RankedWorker(id=worker?.id) !in rankedWorkers) {
             rankedWorkers.addLast(RankedWorker(Random.nextFloat(), worker!!.id))
         }

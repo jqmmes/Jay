@@ -7,6 +7,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.Worker
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.schedulers.*
+import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.*
 import kotlin.concurrent.thread
@@ -63,8 +64,9 @@ object SchedulerService {
     internal fun getWorkers(filter: List<Worker.Type>): HashMap<String, Worker?> {
         if (filter.isEmpty()) return workers as HashMap<String, Worker?>
         val filteredWorkers = mutableMapOf<String, Worker?>()
-        for (worker in workers)
+        for (worker in workers) {
             if (worker.value?.type in filter) filteredWorkers[worker.key] = worker.value
+        }
         return filteredWorkers as HashMap<String, Worker?>
     }
 
@@ -88,6 +90,7 @@ object SchedulerService {
 
     internal fun notifyWorkerUpdate(worker: Worker?) : ODProto.StatusCode {
         ODLogger.logInfo("WORKER_UPDATE", actions = *arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
+        if (worker?.type == Worker.Type.REMOTE && ODSettings.CLOUDLET_ID != "" && ODSettings.CLOUDLET_ID != worker.id) return ODProto.StatusCode.Success
         workers[worker!!.id] = worker
         for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
         return ODProto.StatusCode.Success

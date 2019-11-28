@@ -223,6 +223,7 @@ object BrokerService {
         ODLogger.logInfo("INIT", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker?.id}"))
         if (worker == null) return
         if (worker.id !in workers){
+            if (address == ODSettings.SINGLE_REMOTE_IP) ODSettings.CLOUDLET_ID = worker.id
             ODLogger.logInfo("NEW_DEVICE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { status -> statusUpdate(status, worker.id) }
         } else {
