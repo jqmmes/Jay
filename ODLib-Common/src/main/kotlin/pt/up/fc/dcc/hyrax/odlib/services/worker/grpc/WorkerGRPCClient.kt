@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutionException
 
 @Suppress("DuplicatedCode")
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
-(host, ODSettings.workerPort) {
+(host, ODSettings.WORKER_PORT) {
     override var blockingStub: WorkerServiceGrpc.WorkerServiceBlockingStub = WorkerServiceGrpc.newBlockingStub(channel)
     override var futureStub: WorkerServiceGrpc.WorkerServiceFutureStub = WorkerServiceGrpc.newFutureStub(channel)
 

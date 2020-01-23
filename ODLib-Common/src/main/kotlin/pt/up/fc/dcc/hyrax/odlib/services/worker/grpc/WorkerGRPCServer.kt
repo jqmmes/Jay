@@ -12,7 +12,7 @@ import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
-internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.workerPort,
+internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.WORKER_PORT,
         useNettyServer) {
 
     override val grpcImpl: BindableService = object : WorkerServiceGrpc.WorkerServiceImplBase() {

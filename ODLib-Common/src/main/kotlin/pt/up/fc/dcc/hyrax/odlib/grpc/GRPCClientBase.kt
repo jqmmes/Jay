@@ -1,16 +1,11 @@
 package pt.up.fc.dcc.hyrax.odlib.grpc
 
-import com.google.protobuf.Empty
-import io.grpc.ConnectivityState
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.netty.util.internal.logging.InternalLoggerFactory
 import io.netty.util.internal.logging.JdkLoggerFactory
-import pt.up.fc.dcc.hyrax.odlib.AbstractODLib
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
-import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.util.concurrent.TimeUnit
 
 abstract class GRPCClientBase<T1, T2>(private val host: String, private val port: Int) {

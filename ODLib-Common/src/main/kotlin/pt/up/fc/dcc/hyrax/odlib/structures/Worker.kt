@@ -43,7 +43,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     //private var connections = 0
 
     private var smartPingScheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
-    private var circularFIFO: CircularFifoQueue<Float> = CircularFifoQueue(ODSettings.RTTHistorySize)
+    private var circularFIFO: CircularFifoQueue<Float> = CircularFifoQueue(ODSettings.RTT_HISTORY_SIZE)
     private var consecutiveTransientFailurePing = 0
     private var proto : ODProto.Worker? = null
     private var autoStatusUpdateEnabledFlag = false
@@ -208,33 +208,35 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
 
     private inner class RTTTimer : Runnable {
         override fun run() {
-            grpc.ping(PING_PAYLOAD_SIZE, timeout = ODSettings.pingTimeout, callback = { T ->
+            grpc.ping(PING_PAYLOAD_SIZE, timeout = ODSettings.PING_TIMEOUT, callback = { T ->
                 if (T == -1) {
                     if (status == Status.ONLINE) {
                         ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
                         status = Status.OFFLINE
                         statusChangeCallback?.invoke(status)
                     }
-                    if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
+                    if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
                 } else if (T == -2 || T == -3) { // TRANSIENT_FAILURE || CONNECTING
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > ODSettings.RTTDelayMillisFailAttempts) {
                             ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
-                            if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
+                            if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
                             consecutiveTransientFailurePing = 0
                         } else {
                             if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillisFailRetry, TimeUnit.MILLISECONDS)
                         }
-                    } else { if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS) }
+                    } else {
+                        if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
+                    }
                 } else {
                     if (status == Status.OFFLINE) {
                         ODLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_ONLINE"))
                         status = Status.ONLINE
                         statusChangeCallback?.invoke(status)
                     }
-                    if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTTDelayMillis, TimeUnit.MILLISECONDS)
+                    if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), ODSettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
                     if (calcRTT) addRTT(T)
                 }
             })

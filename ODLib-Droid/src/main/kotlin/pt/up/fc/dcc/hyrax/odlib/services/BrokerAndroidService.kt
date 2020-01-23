@@ -10,7 +10,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.utils.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.odlib.utils.VideoUtils
 
-class BrokerAndroidService() : Service() {
+class BrokerAndroidService : Service() {
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate() {

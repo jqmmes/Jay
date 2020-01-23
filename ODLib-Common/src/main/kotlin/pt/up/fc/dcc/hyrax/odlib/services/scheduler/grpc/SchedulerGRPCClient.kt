@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutionException
 
 @Suppress("DuplicatedCode")
 class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.SchedulerServiceBlockingStub, SchedulerServiceGrpc.SchedulerServiceFutureStub>
-(host, ODSettings.schedulerPort) {
+(host, ODSettings.SCHEDULER_PORT) {
     override var blockingStub: SchedulerServiceGrpc.SchedulerServiceBlockingStub = SchedulerServiceGrpc.newBlockingStub(channel)
     override var futureStub: SchedulerServiceGrpc.SchedulerServiceFutureStub = SchedulerServiceGrpc.newFutureStub(channel)
 

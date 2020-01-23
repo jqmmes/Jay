@@ -100,7 +100,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
         // Relative value --- Lower is better
         val scaledAvgTimePerJob = 1f-crossMultiplication(worker.avgTimePerJob.toFloat(), maxAvgTimePerJob.toFloat())
 
-        val scaledAvgBandwidth = 1f-crossMultiplication(worker.bandwidthEstimate.toFloat(), maxBandwidthEstimate.toFloat())
+        val scaledAvgBandwidth = 1f - crossMultiplication(worker.bandwidthEstimate, maxBandwidthEstimate.toFloat())
 
         val score =
                 scaledAvgTimePerJob * SchedulerService.weights.computeTime +

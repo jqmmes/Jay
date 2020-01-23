@@ -30,7 +30,7 @@ object MulticastListener {
                 listeningSocket.networkInterface = networkInterface
             } else {
                 val interfaces = ODUtils.getCompatibleInterfaces<Inet4Address>()
-                if (!interfaces.isEmpty()) {
+                if (interfaces.isNotEmpty()) {
                     ODLogger.logInfo("USING_DEFAULT_INTERFACE", actions = *arrayOf("LISTEN_INTERFACE=${interfaces[0]}"))
                     listeningSocket.networkInterface = interfaces[0]
                 } else {

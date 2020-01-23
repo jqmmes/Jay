@@ -6,9 +6,9 @@ import org.tensorflow.SavedModelBundle
 import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
-import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.awt.Image
@@ -24,8 +24,6 @@ import java.util.zip.GZIPInputStream
 import javax.imageio.ImageIO
 import kotlin.math.floor
 import kotlin.math.max
-
-
 
 
 /**
@@ -113,10 +111,10 @@ internal class CloudletTensorFlow : DetectObjects {
 
     private fun resizeImage(imgData: ByteArray, maxSize: Int = 300): Image {
         ODLogger.logInfo("INIT")
-        ODLogger.logInfo("READ_IMAGE_DATA_INIT", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
-        val image = ImageIO.read(ByteArrayInputStream(imgData))
-        ODLogger.logInfo("READ_IMAGE_DATA_COMPLETE", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
         try {
+            ODLogger.logInfo("READ_IMAGE_DATA_INIT", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
+            val image = ImageIO.read(ByteArrayInputStream(imgData))
+            ODLogger.logInfo("READ_IMAGE_DATA_COMPLETE", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
             if (image.width == maxSize && image.height <= maxSize ||
                     image.width <= maxSize && image.height == maxSize) return image
             val scale = maxSize.toFloat() / max(image.width, image.height)
@@ -150,7 +148,7 @@ internal class CloudletTensorFlow : DetectObjects {
 
         outputs!![0].expect(Float::class.javaObjectType).use { scoresT ->
             outputs!![1].expect(Float::class.javaObjectType).use { classesT ->
-                outputs!![2].expect(Float::class.javaObjectType).use { _ ->
+                outputs!![2].expect(Float::class.javaObjectType).use {
                     //boxesT ->
                     // All these tensors have:
                     // - 1 as the first dimension
@@ -277,11 +275,14 @@ internal class CloudletTensorFlow : DetectObjects {
         ODLogger.logInfo("INIT")
         val cacheDir = File(modelCacheDir)
         if (!cacheDir.exists()) return false
-        for (file in cacheDir.listFiles())
-            if (file.isDirectory && file.name == name) {
-                ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_LOADED=TRUE"))
-                return true
-            }
+        try {
+            for (file in cacheDir.listFiles()!!)
+                if (file.isDirectory && file.name == name) {
+                    ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_LOADED=TRUE"))
+                    return true
+                }
+        } catch (ignore: Exception) {
+        }
         ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_LOADED=FALSE"))
         return false
     }

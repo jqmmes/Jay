@@ -15,17 +15,17 @@ internal object WorkerProfiler {
     private var brokerGRPC = BrokerGRPCClient("127.0.0.1")
     private var updaterRunning = false
 
-    private val averageComputationTimes = CircularFifoQueue<Long>(ODSettings.averageComputationTimesToStore)
-    private val cpuCores : Int = Runtime.getRuntime().availableProcessors()
-    private val totalMemory : Long = Runtime.getRuntime().totalMemory()
-    private var freeMemory : Long = Runtime.getRuntime().freeMemory()
+    private val averageComputationTimes = CircularFifoQueue<Long>(ODSettings.AVERAGE_COMPUTATION_TIME_TO_SCORE)
+    private val cpuCores: Int = Runtime.getRuntime().availableProcessors()
+    private val totalMemory: Long = Runtime.getRuntime().totalMemory()
+    private var freeMemory: Long = Runtime.getRuntime().freeMemory()
 
-    var runningJobs : AtomicInteger = AtomicInteger(0)
-    var totalJobs : AtomicInteger = AtomicInteger(0)
-    private var queueSize : Int = Int.MAX_VALUE
+    var runningJobs: AtomicInteger = AtomicInteger(0)
+    var totalJobs: AtomicInteger = AtomicInteger(0)
+    private var queueSize: Int = Int.MAX_VALUE
 
     private var battery: Int = 100
-    private var batteryStatus : ODProto.Worker.BatteryStatus = ODProto.Worker.BatteryStatus.CHARGED
+    private var batteryStatus: ODProto.Worker.BatteryStatus = ODProto.Worker.BatteryStatus.CHARGED
     private var batteryMonitor: BatteryMonitor? = null
 
 
@@ -49,7 +49,7 @@ internal object WorkerProfiler {
             updaterRunning = true
             do {
                 statusNotify()
-                sleep(ODSettings.workerStatusUpdateInterval)
+                sleep(ODSettings.WORKER_STATUS_UPDATE_INTERVAL)
             } while (updaterRunning)
         }
     }

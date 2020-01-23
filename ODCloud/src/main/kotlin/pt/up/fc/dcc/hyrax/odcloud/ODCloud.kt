@@ -4,13 +4,12 @@ package pt.up.fc.dcc.hyrax.odcloud
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.stub.StreamObserver
-import pt.up.fc.dcc.hyrax.odlib.ODLib
-import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
-import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odcloud.protoc.LauncherServiceGrpc
 import pt.up.fc.dcc.hyrax.odcloud.protoc.ODCloudGRPC
+import pt.up.fc.dcc.hyrax.odlib.ODLib
 import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
-import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
+import pt.up.fc.dcc.hyrax.odlib.logger.LogLevel
+import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.Thread.sleep

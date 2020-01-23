@@ -4,8 +4,6 @@ import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import pt.up.fc.dcc.hyrax.odlib.ODLib
-import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 
 class ClientAndroidService  : Service() {
 

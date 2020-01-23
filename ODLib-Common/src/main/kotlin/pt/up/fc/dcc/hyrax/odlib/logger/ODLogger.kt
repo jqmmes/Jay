@@ -4,7 +4,6 @@ package pt.up.fc.dcc.hyrax.odlib.logger
 
 import pt.up.fc.dcc.hyrax.odlib.interfaces.LogInterface
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
-import java.lang.Exception
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
@@ -26,10 +25,10 @@ object ODLogger{
 
     private fun buildMessage(operation: String, jobId: String = "", actions: Array<out String>): String {
         var msg = "$operation$DELIMITER$jobId$DELIMITER\""
-        for (i in 0 until actions.size) {
-            msg+=actions[i] + if (i < actions.size-1) ACTION_DELIMITER else ""
+        for (i in actions.indices) {
+            msg += actions[i] + if (i < actions.size - 1) ACTION_DELIMITER else ""
         }
-        return msg+"\""
+        return msg + "\""
     }
 
     fun logInfo(operation: String, jobId: String = "", vararg actions: String) {

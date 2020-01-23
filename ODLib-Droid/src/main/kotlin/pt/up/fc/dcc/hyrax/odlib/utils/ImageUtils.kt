@@ -8,6 +8,7 @@ import java.lang.Thread.sleep
 import kotlin.math.floor
 import kotlin.math.max
 
+@Suppress("unused")
 object ImageUtils {
 
     private val LOCK = Any()

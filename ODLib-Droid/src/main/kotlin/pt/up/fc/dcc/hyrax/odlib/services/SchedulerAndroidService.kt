@@ -3,10 +3,8 @@ package pt.up.fc.dcc.hyrax.odlib.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.support.v4.app.NotificationCompat
 import pt.up.fc.dcc.hyrax.odlib.ODLib
 import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.odlib.R
 
 internal class SchedulerAndroidService : Service() {
 

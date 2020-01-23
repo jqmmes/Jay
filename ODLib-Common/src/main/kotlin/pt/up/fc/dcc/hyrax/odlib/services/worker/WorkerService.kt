@@ -46,7 +46,7 @@ object WorkerService {
     fun start(localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, fsAssistant: FileSystemAssistant? = null) {
         ODLogger.logInfo("INIT")
         if (running) return
-        if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(ODSettings.workingThreads)
+        if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(ODSettings.WORKING_THREADS)
         this.localDetect = localDetect
         this.fsAssistant = fsAssistant
         WorkerProfiler.setBatteryMonitor(batteryMonitor)

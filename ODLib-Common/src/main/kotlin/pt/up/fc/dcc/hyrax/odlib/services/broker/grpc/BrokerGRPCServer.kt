@@ -13,17 +13,18 @@ import pt.up.fc.dcc.hyrax.odlib.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils.genStatus
+import java.util.*
 
-internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.brokerPort, useNettyServer) {
+internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.BROKER_PORT, useNettyServer) {
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
         override fun executeJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
             responseObserver?.onNext(ODProto.Results.newBuilder().setStatus(ODProto.StatusCode.Received).build())
-            BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver)}
+            BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver) }
         }
 
         override fun scheduleJob(request: ODProto.Job?, responseObserver: StreamObserver<ODProto.Results>?) {
-            BrokerService.scheduleJob(request) {R -> genericComplete(R, responseObserver) }
+            BrokerService.scheduleJob(request) { R -> genericComplete(R, responseObserver) }
         }
 
         override fun calibrateWorker(request: ODProto.String?, responseObserver: StreamObserver<Empty>?) {
@@ -154,13 +155,13 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                             V.split("/").forEach { ip -> BrokerService.addCloud(ip) }
                         }
                         "GRPC_MAX_MESSAGE_SIZE" -> ODSettings.GRPC_MAX_MESSAGE_SIZE = V.toInt() //: Int = 150000000
-                        "RTTHistorySize" -> ODSettings.RTTHistorySize = V.toInt() //: Int = 5
-                        "pingTimeout" -> ODSettings.pingTimeout = V.toLong() //: Long = 10000L // 15s
-                        "RTTDelayMillis" -> ODSettings.RTTDelayMillis = V.toLong() //: Long = 10000L // 10s
+                        "RTTHistorySize" -> ODSettings.RTT_HISTORY_SIZE = V.toInt() //: Int = 5
+                        "pingTimeout" -> ODSettings.PING_TIMEOUT = V.toLong() //: Long = 10000L // 15s
+                        "RTTDelayMillis" -> ODSettings.RTT_DELAY_MILLIS = V.toLong() //: Long = 10000L // 10s
                         "PING_PAYLOAD_SIZE" -> ODSettings.PING_PAYLOAD_SIZE = V.toInt() //: Int = 32000 // 32Kb
-                        "averageComputationTimesToStore" -> ODSettings.averageComputationTimesToStore = V.toInt() //: Int = 10
-                        "workingThreads" -> ODSettings.workingThreads = V.toInt() //: Int = 1
-                        "workerStatusUpdateInterval" -> ODSettings.workerStatusUpdateInterval = V.toLong() //: Long = 5000 // 5s
+                        "averageComputationTimesToStore" -> ODSettings.AVERAGE_COMPUTATION_TIME_TO_SCORE = V.toInt() //: Int = 10
+                        "workingThreads" -> ODSettings.WORKING_THREADS = V.toInt() //: Int = 1
+                        "workerStatusUpdateInterval" -> ODSettings.WORKER_STATUS_UPDATE_INTERVAL = V.toLong() //: Long = 5000 // 5s
                         "AUTO_STATUS_UPDATE_INTERVAL_MS" -> ODSettings.AUTO_STATUS_UPDATE_INTERVAL_MS = V.toLong() //: Long = 5000 // 5s
                         "RTTDelayMillisFailRetry" -> ODSettings.RTTDelayMillisFailRetry = V.toLong() //: Long = 500 // 0.5s
                         "RTTDelayMillisFailAttempts" -> ODSettings.RTTDelayMillisFailAttempts = V.toLong() //: Long = 5
@@ -169,9 +170,9 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "BANDWIDTH_SCALING_FACTOR" -> ODSettings.BANDWIDTH_SCALING_FACTOR = V.toFloatOrNull() ?: 1.0f
                         "MCAST_INTERFACE" -> ODSettings.MCAST_INTERFACE = V
                         "BANDWIDTH_ESTIMATE_CALC_METHOD" -> {
-                            if (V.toLowerCase() in arrayOf("mean", "median")) ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase()
+                            if (V.toLowerCase(Locale.getDefault()) in arrayOf("mean", "median")) ODSettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase(Locale.getDefault())
                         }
-                        "ADVERTISE_WORKER_STATUS" -> if (V.toLowerCase() != "false") ODSettings.ADVERTISE_WORKER_STATUS = true
+                        "ADVERTISE_WORKER_STATUS" -> if (V.toLowerCase(Locale.getDefault()) != "false") ODSettings.ADVERTISE_WORKER_STATUS = true
                         "SINGLE_REMOTE_IP" -> ODSettings.SINGLE_REMOTE_IP = V
                     }
                 }

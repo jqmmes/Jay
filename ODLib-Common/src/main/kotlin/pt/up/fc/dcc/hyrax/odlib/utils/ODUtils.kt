@@ -35,7 +35,7 @@ object ODUtils {
             firstRefresh = false
             localIPv4 = ""
             val interfaces = getCompatibleInterfaces<Inet4Address>()
-            if (!interfaces.isEmpty()) {
+            if (interfaces.isNotEmpty()) {
                 for (ip in interfaces[0].inetAddresses) {
                     if (ip is Inet4Address) localIPv4 = ip.toString().trim('/')
                 }

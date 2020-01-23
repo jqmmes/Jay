@@ -147,63 +147,99 @@ message Settings {
     map<string, string> setting = 1;
 }
 
-service BrokerService { // Internal and External communication Broker
-                        rpc ping (Ping) returns (Ping) {}; // ExternalBroker > Broker
+// Internal and External communication Broker
+service BrokerService {
+    rpc ping (Ping) returns (Ping) {
+    }; // ExternalBroker > Broker
 
-                        rpc executeJob (Job) returns (stream Results) {}; // ExternalBroker > Broker --> Calls WorkerService::execute
-                        rpc scheduleJob (Job) returns (Results) {}; // App > Broker --> Calls SchedulerService::schedule
+    rpc executeJob (Job) returns (stream Results) {
+    }; // ExternalBroker > Broker --> Calls WorkerService::execute
+    rpc scheduleJob (Job) returns (Results) {
+    }; // App > Broker --> Calls SchedulerService::schedule
 
-                        rpc advertiseWorkerStatus (Worker) returns (Status) {}; // ExternalBroker > Broker
-                        rpc diffuseWorkerStatus (Worker) returns (Status) {}; // WorkerService > Broker --> Calls:
-                        //          ExternalBroker::diffuseWorkerStatus
-                        //          SchedulerService::notifyWorkerUpdate
-                        rpc requestWorkerStatus(google.protobuf.Empty) returns (Worker) {}; // ExternalBroker > Broker
-                        //      SchedulerService::notifyWorkerUpdate
+    rpc advertiseWorkerStatus (Worker) returns (Status) {
+    }; // ExternalBroker > Broker
+    rpc diffuseWorkerStatus (Worker) returns (Status) {
+    }; // WorkerService > Broker --> Calls:
+    //       ExternalBroker::diffuseWorkerStatus
+    //       SchedulerService::notifyWorkerUpdate
+    rpc requestWorkerStatus (google.protobuf.Empty) returns (Worker) {
+    }; // ExternalBroker > Broker
+    //      SchedulerService::notifyWorkerUpdate
 
-                        rpc getModels (google.protobuf.Empty) returns (Models) {}; // App > Broker --> Calls WorkerService::listModels
-                        rpc setModel (Model) returns (Status) {}; // App > Broker --> Calls WorkerService::selectModel
+    rpc getModels (google.protobuf.Empty) returns (Models) {
+    }; // App > Broker --> Calls WorkerService::listModels
+    rpc setModel (Model) returns (Status) {
+    }; // App > Broker --> Calls WorkerService::selectModel
 
-                        rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {}; // SchedulerService > Broker
+    rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {
+    }; // SchedulerService > Broker
 
-                        rpc getSchedulers (google.protobuf.Empty) returns (Schedulers) {}; // App > Broker --> Calls SchedulerService::listSchedulers
-                        rpc setScheduler (Scheduler) returns (Status) {}; // App > Broker --> Calls SchedulerService::setScheduler
+    rpc getSchedulers (google.protobuf.Empty) returns (Schedulers) {
+    }; // App > Broker --> Calls SchedulerService::listSchedulers
+    rpc setScheduler (Scheduler) returns (Status) {
+    }; // App > Broker --> Calls SchedulerService::setScheduler
 
-                        rpc listenMulticast (google.protobuf.BoolValue) returns (Status) {}; // SchedulerService --> Broker (Starts MC listen)
-                        rpc announceMulticast (google.protobuf.Empty) returns (Status) {}; // SchedulerService --> Broker (Starts MCast advertise)
+    rpc listenMulticast (google.protobuf.BoolValue) returns (Status) {
+    }; // SchedulerService --> Broker (Starts MC listen)
+    rpc announceMulticast (google.protobuf.Empty) returns (Status) {
+    }; // SchedulerService --> Broker (Starts MCast advertise)
 
-                        rpc enableHearBeats (WorkerTypes) returns (Status) {}; // SchedulerService --> Broker (start HB)
-                        rpc enableBandwidthEstimates (BandwidthEstimate) returns (Status) {}; // SchedulerService --> Broker (start RTT Estimate)
-                        rpc disableHearBeats (google.protobuf.Empty) returns (Status) {}; // SchedulerService --> Broker (start HB)
-                        rpc disableBandwidthEstimates (google.protobuf.Empty) returns (Status) {}; // SchedulerService --> Broker (start RTT Estimate)
-                        rpc updateSmartSchedulerWeights (Weights) returns (Status) {};
-                        rpc announceServiceStatus (ServiceStatus) returns (Status) {};
-                        rpc stopService (google.protobuf.Empty) returns (Status) {};
+    rpc enableHearBeats (WorkerTypes) returns (Status) {
+    }; // SchedulerService --> Broker (start HB)
+    rpc enableBandwidthEstimates (BandwidthEstimate) returns (Status) {
+    }; // SchedulerService --> Broker (start RTT Estimate)
+    rpc disableHearBeats (google.protobuf.Empty) returns (Status) {
+    }; // SchedulerService --> Broker (start HB)
+    rpc disableBandwidthEstimates (google.protobuf.Empty) returns (Status) {
+    }; // SchedulerService --> Broker (start RTT Estimate)
+    rpc updateSmartSchedulerWeights (Weights) returns (Status) {
+    };
+    rpc announceServiceStatus (ServiceStatus) returns (Status) {
+    };
+    rpc stopService (google.protobuf.Empty) returns (Status) {
+    };
 
-                        rpc calibrateWorker(String) returns (google.protobuf.Empty) {};
-                        rpc createJob(String) returns (Results) {};
-                        rpc setSettings(Settings) returns (Status) {};
+    rpc calibrateWorker (String) returns (google.protobuf.Empty) {
+    };
+    rpc createJob (String) returns (Results) {
+    };
+    rpc setSettings (Settings) returns (Status) {
+    };
 }
 
-service SchedulerService { // Broker > SchedulerBase
-                           rpc schedule (JobDetails) returns (Worker) {}; // Schedule a Job
-                           rpc notifyJobComplete (JobDetails) returns (google.protobuf.Empty) {
-                           }; // Report jobcompletion to scheduler
-                           rpc notifyWorkerUpdate (Worker) returns (Status) {}; // Inform about Worker updates
-                           rpc notifyWorkerFailure (Worker) returns (Status) {}; // Inform about Worker connection failures
-                           rpc setScheduler (Scheduler) returns (Status) {}; // Select Scheduler to be used
-                           rpc listSchedulers (google.protobuf.Empty) returns (Schedulers) {}; // List available Schedulers
-                           rpc updateSmartSchedulerWeights (Weights) returns (Status) {};
-                           rpc testService (google.protobuf.Empty) returns (ServiceStatus) {};
-                           rpc stopService (google.protobuf.Empty) returns (Status) {
-                           };
+// Broker > SchedulerBase
+service SchedulerService {
+    rpc schedule (JobDetails) returns (Worker) {
+    }; // Schedule a Job
+    rpc notifyJobComplete (JobDetails) returns (google.protobuf.Empty) {
+    }; // Report jobcompletion to scheduler
+    rpc notifyWorkerUpdate (Worker) returns (Status) {
+    }; // Inform about Worker updates
+    rpc notifyWorkerFailure (Worker) returns (Status) {
+    }; // Inform about Worker connection failures
+    rpc setScheduler (Scheduler) returns (Status) {
+    }; // Select Scheduler to be used
+    rpc listSchedulers (google.protobuf.Empty) returns (Schedulers) {
+    }; // List available Schedulers
+    rpc updateSmartSchedulerWeights (Weights) returns (Status) {
+    };
+    rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
+    };
+    rpc stopService (google.protobuf.Empty) returns (Status) {
+    };
 }
 
-service WorkerService { // Broker > WorkerService
-                        rpc execute (WorkerJob) returns (Results) {
-                        }; // Queue a Job for execution
-                        rpc selectModel (Model) returns (Status) {}; // Select TF Model to be used
-                        rpc listModels (google.protobuf.Empty) returns (Models) {}; // List available TF Models
-                        rpc testService (google.protobuf.Empty) returns (ServiceStatus) {};
-                        rpc stopService (google.protobuf.Empty) returns (Status) {
-                        };
+// Broker > WorkerService
+service WorkerService {
+    rpc execute (WorkerJob) returns (Results) {
+    }; // Queue a Job for execution
+    rpc selectModel (Model) returns (Status) {
+    }; // Select TF Model to be used
+    rpc listModels (google.protobuf.Empty) returns (Models) {
+    }; // List available TF Models
+    rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
+    };
+    rpc stopService (google.protobuf.Empty) returns (Status) {
+    };
 }

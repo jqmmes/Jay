@@ -11,7 +11,7 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
-internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.schedulerPort,
+internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(ODSettings.SCHEDULER_PORT,
         useNettyServer) {
 
     override val grpcImpl: BindableService = object : SchedulerServiceGrpc.SchedulerServiceImplBase() {
@@ -53,7 +53,7 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
         }
 
         override fun stopService(request: Empty?, responseObserver: StreamObserver<ODProto.Status>?) {
-            SchedulerService.stopService() { S ->
+            SchedulerService.stopService { S ->
                 genericComplete(S, responseObserver)
                 SchedulerService.stopServer()
             }
