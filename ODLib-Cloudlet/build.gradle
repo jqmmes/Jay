@@ -5,7 +5,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
     }
 }
 
@@ -18,8 +18,7 @@ buildscript {}
 build.dependsOn shadowJar
 
 shadowJar {
-    baseName = 'ODLib-Cloudlet'
-    classifier = null
+    minimize()
     version = 1.0
 }
 
@@ -30,11 +29,11 @@ artifacts {
 dependencies {
     implementation fileTree(include: '*.jar', dir: 'lib')
     implementation 'org.kamranzafar:jtar:2.3'
-    implementation "org.tensorflow:tensorflow:${TENSORFLOW_VERSION}"
-    implementation "org.tensorflow:libtensorflow:${TENSORFLOW_VERSION}"
-    implementation "org.tensorflow:proto:${TENSORFLOW_VERSION}"
+    implementation "org.tensorflow:tensorflow:$TENSORFLOW_VERSION"
+    implementation "org.tensorflow:libtensorflow:$TENSORFLOW_VERSION"
+    implementation "org.tensorflow:proto:$TENSORFLOW_VERSION"
     //noinspection DifferentStdlibGradleVersion
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
-    compile 'com.google.guava:guava:28.1-jre'
-    compile project(path: ':ODLib-Common')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
+    implementation 'com.google.guava:guava:28.2-jre'
+    implementation project(path: ':ODLib-Common')
 }
