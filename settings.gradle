@@ -1,2 +1,6 @@
-rootProject.name = 'ODLib'
-include ':ODLib-Common', ':ODLib-Droid', ':ODLib-Cloudlet', ':ODCloud', ':ODLauncher'
+rootProject.name = 'Jay'
+include ':ODLib-Common', ':ODLib-Droid', ':ODLib-Cloudlet', ':ODCloud'
+
+
+include ':ODLauncher'
+project(':ODLauncher').projectDir = file('ODLauncher')

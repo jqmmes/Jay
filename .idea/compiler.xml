@@ -2,6 +2,8 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="Jay.ODLib-Common.main" target="1.8" />
+      <module name="Jay.ODLib-Common.test" target="1.8" />
       <module name="ODLib-Cloudlet_main" target="1.8" />
       <module name="ODLib-Cloudlet_test" target="1.8" />
       <module name="ODLib-Common_main" target="1.8" />
