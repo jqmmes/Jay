@@ -11,6 +11,12 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.worker.BatteryMonitor
 import kotlin.math.roundToInt
 
+/**
+ * TODO: BATTERY_PROPERTY_CURRENT_NOW           (Sync)
+ *       EXTRA_VOLTAGE                          (ASync)
+ *       EXTRA_TEMPERATURE                      (ASync)
+ */
+
 class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor() {
     private val levelMonitor = BatteryLevelUpdatesReceiver()
     private val chargingStateMonitor = BatteryChargeStateUpdatesReceiver()
