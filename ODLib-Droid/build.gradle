@@ -41,6 +41,9 @@ dependencies {
     implementation 'com.android.support:support-compat:28.0.0'
     implementation 'org.kamranzafar:jtar:2.3'
     implementation "org.tensorflow:tensorflow-android:$TENSORFLOW_VERSION"
+    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
     implementation 'com.google.api.grpc:proto-google-common-protos:1.17.0'
     implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.3.1'
