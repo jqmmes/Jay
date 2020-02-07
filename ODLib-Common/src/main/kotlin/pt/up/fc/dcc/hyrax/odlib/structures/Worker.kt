@@ -28,12 +28,17 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     val grpc: BrokerGRPCClient = BrokerGRPCClient(address)
 
     private var avgComputingEstimate = 0L
-    private var battery = 100
+    private var batteryLevel = 100
+    private var batteryCurrent: Int = -1
+    private var batteryVoltage: Int = -1
+    private var batteryTemperature: Float = -1f
+    private var batteryEnergy: Long = -1
+    private var batteryCharge: Int = -1
+    private var batteryStatus: BatteryStatus = BatteryStatus.CHARGED
     private var cpuCores = 0
     private var queueSize = 1
     private var queuedJobs = 0
     private var runningJobs = 0
-    private var batteryStatus : BatteryStatus = BatteryStatus.CHARGED
     private var totalMemory = 0L
     private var freeMemory = 0L
     private var status = Status.OFFLINE
@@ -77,7 +82,12 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private fun genProto() {
         val worker = ODProto.Worker.newBuilder()
         worker.id = id // Internal
-        worker.battery = battery // Modified by Worker
+        worker.batteryLevel = batteryLevel // Modified by Worker
+        worker.batteryCurrent = batteryCurrent
+        worker.batteryVoltage = batteryVoltage
+        worker.batteryTemperature = batteryTemperature
+        worker.batteryEnergy = batteryEnergy
+        worker.batteryCharge = batteryCharge
         worker.avgTimePerJob = avgComputingEstimate // Modified by Worker
         worker.cpuCores = cpuCores // Set by Worker
         worker.queueSize = queueSize // Set by Worker
@@ -93,13 +103,18 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     internal fun updateStatus(proto: ODProto.Worker?) : ODProto.Worker? {
         ODLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
         if (proto == null) return this.proto
-        battery = proto.battery
+        batteryLevel = proto.batteryLevel
+        batteryCurrent = proto.batteryCurrent
+        batteryVoltage = proto.batteryVoltage
+        batteryTemperature = proto.batteryTemperature
+        batteryEnergy = proto.batteryEnergy
+        batteryCharge = proto.batteryCharge
+        batteryStatus = proto.batteryStatus
         avgComputingEstimate = proto.avgTimePerJob
         runningJobs = proto.runningJobs
         cpuCores = proto.cpuCores
         queueSize = proto.queueSize
         queuedJobs = proto.queuedJobs
-        batteryStatus = proto.batteryStatus
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
         genProto()

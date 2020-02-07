@@ -64,7 +64,12 @@ message Worker {
 
     string id = 2; // uuid
 
-    int32 battery = 3;
+    int32 batteryLevel = 3;
+    int32 batteryCurrent = 4;
+    int32 batteryVoltage = 5;
+    float batteryTemperature = 6;
+    int64 batteryEnergy = 7;
+    int32 batteryCharge = 8;
 
     enum BatteryStatus {
         CHARGED = 0;
@@ -72,25 +77,25 @@ message Worker {
         USB = 2; // USB Charging
         DISCHARGING = 3;
     }
-    BatteryStatus batteryStatus = 4;
+    BatteryStatus batteryStatus = 9;
 
-    int32 cpuCores = 5;
-    int32 queueSize = 6;
-    int32 runningJobs = 7;
-    int32 queuedJobs = 8;
+    int32 cpuCores = 10;
+    int32 queueSize = 11;
+    int32 runningJobs = 12;
+    int32 queuedJobs = 13;
 
-    int64 avgTimePerJob = 9;
+    int64 avgTimePerJob = 14;
 
     enum Type {
         LOCAL = 0;
         CLOUD = 1;
         REMOTE = 2;
     }
-    Type type = 10;
+    Type type = 15;
 
-    float bandwidthEstimate = 11; // KB/s valor a ser calculado no Broker e enviado para o scheduler
-    int64 totalMemory = 12;
-    int64 freeMemory = 13;
+    float bandwidthEstimate = 16; // KB/s valor a ser calculado no Broker e enviado para o scheduler
+    int64 totalMemory = 17;
+    int64 freeMemory = 18;
 
 }
 

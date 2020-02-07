@@ -12,24 +12,27 @@ import pt.up.fc.dcc.hyrax.odlib.services.worker.BatteryMonitor
 import kotlin.math.roundToInt
 
 /**
- * TODO: BATTERY_PROPERTY_CURRENT_NOW           (Sync)
- *       EXTRA_VOLTAGE                          (ASync)
- *       EXTRA_TEMPERATURE                      (ASync)
+ * BATTERY_PROPERTY_CURRENT_NOW           (Sync) Instantaneous battery current in microamperes
+ * BATTERY_PROPERTY_ENERGY_COUNTER        (Sync) Battery remaining energy in nanowatt-hours
+ * EXTRA_VOLTAGE                          (ASync) current battery temperature
+ * EXTRA_TEMPERATURE                      (ASync) current battery voltage level
  */
 
 class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor() {
     private val levelMonitor = BatteryLevelUpdatesReceiver()
     private val chargingStateMonitor = BatteryChargeStateUpdatesReceiver()
 
-    override fun setCallbacks(levelChangeCallback: (Int) -> Unit, statusChangeCallback: (ODProto.Worker.BatteryStatus) -> Unit) {
+    val mBatteryManager: BatteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+
+    override fun setCallbacks(levelChangeCallback: (Int, Int, Float) -> Unit, statusChangeCallback: (ODProto.Worker.BatteryStatus) -> Unit) {
         levelMonitor.setCallback(levelChangeCallback)
         chargingStateMonitor.setCallback(statusChangeCallback)
     }
 
 
-    class BatteryChargeStateUpdatesReceiver:  BroadcastReceiver() {
+    class BatteryChargeStateUpdatesReceiver : BroadcastReceiver() {
 
-        private var context : Context? = null
+        private var context: Context? = null
 
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
@@ -68,18 +71,19 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor() {
     }
 
     class BatteryLevelUpdatesReceiver:  BroadcastReceiver() {
-
-        private var levelChangeCallback: ((Int) -> Unit)? = null
+        // levelChangeCallback(Percentage, Voltage, Temperature)
+        private var levelChangeCallback: ((Int, Int, Float) -> Unit)? = null
 
         @SuppressLint("UnsafeProtectedBroadcastReceiver")
         override fun onReceive(context: Context?, intent: Intent?) {
-            // TODO: validar o receiver com o intent?.action
             val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: 0
             val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: 0
-            levelChangeCallback?.invoke(((level.toFloat() / scale.toFloat())*100f).roundToInt())
+            val voltage = intent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1) ?: 0
+            val temperature = (intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1) ?: 0) / 10f
+            levelChangeCallback?.invoke(((level.toFloat() / scale.toFloat()) * 100f).roundToInt(), voltage, temperature)
         }
 
-        fun setCallback(levelChangeCallback: (Int) -> Unit) {
+        fun setCallback(levelChangeCallback: (Int, Int, Float) -> Unit) {
             this.levelChangeCallback = levelChangeCallback
         }
     }
@@ -100,4 +104,15 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor() {
         }
     }
 
+    override fun getBatteryCurrentNow(): Int {
+        return mBatteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+    }
+
+    override fun getBatteryRemainingEnergy(): Long {
+        return mBatteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)
+    }
+
+    override fun getBatteryCharge(): Int {
+        return mBatteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+    }
 }

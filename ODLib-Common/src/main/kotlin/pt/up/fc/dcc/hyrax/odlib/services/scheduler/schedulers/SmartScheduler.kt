@@ -96,7 +96,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
         * Higher the better >= 0
         */
         // assuming 100% battery
-        val scaledBattery = crossMultiplication(worker.battery.toFloat(), 100f)
+        val scaledBattery = crossMultiplication(worker.batteryLevel.toFloat(), 100f)
         // Relative value --- Lower is better
         val scaledAvgTimePerJob = 1f-crossMultiplication(worker.avgTimePerJob.toFloat(), maxAvgTimePerJob.toFloat())
 
@@ -109,7 +109,7 @@ class SmartScheduler : Scheduler("SmartScheduler") {
                         scaledBattery * SchedulerService.weights.battery +
                         scaledAvgBandwidth * SchedulerService.weights.bandwidth
 
-        ODLogger.logInfo("NEW_SCORE", actions = *arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score", "RUNNING_JOBS=${worker.runningJobs}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${worker.battery}", "AVG_TIME_PER_JOB=${worker.avgTimePerJob}", "BANDWIDTH_ESTIMATE=${worker.bandwidthEstimate}"))
+        ODLogger.logInfo("NEW_SCORE", actions = *arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score", "RUNNING_JOBS=${worker.runningJobs}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${worker.batteryLevel}", "AVG_TIME_PER_JOB=${worker.avgTimePerJob}", "BANDWIDTH_ESTIMATE=${worker.bandwidthEstimate}"))
         return score
     }
 

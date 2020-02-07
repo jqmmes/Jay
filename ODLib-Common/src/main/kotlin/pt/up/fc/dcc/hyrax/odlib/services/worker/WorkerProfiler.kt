@@ -9,6 +9,7 @@ import java.lang.Thread.sleep
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
+@Suppress("unused")
 internal object WorkerProfiler {
     private val JOBS_LOCK = Object()
     private val builder = ODProto.Worker.newBuilder()
@@ -24,7 +25,12 @@ internal object WorkerProfiler {
     var totalJobs: AtomicInteger = AtomicInteger(0)
     private var queueSize: Int = Int.MAX_VALUE
 
-    private var battery: Int = 100
+    private var batteryLevel: Int = 100
+    private var batteryCurrent: Int = -1
+    private var batteryVoltage: Int = -1
+    private var batteryTemperature: Float = -1f
+    private var batteryEnergy: Long = -1
+    private var batteryCharge: Int = -1
     private var batteryStatus: ODProto.Worker.BatteryStatus = ODProto.Worker.BatteryStatus.CHARGED
     private var batteryMonitor: BatteryMonitor? = null
 
@@ -54,13 +60,28 @@ internal object WorkerProfiler {
         }
     }
 
+    internal fun checkBatteryEnergy(): Long {
+        this.batteryEnergy = batteryMonitor?.getBatteryRemainingEnergy() ?: -1
+        return this.batteryEnergy
+    }
+
+    internal fun checkBatteryCurrent(): Int {
+        this.batteryCurrent = batteryMonitor?.getBatteryCurrentNow() ?: -1
+        return this.batteryCurrent
+    }
+
+    internal fun checkBatteryCharge(): Int {
+        this.batteryCharge = batteryMonitor?.getBatteryCharge() ?: -1
+        return this.batteryCharge
+    }
+
     internal fun profileExecution(code: (() -> Unit)) {
         ODLogger.logInfo("START")
         val computationStartTimestamp = System.currentTimeMillis()
         code.invoke()
         val totalTime = System.currentTimeMillis() - computationStartTimestamp
         averageComputationTimes.add(totalTime)
-        ODLogger.logInfo("END",  actions = *arrayOf("COMPUTATION_TIME=$totalTime", "NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() / averageComputationTimes.size)}"))
+        ODLogger.logInfo("END", actions = *arrayOf("COMPUTATION_TIME=$totalTime", "NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() / averageComputationTimes.size)}"))
     }
 
     internal fun atomicOperation(vararg values: AtomicInteger, increment: Boolean = false) {
@@ -77,12 +98,17 @@ internal object WorkerProfiler {
 
     internal fun monitorBattery() {
         batteryMonitor?.setCallbacks(
-                levelChangeCallback = { level ->
-                    ODLogger.logInfo( "LEVEL_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_LEVEL=$level"))
-                    this.battery = level
+                levelChangeCallback = { level, voltage, temperature ->
+                    this.batteryLevel = level
+                    this.batteryVoltage = voltage
+                    this.batteryTemperature = temperature
+                    this.batteryCurrent = batteryMonitor?.getBatteryCurrentNow() ?: -1
+                    this.batteryEnergy = batteryMonitor?.getBatteryRemainingEnergy() ?: -1
+                    this.batteryCharge = batteryMonitor?.getBatteryCharge() ?: -1
+                    ODLogger.logInfo("LEVEL_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_LEVEL=$level", "NEW_BATTERY_VOLTAGE=$voltage", "NEW_BATTERY_TEMPERATURE=$temperature", "NEW_BATTERY_CURRENT=$batteryCurrent", "REMAINING_ENERGY=$batteryEnergy", "NEW_BATTERY_CHARGE=$batteryCharge"))
                 },
                 statusChangeCallback = { status ->
-                    ODLogger.logInfo("STATUS_CHANGE_CB",  actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
+                    ODLogger.logInfo("STATUS_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
                     this.batteryStatus = status
                 })
         batteryMonitor?.monitor()
@@ -96,10 +122,15 @@ internal object WorkerProfiler {
         builder.freeMemory = freeMemory
         builder.queueSize = queueSize
         builder.queuedJobs = totalJobs.get() - runningJobs.get()
-        builder.battery = battery
+        builder.batteryLevel = batteryLevel
+        builder.batteryCurrent = batteryCurrent
+        builder.batteryVoltage = batteryVoltage
+        builder.batteryTemperature = batteryTemperature
+        builder.batteryEnergy = batteryEnergy
+        builder.batteryCharge = batteryCharge
         builder.batteryStatus = batteryStatus
         builder.runningJobs = runningJobs.get()
-        builder.avgTimePerJob = if (averageComputationTimes.size > 0) averageComputationTimes.sum()/averageComputationTimes.size else 0
+        builder.avgTimePerJob = if (averageComputationTimes.size > 0) averageComputationTimes.sum() / averageComputationTimes.size else 0
         brokerGRPC.diffuseWorkerStatus(builder.build())
     }
 }
