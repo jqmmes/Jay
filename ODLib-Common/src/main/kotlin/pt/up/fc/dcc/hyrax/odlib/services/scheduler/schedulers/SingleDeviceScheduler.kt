@@ -6,9 +6,9 @@ import pt.up.fc.dcc.hyrax.odlib.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 
-class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : Scheduler("SingleDeviceScheduler") {
+class SingleDeviceScheduler(private val workerType: ODProto.Worker.Type) : AbstractScheduler("SingleDeviceScheduler") {
 
-    private var worker : ODProto.Worker? = null
+    private var worker: ODProto.Worker? = null
 
     override fun init() {
         ODLogger.logInfo("WORKER_TYPE=${workerType.name}")

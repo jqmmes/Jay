@@ -12,14 +12,14 @@ import kotlin.random.Random
  * TOOD: Actualizam o avg computing e avg bandwidth quando se remove um device... ou então utilizar um avg dos
  * ultimos x updates
  */
-class SmartScheduler : Scheduler("SmartScheduler") {
+class SmartScheduler : AbstractScheduler("SmartScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
     private var maxAvgTimePerJob = 0L
     private var maxBandwidthEstimate = 0L
 
     override fun init() {
         ODLogger.logInfo("INIT")
-        SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) rankWorker(W) else removeWorker(W) }
+        SchedulerService.registerNotifyListener { W, S -> if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) rankWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
             SchedulerService.enableBandwidthEstimates(

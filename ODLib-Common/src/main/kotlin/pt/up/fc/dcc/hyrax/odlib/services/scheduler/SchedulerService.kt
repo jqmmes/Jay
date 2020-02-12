@@ -22,7 +22,7 @@ object SchedulerService {
     private var server :GRPCServerBase? = null
     private val workers: MutableMap<String, Worker?> = hashMapOf()
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
-    private var scheduler : Scheduler? = null
+    private var scheduler: AbstractScheduler? = null
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
     private var jobCompleteListener: ((String) -> Unit)? = null
     private var running = false
@@ -30,7 +30,7 @@ object SchedulerService {
     internal var weights: ODProto.Weights = ODProto.Weights.newBuilder().setComputeTime(0.5f).setQueueSize(0.1f)
             .setRunningJobs(0.1f).setBattery(0.2f).setBandwidth(0.1f).build()
 
-    private val schedulers: Array<Scheduler> = arrayOf(
+    private val schedulers: Array<AbstractScheduler> = arrayOf(
             SingleDeviceScheduler(Worker.Type.LOCAL),
             SingleDeviceScheduler(Worker.Type.CLOUD),
             SingleDeviceScheduler(Worker.Type.REMOTE),

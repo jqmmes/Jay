@@ -6,17 +6,17 @@ import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
-abstract class Scheduler(name: String) {
+abstract class AbstractScheduler(name: String) {
 
     val id: String = UUID.randomUUID().toString()
     private val nameId: String = name
     private var waitInit = CountDownLatch(1)
 
-    open fun getName() : String {
+    open fun getName(): String {
         return nameId
     }
 
-    abstract fun scheduleJob(job: Job) : ODProto.Worker?
+    abstract fun scheduleJob(job: Job): ODProto.Worker?
 
     abstract fun getWorkerTypes() : ODProto.WorkerTypes
 

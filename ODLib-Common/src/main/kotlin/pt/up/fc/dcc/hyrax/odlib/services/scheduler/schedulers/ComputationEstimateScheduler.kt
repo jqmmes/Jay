@@ -10,16 +10,16 @@ import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
 @Suppress("DuplicatedCode")
-class ComputationEstimateScheduler : Scheduler("ComputationEstimateScheduler") {
+class ComputationEstimateScheduler : AbstractScheduler("ComputationEstimateScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
 
     override fun init() {
         ODLogger.logInfo("INIT")
-        SchedulerService.registerNotifyListener { W, S ->  if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) updateWorker(W) else removeWorker(W) }
+        SchedulerService.registerNotifyListener { W, S -> if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) updateWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
             ODLogger.logInfo("LISTEN_FOR_WORKERS", actions = *arrayOf("SCHEDULER_ID=$id"))
-            SchedulerService.enableHeartBeat(getWorkerTypes()){
+            SchedulerService.enableHeartBeat(getWorkerTypes()) {
                 ODLogger.logInfo("COMPLETE")
                 super.init()
             }

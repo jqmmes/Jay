@@ -59,10 +59,6 @@ interface Classifier {
                 resultString += String.format("(%.1f%%) ", confidence * 100.0f)
             }
 
-            if (location != null) {
-                //resultString += location!! + " "
-            }
-
             return resultString.trim { it <= ' ' }
         }
     }
@@ -72,4 +68,7 @@ interface Classifier {
     fun enableStatLogging(debug: Boolean)
 
     fun close()
+
+    fun setNumThreads(num_threads: Int) {}
+    fun setUseNNAPI(isChecked: Boolean) {}
 }

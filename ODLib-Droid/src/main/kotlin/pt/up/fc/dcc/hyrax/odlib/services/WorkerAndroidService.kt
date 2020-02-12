@@ -6,13 +6,17 @@ import android.os.IBinder
 import pt.up.fc.dcc.hyrax.odlib.ODLib
 import pt.up.fc.dcc.hyrax.odlib.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.odlib.services.worker.status.battery.AndroidBatteryMonitor
-import pt.up.fc.dcc.hyrax.odlib.tensorflow.DroidTensorFlow
+import pt.up.fc.dcc.hyrax.odlib.services.worker.workers.TensorflowWorker
+import pt.up.fc.dcc.hyrax.odlib.structures.Detection
+import pt.up.fc.dcc.hyrax.odlib.tensorflow.DroidTensorflow
 import pt.up.fc.dcc.hyrax.odlib.utils.FileSystemAssistant
 
 internal class WorkerAndroidService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        WorkerService.start(DroidTensorFlow(this), true, batteryMonitor = AndroidBatteryMonitor(this),
+        val taskExecutor = TensorflowWorker<List<Detection>>("TensorflowWorker")
+        taskExecutor.init(DroidTensorflow(this))
+        WorkerService.start(taskExecutor, DroidTensorflow(this), true, batteryMonitor = AndroidBatteryMonitor(this),
                 fsAssistant = FileSystemAssistant(this))
         WorkerService.monitorBattery()
         return super.onStartCommand(intent, flags, startId)

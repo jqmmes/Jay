@@ -1,26 +1,18 @@
 package pt.up.fc.dcc.hyrax.odlib.tensorflow
 
 import android.content.res.AssetManager
+import org.tensorflow.*
 import org.tensorflow.contrib.android.RunStats
+import org.tensorflow.types.UInt8
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
-import java.util.ArrayList
-import java.nio.ByteBuffer
-import java.nio.DoubleBuffer
-import java.nio.FloatBuffer
-import java.nio.IntBuffer
-import java.nio.LongBuffer
-import org.tensorflow.Graph
-import org.tensorflow.Operation
-import org.tensorflow.Session
-import org.tensorflow.Tensor
-import org.tensorflow.Tensors
-import org.tensorflow.types.UInt8
+import java.nio.*
+import java.util.*
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
-class MyTensorFlowInferenceInterface {
+class TensorflowInference {
     private val modelName: String
     private val g: Graph
     private val session: Session

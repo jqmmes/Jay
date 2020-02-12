@@ -7,14 +7,14 @@ import pt.up.fc.dcc.hyrax.odlib.structures.Job
 import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import kotlin.random.Random
 
-class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devices: ODProto.Worker.Type): Scheduler("MultiDeviceScheduler") {
+class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devices: ODProto.Worker.Type) : AbstractScheduler("MultiDeviceScheduler") {
 
     private var devices = devices.toList()
     private var roundRobinCount: Int = 0
 
     override fun init() {
-        ODLogger.logInfo("INIT",actions = *arrayOf("SCHEDULE_STRATEGY=${if (roundRobin) "ROUND_ROBIN" else "RANDOM"}"))
-        for (device in devices) ODLogger.logInfo("DEVICES",actions = *arrayOf("DEVICE_TYPE=${device.name}"))
+        ODLogger.logInfo("INIT", actions = *arrayOf("SCHEDULE_STRATEGY=${if (roundRobin) "ROUND_ROBIN" else "RANDOM"}"))
+        for (device in devices) ODLogger.logInfo("DEVICES", actions = *arrayOf("DEVICE_TYPE=${device.name}"))
         if (ODProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
                 SchedulerService.enableHeartBeat(getWorkerTypes()) {

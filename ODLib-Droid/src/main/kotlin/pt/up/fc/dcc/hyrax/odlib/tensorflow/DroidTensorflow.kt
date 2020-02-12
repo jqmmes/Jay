@@ -20,7 +20,7 @@ import java.util.zip.GZIPInputStream
 import kotlin.concurrent.thread
 
 @Suppress("unused")
-class DroidTensorFlow(private val context: Context) : DetectObjects {
+class DroidTensorflow(private val context: Context) : DetectObjects {
     override fun modelLoaded(model: Model): Boolean {
         if (localDetector == null) return false
         return true
@@ -28,9 +28,9 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
 
     override var minimumScore: Float = 0f
 
-    private var localDetector : Classifier? = null
-    private val tfOdApiInputSize : Int = 500
-    private var minimumConfidence : Float = 0.1f
+    private var localDetector: Classifier? = null
+    private val tfOdApiInputSize: Int = 500
+    private var minimumConfidence: Float = 0.1f
     override val models: List<Model>
         get() = listOf(
                 Model(0,
@@ -100,7 +100,7 @@ class DroidTensorFlow(private val context: Context) : DetectObjects {
         ODLogger.logInfo("INIT",  actions = *arrayOf("MODEL_PATH=$path"))
         localDetector = null
         try {
-            localDetector = TensorFlowObjectDetectionAPIModel.create(
+            localDetector = TensorFlowObjectDetection.create(
                     Resources.getSystem().assets, path, tfOdApiInputSize)
             ODLogger.logInfo("COMPLETE",  actions = *arrayOf("MODEL_PATH=$path"))
         } catch (e: IOException) {

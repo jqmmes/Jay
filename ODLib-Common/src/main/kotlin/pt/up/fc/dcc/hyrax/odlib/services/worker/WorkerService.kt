@@ -8,6 +8,8 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.StatusCode
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
+import pt.up.fc.dcc.hyrax.odlib.services.worker.workers.AbstractWorker
+import pt.up.fc.dcc.hyrax.odlib.services.worker.workers.TensorflowWorker
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
@@ -20,6 +22,7 @@ import kotlin.concurrent.thread
 object WorkerService {
 
     private lateinit var localDetect: DetectObjects
+    private var taskExecutor: AbstractWorker<List<Detection>>? = null
 
     private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
     private var running = false
@@ -27,7 +30,7 @@ object WorkerService {
     private var waitingResultsMap : HashMap<Int, (List<Detection?>) -> Unit> = HashMap()
     private var server: GRPCServerBase? = null
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
-    private var fsAssistant: FileSystemAssistant? = null
+    internal var fsAssistant: FileSystemAssistant? = null
 
     init {
         executor.shutdown()
@@ -43,14 +46,14 @@ object WorkerService {
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
     }
 
-    fun start(localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, fsAssistant: FileSystemAssistant? = null) {
+    fun start(taskExecutor: TensorflowWorker<List<Detection>>, localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, fsAssistant: FileSystemAssistant? = null) {
         ODLogger.logInfo("INIT")
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(ODSettings.WORKING_THREADS)
         this.localDetect = localDetect
         this.fsAssistant = fsAssistant
+        this.taskExecutor = taskExecutor
         WorkerProfiler.setBatteryMonitor(batteryMonitor)
-
         server = WorkerGRPCServer(useNettyServer).start()
         WorkerProfiler.start()
 
@@ -82,6 +85,7 @@ object WorkerService {
         jobQueue.offer(RunnableJobObjects(null) {})
         executor.shutdownNow()
         WorkerProfiler.destroy()
+        taskExecutor?.destroy()
         brokerGRPC.announceServiceStatus(ODProto.ServiceStatus.newBuilder().setType(ODProto.ServiceStatus.Type.WORKER).setRunning(false).build()) {S ->
             ODLogger.logInfo("COMPLETE")
             callback?.invoke(S)
@@ -96,14 +100,16 @@ object WorkerService {
 
     fun loadModel(model: Model, callback: ((ODProto.Status) -> Unit)? = null) {
         ODLogger.logInfo("INIT")
-        if(running) localDetect.loadModel(model, callback)
+        if (running) {
+            taskExecutor?.runAction("loadModel", callback, model)
+        }
         ODLogger.logInfo("COMPLETE")
     }
 
 
     fun listModels() : Set<Model> {
         ODLogger.logInfo("INIT")
-        return localDetect.models.toSet()
+        return taskExecutor?.callAction("listModels", {}) ?: emptySet()
     }
 
     internal fun isRunning() : Boolean { return running }
@@ -123,17 +129,8 @@ object WorkerService {
         override fun run() {
             ODLogger.logInfo("INIT", job?.id ?: "")
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, increment = true)
-            try {
-                ODLogger.logInfo("READ_IMAGE_DATA", job?.id ?: "")
-                val imgData = fsAssistant?.readTempFile(job?.fileId) ?: ByteArray(0)
-                ODLogger.logInfo("START", job?.id ?: "")
-                WorkerProfiler.profileExecution { callback?.invoke(localDetect.detectObjects(imgData)) }
-                ODLogger.logInfo("END", job?.id ?: "")
-            } catch (e: Exception) {
-                e.printStackTrace()
-                ODLogger.logError("FAIL",  job?.id ?: "")
-                callback?.invoke(emptyList())
-            }
-            WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs, increment=false) }
+            WorkerProfiler.profileExecution { taskExecutor?.executeJob(job, callback) }
+            WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs, increment = false)
+        }
     }
 }

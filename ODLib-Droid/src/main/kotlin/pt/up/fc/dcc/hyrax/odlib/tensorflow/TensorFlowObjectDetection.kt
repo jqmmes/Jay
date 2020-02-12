@@ -27,7 +27,7 @@ import java.util.*
 //* Wrapper for frozen detection models trained using the Tensorflow Object Detection API:
 //* github.com/tensorflow/models/tree/master/research/object_detection
 //*/
-class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
+class TensorFlowObjectDetection private constructor() : Classifier {
     override val statString: String
         get() = inferenceInterface.statString
 
@@ -36,7 +36,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
     }
 
     //Only return this many results.
-    private val maxResults : Int = 100
+    private val maxResults: Int = 100
 
     //Config values.
     private lateinit var inputName : String
@@ -51,7 +51,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
     private lateinit var outputNames : Array<String>
     private var logStats : Boolean = false
 
-    private lateinit var inferenceInterface : MyTensorFlowInferenceInterface
+    private lateinit var inferenceInterface: TensorflowInference
 
     /**
      * Initializes a native TensorFlow session for classifying images.
@@ -70,23 +70,10 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
                 modelFilename : String,
                 inputSize : Int) : Classifier? {
             ODLogger.logInfo("INIT")
-            val d = TensorFlowObjectDetectionAPIModel()
-
-            /*val labelsInput: InputStream?
-            val actualFilename : String = labelFilename.split("file:///android_asset/")[1]
-            labelsInput = assetManager.open(actualFilename)
-            val br: BufferedReader?
-            br = BufferedReader(InputStreamReader(labelsInput))
-            var line : String?
-            line = br.readLine()
-            while (line != null) {
-                d.labels.add(line)
-                line = br.readLine()
-            }
-            br.clean()*/
+            val d = TensorFlowObjectDetection()
 
             try {
-                d.inferenceInterface = MyTensorFlowInferenceInterface(assetManager, modelFilename)
+                d.inferenceInterface = TensorflowInference(assetManager, modelFilename)
             } catch (e: RuntimeException) {
                 ODLogger.logInfo("ERROR")
                 return null
@@ -153,7 +140,7 @@ class TensorFlowObjectDetectionAPIModel private constructor() : Classifier {
         //Trace.beginSection("feed")
         //inputName: String!, src: ByteArray!, vararg dims: Long
         ODLogger.logInfo("CREATE_SESSION_INIT")
-        val sessionInferenceInterface = MyTensorFlowInferenceInterface(loadedGraph)
+        val sessionInferenceInterface = TensorflowInference(loadedGraph)
         ODLogger.logInfo("CREATE_SESSION_COMPLETE")
         ODLogger.logInfo("FEED_INTERFACE_INIT")
         sessionInferenceInterface.feed(inputName, byteValues, 1L, inputSize.toLong(), inputSize.toLong(), 3L)
