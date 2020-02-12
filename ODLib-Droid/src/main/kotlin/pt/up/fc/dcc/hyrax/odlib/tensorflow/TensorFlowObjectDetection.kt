@@ -123,7 +123,7 @@ class TensorFlowObjectDetection private constructor() : Classifier {
         //on the provided parameters.
         bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
-        for (i : Int  in 0..(intValues.size-1)) {
+        for (i: Int in intValues.indices) {
             byteValues[i * 3 + 2] = intValues[i].and(0xFF).toByte()
             byteValues[i * 3 + 1] = (intValues[i].shr(8)).and(0xFF).toByte()
             byteValues[i * 3 + 0] = (intValues[i].shr(16)).and(0xFF).toByte()
@@ -175,7 +175,7 @@ class TensorFlowObjectDetection private constructor() : Classifier {
 
         ODLogger.logInfo("CHECK_RESULTS_INIT")
         //Scale them back to the input size.
-        for (i : Int in 0..(outputScores.size-1)) {
+        for (i: Int in outputScores.indices) {
             val detection =
                     RectF(
                             outputLocations[4 * i + 1] * inputSize,
@@ -188,7 +188,7 @@ class TensorFlowObjectDetection private constructor() : Classifier {
         }
 
         val recognitions : ArrayList<Classifier.Recognition> = ArrayList()
-        for (i : Int in 0..Math.min(pq.size, maxResults)) {
+        for (i: Int in 0..pq.size.coerceAtMost(maxResults)) {
             recognitions.add(pq.poll())
         }
         ODLogger.logInfo("CHECK_RESULTS_COMPLETE")

@@ -32,9 +32,9 @@ class TFLiteInference : Classifier {
     private var imgData: ByteBuffer? = null
     private var tfLite: Interpreter? = null
 
-    var gpuDelegate: GpuDelegate? = null
-    var nnApiDelegate: NnApiDelegate? = null
-    var tfLiteModel: MappedByteBuffer? = null
+    private var gpuDelegate: GpuDelegate? = null
+    private var nnApiDelegate: NnApiDelegate? = null
+    private var tfLiteModel: MappedByteBuffer? = null
 
     override fun recognizeImage(bitmap: Bitmap): ArrayList<Recognition> {
         /**
