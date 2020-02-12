@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.odlib.tensorflow
 
-import android.app.Activity
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.RectF
 import org.tensorflow.lite.Interpreter
@@ -18,7 +18,7 @@ import java.util.*
  * Wrapper for frozen detection models trained using the Tensorflow Object Detection API:
  * github.com/tensorflow/models/tree/master/research/object_detection
  */
-class TFLiteInference private constructor() {
+class TFLiteInference : Classifier {
     private var isModelQuantized = false
 
     // Config values.
@@ -32,14 +32,11 @@ class TFLiteInference private constructor() {
     private var imgData: ByteBuffer? = null
     private var tfLite: Interpreter? = null
 
-    // Constant Values
-    private val NUM_DETECTIONS = 10 // Only return this many results.
-    private val IMAGE_MEAN = 128.0f // Float model
-    private val IMAGE_STD = 128.0f // Float model
-    private val NUM_THREADS = 4 // Number of threads in the java app
+    var gpuDelegate: GpuDelegate? = null
+    var nnApiDelegate: NnApiDelegate? = null
+    var tfLiteModel: MappedByteBuffer? = null
 
-
-    fun recognizeImage(bitmap: Bitmap): ArrayList<Recognition> {
+    override fun recognizeImage(bitmap: Bitmap): ArrayList<Recognition> {
         /**
          * LOAD IMAGE DATA
          */
@@ -99,8 +96,21 @@ class TFLiteInference private constructor() {
         return recognitions
     }
 
-    fun loadModel(device: String, numThreads: Int = NUM_THREADS, modelPath: String, activity: Activity) {
-        val tfLiteModel: MappedByteBuffer? = FileUtil.loadMappedFile(activity, modelPath)
+    override fun close() {
+        tfLite?.close()
+        tfLite = null
+
+        gpuDelegate?.close()
+        gpuDelegate = null
+
+        nnApiDelegate?.close()
+        nnApiDelegate = null
+
+        tfLiteModel = null
+    }
+
+    fun loadModel(device: String, numThreads: Int, modelPath: String, context: Context) {
+        this.tfLiteModel = FileUtil.loadMappedFile(context, modelPath)
         val tfLiteOptions = Interpreter.Options()
         when (device) {
             "NNAPI" -> {
@@ -118,23 +128,39 @@ class TFLiteInference private constructor() {
         tfLite = Interpreter(tfLiteModel!!, tfLiteOptions)
     }
 
-    fun create(isQuantized: Boolean, inputSize: Int) {
-        this.inputSize = inputSize
-        this.isModelQuantized = isQuantized
+    companion object {
 
-        // Pre-allocate buffers.
-        val numBytesPerChannel: Int = if (isQuantized) {
-            1 // Quantized
-        } else {
-            4 // Floating point
+        // Constant Values
+        private const val NUM_DETECTIONS = 10 // Only return this many results.
+        private const val IMAGE_MEAN = 128.0f // Float model
+        private const val IMAGE_STD = 128.0f // Float model
+        private const val NUM_THREADS = 4 // Number of threads in the java app
+
+        fun create(isQuantized: Boolean, inputSize: Int, device: String, modelPath: String, context: Context, numThreads: Int = NUM_THREADS): Classifier? {
+
+            val inferenceInterface = TFLiteInference()
+
+            inferenceInterface.inputSize = inputSize
+            inferenceInterface.isModelQuantized = isQuantized
+
+            // Pre-allocate buffers.
+            val numBytesPerChannel: Int = if (isQuantized) {
+                1 // Quantized
+            } else {
+                4 // Floating point
+            }
+
+            inferenceInterface.imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * 3 * numBytesPerChannel)
+            inferenceInterface.imgData!!.order(ByteOrder.nativeOrder())
+            inferenceInterface.intValues = IntArray(inputSize * inputSize)
+            inferenceInterface.outputLocations = Array(1) { Array(NUM_DETECTIONS) { FloatArray(4) } }
+            inferenceInterface.outputClasses = Array(1) { FloatArray(NUM_DETECTIONS) }
+            inferenceInterface.outputScores = Array(1) { FloatArray(NUM_DETECTIONS) }
+            inferenceInterface.numDetections = FloatArray(1)
+
+            inferenceInterface.loadModel(device, numThreads, modelPath, context)
+
+            return inferenceInterface
         }
-
-        this.imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * 3 * numBytesPerChannel)
-        this.imgData!!.order(ByteOrder.nativeOrder())
-        this.intValues = IntArray(inputSize * inputSize)
-        this.outputLocations = Array(1) { Array(NUM_DETECTIONS) { FloatArray(4) } }
-        this.outputClasses = Array(1) { FloatArray(NUM_DETECTIONS) }
-        this.outputScores = Array(1) { FloatArray(NUM_DETECTIONS) }
-        this.numDetections = FloatArray(1)
     }
 }

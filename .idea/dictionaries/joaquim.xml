@@ -16,6 +16,7 @@
       <w>resnet</w>
       <w>ssdlite</w>
       <w>tensorflow</w>
+      <w>tflite</w>
       <w>vframes</w>
     </words>
   </dictionary>

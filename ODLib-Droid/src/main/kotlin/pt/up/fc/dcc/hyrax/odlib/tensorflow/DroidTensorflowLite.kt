@@ -1,6 +1,8 @@
 package pt.up.fc.dcc.hyrax.odlib.tensorflow
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.odlib.interfaces.DetectObjects
@@ -8,12 +10,20 @@ import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection
 import pt.up.fc.dcc.hyrax.odlib.structures.Model
+import pt.up.fc.dcc.hyrax.odlib.utils.ImageUtils
+import pt.up.fc.dcc.hyrax.odlib.utils.ODUtils
 import java.io.*
+import java.net.URL
+import java.net.URLConnection
 import java.util.zip.GZIPInputStream
+import kotlin.concurrent.thread
 
 class DroidTensorflowLite(private val context: Context) : DetectObjects {
 
     override var minimumScore: Float = 0f
+    private var localDetector: Classifier? = null
+    private val tfOdApiInputSize: Int = 500
+    private var minimumConfidence: Float = 0.1f
 
     override val models: List<Model>
         get() = listOf(
@@ -52,9 +62,8 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
                 entry = tis.nextEntry
                 continue
             }
-            if (entry.name.contains("frozen_inference_graph.pb")) {
-                basePath = File(context.cacheDir, "Models/${entry.name.substring(0, entry.name.indexOf
-                ("frozen_inference_graph.pb"))}").absolutePath
+            if (entry.name.contains("model.tflite")) {
+                basePath = File(context.cacheDir, "Models/${entry.name.substring(0, entry.name.indexOf("model.tflite"))}").absolutePath
             }
             var count: Int
             val data = ByteArray(2048)
@@ -85,38 +94,152 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
     }
 
     override fun downloadModel(model: Model): File? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_NAME=${model.modelName}", "MODEL_URL=${model.remoteUrl}"))
+        var count: Int
+        if (File(context.cacheDir, "Models").exists() || !File(context.cacheDir, "Models").isDirectory) File(context.cacheDir, "Models").mkdirs()
+        val tmpFile = File.createTempFile(model.modelName + "-", ".tar.gz", File(context.cacheDir, "Models"))
+        try {
+            val url = URL(model.remoteUrl)
+
+            val connection: URLConnection = url.openConnection()
+            connection.connect()
+
+            // this will be useful so that you can show a typical 0-100% progress bar
+            val lengthOfFile = connection.contentLength
+
+            // download the file
+            val input = BufferedInputStream(url.openStream(), 8192)
+            ODLogger.logInfo("MODEL_INFO", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_SIZE=$lengthOfFile"))
+
+            // Output stream
+            val output = FileOutputStream(tmpFile)
+
+            val data = ByteArray(1024)
+
+            var total: Long = 0
+
+            count = input.read(data)
+            while (count != -1) {
+                total += count.toLong()
+
+                output.write(data, 0, count)
+                count = input.read(data)
+            }
+
+            // flushing output
+            output.flush()
+
+            // closing streams
+            output.close()
+            input.close()
+
+        } catch (e: Exception) {
+            ODLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+        }
+        ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+
+        return tmpFile
     }
 
     override fun checkDownloadedModel(name: String): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val modelCache = File(context.cacheDir, "Models")
+        if (!modelCache.exists()) return false
+        for (file in modelCache.listFiles())
+            if (file.isDirectory && file.name == name) return true
+        return false
     }
 
+
     override fun loadModel(model: Model, completeCallback: ((ODProto.Status) -> Unit)?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        localDetector = null
+        thread(name = "DroidTensorflowLite loadModel") {
+            ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
+            ODLogger.logInfo("LOADING_MODEL_INIT", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_PATH=$modelPath"))
+            if (!checkDownloadedModel(model.modelName)) {
+                ODLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+                val tmpFile = downloadModel(model)
+                ODLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+                if (tmpFile != null) {
+                    try {
+                        modelPath = extractModel(tmpFile)
+                        if (File(modelPath) != File(context.cacheDir, "Models/${model.modelName}")) {
+                            File(modelPath).renameTo(File(context.cacheDir, "Models/${model.modelName}"))
+                            ODLogger.logInfo("RENAME", actions = *arrayOf("MODEL_ID=${model.modelId}", "NEW_NAME=${File(context.cacheDir, "Models/${model.modelName}").absolutePath}"))
+                            modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
+                        }
+                    } catch (e: EOFException) {
+                        ODLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=BAD_EOF"))
+                    }
+                    tmpFile.delete()
+                } else {
+                    ODLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=DOWNLOAD_FAILED"))
+                }
+            }
+            ODLogger.logInfo("LOADING_MODEL_INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            loadModel(File(modelPath, "model.tflite").absolutePath)
+            ODLogger.logInfo("LOADING_MODEL_COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            completeCallback?.invoke(ODUtils.genStatusSuccess()!!)
+        }
+    }
+
+    private fun loadModel(modelPath: String) {
+        ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_PATH=$modelPath"))
+        localDetector = null
+        try {
+            localDetector = TFLiteInference.create(false, tfOdApiInputSize, "CPU", modelPath, context, 4)
+            ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_PATH=$modelPath"))
+        } catch (e: IOException) {
+            ODLogger.logError("ERROR", actions = *arrayOf("MODEL_PATH=$modelPath"))
+        }
     }
 
     override fun modelLoaded(model: Model): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (localDetector == null) return false
+        return true
     }
 
     override fun setMinAcceptScore(score: Float) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        minimumConfidence = score
     }
 
     override fun detectObjects(imgPath: String): List<Detection> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return detectObjects(BitmapFactory.decodeFile(imgPath))
     }
 
     override fun detectObjects(imgData: ByteArray): List<Detection> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (imgData.isNotEmpty()) return detectObjects(ImageUtils.getBitmapFromByteArray(imgData))
+        return listOf()
+    }
+
+    private fun detectObjects(imgBitmap: Bitmap): List<Detection> {
+        ODLogger.logInfo("INIT")
+        if (localDetector == null) {
+            ODLogger.logWarn("ERROR", actions = *arrayOf("ERROR_MESSAGE=NO_MODEL_LOADED"))
+            return emptyList()
+        }
+        ODLogger.logInfo("RECOGNIZE_IMAGE_INIT")
+        val results: List<Classifier.Recognition> = localDetector!!.recognizeImage(ImageUtils.scaleImage(imgBitmap, tfOdApiInputSize))
+        ODLogger.logInfo("RECOGNIZE_IMAGE_COMPLETE")
+        val mappedRecognitions: MutableList<Detection> = ArrayList()
+        for (result: Classifier.Recognition? in results) {
+            if (result == null) continue
+            if (result.confidence == null) continue
+            if (result.confidence >= minimumConfidence) {
+                mappedRecognitions.add(Detection(score = result.confidence, class_ = result.title!!.toFloat
+                ().toInt()))
+            }
+        }
+        ODLogger.logInfo("COMPLETE")
+        return mappedRecognitions
     }
 
     override fun getByteArrayFromImage(imgPath: String): ByteArray {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return ImageUtils.getByteArrayFromImage(imgPath)
     }
 
     override fun clean() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        localDetector?.close()
+        localDetector = null
     }
 }

@@ -23,8 +23,6 @@ import android.graphics.RectF
  */
 interface Classifier {
 
-    val statString: String
-
     /**
      * An immutable result returned by a Classifier describing what was recognized.
      */
@@ -64,8 +62,6 @@ interface Classifier {
     }
 
     fun recognizeImage(bitmap: Bitmap): List<Recognition>
-
-    fun enableStatLogging(debug: Boolean)
 
     fun close()
 

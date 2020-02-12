@@ -28,12 +28,6 @@ import java.util.*
 //* github.com/tensorflow/models/tree/master/research/object_detection
 //*/
 class TensorFlowObjectDetection private constructor() : Classifier {
-    override val statString: String
-        get() = inferenceInterface.statString
-
-    override fun enableStatLogging(debug: Boolean) {
-        this.logStats = debug
-    }
 
     //Only return this many results.
     private val maxResults: Int = 100
