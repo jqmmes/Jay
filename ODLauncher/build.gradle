@@ -38,6 +38,13 @@ android {
         exclude 'META-INF/notice.txt'
         exclude 'META-INF/ASL2.0'
     }
+
+    //noinspection GroovyMissingReturnStatement
+    aaptOptions {
+        noCompress "tflite"
+        noCompress "lite"
+    }
+
     //noinspection GroovyMissingReturnStatement
     defaultConfig {
         applicationId "pt.up.fc.dcc.hyrax.od_launcher"

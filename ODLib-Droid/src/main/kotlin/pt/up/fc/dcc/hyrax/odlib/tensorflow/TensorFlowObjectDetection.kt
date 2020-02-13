@@ -77,8 +77,6 @@ class TensorFlowObjectDetection private constructor() : Classifier {
             loadedGraph = d.inferenceInterface.graph()
 
 
-            //TensorFlowInferenceInterface(loadedGraph) //create new session
-
             d.inputName = "image_tensor"
             // The inputName node has a shape of [N, H, W, C], where
             // N is the batch size
@@ -105,20 +103,13 @@ class TensorFlowObjectDetection private constructor() : Classifier {
             ODLogger.logInfo("COMPLETE")
             return d
         }
-
-
-        //
     }
-
-    //TensorFlowObjectDetectionAPIModel()
 
 
     override fun recognizeImage(bitmap : Bitmap) : List<Classifier.Recognition>{
         ODLogger.logInfo("INIT")
         // Log this method so that it can be analyzed with systrace.
-        //Trace.beginSection("recognizeImage")
 
-        //Trace.beginSection("preprocessBitmap")
         //Preprocess the image data to extract R, G and B bytes from int of form 0x00RRGGBB
         //on the provided parameters.
         bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
@@ -128,45 +119,29 @@ class TensorFlowObjectDetection private constructor() : Classifier {
             byteValues[i * 3 + 1] = (intValues[i].shr(8)).and(0xFF).toByte()
             byteValues[i * 3 + 0] = (intValues[i].shr(16)).and(0xFF).toByte()
         }
-        //Trace.endSection() //preprocessBitmap
 
         //Copy the input data into TensorFlow.
-        //Trace.beginSection("feed")
-        //inputName: String!, src: ByteArray!, vararg dims: Long
         ODLogger.logInfo("CREATE_SESSION_INIT")
         val sessionInferenceInterface = TensorflowInference(loadedGraph)
         ODLogger.logInfo("CREATE_SESSION_COMPLETE")
         ODLogger.logInfo("FEED_INTERFACE_INIT")
         sessionInferenceInterface.feed(inputName, byteValues, 1L, inputSize.toLong(), inputSize.toLong(), 3L)
         ODLogger.logInfo("FEED_INTERFACE_COMPLETE")
-        //inferenceInterface.feed(inputName, byteValues, 1L, inputSize, inputSize, 3L)
-        //Trace.endSection()
 
         //Run the inference call.
-        //Trace.beginSection("run")
         ODLogger.logInfo("RUN_INIT")
         sessionInferenceInterface.run(outputNames, logStats)
         ODLogger.logInfo("RUN_COMPLETE")
-        //inferenceInterface.run(outputNames, logStats)
-        //Trace.endSection()
 
         //Copy the output Tensor back into the output array.
-        //Trace.beginSection("fetch")
         val outputLocations = FloatArray(maxResults * 4)
         val outputScores = FloatArray(maxResults)
         val outputClasses = FloatArray(maxResults)
         val outputNumDetections = FloatArray(1)
-        /*inferenceInterface.fetch(outputNames[0], outputLocations)
-        inferenceInterface.fetch(outputNames[1], outputScores)
-        inferenceInterface.fetch(outputNames[2], outputClasses)
-        inferenceInterface.fetch(outputNames[3], outputNumDetections)*/
         sessionInferenceInterface.fetch(outputNames[0], outputLocations)
         sessionInferenceInterface.fetch(outputNames[1], outputScores)
         sessionInferenceInterface.fetch(outputNames[2], outputClasses)
         sessionInferenceInterface.fetch(outputNames[3], outputNumDetections)
-        //Trace.endSection()
-
-
 
         //Find the best detections.
         val  pq : PriorityQueue<Classifier.Recognition> =
@@ -192,9 +167,7 @@ class TensorFlowObjectDetection private constructor() : Classifier {
             recognitions.add(pq.poll())
         }
         ODLogger.logInfo("CHECK_RESULTS_COMPLETE")
-        //Trace.endSection() //"recognizeImage"
         ODLogger.logInfo("CLOSE_SESSION_INIT")
-        //sessionInferenceInterface.clean()
         sessionInferenceInterface.closeSession()
         ODLogger.logInfo("CLOSE_SESSION_COMPLETE")
         ODLogger.logInfo("COMPLETE")

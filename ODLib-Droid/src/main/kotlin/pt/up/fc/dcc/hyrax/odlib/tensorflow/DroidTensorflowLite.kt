@@ -22,7 +22,7 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
 
     override var minimumScore: Float = 0f
     private var localDetector: Classifier? = null
-    private val tfOdApiInputSize: Int = 500
+    private val tfOdApiInputSize: Int = 320//500
     private var minimumConfidence: Float = 0.1f
 
     override val models: List<Model>
@@ -41,7 +41,13 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
 
     override fun extractModel(modelFile: File): String {
         ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
-        val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
+        var tis: TarInputStream?
+        try {
+            tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
+        } catch (e: java.lang.Exception) {
+            tis = TarInputStream(BufferedInputStream(FileInputStream(modelFile)))
+        }
+        if (tis == null) throw Error("Error unzipping ${modelFile.absolutePath}")
 
         var basePath = File(context.cacheDir.path, "Models/").absolutePath
         var entry: TarEntry? = tis.nextEntry
@@ -187,7 +193,7 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
         ODLogger.logInfo("INIT", actions = *arrayOf("MODEL_PATH=$modelPath"))
         localDetector = null
         try {
-            localDetector = TFLiteInference.create(false, tfOdApiInputSize, "CPU", modelPath, context, 4)
+            localDetector = TFLiteInference.create(true, tfOdApiInputSize, "GPU", modelPath, context, 4)
             ODLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_PATH=$modelPath"))
         } catch (e: IOException) {
             ODLogger.logError("ERROR", actions = *arrayOf("MODEL_PATH=$modelPath"))

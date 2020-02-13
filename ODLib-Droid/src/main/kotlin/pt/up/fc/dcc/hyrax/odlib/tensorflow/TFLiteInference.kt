@@ -6,11 +6,13 @@ import android.graphics.RectF
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
 import org.tensorflow.lite.nnapi.NnApiDelegate
-import org.tensorflow.lite.support.common.FileUtil
 import pt.up.fc.dcc.hyrax.odlib.tensorflow.Classifier.Recognition
+import java.io.File
+import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 import java.util.*
 
 
@@ -26,9 +28,7 @@ class TFLiteInference : Classifier {
     private val labels = Vector<String>()
     private lateinit var intValues: IntArray
     private lateinit var outputLocations: Array<Array<FloatArray>>
-    private lateinit var outputClasses: Array<FloatArray>
-    private lateinit var outputScores: Array<FloatArray>
-    private lateinit var numDetections: FloatArray
+    private lateinit var outputClasses: Array<Array<Array<FloatArray>>>
     private var imgData: ByteBuffer? = null
     private var tfLite: Interpreter? = null
 
@@ -60,16 +60,10 @@ class TFLiteInference : Classifier {
         /**
          * PREPARE OUTPUTS MAP
          */
-        outputLocations = Array(1) { Array(NUM_DETECTIONS) { FloatArray(4) } }
-        outputClasses = Array(1) { FloatArray(NUM_DETECTIONS) }
-        outputScores = Array(1) { FloatArray(NUM_DETECTIONS) }
-        numDetections = FloatArray(1)
         val inputArray = arrayOf<Any?>(imgData)
         val outputMap: MutableMap<Int, Any> = HashMap()
-        outputMap[0] = outputLocations
-        outputMap[1] = outputClasses
-        outputMap[2] = outputScores
-        outputMap[3] = numDetections
+        outputMap[0] = this.outputLocations
+        outputMap[1] = this.outputClasses
 
         /**
          * Run Inference
@@ -91,7 +85,7 @@ class TFLiteInference : Classifier {
             // in label file and class labels start from 1 to number_of_classes+1,
             // while outputClasses correspond to class index from 0 to number_of_classes
             val labelOffset = 1
-            recognitions.add(Recognition("" + i, labels[outputClasses[0][i].toInt() + labelOffset], outputScores[0][i], detection))
+            //recognitions.add(Recognition("" + i, labels[outputClasses[0][i].toInt() + labelOffset], outputScores[0][i], detection))
         }
         return recognitions
     }
@@ -109,8 +103,18 @@ class TFLiteInference : Classifier {
         tfLiteModel = null
     }
 
+    fun loadMappedFile(filePath: String): MappedByteBuffer? {
+        val fd = File(filePath)
+
+        val inputStream = FileInputStream(filePath) //FileInputStream(fileDescriptor.fileDescriptor)
+        val fileChannel = inputStream.channel
+        val startOffset = 0L //fileDescriptor.startOffset
+        val declaredLength = fd.length() //fileDescriptor.declaredLength
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+    }
+
     fun loadModel(device: String, numThreads: Int, modelPath: String, context: Context) {
-        this.tfLiteModel = FileUtil.loadMappedFile(context, modelPath)
+        this.tfLiteModel = loadMappedFile(modelPath)
         val tfLiteOptions = Interpreter.Options()
         when (device) {
             "NNAPI" -> {
@@ -131,7 +135,7 @@ class TFLiteInference : Classifier {
     companion object {
 
         // Constant Values
-        private const val NUM_DETECTIONS = 10 // Only return this many results.
+        private const val NUM_DETECTIONS = 2034 // 10 // Only return this many results.
         private const val IMAGE_MEAN = 128.0f // Float model
         private const val IMAGE_STD = 128.0f // Float model
         private const val NUM_THREADS = 4 // Number of threads in the java app
@@ -153,10 +157,8 @@ class TFLiteInference : Classifier {
             inferenceInterface.imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * 3 * numBytesPerChannel)
             inferenceInterface.imgData!!.order(ByteOrder.nativeOrder())
             inferenceInterface.intValues = IntArray(inputSize * inputSize)
-            inferenceInterface.outputLocations = Array(1) { Array(NUM_DETECTIONS) { FloatArray(4) } }
-            inferenceInterface.outputClasses = Array(1) { FloatArray(NUM_DETECTIONS) }
-            inferenceInterface.outputScores = Array(1) { FloatArray(NUM_DETECTIONS) }
-            inferenceInterface.numDetections = FloatArray(1)
+            inferenceInterface.outputLocations = Array(1) { Array(NUM_DETECTIONS) { FloatArray(91) } }
+            inferenceInterface.outputClasses = Array(1) { Array(NUM_DETECTIONS) { Array(1) { FloatArray(4) } } } //4072 // Expected Shape: [1,2034,1,4]
 
             inferenceInterface.loadModel(device, numThreads, modelPath, context)
 

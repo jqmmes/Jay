@@ -9,6 +9,7 @@
       <w>interno</w>
       <w>mcast</w>
       <w>mobilenet</w>
+      <w>nnapi</w>
       <w>odcloudservice</w>
       <w>odlib</w>
       <w>protobuf</w>
