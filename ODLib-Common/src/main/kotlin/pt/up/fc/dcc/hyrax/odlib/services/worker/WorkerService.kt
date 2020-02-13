@@ -8,6 +8,7 @@ import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto.StatusCode
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.odlib.services.worker.grpc.WorkerGRPCServer
+import pt.up.fc.dcc.hyrax.odlib.services.worker.interfaces.BatteryMonitor
 import pt.up.fc.dcc.hyrax.odlib.services.worker.workers.AbstractWorker
 import pt.up.fc.dcc.hyrax.odlib.services.worker.workers.TensorflowWorker
 import pt.up.fc.dcc.hyrax.odlib.structures.Detection

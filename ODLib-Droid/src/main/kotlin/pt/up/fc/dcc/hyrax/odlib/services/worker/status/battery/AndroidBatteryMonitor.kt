@@ -8,7 +8,7 @@ import android.content.Intent.*
 import android.content.IntentFilter
 import android.os.BatteryManager
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
-import pt.up.fc.dcc.hyrax.odlib.services.worker.BatteryMonitor
+import pt.up.fc.dcc.hyrax.odlib.services.worker.interfaces.BatteryMonitor
 import kotlin.math.roundToInt
 
 /**

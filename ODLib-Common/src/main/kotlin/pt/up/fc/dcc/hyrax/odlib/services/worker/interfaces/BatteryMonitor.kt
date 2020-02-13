@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.odlib.services.worker
+package pt.up.fc.dcc.hyrax.odlib.services.worker.interfaces
 
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 

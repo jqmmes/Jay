@@ -4,6 +4,7 @@ import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.odlib.logger.ODLogger
 import pt.up.fc.dcc.hyrax.odlib.protoc.ODProto
 import pt.up.fc.dcc.hyrax.odlib.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.odlib.services.worker.interfaces.BatteryMonitor
 import pt.up.fc.dcc.hyrax.odlib.utils.ODSettings
 import java.lang.Thread.sleep
 import java.util.concurrent.atomic.AtomicInteger
