@@ -2,21 +2,15 @@ package pt.up.fc.dcc.hyrax.jay.tensorflow
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import org.kamranzafar.jtar.TarEntry
-import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.jay.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
-import java.io.*
-import java.net.URL
-import java.net.URLConnection
-import java.util.zip.GZIPInputStream
+import pt.up.fc.dcc.hyrax.jay.utils.TFUtils
+import java.io.File
 import kotlin.concurrent.thread
 
 @Suppress("unused")
@@ -69,74 +63,33 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
         return ImageUtils.getByteArrayFromImage(imgPath)
     }
 
-    override fun detectObjects(imgData: ByteArray) : List<Detection> {
-        if (imgData.isNotEmpty()) return detectObjects(ImageUtils.getBitmapFromByteArray(imgData))
+    override fun detectObjects(imgPath: String): List<Detection> {
+        return TFUtils.detectObjects(localDetector, minimumConfidence, tfOdApiInputSize, BitmapFactory.decodeFile(imgPath))
+    }
+
+    override fun detectObjects(imgData: ByteArray): List<Detection> {
+        if (imgData.isNotEmpty()) return TFUtils.detectObjects(localDetector, minimumConfidence, tfOdApiInputSize, ImageUtils.getBitmapFromByteArray(imgData))
         return listOf()
     }
 
-    private fun detectObjects(imgData: Bitmap) : List<Detection> {
-        JayLogger.logInfo("INIT")
-        if (localDetector == null) {
-            JayLogger.logWarn("ERROR", actions = *arrayOf("ERROR_MESSAGE=NO_MODEL_LOADED"))
-            return emptyList()
-        }
-        JayLogger.logInfo("RECOGNIZE_IMAGE_INIT")
-        val results : List<Classifier.Recognition> = localDetector!!.recognizeImage(ImageUtils.scaleImage(imgData, tfOdApiInputSize))
-        JayLogger.logInfo("RECOGNIZE_IMAGE_COMPLETE")
-        val mappedRecognitions : MutableList<Detection> = ArrayList()
-        for (result : Classifier.Recognition? in results) {
-            if (result == null) continue
-            if (result.confidence == null) continue
-            if (result.confidence >= minimumConfidence) {
-                mappedRecognitions.add(Detection(score = result.confidence, class_ = result.title!!.toFloat
-                ().toInt()))
-            }
-        }
-        JayLogger.logInfo("COMPLETE")
-        return mappedRecognitions
-    }
-
-    private fun loadModel(path: String) { //, score: Float
+    /*private fun loadModel(path: String) { //, score: Float
         JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_PATH=$path"))
         localDetector = null
         try {
-            localDetector = TensorFlowObjectDetection.create(
-                    Resources.getSystem().assets, path, tfOdApiInputSize)
+            localDetector = TensorFlowObjectDetection()
+            localDetector!!.init(path, tfOdApiInputSize, assetManager = Resources.getSystem().assets)
+            /*localDetector = TensorFlowObjectDetection.create(
+                    Resources.getSystem().assets, path, tfOdApiInputSize)*/
             JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_PATH=$path"))
         } catch (e: IOException) {
             JayLogger.logError("ERROR", actions = *arrayOf("MODEL_PATH=$path"))
         }
-    }
+    }*/
 
     override fun loadModel(model: Model, completeCallback: ((JayProto.Status) -> Unit)?) {
         localDetector = null
         thread(name = "DroidTensorflow loadModel") {
-            JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
-            var modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
-            JayLogger.logInfo("LOADING_MODEL_INIT", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_PATH=$modelPath"))
-            if (!checkDownloadedModel(model.modelName)) {
-                JayLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
-                val tmpFile = downloadModel(model)
-                JayLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
-                if (tmpFile != null) {
-                    try {
-                        modelPath = extractModel(tmpFile)
-                        if (File(modelPath) != File(context.cacheDir, "Models/${model.modelName}")) {
-                            File(modelPath).renameTo(File(context.cacheDir, "Models/${model.modelName}"))
-                            JayLogger.logInfo("RENAME", actions = *arrayOf("MODEL_ID=${model.modelId}", "NEW_NAME=${File(context.cacheDir, "Models/${model.modelName}").absolutePath}"))
-                            modelPath = File(context.cacheDir, "Models/${model.modelName}").absolutePath
-                        }
-                    } catch (e: EOFException) {
-                        JayLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=BAD_EOF"))
-                    }
-                    tmpFile.delete()
-                } else {
-                    JayLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=DOWNLOAD_FAILED"))
-                }
-            }
-            JayLogger.logInfo("LOADING_MODEL_INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
-            loadModel(File(modelPath, "frozen_inference_graph.pb").absolutePath)
-            JayLogger.logInfo("LOADING_MODEL_COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            localDetector = TFUtils.loadModel(TensorFlowObjectDetection(), context, model, "frozen_inference_graph.pb", tfOdApiInputSize, assetManager = Resources.getSystem().assets)
             completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
         }
     }
@@ -146,127 +99,15 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
         minimumConfidence = score
     }
 
-    override fun detectObjects(imgPath: String) : List<Detection> {
-        return detectObjects(BitmapFactory.decodeFile(imgPath))
-    }
-
     override fun checkDownloadedModel(name: String): Boolean {
-        val modelCache = File(context.cacheDir, "Models")
-        if (!modelCache.exists()) return false
-        for (file in modelCache.listFiles())
-            if (file.isDirectory && file.name == name) return true
-        return false
+        return TFUtils.checkDownloadedModel(context, name)
     }
 
     override fun downloadModel(model: Model): File? {
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_NAME=${model.modelName}", "MODEL_URL=${model.remoteUrl}"))
-        var count: Int
-        if (File(context.cacheDir, "Models").exists() || !File(context.cacheDir, "Models").isDirectory) File(context
-                .cacheDir, "Models").mkdirs()
-        val tmpFile  = File.createTempFile(model.modelName + "-",".tar.gz",File(context
-                .cacheDir, "Models"))
-        try {
-            val url = URL(model.remoteUrl)
-
-            val connection : URLConnection = url.openConnection()
-            connection.connect()
-
-            // this will be useful so that you can show a typical 0-100%
-            // progress bar
-            val lengthOfFile = connection.contentLength
-
-            // download the file
-            val input = BufferedInputStream(url.openStream(),
-                    //8192)
-                    8192)
-            JayLogger.logInfo("MODEL_INFO", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_SIZE=$lengthOfFile"))
-
-            // Output stream
-            val output = FileOutputStream(tmpFile)
-
-            val data = ByteArray(1024)
-
-            var total: Long = 0
-
-            count = input.read(data)
-            while (count != -1) {
-                total += count.toLong()
-                // publishing the progress....
-                // After this onProgressUpdate will be called
-                //publishProgress("" + (total * 100 / lengthOfFile).toInt())
-
-                // writing data to file
-                output.write(data, 0, count)
-                count = input.read(data)
-            }
-
-            // flushing output
-            output.flush()
-
-            // closing streams
-            output.close()
-            input.close()
-
-        } catch (e: Exception) {
-            JayLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}"))
-        }
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
-
-        return tmpFile
+        return TFUtils.downloadModel(context, model)
     }
 
     override fun extractModel(modelFile: File) : String {
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
-        val tis = TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
-
-        var basePath = File(context.cacheDir.path, "Models/").absolutePath
-        var entry : TarEntry? = tis.nextEntry
-        if (entry!= null && entry.isDirectory) {
-            JayLogger.logInfo("MAKE_DIR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "MK_DIR=${File(context.cacheDir.path, "Models/${entry.name}").path}"))
-            File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
-            basePath = File(context.cacheDir.path, "Models/${entry.name}").absolutePath
-            entry = tis.nextEntry
-        }
-        while (entry != null) {
-            if (entry.name.contains("PaxHeader")) {
-                entry = tis.nextEntry
-                continue
-            }
-            if (entry.isDirectory) {
-                JayLogger.logInfo("MAKE_DIR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "MK_DIR=${File(context.cacheDir.path, "Models/${entry.name}").path}"))
-                File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
-                entry = tis.nextEntry
-                continue
-            }
-            if (entry.name.contains("frozen_inference_graph.pb")) {
-                basePath = File(context.cacheDir, "Models/${entry.name.substring(0, entry.name.indexOf
-                ("frozen_inference_graph.pb"))}").absolutePath
-            }
-            var count: Int
-            val data = ByteArray(2048)
-            JayLogger.logInfo("EXTRACT_FILE", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "FILE=${File(context.cacheDir.path, entry.name).path}"))
-            try {
-                File(context.cacheDir.path, "Models/${entry.name}").mkdirs()
-                File(context.cacheDir.path, "Models/${entry.name}").delete()
-                val fos = FileOutputStream(File(context.cacheDir.path, "Models/${entry.name}"))
-
-                val dest = BufferedOutputStream(fos)
-
-                count = tis.read(data)
-                while (count != -1) {
-                    dest.write(data, 0, count)
-                    count = tis.read(data)
-                }
-
-                dest.flush()
-                dest.close()
-            } catch (ignore : Exception) {
-                JayLogger.logWarn("ERROR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "EXTRACT=${File(context.cacheDir.path, entry.name).path}"))
-            }
-
-            entry = tis.nextEntry
-        }
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
-        return basePath
+        return TFUtils.extractModel(context, modelFile, "frozen_inference_graph.pb")
     }
 }

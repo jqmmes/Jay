@@ -82,7 +82,7 @@ shadowJar {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.jay.x86Jay'
+        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.jay.X86JayLauncher'
         attributes 'Class-Path': 'libs/Jay-x86.jar libs/Jay-x86.jar'
     }
 

@@ -1,8 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.tensorflow
 
-import android.content.Context
+import android.content.res.AssetManager
 import android.graphics.Bitmap
-import android.graphics.RectF
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
 import org.tensorflow.lite.nnapi.NnApiDelegate
@@ -21,11 +20,16 @@ import java.util.*
  * github.com/tensorflow/models/tree/master/research/object_detection
  */
 class TFLiteInference : Classifier {
-    private var isModelQuantized = false
+
+    // Constant Values
+    private val numDetections = 2034 // 10 // Only return this many results.
+    private val imageMean = 128.0f // Float model
+    private val imageStd = 128.0f // Float model
 
     // Config values.
+    private var isModelQuantized = false
     private var inputSize = 0
-    private val labels = Vector<String>()
+    //private val labels = Vector<String>()
     private lateinit var intValues: IntArray
     private lateinit var outputLocations: Array<Array<FloatArray>>
     private lateinit var outputClasses: Array<Array<Array<FloatArray>>>
@@ -36,10 +40,27 @@ class TFLiteInference : Classifier {
     private var nnApiDelegate: NnApiDelegate? = null
     private var tfLiteModel: MappedByteBuffer? = null
 
+    override fun init(modelPath: String, inputSize: Int, assetManager: AssetManager?, isQuantized: Boolean?, numThreads: Int?, device: String?) {
+        this.inputSize = inputSize
+        this.isModelQuantized = isQuantized ?: false
+
+        // Pre-allocate buffers.
+        val numBytesPerChannel: Int = if (isQuantized == true) {
+            1
+        } else {
+            4
+        }
+
+        this.imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * 3 * numBytesPerChannel)
+        this.imgData!!.order(ByteOrder.nativeOrder())
+        this.intValues = IntArray(inputSize * inputSize)
+        this.outputLocations = Array(1) { Array(numDetections) { FloatArray(91) } }
+        this.outputClasses = Array(1) { Array(numDetections) { Array(1) { FloatArray(4) } } } //4072 // Expected Shape: [1,2034,1,4]
+
+        loadModel(device!!, numThreads ?: 4, modelPath)
+    }
+
     override fun recognizeImage(bitmap: Bitmap): ArrayList<Recognition> {
-        /**
-         * LOAD IMAGE DATA
-         */
         bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
         imgData!!.rewind()
         for (i in 0 until inputSize) {
@@ -50,44 +71,40 @@ class TFLiteInference : Classifier {
                     imgData!!.put((pixelValue shr 8 and 0xFF).toByte())
                     imgData!!.put((pixelValue and 0xFF).toByte())
                 } else { // Float model
-                    imgData!!.putFloat(((pixelValue shr 16 and 0xFF) - IMAGE_MEAN) / IMAGE_STD)
-                    imgData!!.putFloat(((pixelValue shr 8 and 0xFF) - IMAGE_MEAN) / IMAGE_STD)
-                    imgData!!.putFloat(((pixelValue and 0xFF) - IMAGE_MEAN) / IMAGE_STD)
+                    imgData!!.putFloat(((pixelValue shr 16 and 0xFF) - imageMean) / imageStd)
+                    imgData!!.putFloat(((pixelValue shr 8 and 0xFF) - imageMean) / imageStd)
+                    imgData!!.putFloat(((pixelValue and 0xFF) - imageMean) / imageStd)
                 }
             }
         }
 
-        /**
-         * PREPARE OUTPUTS MAP
-         */
+        // PREPARE OUTPUTS MAP
         val inputArray = arrayOf<Any?>(imgData)
         val outputMap: MutableMap<Int, Any> = HashMap()
         outputMap[0] = this.outputLocations
         outputMap[1] = this.outputClasses
 
-        /**
-         * Run Inference
-         */
+        // Run Inference
         tfLite!!.runForMultipleInputsOutputs(inputArray, outputMap)
 
-        /**
-         * PROCESS OUTPUTS
-         */
-        val recognitions = ArrayList<Recognition>(NUM_DETECTIONS)
-        for (i in 0 until NUM_DETECTIONS) {
+        // PROCESS OUTPUTS
+        //val recognitions = ArrayList<Recognition>(numDetections)
+        /*for (i in 0 until numDetections) {
             val detection = RectF(
                     outputLocations[0][i][1] * inputSize,
                     outputLocations[0][i][0] * inputSize,
                     outputLocations[0][i][3] * inputSize,
                     outputLocations[0][i][2] * inputSize
             )
-            // SSD Mobilenet V1 Model assumes class 0 is background class
-            // in label file and class labels start from 1 to number_of_classes+1,
-            // while outputClasses correspond to class index from 0 to number_of_classes
+            /** SSD Mobilenet V1 Model assumes class 0 is background class
+             * in label file and class labels start from 1 to number_of_classes+1,
+             * while outputClasses correspond to class index from 0 to number_of_classes */
+            // detection_boxes,detection_classes,detection_scores,num_detections
             val labelOffset = 1
+            println()
             //recognitions.add(Recognition("" + i, labels[outputClasses[0][i].toInt() + labelOffset], outputScores[0][i], detection))
-        }
-        return recognitions
+        }*/
+        return ArrayList(numDetections)
     }
 
     override fun close() {
@@ -103,7 +120,7 @@ class TFLiteInference : Classifier {
         tfLiteModel = null
     }
 
-    fun loadMappedFile(filePath: String): MappedByteBuffer? {
+    private fun loadMappedFile(filePath: String): MappedByteBuffer? {
         val fd = File(filePath)
 
         val inputStream = FileInputStream(filePath) //FileInputStream(fileDescriptor.fileDescriptor)
@@ -113,7 +130,7 @@ class TFLiteInference : Classifier {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
     }
 
-    fun loadModel(device: String, numThreads: Int, modelPath: String, context: Context) {
+    private fun loadModel(device: String, numThreads: Int, modelPath: String) {
         this.tfLiteModel = loadMappedFile(modelPath)
         val tfLiteOptions = Interpreter.Options()
         when (device) {
@@ -130,39 +147,5 @@ class TFLiteInference : Classifier {
         }
         tfLiteOptions.setNumThreads(numThreads)
         tfLite = Interpreter(tfLiteModel!!, tfLiteOptions)
-    }
-
-    companion object {
-
-        // Constant Values
-        private const val NUM_DETECTIONS = 2034 // 10 // Only return this many results.
-        private const val IMAGE_MEAN = 128.0f // Float model
-        private const val IMAGE_STD = 128.0f // Float model
-        private const val NUM_THREADS = 4 // Number of threads in the java app
-
-        fun create(isQuantized: Boolean, inputSize: Int, device: String, modelPath: String, context: Context, numThreads: Int = NUM_THREADS): Classifier? {
-
-            val inferenceInterface = TFLiteInference()
-
-            inferenceInterface.inputSize = inputSize
-            inferenceInterface.isModelQuantized = isQuantized
-
-            // Pre-allocate buffers.
-            val numBytesPerChannel: Int = if (isQuantized) {
-                1 // Quantized
-            } else {
-                4 // Floating point
-            }
-
-            inferenceInterface.imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * 3 * numBytesPerChannel)
-            inferenceInterface.imgData!!.order(ByteOrder.nativeOrder())
-            inferenceInterface.intValues = IntArray(inputSize * inputSize)
-            inferenceInterface.outputLocations = Array(1) { Array(NUM_DETECTIONS) { FloatArray(91) } }
-            inferenceInterface.outputClasses = Array(1) { Array(NUM_DETECTIONS) { Array(1) { FloatArray(4) } } } //4072 // Expected Shape: [1,2034,1,4]
-
-            inferenceInterface.loadModel(device, numThreads, modelPath, context)
-
-            return inferenceInterface
-        }
     }
 }

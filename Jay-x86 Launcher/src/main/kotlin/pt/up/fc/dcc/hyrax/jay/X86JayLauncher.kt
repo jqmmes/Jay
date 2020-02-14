@@ -15,7 +15,7 @@ import java.lang.Thread.sleep
 import java.net.InetAddress
 import kotlin.concurrent.thread
 
-class x86Jay {
+class X86JayLauncher {
     companion object {
         private var jay = Jay()
         private var cloudlet = false
@@ -93,7 +93,7 @@ class x86Jay {
                 if (logging) return
                 logging = true
 
-                JayLogger.enableLogs(LoggingInterface(FileOutputStream(File(x86Jay::class.java.protectionDomain.codeSource.location.toURI().path.substringBefore("Jay-x86.jar") + "/logs/$logName"), false)), LogLevel.Info)
+                JayLogger.enableLogs(LoggingInterface(FileOutputStream(File(X86JayLauncher::class.java.protectionDomain.codeSource.location.toURI().path.substringBefore("Jay-x86.jar") + "/logs/$logName"), false)), LogLevel.Info)
             }
 
             private fun disableLogs() {
