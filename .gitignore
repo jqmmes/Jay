@@ -12,3 +12,6 @@ out/
 /captures
 .externalNativeBuild
 local.properties
+gradlew
+gradlew.bat
+.idea
