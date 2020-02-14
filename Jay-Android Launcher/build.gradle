@@ -1,0 +1,86 @@
+apply plugin: 'com.google.protobuf'
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+protobuf {
+    protoc { artifact = 'com.google.protobuf:protoc:3.11.2' }
+    plugins {
+        java { artifact = "com.google.protobuf:protoc:3.11.2" }
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${GRPC_VERSION}" }
+    }
+    generateProtoTasks {
+        //noinspection GroovyAssignabilityCheck
+        all().each { task ->
+            task.builtins {
+                java
+            }
+            task.plugins {
+                java {}
+                grpc {}
+            }
+        }
+    }
+}
+
+android {
+    compileSdkVersion 28
+    //noinspection GroovyMissingReturnStatement
+    packagingOptions {
+        exclude 'META-INF/io.netty.versions.properties'
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+    }
+
+    //noinspection GroovyMissingReturnStatement
+    aaptOptions {
+        noCompress "tflite"
+        noCompress "lite"
+    }
+
+    //noinspection GroovyMissingReturnStatement
+    defaultConfig {
+        applicationId "pt.up.fc.dcc.hyrax.jay_droid_launcher"
+        minSdkVersion 24
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    dexOptions {
+        javaMaxHeapSize "4g"
+        preDexLibraries = false
+    }
+    buildToolsVersion '28.0.3'
+}
+
+dependencies {
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
+    implementation "io.grpc:grpc-netty:$GRPC_VERSION"
+    implementation "io.grpc:grpc-protobuf:$GRPC_VERSION"
+    implementation "io.grpc:grpc-stub:$GRPC_VERSION"
+    
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    implementation project(':Jay-Android')
+    implementation project(':Jay-Base')
+}
+
+repositories {
+    mavenCentral()
+}

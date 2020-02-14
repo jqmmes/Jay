@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_package = "pt.up.fc.dcc.hyrax.jay.protoc";
+option java_outer_classname = "DroidJayLauncher";
+
+package launcherservice;
+
+message BoolValue {
+    bool value = 1;
+}
+
+message Empty {
+}
+
+message String {
+    string str = 1;
+}
+
+service LauncherService {
+    rpc StartScheduler(Empty) returns (BoolValue) {};
+    rpc StartWorker(Empty) returns (BoolValue) {};
+    rpc SetLogName(String) returns (BoolValue) {};
+}

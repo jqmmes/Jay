@@ -1,0 +1,141 @@
+package pt.up.fc.dcc.hyrax.jay
+
+
+import io.grpc.Server
+import io.grpc.ServerBuilder
+import io.grpc.stub.StreamObserver
+import pt.up.fc.dcc.hyrax.jay.interfaces.LogInterface
+import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.logger.LogLevel
+import pt.up.fc.dcc.hyrax.jay.protoc.LauncherServiceGrpc
+import pt.up.fc.dcc.hyrax.jay.protoc.x86JayGRPC
+import java.io.File
+import java.io.FileOutputStream
+import java.lang.Thread.sleep
+import java.net.InetAddress
+import kotlin.concurrent.thread
+
+class x86Jay {
+    companion object {
+        private var jay = Jay()
+        private var cloudlet = false
+        private val hostname = InetAddress.getLocalHost().hostName
+        private var server: Server? = null
+        private var running = false
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            if (args.isNotEmpty()) {
+                if (args[0] == "cloudlet") {
+                    cloudlet = true
+                }
+            }
+
+            Runtime.getRuntime().addShutdownHook(object : Thread() {
+                override fun run() {
+                    JayLogger.logError("ERROR", actions = *arrayOf("ERROR='*** shutting down server since JVM is shutting down'"))
+                    jay.destroy()
+                    stopNowAndWait()
+                    running = false
+                    JayLogger.logError("ERROR", actions = *arrayOf("ERROR='*** server shut down'"))
+                }
+            })
+
+            startServer()
+
+            while (true) {
+                sleep(1000)
+            }
+        }
+
+
+        private fun startServer() {
+            server = ServerBuilder.forPort(50000)
+                    .addService(GrpcImpl(jay))
+                    .maxInboundMessageSize(100)
+                    .build()
+                    .start()
+        }
+
+        private fun stopNowAndWait() {
+            server?.shutdownNow()
+            server?.awaitTermination()
+        }
+
+        internal class GrpcImpl(private val odClient: Jay) : LauncherServiceGrpc.LauncherServiceImplBase() {
+
+            private var logName = "logs"
+            private var logging = false
+
+            override fun setLogName(request: x86JayGRPC.String?, responseObserver: StreamObserver<x86JayGRPC.BoolValue>?) {
+                logName = request?.str ?: "logs"
+                genericComplete(x86JayGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
+            }
+
+            override fun startWorker(request: x86JayGRPC.Empty?, responseObserver: StreamObserver<x86JayGRPC.BoolValue>?) {
+                running = true
+                enableLogs()
+                thread(start = true) {
+                    odClient.startWorker()
+                    do (sleep(1)) while (running)
+                }
+                genericComplete(x86JayGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
+            }
+
+            override fun stop(request: x86JayGRPC.Empty?, responseObserver: StreamObserver<x86JayGRPC.BoolValue>?) {
+                odClient.destroy()
+                running = false
+                disableLogs()
+                genericComplete(x86JayGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
+            }
+
+            private fun enableLogs() {
+                if (logging) return
+                logging = true
+
+                JayLogger.enableLogs(LoggingInterface(FileOutputStream(File(x86Jay::class.java.protectionDomain.codeSource.location.toURI().path.substringBefore("Jay-x86.jar") + "/logs/$logName"), false)), LogLevel.Info)
+            }
+
+            private fun disableLogs() {
+                if (logging) return
+                logging = false
+                JayLogger.enableLogs(LoggingInterface(), LogLevel.Disabled)
+            }
+
+
+            private fun <T> genericComplete(request: T?, responseObserver: StreamObserver<T>?) {
+                if (!io.grpc.Context.current().isCancelled) {
+                    responseObserver!!.onNext(request)
+                    responseObserver.onCompleted()
+                }
+            }
+        }
+    }
+
+    private class LoggingInterface() : LogInterface {
+        private lateinit var logFile: FileOutputStream
+        private var logging = false
+
+        constructor(logFile: FileOutputStream) : this(){
+            this.logFile = logFile
+            logging = true
+            this.logFile.write("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION,JOB_ID,ACTIONS\n".toByteArray())
+            this.logFile.flush()
+        }
+
+        override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
+            if (logging) {
+                logFile.write("$hostname,$id,${if (cloudlet) "CLOUDLET" else "CLOUD"},$timestamp,${logLevel.name},$callerInfo,$message\n".toByteArray())
+                logFile.flush()
+            }
+        }
+
+        override fun close() {
+            if (logging) {
+                logFile.flush()
+                logFile.close()
+            }
+            logging = false
+        }
+    }
+}

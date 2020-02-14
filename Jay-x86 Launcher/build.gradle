@@ -1,0 +1,108 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+            mavenCentral()
+
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
+    }
+}
+
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
+apply plugin: 'application'
+apply plugin: 'kotlin'
+mainClassName = 'pt.up.fc.dcc.hyrax.jay.x86Jay'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.google.protobuf'
+jar.enabled = false
+
+repositories {
+    mavenCentral()
+    flatDir { dirs '../out/libs' }
+}
+
+
+dependencies {
+    //noinspection DifferentStdlibGradleVersion
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
+
+    implementation "io.grpc:grpc-okhttp:$GRPC_VERSION"
+    implementation "io.grpc:grpc-protobuf:$GRPC_VERSION"
+    implementation "io.grpc:grpc-stub:$GRPC_VERSION"
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    implementation project(':Jay-x86')
+    implementation project(':Jay-Base')
+}
+
+protobuf {
+    protoc {
+        // The artifact spec for the Protobuf Compiler
+        artifact = 'com.google.protobuf:protoc:3.11.2'
+    }
+    plugins {
+        // Optional: an artifact spec for a protoc plugin, with "grpc" as
+        // the identifier, which can be referred to in the "plugins"
+        // container of the "generateProtoTasks" closure.
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:$GRPC_VERSION"
+        }
+    }
+    generateProtoTasks {
+        ofSourceSet('main')*.plugins {
+            // Apply the "grpc" plugin whose spec is defined above, without
+            // options.  Note the braces cannot be omitted, otherwise the
+            // plugin will not be added. This is because of the implicit way
+            // NamedDomainObjectContainer binds the methods.
+            grpc { }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+shadowJar {
+    version = 1.0
+    archiveFileName = "Jay-x86.jar"
+}
+
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'pt.up.fc.dcc.hyrax.jay.x86Jay'
+        attributes 'Class-Path': 'libs/Jay-x86.jar libs/Jay-x86.jar'
+    }
+
+    // This line of code recursively collects and copies all of a project's files
+    // and adds them to the JAR itself. One can extend this task, to skip certain
+    // files or particular types at will
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+artifacts {
+    archives shadowJar
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}

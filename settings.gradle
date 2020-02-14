@@ -1,6 +1,6 @@
 rootProject.name = 'Jay'
-include ':ODLib-Common', ':ODLib-Droid', ':ODLib-Cloudlet', ':ODCloud'
+include ':Jay-Base', ':Jay-Android', ':Jay-x86', ':Jay-x86 Launcher'
 
 
-include ':ODLauncher'
-project(':ODLauncher').projectDir = file('ODLauncher')
+include ':Jay-Android Launcher'
+project(':Jay-Android Launcher').projectDir = file('Jay-Android Launcher')
