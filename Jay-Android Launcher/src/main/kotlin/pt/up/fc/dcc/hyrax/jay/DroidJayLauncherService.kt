@@ -155,8 +155,6 @@ class DroidJayLauncherService : Service() {
         odClient = Jay(this)
 
         startServer()
-        // To test only
-        //odClient.startWorker()
     }
 
     override fun onBind(intent: Intent?): IBinder? {
