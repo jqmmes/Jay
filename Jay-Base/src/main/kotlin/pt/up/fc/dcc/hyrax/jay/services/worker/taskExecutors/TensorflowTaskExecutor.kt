@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay.services.worker.workers
+package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
 import pt.up.fc.dcc.hyrax.jay.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
@@ -7,7 +7,7 @@ import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.WorkerJob
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 
-class TensorflowWorker<T>(override var workerName: String) : AbstractWorker<T>() {
+class TensorflowTaskExecutor<T>(override var workerName: String) : AbstractTaskExecutor<T>() {
 
     private lateinit var classifier: DetectObjects
 

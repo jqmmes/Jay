@@ -8,6 +8,7 @@ import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker.BatteryStatus
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings.PING_PAYLOAD_SIZE
+import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
@@ -80,24 +81,9 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     private fun genProto() {
-        val worker = JayProto.Worker.newBuilder()
-        worker.id = id // Internal
-        worker.batteryLevel = batteryLevel // Modified by Worker
-        worker.batteryCurrent = batteryCurrent
-        worker.batteryVoltage = batteryVoltage
-        worker.batteryTemperature = batteryTemperature
-        worker.batteryEnergy = batteryEnergy
-        worker.batteryCharge = batteryCharge
-        worker.avgTimePerJob = avgComputingEstimate // Modified by Worker
-        worker.cpuCores = cpuCores // Set by Worker
-        worker.queueSize = queueSize // Set by Worker
-        worker.queuedJobs = queuedJobs
-        worker.runningJobs = runningJobs // Modified by Worker
-        worker.type = type // Set in Broker
-        worker.bandwidthEstimate = bandwidthEstimate // Set internally
-        worker.totalMemory = totalMemory
-        worker.freeMemory = freeMemory
-        proto = worker.build()
+        this.proto = JayUtils.genWorkerProto(id, batteryLevel, batteryCurrent, batteryVoltage,
+                batteryTemperature, batteryEnergy, batteryCharge, avgComputingEstimate, cpuCores,
+                queueSize, queuedJobs, runningJobs, type, bandwidthEstimate, totalMemory, freeMemory)
     }
 
     internal fun updateStatus(proto: JayProto.Worker?): JayProto.Worker? {
@@ -117,12 +103,11 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         queuedJobs = proto.queuedJobs
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
-        genProto()
-        return getProto()
+        return getProto(true)
     }
 
-    internal fun getProto(): JayProto.Worker? {
-        if (proto == null) genProto()
+    internal fun getProto(genProto: Boolean = false): JayProto.Worker? {
+        if (proto == null || genProto) genProto()
         return proto
     }
 

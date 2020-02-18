@@ -7,6 +7,7 @@ import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
+import pt.up.fc.dcc.hyrax.jay.services.worker.interfaces.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
@@ -19,7 +20,8 @@ object SchedulerService {
         OFFLINE
     }
 
-    private var server :GRPCServerBase? = null
+    private var batteryMonitor: BatteryMonitor? = null
+    private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker?> = hashMapOf()
     private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
     private var scheduler: AbstractScheduler? = null
@@ -70,16 +72,17 @@ object SchedulerService {
         return filteredWorkers as HashMap<String, Worker?>
     }
 
-    fun start(useNettyServer: Boolean = false) {
+    fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null) {
         JayLogger.logInfo("INIT")
         if (running) return
-        server = SchedulerGRPCServer(useNettyServer).start()
-        running = true
-        brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.SCHEDULER).setRunning(true).build()) {
+        this.batteryMonitor = batteryMonitor
+        this.server = SchedulerGRPCServer(useNettyServer).start()
+        this.running = true
+        this.brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.SCHEDULER).setRunning(true).build()) {
             JayLogger.logInfo("COMPLETE")
         }
         thread {
-            brokerGRPC.updateWorkers { JayLogger.logInfo("COMPLETE") }
+            this.brokerGRPC.updateWorkers { JayLogger.logInfo("COMPLETE") }
         }
     }
 

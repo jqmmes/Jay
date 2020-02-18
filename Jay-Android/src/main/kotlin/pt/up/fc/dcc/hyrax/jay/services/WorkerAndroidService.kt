@@ -7,7 +7,7 @@ import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.AndroidBatteryMonitor
-import pt.up.fc.dcc.hyrax.jay.services.worker.workers.TensorflowWorker
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TensorflowTaskExecutor
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.tensorflow.DroidTensorflowLite
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
@@ -15,7 +15,7 @@ import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 internal class WorkerAndroidService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val taskExecutor = TensorflowWorker<List<Detection>>("TensorflowWorker")
+        val taskExecutor = TensorflowTaskExecutor<List<Detection>>("TensorflowWorker")
         //taskExecutor.init(DroidTensorflow(this))
         taskExecutor.init(DroidTensorflowLite(this))
         WorkerService.start(taskExecutor, DroidTensorflowLite(this), true, batteryMonitor = AndroidBatteryMonitor(this),
@@ -29,7 +29,6 @@ internal class WorkerAndroidService : Service() {
         val notification = Jay.makeNotification(this, "DroidJay Worker", "Running", icon = R.drawable.ic_bird_worker_border)
         startForeground(notification.first, notification.second)
     }
-
 
     override fun onDestroy() {
         WorkerService.stop()

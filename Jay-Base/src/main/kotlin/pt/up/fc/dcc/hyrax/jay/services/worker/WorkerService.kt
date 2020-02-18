@@ -9,8 +9,8 @@ import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.StatusCode
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.worker.interfaces.BatteryMonitor
-import pt.up.fc.dcc.hyrax.jay.services.worker.workers.AbstractWorker
-import pt.up.fc.dcc.hyrax.jay.services.worker.workers.TensorflowWorker
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.AbstractTaskExecutor
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TensorflowTaskExecutor
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
@@ -23,7 +23,7 @@ import kotlin.concurrent.thread
 object WorkerService {
 
     private lateinit var localDetect: DetectObjects
-    private var taskExecutor: AbstractWorker<List<Detection>>? = null
+    private var taskExecutor: AbstractTaskExecutor<List<Detection>>? = null
 
     private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
     private var running = false
@@ -47,7 +47,7 @@ object WorkerService {
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
     }
 
-    fun start(taskExecutor: TensorflowWorker<List<Detection>>, localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, fsAssistant: FileSystemAssistant? = null) {
+    fun start(taskExecutor: TensorflowTaskExecutor<List<Detection>>, localDetect: DetectObjects, useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, fsAssistant: FileSystemAssistant? = null) {
         JayLogger.logInfo("INIT")
         if (running) return
         if (executor.isShutdown || executor.isTerminated) executor = Executors.newFixedThreadPool(JaySettings.WORKING_THREADS)

@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay
+package pt.up.fc.dcc.hyrax.droid_jay_app
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -17,6 +17,7 @@ import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import io.netty.util.internal.logging.InternalLoggerFactory
 import io.netty.util.internal.logging.JdkLoggerFactory
+import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.interfaces.LogInterface
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.logger.LogLevel

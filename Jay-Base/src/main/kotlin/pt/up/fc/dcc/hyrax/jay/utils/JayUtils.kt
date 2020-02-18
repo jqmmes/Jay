@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.jay.utils
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 import java.net.DatagramPacket
@@ -95,11 +96,11 @@ object JayUtils {
         return JayProto.JobDetails.newBuilder().setId(job.id).setDataSize(job.data.size()).build()
     }
 
-    fun genWorkerTypes(vararg types: JayProto.Worker.Type): JayProto.WorkerTypes {
+    fun genWorkerTypes(vararg types: Type): JayProto.WorkerTypes {
         return JayProto.WorkerTypes.newBuilder().addAllType(types.asIterable()).build()
     }
 
-    fun genWorkerTypes(types: List<JayProto.Worker.Type>): JayProto.WorkerTypes {
+    fun genWorkerTypes(types: List<Type>): JayProto.WorkerTypes {
         return JayProto.WorkerTypes.newBuilder().addAllType(types).build()
     }
 
@@ -109,5 +110,31 @@ object JayUtils {
 
     fun genStatusError(): JayProto.Status? {
         return genStatus(JayProto.StatusCode.Success)
+    }
+
+    fun genWorkerProto(id: String? = null, batteryLevel: Int, batteryCurrent: Int, batteryVoltage: Int,
+                       batteryTemperature: Float, batteryEnergy: Long, batteryCharge: Int,
+                       avgComputingEstimate: Long, cpuCores: Int, queueSize: Int,
+                       queuedJobs: Int, runningJobs: Int, type: Type? = null,
+                       bandwidthEstimate: Float? = null, totalMemory: Long,
+                       freeMemory: Long): JayProto.Worker? {
+        val worker = JayProto.Worker.newBuilder()
+        if (id != null) worker.id = id // Internal
+        worker.batteryLevel = batteryLevel // Modified by Worker
+        worker.batteryCurrent = batteryCurrent
+        worker.batteryVoltage = batteryVoltage
+        worker.batteryTemperature = batteryTemperature
+        worker.batteryEnergy = batteryEnergy
+        worker.batteryCharge = batteryCharge
+        worker.avgTimePerJob = avgComputingEstimate // Modified by Worker
+        worker.cpuCores = cpuCores // Set by Worker
+        worker.queueSize = queueSize // Set by Worker
+        worker.queuedJobs = queuedJobs
+        worker.runningJobs = runningJobs // Modified by Worker
+        if (type != null) worker.type = type // Set in Broker
+        if (bandwidthEstimate != null) worker.bandwidthEstimate = bandwidthEstimate // Set internally
+        worker.totalMemory = totalMemory
+        worker.freeMemory = freeMemory
+        return worker.build()
     }
 }

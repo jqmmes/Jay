@@ -18,7 +18,7 @@ plugins {
 }
 apply plugin: 'application'
 apply plugin: 'kotlin'
-mainClassName = 'pt.up.fc.dcc.hyrax.jay.x86Jay'
+mainClassName = 'pt.up.fc.dcc.hyrax.jay.X86JayLauncher'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'com.google.protobuf'
 jar.enabled = false

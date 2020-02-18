@@ -12,6 +12,7 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
+import pt.up.fc.dcc.hyrax.jay.services.worker.interfaces.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.structures.Worker
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
@@ -22,6 +23,7 @@ import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker as ODWorker
 
 object BrokerService {
 
+    internal var batteryMonitor: BatteryMonitor? = null
     private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker> = hashMapOf()
     private val assignedJobs: MutableMap<String, String> = hashMapOf()
@@ -39,13 +41,14 @@ object BrokerService {
         workers[local.id] = local
     }
 
-    fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, videoUtils: VideoUtils? = null) {
+    fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, videoUtils: VideoUtils? = null, batteryMonitor: BatteryMonitor? = null) {
         this.fsAssistant = fsAssistant
         this.videoUtils = videoUtils
+        this.batteryMonitor = batteryMonitor
         server = BrokerGRPCServer(useNettyServer).start()
-        worker.testService { ServiceStatus -> workerServiceRunning = ServiceStatus?.running ?: false}
-        scheduler.testService {
-            ServiceStatus -> schedulerServiceRunning = ServiceStatus?.running ?: false
+        worker.testService { ServiceStatus -> workerServiceRunning = ServiceStatus?.running ?: false }
+        scheduler.testService { ServiceStatus ->
+            schedulerServiceRunning = ServiceStatus?.running ?: false
             if (schedulerServiceRunning) updateWorkers()
         }
     }
@@ -66,7 +69,6 @@ object BrokerService {
 
     internal fun extractVideoFrames(id: String?) {
         videoUtils?.extractFrames("${fsAssistant?.getAbsolutePath()}/$id", 1, (fsAssistant?.getAbsolutePath() ?: ""), (id?.dropLast(4) ?: "thumb"))
-        //videoUtils?.extractFrameAt("${fsAssistant?.getAbsolutePath()}/$id",0,4,0,(fsAssistant?.getAbsolutePath() ?: ""), (id?.dropLast(4) ?: "thumb"))
     }
 
     internal fun getByteArrayFromId(id: String?) : ByteArray? {

@@ -1,9 +1,9 @@
-package pt.up.fc.dcc.hyrax.jay.services.worker.workers
+package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
 import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
 import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.WorkerJob
 
-abstract class AbstractWorker<T> {
+abstract class AbstractTaskExecutor<T> {
 
     protected abstract var workerName: String
 

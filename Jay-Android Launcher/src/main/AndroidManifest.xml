@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools" package="pt.up.fc.dcc.hyrax.jay">
+          xmlns:tools="http://schemas.android.com/tools" package="pt.up.fc.dcc.hyrax.droid_jay_app">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
@@ -14,7 +14,7 @@
                  android:largeHeap="true"
                  android:theme="@style/AppTheme" tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name="pt.up.fc.dcc.hyrax.jay.MainActivity"
+        <activity android:name="pt.up.fc.dcc.hyrax.droid_jay_app.MainActivity"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
 
-        <service android:enabled="true" android:name="pt.up.fc.dcc.hyrax.jay.DroidJayLauncherService"
+        <service android:enabled="true" android:name="pt.up.fc.dcc.hyrax.droid_jay_app.DroidJayLauncherService"
                  android:exported="true"
                  android:permission="pt.up.fc.dcc.hyrax.jay.SERVICE"/>
     </application>

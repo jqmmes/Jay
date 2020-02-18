@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay
+package pt.up.fc.dcc.hyrax.droid_jay_app
 
 import android.content.Intent
 import android.os.Build
