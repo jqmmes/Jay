@@ -51,6 +51,16 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
                         "ssd_resnet_50_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
                         checkDownloadedModel("ssd_resnet_50_fpn_coco")
+                ),
+                Model(5,
+                        "ssd_mobilenet_v3_large_coco",
+                        "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v3_large_coco_2019_08_14.tar.gz",
+                        checkDownloadedModel("ssd_mobilenet_v3_large_coco")
+                ),
+                Model(6,
+                        "ssd_mobilenet_v3_small_coco",
+                        "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v3_small_coco_2019_08_14.tar.gz",
+                        checkDownloadedModel("ssd_mobilenet_v3_small_coco")
                 )
         )
 
