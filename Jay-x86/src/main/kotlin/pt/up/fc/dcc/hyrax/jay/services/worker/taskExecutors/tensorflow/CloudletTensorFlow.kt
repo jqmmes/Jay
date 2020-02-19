@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay.tensorflow
+package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow
 
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
@@ -7,7 +7,7 @@ import org.tensorflow.Tensor
 import org.tensorflow.types.UInt8
 import pt.up.fc.dcc.hyrax.jay.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
@@ -50,7 +50,6 @@ internal class CloudletTensorFlow : DetectObjects {
         JayLogger.logInfo("LOADING_MODEL_INIT", actions = *arrayOf("MODEL_NAME=${model.modelName}"))
         loadModel(File(modelPath, "saved_model/").absolutePath, completeCallback = completeCallback)
         JayLogger.logInfo("LOADING_MODEL_COMPLETE", actions = *arrayOf("MODEL_NAME=${model.modelName}"))
-        //Files.delete(File(modelCacheDir+model.modelName+".tar.gz").toPath())
     }
 
     override var minimumScore: Float = 0.3f
@@ -209,15 +208,8 @@ internal class CloudletTensorFlow : DetectObjects {
 
     private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
         JayLogger.logInfo("INIT")
-        //val img = convertBufferedImageType(ImageIO.read(ByteArrayInputStream(imageData)))
-        //val img = ImageIO.read(ByteArrayInputStream(imageData))
-
         val img: BufferedImage = toBufferedImage(resizeImage(imageData))
-        /*if (img.type != BufferedImage.TYPE_3BYTE_BGR) {
-            throw IOException("Expected 3-byte BGR encoding in BufferedImage, found ${img.type}. This code could be made more robust")
-        }*/
         val data = (img.raster.dataBuffer as DataBufferByte).data
-        // ImageIO.read seems to produce BGR-encoded images, but the model expects RGB.
         bgr2rgb(data)
         val batchSize: Long = 1
         val channels: Long = 3
@@ -238,7 +230,6 @@ internal class CloudletTensorFlow : DetectObjects {
                             img.type, filename))
         }
         val data = (img.data.dataBuffer as DataBufferByte).data
-        // ImageIO.read seems to produce BGR-encoded images, but the model expects RGB.
         bgr2rgb(data)
         val batchSize: Long = 1
         val channels: Long = 3
@@ -356,7 +347,6 @@ internal class CloudletTensorFlow : DetectObjects {
                         "ssd_mobilenet_v1_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
                         checkDownloadedModel("ssd_mobilenet_v1_fpn_coco")
-
                 ),
                 Model(1,
                         "ssd_mobilenet_v1_coco",
@@ -373,17 +363,17 @@ internal class CloudletTensorFlow : DetectObjects {
                         "http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz",
                         checkDownloadedModel("ssdlite_mobilenet_v2_coco")
                 ),
-                /*Model(4,
+                Model(4,
                         "faster_rcnn_resnet101_coco",
                         "http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz",
                         checkDownloadedModel("faster_rcnn_resnet101_coco")
-                ),*/
+                ),
                 Model(5,
                         "ssd_resnet_50_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
                         checkDownloadedModel("ssd_resnet_50_fpn_coco")
-                )//,
-                /*Model(
+                ),
+                Model(
                         6,
                         "faster_rcnn_inception_resnet_v2_atrous_coco",
                         "http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28.tar.gz",
@@ -400,6 +390,6 @@ internal class CloudletTensorFlow : DetectObjects {
                         "faster_rcnn_nas_lowproposals_coco",
                         "http://download.tensorflow.org/models/object_detection/faster_rcnn_nas_lowproposals_coco_2018_01_28.tar.gz",
                         checkDownloadedModel("faster_rcnn_nas_lowproposals_coco")
-                )*/
+                )
         )
 }

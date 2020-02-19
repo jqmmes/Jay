@@ -11,7 +11,7 @@ class FileSystemAssistant : FileSystemAssistant {
     private var tmpDir: File = createTempDir("Jay-x86", directory = File("/tmp/"))
 
     override fun getByteArrayFast(id: String): ByteArray {
-        return File("${this.javaClass.protectionDomain.codeSource.location.toURI().path.removeSuffix("/ODCloud.jar")}/assets/$id").readBytes()
+        return File("${this.javaClass.protectionDomain.codeSource.location.toURI().path.removeSuffix("/Jay-x86.jar")}/assets/$id").readBytes()
     }
 
     override fun getAbsolutePath(): String {

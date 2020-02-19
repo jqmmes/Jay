@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.structures
 
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Model as JayModel
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Model as JayModel
 
 data class Model(val modelId: Int,
                  val modelName: String,

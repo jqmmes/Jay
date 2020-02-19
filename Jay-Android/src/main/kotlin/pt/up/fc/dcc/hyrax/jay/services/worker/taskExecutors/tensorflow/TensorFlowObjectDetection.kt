@@ -10,7 +10,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-package pt.up.fc.dcc.hyrax.jay.tensorflow
+package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow
 
 import android.content.res.AssetManager
 import android.graphics.Bitmap

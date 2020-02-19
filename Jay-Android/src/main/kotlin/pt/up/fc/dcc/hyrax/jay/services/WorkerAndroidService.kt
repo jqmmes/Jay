@@ -7,19 +7,21 @@ import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.AndroidBatteryMonitor
-import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TensorflowTaskExecutor
-import pt.up.fc.dcc.hyrax.jay.structures.Detection
-import pt.up.fc.dcc.hyrax.jay.tensorflow.DroidTensorflowLite
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 
 internal class WorkerAndroidService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val taskExecutor = TensorflowTaskExecutor<List<Detection>>("TensorflowWorker")
+        //val taskExecutor = TensorflowTaskExecutor<List<Detection>>("TensorflowWorker")
         //taskExecutor.init(DroidTensorflow(this))
-        taskExecutor.init(DroidTensorflowLite(this))
-        WorkerService.start(taskExecutor, DroidTensorflowLite(this), true, batteryMonitor = AndroidBatteryMonitor(this),
-                fsAssistant = FileSystemAssistant(this))
+
+        //taskExecutor.init(DroidTensorflowLite(this))
+        val taskExecutorManager = TaskExecutorManager(this, FileSystemAssistant(this))
+
+        //WorkerService.start(taskExecutorManager, taskExecutor, DroidTensorflowLite(this), true, batteryMonitor = AndroidBatteryMonitor(this),
+        //        fsAssistant = FileSystemAssistant(this))
+        WorkerService.start(taskExecutorManager, useNettyServer = true, batteryMonitor = AndroidBatteryMonitor(this))
         WorkerService.monitorBattery()
         return super.onStartCommand(intent, flags, startId)
     }

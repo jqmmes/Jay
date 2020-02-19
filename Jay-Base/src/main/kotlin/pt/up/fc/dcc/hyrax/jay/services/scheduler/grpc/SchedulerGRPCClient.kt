@@ -5,8 +5,8 @@ import io.grpc.ConnectivityState
 import pt.up.fc.dcc.hyrax.jay.AbstractJay
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
-import pt.up.fc.dcc.hyrax.jay.protoc.SchedulerServiceGrpc
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutionException

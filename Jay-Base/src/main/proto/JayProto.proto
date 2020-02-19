@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option java_package = "pt.up.fc.dcc.hyrax.jay.protoc";
+option java_package = "pt.up.fc.dcc.hyrax.jay.proto";
 option java_outer_classname = "JayProto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
@@ -152,6 +152,26 @@ message Settings {
     map<string, string> setting = 1;
 }
 
+message TaskExecutor {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message TaskExecutors {
+    repeated TaskExecutor taskExecutors = 1;
+}
+
+message Request {
+    string request = 1;
+    repeated bytes args = 2;
+}
+
+message CallResponse {
+    Status status = 1;
+    bytes bytes = 2;
+}
+
 // Internal and External communication Broker
 service BrokerService {
     rpc ping (Ping) returns (Ping) {
@@ -211,6 +231,17 @@ service BrokerService {
     };
     rpc setSettings (Settings) returns (Status) {
     };
+
+    rpc listTaskExecutors (google.protobuf.Empty) returns (TaskExecutors) {
+    };
+    rpc selectTaskExecutor (TaskExecutor) returns (Status) {
+    };
+    rpc callExecutorAction (Request) returns (CallResponse) {
+    };
+    rpc runExecutorAction (Request) returns (Status) {
+    };
+    rpc setExecutorSettings (Settings) returns (Status) {
+    };
 }
 
 // Broker > SchedulerBase
@@ -240,11 +271,21 @@ service WorkerService {
     rpc execute (WorkerJob) returns (Results) {
     }; // Queue a Job for execution
     rpc selectModel (Model) returns (Status) {
-    }; // Select TF Model to be used
+    }; // Select TF Model to be used @deprecated
     rpc listModels (google.protobuf.Empty) returns (Models) {
-    }; // List available TF Models
+    }; // List available TF Models @deprecated
     rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
     };
     rpc stopService (google.protobuf.Empty) returns (Status) {
+    };
+    rpc listTaskExecutors (google.protobuf.Empty) returns (TaskExecutors) {
+    };
+    rpc selectTaskExecutor (TaskExecutor) returns (Status) {
+    };
+    rpc callExecutorAction (Request) returns (CallResponse) {
+    };
+    rpc runExecutorAction (Request) returns (Status) {
+    };
+    rpc setExecutorSettings (Settings) returns (Status) {
     };
 }

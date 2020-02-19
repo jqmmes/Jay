@@ -1,25 +1,26 @@
 package pt.up.fc.dcc.hyrax.jay.services.broker
 
+import com.google.protobuf.Empty
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.interfaces.VideoUtils
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.*
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker.Type
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
-import pt.up.fc.dcc.hyrax.jay.services.worker.interfaces.BatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.structures.Worker
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker as ODWorker
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 
 object BrokerService {
 
@@ -155,7 +156,7 @@ object BrokerService {
         return countDownLatch
     }
 
-    internal fun updateWorker(request: ODWorker?): CountDownLatch {//, updateCloud: Boolean = false) : CountDownLatch {
+    internal fun updateWorker(request: JayWorker?): CountDownLatch {//, updateCloud: Boolean = false) : CountDownLatch {
         JayLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}"))//, "UPDATE_CLOUD=$updateCloud"))
         val countDownLatch = CountDownLatch(1)
         JayLogger.logInfo("UPDATE_STATUS", actions = *arrayOf("WORKER_ID=${request?.id}"))//, "UPDATE_CLOUD=$updateCloud"))
@@ -235,7 +236,7 @@ object BrokerService {
         statusUpdate(Worker.Status.ONLINE, worker.id)
     }
 
-    internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: ODWorker? = null) {
+    internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: JayWorker? = null) {
         if (stopAdvertiser) MulticastAdvertiser.stop()
         else {
             val data = worker?.toByteArray() ?: local.getProto()?.toByteArray()
@@ -336,5 +337,39 @@ object BrokerService {
             workers[cloud.id] = cloud
         }
         JayLogger.logInfo("COMPLETE", "", "CLOUD_IP=$cloud_ip")
+    }
+
+    fun callExecutorAction(request: Request?, callback: ((CallResponse?) -> Unit)? = null) {
+        JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST=${request?.request}"))
+        if (workerServiceRunning) worker.callExecutorAction(request, callback)
+        else {
+            val errCallResponse = CallResponse.newBuilder()
+            errCallResponse.status = JayUtils.genStatusError()
+            callback?.invoke(errCallResponse.build())
+        }
+    }
+
+    fun listTaskExecutors(callback: ((TaskExecutors) -> Unit)?) {
+        JayLogger.logInfo("INIT")
+        if (workerServiceRunning) worker.listTaskExecutors(Empty.getDefaultInstance(), callback)
+        else callback?.invoke(TaskExecutors.getDefaultInstance())
+    }
+
+    fun runExecutorAction(request: Request?, callback: ((Status?) -> Unit)?) {
+        JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST=${request?.request}"))
+        if (workerServiceRunning) worker.runExecutorAction(request, callback)
+        else callback?.invoke(JayUtils.genStatusError())
+    }
+
+    fun selectTaskExecutor(request: JayProto.TaskExecutor?, callback: ((Status?) -> Unit)?) {
+        JayLogger.logInfo("INIT", actions = *arrayOf("EXECUTOR_NAME=${request?.name}"))
+        if (workerServiceRunning) worker.selectTaskExecutor(request, callback)
+        else callback?.invoke(JayUtils.genStatusError())
+    }
+
+    fun setExecutorSettings(request: JayProto.Settings?, callback: ((Status?) -> Unit)?) {
+        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        if (workerServiceRunning) worker.setExecutorSettings(request, callback)
+        else callback?.invoke(JayUtils.genStatusError())
     }
 }

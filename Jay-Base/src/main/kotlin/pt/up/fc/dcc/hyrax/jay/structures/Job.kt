@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.structures
 
 import com.google.protobuf.ByteString
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import java.util.*
 
 class Job {

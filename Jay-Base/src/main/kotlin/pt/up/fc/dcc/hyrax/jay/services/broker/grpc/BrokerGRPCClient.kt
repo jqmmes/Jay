@@ -9,8 +9,8 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.jay.AbstractJay
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.BrokerServiceGrpc
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.structures.Job
 import pt.up.fc.dcc.hyrax.jay.structures.Model
@@ -156,6 +156,81 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 callback?.invoke(JayUtils.parseModels(call.get()))
             } catch (e: ExecutionException) {
                 JayLogger.logError("UNAVAILABLE")
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun callExecutorAction(request: JayProto.Request?, callback: ((JayProto.CallResponse?) -> Unit)?) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        JayLogger.logInfo("INIT", actions = *arrayOf("ACTION=${request?.request}"))
+        val call = futureStub.callExecutorAction(request)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+                JayLogger.logInfo("COMPLETE", actions = *arrayOf("ACTION=${request?.request}"))
+            } catch (e: ExecutionException) {
+                JayLogger.logInfo("ERROR", actions = *arrayOf("ACTION=${request?.request}"))
+                callback?.invoke(JayProto.CallResponse.newBuilder().setStatus(JayUtils.genStatusError()).build())
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun runExecutorAction(request: JayProto.Request?, callback: ((JayProto.Status?) -> Unit)?) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        JayLogger.logInfo("INIT", actions = *arrayOf("ACTION=${request?.request}"))
+        val call = futureStub.runExecutorAction(request)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+                JayLogger.logInfo("COMPLETE", actions = *arrayOf("ACTION=${request?.request}"))
+            } catch (e: ExecutionException) {
+                JayLogger.logInfo("ERROR", actions = *arrayOf("ACTION=${request?.request}"))
+                callback?.invoke(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun listTaskExecutors(request: Empty?, callback: ((JayProto.TaskExecutors) -> Unit)?) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        JayLogger.logInfo("INIT")
+        val call = futureStub.listTaskExecutors(request)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+                JayLogger.logInfo("COMPLETE")
+            } catch (e: ExecutionException) {
+                JayLogger.logInfo("ERROR")
+                callback?.invoke(JayProto.TaskExecutors.getDefaultInstance())
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun selectTaskExecutor(request: JayProto.TaskExecutor?, callback: ((JayProto.Status?) -> Unit)?) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        JayLogger.logInfo("INIT", actions = *arrayOf("ACTION=${request?.id}"))
+        val call = futureStub.selectTaskExecutor(request)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+                JayLogger.logInfo("COMPLETE", actions = *arrayOf("ACTION=${request?.id}"))
+            } catch (e: ExecutionException) {
+                JayLogger.logInfo("ERROR", actions = *arrayOf("ACTION=${request?.id}"))
+                callback?.invoke(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun setExecutorSettings(request: JayProto.Settings?, callback: ((JayProto.Status?) -> Unit)?) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        val call = futureStub.setExecutorSettings(request)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+                JayLogger.logInfo("COMPLETE", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+            } catch (e: ExecutionException) {
+                JayLogger.logInfo("ERROR", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+                callback?.invoke(JayUtils.genStatusError())
             }
         }, AbstractJay.executorPool)
     }

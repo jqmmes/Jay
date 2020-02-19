@@ -6,9 +6,9 @@ import android.graphics.Bitmap
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.Classifier
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
-import pt.up.fc.dcc.hyrax.jay.tensorflow.Classifier
 import java.io.*
 import java.net.URL
 import java.net.URLConnection

@@ -2,10 +2,10 @@ package pt.up.fc.dcc.hyrax.jay.services.worker
 
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
-import pt.up.fc.dcc.hyrax.jay.services.worker.interfaces.BatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep

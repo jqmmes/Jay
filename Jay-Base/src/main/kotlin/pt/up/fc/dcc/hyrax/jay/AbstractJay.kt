@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay
 
 import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService

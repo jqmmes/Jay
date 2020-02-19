@@ -2,12 +2,12 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler
 
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
-import pt.up.fc.dcc.hyrax.jay.services.worker.interfaces.BatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*

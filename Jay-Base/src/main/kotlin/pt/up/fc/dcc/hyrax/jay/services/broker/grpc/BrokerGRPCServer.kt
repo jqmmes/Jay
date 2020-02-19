@@ -7,8 +7,8 @@ import io.grpc.BindableService
 import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.BrokerServiceGrpc
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.structures.Job
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
@@ -141,6 +141,29 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 JayLogger.logInfo("JOB_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
             JayLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=$reqId"))
+        }
+
+        override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.CallResponse>?) {
+            BrokerService.callExecutorAction(request) { CR -> genericComplete(CR, responseObserver) }
+        }
+
+        override fun listTaskExecutors(request: Empty?, responseObserver: StreamObserver<JayProto.TaskExecutors>?) {
+            BrokerService.listTaskExecutors { TE ->
+                TE.taskExecutorsList.forEach { T -> println(T.name) }
+                genericComplete(TE, responseObserver)
+            }
+        }
+
+        override fun runExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Status>?) {
+            BrokerService.runExecutorAction(request) { S -> genericComplete(S, responseObserver) }
+        }
+
+        override fun selectTaskExecutor(request: JayProto.TaskExecutor?, responseObserver: StreamObserver<JayProto.Status>?) {
+            BrokerService.selectTaskExecutor(request) { S -> genericComplete(S, responseObserver) }
+        }
+
+        override fun setExecutorSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
+            BrokerService.setExecutorSettings(request) { S -> genericComplete(S, responseObserver) }
         }
 
         override fun setSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {

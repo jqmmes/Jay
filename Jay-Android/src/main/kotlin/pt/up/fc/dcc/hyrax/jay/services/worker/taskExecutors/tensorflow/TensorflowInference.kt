@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay.tensorflow
+package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow
 
 import android.content.res.AssetManager
 import org.tensorflow.Graph

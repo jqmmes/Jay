@@ -1,8 +1,8 @@
 package pt.up.fc.dcc.hyrax.jay.utils
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto.Worker.Type
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 import java.net.DatagramPacket

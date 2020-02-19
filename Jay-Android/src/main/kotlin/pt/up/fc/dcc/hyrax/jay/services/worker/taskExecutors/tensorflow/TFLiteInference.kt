@@ -1,11 +1,11 @@
-package pt.up.fc.dcc.hyrax.jay.tensorflow
+package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow
 
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
 import org.tensorflow.lite.nnapi.NnApiDelegate
-import pt.up.fc.dcc.hyrax.jay.tensorflow.Classifier.Recognition
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.Classifier.Recognition
 import java.io.File
 import java.io.FileInputStream
 import java.nio.ByteBuffer

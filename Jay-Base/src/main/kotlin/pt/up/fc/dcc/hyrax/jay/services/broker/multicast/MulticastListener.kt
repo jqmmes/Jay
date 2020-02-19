@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.broker.multicast
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.getLocalIpV4

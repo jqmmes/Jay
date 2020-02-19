@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.structures.Job
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings

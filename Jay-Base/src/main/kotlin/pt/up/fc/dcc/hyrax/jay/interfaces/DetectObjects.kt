@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.interfaces
 
-import pt.up.fc.dcc.hyrax.jay.protoc.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 import java.io.File
@@ -13,7 +13,7 @@ interface DetectObjects {
     fun downloadModel(model: Model): File?
     fun checkDownloadedModel(name: String): Boolean
 
-    fun loadModel(model: Model, completeCallback: ((JayProto.Status) -> Unit)? = null)
+    fun loadModel(model: Model, completeCallback: ((Status) -> Unit)? = null)
     fun modelLoaded(model: Model): Boolean
     fun setMinAcceptScore(score: Float)
     fun detectObjects(imgPath: String) : List<Detection>
