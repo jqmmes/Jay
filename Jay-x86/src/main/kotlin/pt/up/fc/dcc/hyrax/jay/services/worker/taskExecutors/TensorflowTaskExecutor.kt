@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
+import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.CloudletTensorFlow
@@ -29,6 +30,10 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
     override fun callAction(action: String, statusCallback: ((JayProto.Status, Any?) -> Unit)?, vararg args: Any) {
         when (action) {
             "listModels" -> statusCallback?.invoke(JayUtils.genStatusSuccess()!!, JayUtils.genModelRequest(classifier.models.toSet())?.toByteArray())
+            else -> {
+                statusCallback?.invoke(JayUtils.genStatusError()!!, ByteArray(0))
+                throw(NoSuchElementException("Unknown Action: $action"))
+            }
         }
     }
 
@@ -36,8 +41,12 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
         when (action) {
             "loadModel" -> {
                 if (args.isEmpty()) throw Error()
-                if (args[0] !is Model) throw Error()
-                classifier.loadModel(args[0] as Model, statusCallback)
+                val model = JayProto.Model.parseFrom(args[0] as ByteString)
+                classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded), statusCallback)
+            }
+            else -> {
+                statusCallback?.invoke(JayUtils.genStatusError()!!)
+                throw(NoSuchElementException("Unknown Action: $action"))
             }
         }
     }

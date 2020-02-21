@@ -144,6 +144,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.CallResponse>?) {
+            println("BROKER->CallExecutorAction")
             BrokerService.callExecutorAction(request) { CR -> genericComplete(CR, responseObserver) }
         }
 
@@ -155,6 +156,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun runExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Status>?) {
+            println("BROKER->RunExecutorAction")
             BrokerService.runExecutorAction(request) { S -> genericComplete(S, responseObserver) }
         }
 

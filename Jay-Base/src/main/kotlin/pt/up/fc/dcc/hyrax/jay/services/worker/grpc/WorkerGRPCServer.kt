@@ -26,13 +26,13 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         // @deprecated
-        override fun listModels(request: Empty?, responseObserver: StreamObserver<JayProto.Models>?) {
+        /*override fun listModels(request: Empty?, responseObserver: StreamObserver<JayProto.Models>?) {
             JayLogger.logInfo("INIT")
             WorkerService.listModels { _, byteArrayModel ->
                 genericComplete(JayProto.Models.parseFrom(byteArrayModel as ByteArray), responseObserver)
             }
             JayLogger.logInfo("COMPLETE")
-        }
+        }*/
 
         // @deprecated
         override fun selectModel(request: JayProto.Model?, responseObserver: StreamObserver<JayProto.Status>?) {
@@ -57,18 +57,21 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.CallResponse>?) {
+            println("WORKER->CallExecutorAction")
             JayLogger.logInfo("INIT")
             if (request == null) genericComplete(JayProto.CallResponse.newBuilder().setStatus(JayUtils.genStatusError()).build(), responseObserver)
             WorkerService.callExecutorAction(request!!.request, { Status, Response ->
                 val callResponse = JayProto.CallResponse.newBuilder()
                 callResponse.status = Status
-                callResponse.bytes = ByteString.copyFrom((Response as ByteArray))
+                if (Response != null) callResponse.bytes = ByteString.copyFrom((Response as ByteArray))
+                else callResponse.bytes = ByteString.EMPTY
                 genericComplete(callResponse.build(), responseObserver)
                 JayLogger.logInfo("COMPLETE")
             }, *request.argsList.toTypedArray())
         }
 
         override fun runExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Status>?) {
+            println("WORKER->RunExecutorAction")
             JayLogger.logInfo("INIT")
             if (request == null) genericComplete(JayUtils.genStatusError(), responseObserver)
             WorkerService.runExecutorAction(request!!.request,
