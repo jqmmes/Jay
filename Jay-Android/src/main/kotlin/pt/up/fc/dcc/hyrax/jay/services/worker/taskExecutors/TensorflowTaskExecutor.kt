@@ -8,6 +8,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerJob
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.DroidTensorflow
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.DroidTensorflowLite
+import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 
@@ -44,19 +45,22 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
         }
     }
 
+    private fun genErrorWithCallback(callback: ((JayProto.Status) -> Unit)?, error: Throwable) {
+        callback?.invoke(JayUtils.genStatusError()!!)
+        throw error
+    }
+
     override fun runAction(action: String, statusCallback: ((JayProto.Status) -> Unit)?, vararg args: Any) {
         when (action) {
             "loadModel" -> {
-                if (args.isEmpty()) throw Error()
-                println("--------------------")
-                println((args[0] as ByteString))
-                //val model = JayProto.Model.parseFrom()
-                //classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded), statusCallback)
+                if (args.isEmpty()) genErrorWithCallback(statusCallback,
+                        RuntimeException("loadModel requires a ByteString Model arg"))
+                if (args[0] !is ByteString) genErrorWithCallback(statusCallback,
+                        RuntimeException("Invalid loadModel arg type (${args[0].javaClass.name}"))
+                val model = JayProto.Model.parseFrom(args[0] as ByteString)
+                classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded), statusCallback)
             }
-            else -> {
-                statusCallback?.invoke(JayUtils.genStatusError()!!)
-                throw(NoSuchElementException("Unknown Action: $action"))
-            }
+            else -> genErrorWithCallback(statusCallback, NoSuchElementException("Unknown Action: $action"))
         }
     }
 }

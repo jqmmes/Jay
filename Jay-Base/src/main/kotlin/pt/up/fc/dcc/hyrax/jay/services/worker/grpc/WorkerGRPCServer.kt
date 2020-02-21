@@ -9,7 +9,6 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 
@@ -22,24 +21,6 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             WorkerService.queueJob(request!!) { detectionList ->
                 JayLogger.logInfo("COMPLETE", request.id ?: "")
                 genericComplete(JayUtils.genResults(request.id, detectionList), responseObserver)
-            }
-        }
-
-        // @deprecated
-        /*override fun listModels(request: Empty?, responseObserver: StreamObserver<JayProto.Models>?) {
-            JayLogger.logInfo("INIT")
-            WorkerService.listModels { _, byteArrayModel ->
-                genericComplete(JayProto.Models.parseFrom(byteArrayModel as ByteArray), responseObserver)
-            }
-            JayLogger.logInfo("COMPLETE")
-        }*/
-
-        // @deprecated
-        override fun selectModel(request: JayProto.Model?, responseObserver: StreamObserver<JayProto.Status>?) {
-            JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${request?.id}"))
-            WorkerService.loadModel(Model(request!!.id, request.name, request.url, request.downloaded)) { S ->
-                JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request.id}"))
-                genericComplete(S, responseObserver)
             }
         }
 
@@ -77,7 +58,7 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             WorkerService.runExecutorAction(request!!.request,
                     { S -> genericComplete(S, responseObserver); JayLogger.logInfo("COMPLETE") },
                     *request.argsList.toTypedArray())
-        }
+    }
 
         override fun listTaskExecutors(request: Empty?, responseObserver: StreamObserver<JayProto.TaskExecutors>?) {
             JayLogger.logInfo("INIT")

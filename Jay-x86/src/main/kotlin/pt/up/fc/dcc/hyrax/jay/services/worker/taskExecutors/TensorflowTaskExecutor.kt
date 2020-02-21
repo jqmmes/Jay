@@ -37,17 +37,22 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
         }
     }
 
+    private fun genErrorWithCallback(callback: ((JayProto.Status) -> Unit)?, error: Throwable) {
+        callback?.invoke(JayUtils.genStatusError()!!)
+        throw error
+    }
+
     override fun runAction(action: String, statusCallback: ((JayProto.Status) -> Unit)?, vararg args: Any) {
         when (action) {
             "loadModel" -> {
-                if (args.isEmpty()) throw Error()
+                if (args.isEmpty()) genErrorWithCallback(statusCallback,
+                        RuntimeException("loadModel requires a ByteString Model arg"))
+                if (args[0] !is ByteString) genErrorWithCallback(statusCallback,
+                        RuntimeException("Invalid loadModel arg type (${args[0].javaClass.name}"))
                 val model = JayProto.Model.parseFrom(args[0] as ByteString)
                 classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded), statusCallback)
             }
-            else -> {
-                statusCallback?.invoke(JayUtils.genStatusError()!!)
-                throw(NoSuchElementException("Unknown Action: $action"))
-            }
+            else -> genErrorWithCallback(statusCallback, NoSuchElementException("Unknown Action: $action"))
         }
     }
 }

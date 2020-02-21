@@ -2,14 +2,12 @@ package pt.up.fc.dcc.hyrax.jay.services.worker
 
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.StatusCode
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutor
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
-import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutorService
@@ -35,7 +33,7 @@ object WorkerService {
         JayLogger.logInfo("COMPLETE")
     }
 
-    internal fun queueJob(job: JayProto.WorkerJob, callback: ((List<Detection>) -> Unit)?): StatusCode {
+    internal fun queueJob(job: WorkerJob, callback: ((List<Detection>) -> Unit)?): StatusCode {
         JayLogger.logInfo("INIT", job.id)
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(job, callback))
@@ -52,7 +50,6 @@ object WorkerService {
         WorkerProfiler.setBatteryMonitor(batteryMonitor)
         server = WorkerGRPCServer(useNettyServer).start()
         WorkerProfiler.start()
-
         thread(start = true, isDaemon = true, name = "WorkerService") {
             running = true
             while (running) {
@@ -69,12 +66,12 @@ object WorkerService {
             }
             if (!executorThreadPool.isShutdown) executorThreadPool.shutdownNow()
         }
-        brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.WORKER).setRunning(true).build()) {
-            JayLogger.logInfo("RUNNING")
-        }
+        brokerGRPC.announceServiceStatus(
+                ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(true).build())
+        { JayLogger.logInfo("RUNNING") }
     }
 
-    fun stop(stopGRPCServer: Boolean = true, callback: ((JayProto.Status?) -> Unit)? = null) {
+    fun stop(stopGRPCServer: Boolean = true, callback: ((Status?) -> Unit)? = null) {
         JayLogger.logInfo("INIT")
         running = false
         if (stopGRPCServer) server?.stop()
@@ -84,7 +81,7 @@ object WorkerService {
         executorThreadPool.shutdownNow()
         WorkerProfiler.destroy()
         taskExecutorManager?.getCurrentExecutor()?.destroy()
-        brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.WORKER).setRunning(false).build()) { S ->
+        brokerGRPC.announceServiceStatus(ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(false).build()) { S ->
             JayLogger.logInfo("COMPLETE")
             callback?.invoke(S)
         }
@@ -96,15 +93,7 @@ object WorkerService {
         JayLogger.logInfo("COMPLETE")
     }
 
-    fun loadModel(model: Model, callback: ((JayProto.Status) -> Unit)? = null) {
-        JayLogger.logInfo("INIT")
-        if (running) {
-            taskExecutorManager?.getCurrentExecutor()?.runAction("loadModel", callback, model)
-        }
-        JayLogger.logInfo("COMPLETE")
-    }
-
-    fun selectTaskExecutor(taskExecutorUUID: String, callback: ((JayProto.Status?) -> Unit)?) {
+    fun selectTaskExecutor(taskExecutorUUID: String, callback: ((Status?) -> Unit)?) {
         callback?.invoke(if (taskExecutorManager?.setExecutor(taskExecutorUUID) == true) JayUtils.genStatusSuccess() else JayUtils.genStatusError())
     }
 
@@ -112,24 +101,19 @@ object WorkerService {
         return taskExecutorManager?.taskExecutors ?: emptySet()
     }
 
-    fun callExecutorAction(action: String, callback: ((JayProto.Status?, Any?) -> Unit)?, vararg args: Any) {
-        taskExecutorManager?.getCurrentExecutor()?.callAction(action, callback, args)
+    fun callExecutorAction(action: String, callback: ((Status?, Any?) -> Unit)?, vararg args: Any) {
+        taskExecutorManager?.getCurrentExecutor()?.callAction(action, callback, *args)
     }
 
-    fun runExecutorAction(action: String, callback: ((JayProto.Status?) -> Unit)?, vararg args: Any) {
-        taskExecutorManager?.getCurrentExecutor()?.runAction(action, callback, args)
-    }
-
-    fun listModels(callback: ((JayProto.Status?, Any?) -> Unit)?) {
-        JayLogger.logInfo("INIT")
-        taskExecutorManager?.getCurrentExecutor()?.callAction("listModels", callback)
+    fun runExecutorAction(action: String, callback: ((Status?) -> Unit)?, vararg args: Any) {
+        taskExecutorManager?.getCurrentExecutor()?.runAction(action, callback, *args)
     }
 
     internal fun isRunning(): Boolean {
         return running
     }
 
-    fun stopService(callback: ((JayProto.Status?) -> Unit)) {
+    fun stopService(callback: ((Status?) -> Unit)) {
         JayLogger.logInfo("INIT")
         stop(false) { S ->
             callback(S)
@@ -142,7 +126,7 @@ object WorkerService {
     }
 
     // TODO: generify this call
-    private class RunnableJobObjects(val job: JayProto.WorkerJob?, var callback: ((List<Detection>) -> Unit)?) : Runnable {
+    private class RunnableJobObjects(val job: WorkerJob?, var callback: ((List<Detection>) -> Unit)?) : Runnable {
         override fun run() {
             JayLogger.logInfo("INIT", job?.id ?: "")
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, increment = true)
