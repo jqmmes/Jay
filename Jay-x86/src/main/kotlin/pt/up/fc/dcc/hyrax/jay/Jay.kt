@@ -7,14 +7,15 @@ import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 class Jay : AbstractJay() {
 
     override fun startWorker() {
-        //val fsAssistant = FileSystemAssistant()
-        /*startBroker(fsAssistant = fsAssistant)
+        /*
+        startBroker(fsAssistant = fsAssistant)
         val taskExecutor = TensorflowTaskExecutor("TensorflowWorker")
-        taskExecutor.init(CloudletTensorFlow())*/
+        taskExecutor.init(CloudletTensorFlow())
+        WorkerService.start(taskExecutorManager, taskExecutor, localDetect = CloudletTensorFlow(), fsAssistant = fsAssistant)
+        */
 
-        val taskExecutorManager = TaskExecutorManager(FileSystemAssistant())
-
-        //WorkerService.start(taskExecutorManager, taskExecutor, localDetect = CloudletTensorFlow(), fsAssistant = fsAssistant)
-        WorkerService.start(taskExecutorManager)
+        val fsAssistant = FileSystemAssistant()
+        startBroker(fsAssistant = fsAssistant)
+        WorkerService.start(TaskExecutorManager(fsAssistant))
     }
 }

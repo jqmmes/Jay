@@ -144,19 +144,16 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.CallResponse>?) {
-            println("BROKER->CallExecutorAction")
             BrokerService.callExecutorAction(request) { CR -> genericComplete(CR, responseObserver) }
         }
 
         override fun listTaskExecutors(request: Empty?, responseObserver: StreamObserver<JayProto.TaskExecutors>?) {
             BrokerService.listTaskExecutors { TE ->
-                TE.taskExecutorsList.forEach { T -> println(T.name) }
                 genericComplete(TE, responseObserver)
             }
         }
 
         override fun runExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Status>?) {
-            println("BROKER->RunExecutorAction")
             BrokerService.runExecutorAction(request) { S -> genericComplete(S, responseObserver) }
         }
 

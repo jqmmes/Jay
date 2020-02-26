@@ -38,7 +38,6 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.CallResponse>?) {
-            println("WORKER->CallExecutorAction")
             JayLogger.logInfo("INIT")
             if (request == null) genericComplete(JayProto.CallResponse.newBuilder().setStatus(JayUtils.genStatusError()).build(), responseObserver)
             WorkerService.callExecutorAction(request!!.request, { Status, Response ->
@@ -52,7 +51,6 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun runExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Status>?) {
-            println("WORKER->RunExecutorAction")
             JayLogger.logInfo("INIT")
             if (request == null) genericComplete(JayUtils.genStatusError(), responseObserver)
             WorkerService.runExecutorAction(request!!.request,
