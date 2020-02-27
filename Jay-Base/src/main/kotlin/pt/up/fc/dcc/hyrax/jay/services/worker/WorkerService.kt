@@ -130,8 +130,6 @@ object WorkerService {
         override fun run() {
             JayLogger.logInfo("INIT", job?.id ?: "")
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, increment = true)
-            print("RUN_JOB")
-            print(job?.id)
             WorkerProfiler.profileExecution { taskExecutorManager?.getCurrentExecutor()?.executeJob(job, callback as ((Any) -> Unit)?) }
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs, increment = false)
         }
