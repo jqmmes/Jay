@@ -79,16 +79,15 @@ object BrokerService {
         return null
     }
 
-    internal fun executeJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
+    internal fun executeJob(request: Job?, callback: ((Response?) -> Unit)? = null) {
         val jobId = request?.id ?: ""
         JayLogger.logInfo("INIT", jobId)
         val workerJob = WorkerJob.newBuilder().setId(jobId).setFileId(fsAssistant?.createTempFile(request?.data?.toByteArray())).build()
-        if (workerServiceRunning) worker.execute(workerJob, callback) else callback?.invoke(Results
-                .getDefaultInstance())
+        if (workerServiceRunning) worker.execute(workerJob, callback) else callback?.invoke(Response.getDefaultInstance())
         JayLogger.logInfo("COMPLETE", jobId)
     }
 
-    internal fun scheduleJob(request: Job?, callback: ((Results?) -> Unit)? = null) {
+    internal fun scheduleJob(request: Job?, callback: ((Response?) -> Unit)? = null) {
         val jobId = request?.id ?: ""
         JayLogger.logInfo("INIT", jobId)
         val jobDetails = JayUtils.getJobDetails(request)
@@ -105,7 +104,7 @@ object BrokerService {
                 }
             }
         } else {
-            callback?.invoke(Results.getDefaultInstance())
+            callback?.invoke(Response.getDefaultInstance())
         }
         JayLogger.logInfo("COMPLETE", jobId)
     }
@@ -133,14 +132,6 @@ object BrokerService {
         countDownLatch.await()
     }
 
-    internal fun getModels(callback: (Models) -> Unit) {
-        if (workerServiceRunning) worker.listModels(callback) else callback(Models.getDefaultInstance())
-    }
-
-    internal fun setModel(request: Model?, callback: ((Status?) -> Unit)? = null) {
-        if (workerServiceRunning) worker.selectModel(request, callback) else callback?.invoke(JayUtils.genStatusError())
-    }
-
     internal fun diffuseWorkerStatus() : CountDownLatch {
         val countDownLatch = CountDownLatch(1)
         val atomicLock = AtomicInteger(0)
@@ -164,7 +155,6 @@ object BrokerService {
         if (schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.getProto()) { countDownLatch.countDown() }
         else countDownLatch.countDown()
         return countDownLatch
-
     }
 
     internal fun receiveWorkerStatus(request: JayProto.Worker?, completeCallback: (Status?) -> Unit) {
@@ -193,7 +183,6 @@ object BrokerService {
             JayLogger.logWarn("SCHEDULER_NOT_RUNNING")
             callback?.invoke(Schedulers.getDefaultInstance())
         }
-
     }
 
     fun setScheduler(request: Scheduler?, callback: ((Status?) -> Unit)? = null) {
@@ -339,11 +328,11 @@ object BrokerService {
         JayLogger.logInfo("COMPLETE", "", "CLOUD_IP=$cloud_ip")
     }
 
-    fun callExecutorAction(request: Request?, callback: ((CallResponse?) -> Unit)? = null) {
+    fun callExecutorAction(request: Request?, callback: ((Response?) -> Unit)? = null) {
         JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST=${request?.request}"))
         if (workerServiceRunning) worker.callExecutorAction(request, callback)
         else {
-            val errCallResponse = CallResponse.newBuilder()
+            val errCallResponse = Response.newBuilder()
             errCallResponse.status = JayUtils.genStatusError()
             callback?.invoke(errCallResponse.build())
         }
@@ -361,13 +350,13 @@ object BrokerService {
         else callback?.invoke(JayUtils.genStatusError())
     }
 
-    fun selectTaskExecutor(request: JayProto.TaskExecutor?, callback: ((Status?) -> Unit)?) {
+    fun selectTaskExecutor(request: TaskExecutor?, callback: ((Status?) -> Unit)?) {
         JayLogger.logInfo("INIT", actions = *arrayOf("EXECUTOR_NAME=${request?.name}"))
         if (workerServiceRunning) worker.selectTaskExecutor(request, callback)
         else callback?.invoke(JayUtils.genStatusError())
     }
 
-    fun setExecutorSettings(request: JayProto.Settings?, callback: ((Status?) -> Unit)?) {
+    fun setExecutorSettings(request: Settings?, callback: ((Status?) -> Unit)?) {
         JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
         if (workerServiceRunning) worker.setExecutorSettings(request, callback)
         else callback?.invoke(JayUtils.genStatusError())

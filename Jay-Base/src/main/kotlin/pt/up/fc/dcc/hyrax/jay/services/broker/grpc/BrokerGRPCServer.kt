@@ -18,12 +18,12 @@ import java.util.*
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(JaySettings.BROKER_PORT, useNettyServer) {
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
-        override fun executeJob(request: JayProto.Job?, responseObserver: StreamObserver<JayProto.Results>?) {
-            responseObserver?.onNext(JayProto.Results.newBuilder().setStatus(JayProto.StatusCode.Received).build())
+        override fun executeJob(request: JayProto.Job?, responseObserver: StreamObserver<JayProto.Response>?) {
+            responseObserver?.onNext(JayProto.Response.newBuilder().setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
             BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver) }
         }
 
-        override fun scheduleJob(request: JayProto.Job?, responseObserver: StreamObserver<JayProto.Results>?) {
+        override fun scheduleJob(request: JayProto.Job?, responseObserver: StreamObserver<JayProto.Response>?) {
             BrokerService.scheduleJob(request) { R -> genericComplete(R, responseObserver) }
         }
 
@@ -54,18 +54,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(request, responseObserver)
         }
 
-        override fun getModels(request: Empty?, responseObserver: StreamObserver<JayProto.Models>?) {
-            BrokerService.getModels { M -> genericComplete(M, responseObserver) }
-        }
-
-        override fun setModel(request: JayProto.Model?, responseObserver: StreamObserver<JayProto.Status>?) {
-            JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${request?.id}"))
-            BrokerService.setModel(request) { S ->
-                JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request?.id}"))
-                genericComplete(S, responseObserver)
-            }
-        }
-
         override fun getSchedulers(request: Empty?, responseObserver: StreamObserver<JayProto.Schedulers>?) {
             JayLogger.logInfo("INIT")
             BrokerService.getSchedulers { S ->
@@ -86,11 +74,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             BrokerService.listenMulticast(request?.value ?: false)
             genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
         }
-
-        /*override fun announceMulticast(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
-            BrokerService.announceMulticast()
-            genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
-        }*/
 
         override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<JayProto.Worker>?) {
             genericComplete(BrokerService.requestWorkerStatus(), responseObserver)
@@ -127,7 +110,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun createJob(request: JayProto.String?, responseObserver: StreamObserver<JayProto.Results>?) {
+        override fun createJob(request: JayProto.String?, responseObserver: StreamObserver<JayProto.Response>?) {
             val reqId = request?.str ?: ""
             JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST_ID=$reqId"))
             if (reqId.contains(".mp4")) {
@@ -143,7 +126,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             JayLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=$reqId"))
         }
 
-        override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.CallResponse>?) {
+        override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Response>?) {
             BrokerService.callExecutorAction(request) { CR -> genericComplete(CR, responseObserver) }
         }
 

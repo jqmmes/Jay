@@ -7,7 +7,6 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.structures.Job
-import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import java.lang.Thread.sleep
 import java.util.*
@@ -27,16 +26,8 @@ abstract class AbstractJay {
         val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(5, 30, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>())
     }
 
-    fun listModels(callback: ((Set<Model>) -> Unit)? = null) {
-        broker.getModels(callback)
-    }
-
     fun listSchedulers(callback: ((Set<Pair<String, String>>) -> Unit)? = null) {
         broker.getSchedulers(callback)
-    }
-
-    fun setModel(model: Model, callback: ((JayProto.Status) -> Unit)? = null) {
-        broker.selectModel(model, callback)
     }
 
     fun setScheduler(id: String, completeCallback: (Boolean) -> Unit) {
@@ -71,7 +62,7 @@ abstract class AbstractJay {
         WorkerService.stop()
     }
 
-    fun scheduleJob(data: ByteArray, result: ((JayProto.Results) -> Unit)? = null) {
+    fun scheduleJob(data: ByteArray, result: ((JayProto.Response) -> Unit)? = null) {
         broker.scheduleJob(Job(data), result)
     }
 

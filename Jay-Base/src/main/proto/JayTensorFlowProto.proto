@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option java_package = "pt.up.fc.dcc.hyrax.jay.proto";
+option java_outer_classname = "JayTensorFlowProto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "JayProto.proto";
+
+
+message Detection {
+    float score = 1;
+    int32 class = 3;
+}
+
+message Results {
+    StatusCode status = 1;
+    repeated Detection detections = 2;
+    string id = 3; // uuid
+}
+
+message Models {
+    repeated Model models = 1;
+}
+
+message Model {
+    int32 id = 1;
+    string name = 2;
+    string url = 3;
+    bool downloaded = 4;
+}
+
+message ModelConfig {
+    Model model = 1;
+    map<string, string> configs = 2;
+}

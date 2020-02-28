@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutionException
 
+@Suppress("DuplicatedCode")
 class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerServiceBlockingStub, WorkerServiceGrpc.WorkerServiceFutureStub>
 (host, JaySettings.WORKER_PORT) {
     override var blockingStub: WorkerServiceGrpc.WorkerServiceBlockingStub = WorkerServiceGrpc.newBlockingStub(channel)
@@ -21,7 +22,7 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         futureStub = WorkerServiceGrpc.newFutureStub(channel)
     }
 
-    fun execute(job: JayProto.WorkerJob?, callback: ((JayProto.Results?) -> Unit)? = null) {
+    fun execute(job: JayProto.WorkerJob?, callback: ((JayProto.Response?) -> Unit)? = null) {
         JayLogger.logInfo("INIT", job?.id ?: "")
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val futureJob = futureStub.execute(job)
@@ -35,36 +36,7 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         }, AbstractJay.executorPool)
     }
 
-    fun listModels(callback: ((JayProto.Models) -> Unit)? = null) {
-        JayLogger.logInfo("INIT")
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.listModels(Empty.getDefaultInstance())
-        call.addListener(Runnable {
-            try {
-                callback?.invoke(call.get())
-                JayLogger.logInfo("COMPLETE")
-            } catch (e: ExecutionException) {
-                JayLogger.logInfo("ERROR")
-            }
-
-        }, AbstractJay.executorPool)
-    }
-
-    fun selectModel(request: JayProto.Model?, callback: ((JayProto.Status?) -> Unit)?) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${request?.id}"))
-        val call = futureStub.selectModel(request)
-        call.addListener(Runnable {
-            try {
-                callback?.invoke(call.get())
-                JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${request?.id}"))
-            } catch (e: ExecutionException) {
-                JayLogger.logInfo("ERROR", actions = *arrayOf("MODEL_ID=${request?.id}"))
-                callback?.invoke(JayUtils.genStatusError())
-            }
-        }, AbstractJay.executorPool)
-    }
-
-    fun callExecutorAction(request: JayProto.Request?, callback: ((JayProto.CallResponse?) -> Unit)?) {
+    fun callExecutorAction(request: JayProto.Request?, callback: ((JayProto.Response?) -> Unit)?) {
         JayLogger.logInfo("INIT", actions = *arrayOf("ACTION=${request?.request}"))
         val call = futureStub.callExecutorAction(request)
         call.addListener(Runnable {
@@ -73,7 +45,7 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
                 JayLogger.logInfo("COMPLETE", actions = *arrayOf("ACTION=${request?.request}"))
             } catch (e: ExecutionException) {
                 JayLogger.logInfo("ERROR", actions = *arrayOf("ACTION=${request?.request}"))
-                callback?.invoke(JayProto.CallResponse.newBuilder().setStatus(JayUtils.genStatusError()).build())
+                callback?.invoke(JayProto.Response.newBuilder().setStatus(JayUtils.genStatusError()).build())
             }
         }, AbstractJay.executorPool)
     }

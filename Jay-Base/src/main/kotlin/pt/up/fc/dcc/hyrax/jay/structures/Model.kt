@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.structures
 
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Model as JayModel
+import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Model as JayModel
 
 data class Model(val modelId: Int,
                  val modelName: String,
@@ -9,7 +9,7 @@ data class Model(val modelId: Int,
 
     internal constructor(request: JayModel?) : this(request!!.id, request.name, request.url, request.downloaded)
 
-    internal fun getProto(): JayModel {
+    fun getProto(): JayModel {
         return JayModel.newBuilder().setId(modelId).setName(modelName).setUrl(remoteUrl).setDownloaded(downloaded).build()
     }
 }

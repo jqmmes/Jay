@@ -1,10 +1,9 @@
 package pt.up.fc.dcc.hyrax.jay.utils
 
+import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
-import pt.up.fc.dcc.hyrax.jay.structures.Detection
-import pt.up.fc.dcc.hyrax.jay.structures.Model
 import java.net.DatagramPacket
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -18,7 +17,7 @@ object JayUtils {
         val interfaceList: MutableList<NetworkInterface> = mutableListOf()
         for (netInt in NetworkInterface.getNetworkInterfaces()) {
             if (!netInt.isLoopback && !netInt.isPointToPoint && netInt.isUp && netInt.supportsMulticast()) {
-                for (address in netInt.inetAddresses)
+                for (address in netInt.inetAddresses) {
                     if (address is T) {
                         if (JaySettings.MCAST_INTERFACE == null || (JaySettings.MCAST_INTERFACE != null && netInt.name ==
                                         JaySettings.MCAST_INTERFACE)) {
@@ -26,6 +25,7 @@ object JayUtils {
                             interfaceList.add(netInt)
                         }
                     }
+                }
             }
         }
         return interfaceList
@@ -49,40 +49,15 @@ object JayUtils {
         return packet.address.hostAddress.substringBefore("%")
     }
 
-    private fun genDetection(detection: Detection?): JayProto.Detection {
-        return JayProto.Detection.newBuilder()
-                .setClass_(detection!!.class_)
-                .setScore(detection.score)
-                .build()
-    }
-
-    internal fun genResults(id: String, results: List<Detection?>): JayProto.Results {
-        val builder = JayProto.Results.newBuilder()
+    internal fun genResponse(id: String, results: ByteString): JayProto.Response {
+        val builder = JayProto.Response.newBuilder()
                 .setId(id)
-        for (detection in results) {
-            builder.addDetections(genDetection(detection))
-        }
+        builder.bytes = results
         return builder.build()
-    }
-
-    fun genModelRequest(listModels: Set<Model>): JayProto.Models? {
-        val models = JayProto.Models.newBuilder()
-        for (model in listModels) {
-            models.addModels(model.getProto())
-        }
-        return models.build()
     }
 
     fun genStatus(code: JayProto.StatusCode): JayProto.Status? {
         return JayProto.Status.newBuilder().setCode(code).build()
-    }
-
-    fun parseModels(models: JayProto.Models?): Set<Model> {
-        val modelSet: MutableSet<Model> = mutableSetOf()
-        for (model in models!!.modelsList) {
-            modelSet.add(Model(model))
-        }
-        return modelSet.toSet()
     }
 
     fun parseSchedulers(schedulers: JayProto.Schedulers?): Set<Pair<String, String>> {

@@ -16,11 +16,11 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
     override val grpcImpl: BindableService = object : WorkerServiceGrpc.WorkerServiceImplBase() {
 
-        override fun execute(request: JayProto.WorkerJob?, responseObserver: StreamObserver<JayProto.Results>?) {
+        override fun execute(request: JayProto.WorkerJob?, responseObserver: StreamObserver<JayProto.Response>?) {
             JayLogger.logInfo("INIT", request?.id ?: "")
             WorkerService.queueJob(request!!) { detectionList ->
                 JayLogger.logInfo("COMPLETE", request.id ?: "")
-                genericComplete(JayUtils.genResults(request.id, detectionList), responseObserver)
+                genericComplete(JayUtils.genResponse(request.id, detectionList as ByteString), responseObserver)
             }
         }
 
@@ -37,11 +37,11 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.CallResponse>?) {
+        override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Response>?) {
             JayLogger.logInfo("INIT")
-            if (request == null) genericComplete(JayProto.CallResponse.newBuilder().setStatus(JayUtils.genStatusError()).build(), responseObserver)
+            if (request == null) genericComplete(JayProto.Response.newBuilder().setStatus(JayUtils.genStatusError()).build(), responseObserver)
             WorkerService.callExecutorAction(request!!.request, { Status, Response ->
-                val callResponse = JayProto.CallResponse.newBuilder()
+                val callResponse = JayProto.Response.newBuilder()
                 callResponse.status = Status
                 if (Response != null) callResponse.bytes = ByteString.copyFrom((Response as ByteArray))
                 else callResponse.bytes = ByteString.EMPTY
@@ -79,10 +79,11 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             JayLogger.logInfo("COMPLETE")
         }
 
-        // TODO: SetExecutorSettings
         override fun setExecutorSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
             JayLogger.logInfo("INIT")
             if (request == null) genericComplete(JayUtils.genStatusError(), responseObserver)
+            else WorkerService.setExecutorSettings(request.settingMap) { S -> genericComplete(S, responseObserver) }
+            JayLogger.logInfo("COMPLETE")
         }
     }
 }

@@ -13,7 +13,6 @@ import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.structures.Job
-import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutionException
@@ -39,13 +38,13 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         futureStub = BrokerServiceGrpc.newFutureStub(channel)
     }
 
-    fun scheduleJob(job: Job, callback: ((JayProto.Results) -> Unit)? = null) {
+    fun scheduleJob(job: Job, callback: ((JayProto.Response) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.scheduleJob(job.getProto())
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
-    fun executeJob(job: JayProto.Job?, callback: ((JayProto.Results) -> Unit)? = null, schedulerInformCallback: (() -> Unit)? = null) {
+    fun executeJob(job: JayProto.Job?, callback: ((JayProto.Response) -> Unit)? = null, schedulerInformCallback: (() -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val jobId = job?.id ?: ""
         AbstractJay.executorPool.submit {
@@ -54,11 +53,11 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
-            asyncStub.executeJob(job, object : StreamObserver<JayProto.Results> {
-                private var lastResult: JayProto.Results? = null
-                override fun onNext(results: JayProto.Results) {
+            asyncStub.executeJob(job, object : StreamObserver<JayProto.Response> {
+                private var lastResult: JayProto.Response? = null
+                override fun onNext(results: JayProto.Response) {
                     lastResult = results
-                    when (results.status) {
+                    when (results.status.code) {
                         JayProto.StatusCode.Received ->
                             JayLogger.logInfo("DATA_REACHED_SERVER", jobId,
                                     "DATA_SIZE=${job?.toByteArray()?.size}",
@@ -75,17 +74,17 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
                         else -> onError(Throwable("Error Received onNext for jobId: $jobId"))
                     }
-                    if (JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("PASSIVE", "ALL") && results.status == JayProto.StatusCode.Received) {
+                    if (JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("PASSIVE", "ALL") && results.status.code == JayProto.StatusCode.Received) {
                         BrokerService.passiveBandwidthUpdate(jobId, job?.toByteArray()?.size
                                 ?: -1, System.currentTimeMillis() - startTime)
-                    } else if (results.status == JayProto.StatusCode.Error) {
+                    } else if (results.status.code == JayProto.StatusCode.Error) {
                         onError(Throwable("Error Received onNext for jobId: $jobId"))
                     }
                 }
 
                 override fun onError(t: Throwable) {
                     JayLogger.logError("ERROR", jobId)
-                    callback?.invoke(JayProto.Results.getDefaultInstance()); JayLogger.logError("ERROR", jobId,
+                    callback?.invoke(JayProto.Response.getDefaultInstance()); JayLogger.logError("ERROR", jobId,
                             "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                             "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                             "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
@@ -98,7 +97,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                             "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                             "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                             "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
-                    callback?.invoke(lastResult ?: JayProto.Results.getDefaultInstance())
+                    callback?.invoke(lastResult ?: JayProto.Response.getDefaultInstance())
                     schedulerInformCallback?.invoke()
                 }
             })
@@ -142,25 +141,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }, AbstractJay.executorPool)
     }
 
-    fun selectModel(model: Model, callback: ((JayProto.Status) -> Unit)? = null) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.setModel(model.getProto())
-        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
-    }
-
-    fun getModels(callback: ((Set<Model>) -> Unit)? = null) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.getModels(Empty.getDefaultInstance())
-        call.addListener(Runnable {
-            try {
-                callback?.invoke(JayUtils.parseModels(call.get()))
-            } catch (e: ExecutionException) {
-                JayLogger.logError("UNAVAILABLE")
-            }
-        }, AbstractJay.executorPool)
-    }
-
-    fun callExecutorAction(request: JayProto.Request?, callback: ((JayProto.CallResponse?) -> Unit)?) {
+    fun callExecutorAction(request: JayProto.Request?, callback: ((JayProto.Response?) -> Unit)?) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         JayLogger.logInfo("INIT", actions = *arrayOf("ACTION=${request?.request}"))
         val call = futureStub.callExecutorAction(request)
@@ -170,7 +151,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 JayLogger.logInfo("COMPLETE", actions = *arrayOf("ACTION=${request?.request}"))
             } catch (e: ExecutionException) {
                 JayLogger.logInfo("ERROR", actions = *arrayOf("ACTION=${request?.request}"))
-                callback?.invoke(JayProto.CallResponse.newBuilder().setStatus(JayUtils.genStatusError()).build())
+                callback?.invoke(JayProto.Response.newBuilder().setStatus(JayUtils.genStatusError()).build())
             }
         }, AbstractJay.executorPool)
     }

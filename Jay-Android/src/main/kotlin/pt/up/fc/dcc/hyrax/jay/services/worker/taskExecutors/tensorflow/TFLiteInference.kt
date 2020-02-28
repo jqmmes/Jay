@@ -83,9 +83,39 @@ class TFLiteInference : Classifier {
         val outputMap: MutableMap<Int, Any> = HashMap()
         outputMap[0] = this.outputLocations
         outputMap[1] = this.outputClasses
+        //outputMap[2] = IntArray(numDetections)
+
 
         // Run Inference
         tfLite!!.runForMultipleInputsOutputs(inputArray, outputMap)
+
+        /**
+         * The results are stored in outputMap[0] per class [detections_0: [class_0, class_1, .., class_91], detections_1: ...]
+         * and in outputMap[1] are the locations [detections_0: [[x,y,up,down]], detections_1: ...]
+         * Current TFLite models available on ModelZoo are broken and need to be recompiled locally using latest Object Detection API!
+         */
+
+
+        /*
+            val outputs = (outputMap[0] as Array<Array<FloatArray>>)[0]
+            var max = 0f
+            var location = 0
+            outputs.forEach { it ->
+                var i = 0
+                it.forEach {it0 -> if (it0 > max) {
+                        max = it0
+                        location = i
+                    }
+                    i++
+                }
+            }
+            println("$max - $location")
+            */
+
+
+        //println(this.outputLocations.contentDeepToString())
+        //println(this.outputClasses.contentDeepToString())
+
 
         // PROCESS OUTPUTS
         //val recognitions = ArrayList<Recognition>(numDetections)

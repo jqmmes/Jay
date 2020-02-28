@@ -5,12 +5,6 @@ option java_outer_classname = "JayProto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
-
-message Detection {
-    float score = 1;
-    int32 class = 3;
-}
-
 message Job {
     string id = 1; // uuid
     bytes data = 2;
@@ -35,28 +29,6 @@ enum StatusCode {
 
 message Status {
     StatusCode code = 1;
-}
-
-message Results {
-    StatusCode status = 1;
-    repeated Detection detections = 2;
-    string id = 3; // uuid
-}
-
-message Models {
-    repeated Model models = 1;
-}
-
-message Model {
-    int32 id = 1;
-    string name = 2;
-    string url = 3;
-    bool downloaded = 4;
-}
-
-message ModelConfig {
-    Model model = 1;
-    map<string, string> configs = 2;
 }
 
 message Worker {
@@ -167,9 +139,10 @@ message Request {
     repeated bytes args = 2;
 }
 
-message CallResponse {
+message Response {
     Status status = 1;
     bytes bytes = 2;
+    string id = 3;
 }
 
 // Internal and External communication Broker
@@ -177,9 +150,9 @@ service BrokerService {
     rpc ping (Ping) returns (Ping) {
     }; // ExternalBroker > Broker
 
-    rpc executeJob (Job) returns (stream Results) {
+    rpc executeJob (Job) returns (stream Response) {
     }; // ExternalBroker > Broker --> Calls WorkerService::execute
-    rpc scheduleJob (Job) returns (Results) {
+    rpc scheduleJob (Job) returns (Response) {
     }; // App > Broker --> Calls SchedulerService::schedule
 
     rpc advertiseWorkerStatus (Worker) returns (Status) {
@@ -192,10 +165,6 @@ service BrokerService {
     }; // ExternalBroker > Broker
     //      SchedulerService::notifyWorkerUpdate
 
-    rpc getModels (google.protobuf.Empty) returns (Models) {
-    }; // App > Broker --> Calls WorkerService::listModels
-    rpc setModel (Model) returns (Status) {
-    }; // App > Broker --> Calls WorkerService::selectModel
 
     rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {
     }; // SchedulerService > Broker
@@ -227,7 +196,7 @@ service BrokerService {
 
     rpc calibrateWorker (String) returns (google.protobuf.Empty) {
     };
-    rpc createJob (String) returns (Results) {
+    rpc createJob (String) returns (Response) {
     };
     rpc setSettings (Settings) returns (Status) {
     };
@@ -236,7 +205,7 @@ service BrokerService {
     };
     rpc selectTaskExecutor (TaskExecutor) returns (Status) {
     };
-    rpc callExecutorAction (Request) returns (CallResponse) {
+    rpc callExecutorAction (Request) returns (Response) {
     };
     rpc runExecutorAction (Request) returns (Status) {
     };
@@ -268,12 +237,8 @@ service SchedulerService {
 
 // Broker > WorkerService
 service WorkerService {
-    rpc execute (WorkerJob) returns (Results) {
+    rpc execute (WorkerJob) returns (Response) {
     }; // Queue a Job for execution
-    rpc selectModel (Model) returns (Status) {
-    }; // Select TF Model to be used @deprecated
-    rpc listModels (google.protobuf.Empty) returns (Models) {
-    }; // List available TF Models @deprecated
     rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
     };
     rpc stopService (google.protobuf.Empty) returns (Status) {
@@ -282,7 +247,7 @@ service WorkerService {
     };
     rpc selectTaskExecutor (TaskExecutor) returns (Status) {
     };
-    rpc callExecutorAction (Request) returns (CallResponse) {
+    rpc callExecutorAction (Request) returns (Response) {
     };
     rpc runExecutorAction (Request) returns (Status) {
     };

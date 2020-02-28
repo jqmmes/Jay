@@ -33,7 +33,7 @@ object WorkerService {
         JayLogger.logInfo("COMPLETE")
     }
 
-    internal fun queueJob(job: WorkerJob, callback: ((List<Detection>) -> Unit)?): StatusCode {
+    internal fun queueJob(job: WorkerJob, callback: ((Any) -> Unit)?): StatusCode {
         JayLogger.logInfo("INIT", job.id)
         if (!running) throw Exception("WorkerService not running")
         jobQueue.put(RunnableJobObjects(job, callback))
@@ -125,12 +125,15 @@ object WorkerService {
         server?.stopNowAndWait()
     }
 
-    // TODO: generify this call
-    private class RunnableJobObjects(val job: WorkerJob?, var callback: ((List<Detection>) -> Unit)?) : Runnable {
+    fun setExecutorSettings(settingMap: Map<String, Any>, callback: ((Status?) -> Unit)?) {
+        callback?.invoke(taskExecutorManager?.setSettings(settingMap))
+    }
+
+    private class RunnableJobObjects(val job: WorkerJob?, var callback: ((Any) -> Unit)?) : Runnable {
         override fun run() {
             JayLogger.logInfo("INIT", job?.id ?: "")
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, increment = true)
-            WorkerProfiler.profileExecution { taskExecutorManager?.getCurrentExecutor()?.executeJob(job, callback as ((Any) -> Unit)?) }
+            WorkerProfiler.profileExecution { taskExecutorManager?.getCurrentExecutor()?.executeJob(job, callback) }
             WorkerProfiler.atomicOperation(WorkerProfiler.runningJobs, WorkerProfiler.totalJobs, increment = false)
         }
     }
