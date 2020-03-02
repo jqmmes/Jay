@@ -47,7 +47,14 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
         }
     }
 
-    override fun setSetting(key: String, value: Any?, statusCallback: ((JayProto.Status) -> Unit)?) {}
+    override fun setSetting(key: String, value: Any?, statusCallback: ((JayProto.Status) -> Unit)?) {
+        when (key) {
+            "GPU" -> classifier.useGPU = true
+            "CPU" -> classifier.useGPU = false
+        }
+
+
+    }
 
     private fun genModelRequest(listModels: Set<Model>): JayTensorFlowProto.Models? {
         val models = JayTensorFlowProto.Models.newBuilder()
@@ -80,7 +87,7 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
                 if (args[0] !is ByteString) genErrorWithCallback(statusCallback,
                         RuntimeException("Invalid loadModel arg type (${args[0].javaClass.name}"))
                 val model = JayModel.parseFrom(args[0] as ByteString)
-                classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded), statusCallback)
+                classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded, model.isQuantized, model.inputSize), statusCallback)
             }
             else -> genErrorWithCallback(statusCallback, NoSuchElementException("Unknown Action: $action"))
         }

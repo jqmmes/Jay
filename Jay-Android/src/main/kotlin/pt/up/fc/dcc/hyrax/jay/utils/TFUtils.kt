@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarInputStream
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.COCODataLabels
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.Classifier
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
@@ -78,8 +79,11 @@ object TFUtils {
             if (result == null) continue
             if (result.confidence == null) continue
             if (result.confidence >= minimumConfidence) {
-                mappedRecognitions.add(Detection(score = result.confidence, class_ = result.title!!.toFloat
-                ().toInt()))
+                try {
+                    mappedRecognitions.add(Detection(score = result.confidence, class_ = result.title!!.toFloat().toInt()))
+                } catch (e: Exception) {
+                    mappedRecognitions.add(Detection(score = result.confidence, class_ = COCODataLabels.classId(result.title!!)))
+                }
             }
         }
         JayLogger.logInfo("COMPLETE")
@@ -185,7 +189,7 @@ object TFUtils {
             } catch (ignore: Exception) {
                 JayLogger.logWarn("ERROR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "EXTRACT=${File(context.cacheDir.path, entry.name).path}"))
             }
-
+            println(entry.name)
             entry = tis.nextEntry
         }
         JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))

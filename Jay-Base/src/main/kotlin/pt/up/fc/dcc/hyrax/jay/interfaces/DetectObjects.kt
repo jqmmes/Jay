@@ -8,6 +8,7 @@ import java.io.File
 interface DetectObjects {
     var minimumScore: Float
     val models: List<Model>
+    var useGPU: Boolean
 
     fun extractModel(modelFile: File) : String
     fun downloadModel(model: Model): File?

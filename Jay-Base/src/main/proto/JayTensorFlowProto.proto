@@ -27,6 +27,8 @@ message Model {
     string name = 2;
     string url = 3;
     bool downloaded = 4;
+    bool isQuantized = 5;
+    int32 inputSize = 6;
 }
 
 message ModelConfig {

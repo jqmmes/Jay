@@ -74,7 +74,7 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
                 if (args[0] !is ByteString) genErrorWithCallback(statusCallback,
                         RuntimeException("Invalid loadModel arg type (${args[0].javaClass.name}"))
                 val model = JayModel.parseFrom(args[0] as ByteString)
-                classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded), statusCallback)
+                classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded, model.isQuantized, model.inputSize), statusCallback)
             }
             else -> genErrorWithCallback(statusCallback, NoSuchElementException("Unknown Action: $action"))
         }

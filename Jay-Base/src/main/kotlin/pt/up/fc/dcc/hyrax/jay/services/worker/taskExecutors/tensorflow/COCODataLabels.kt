@@ -78,14 +78,20 @@ object COCODataLabels{
         84 to "book",
         85 to "clock",
         86 to "vase",
-        87 to "scissors",
-        88 to "teddy bear",
-        89 to "hair drier",
-        90 to "toothbrush"
+            87 to "scissors",
+            88 to "teddy bear",
+            89 to "hair drier",
+            90 to "toothbrush"
     )
 
-    fun label(classId : Int) : String {
+    fun label(classId: Int): String {
         if (classId in classToLabel) return classToLabel[classId]!!
         return ""
+    }
+
+    fun classId(label: String): Int {
+        if (label in classToLabel.values)
+            classToLabel.forEach { (i, s) -> if (s == label) return i }
+        return 0
     }
 }

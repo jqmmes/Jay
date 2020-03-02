@@ -21,10 +21,12 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
     }
 
     override var minimumScore: Float = 0f
+    override var useGPU = false
 
     private var localDetector: Classifier? = null
     private val tfOdApiInputSize: Int = 500
     private var minimumConfidence: Float = 0.1f
+
     override val models: List<Model>
         get() = listOf(
                 Model(0,

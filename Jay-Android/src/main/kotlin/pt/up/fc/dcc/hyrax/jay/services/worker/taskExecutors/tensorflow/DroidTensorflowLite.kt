@@ -15,21 +15,36 @@ import kotlin.concurrent.thread
 class DroidTensorflowLite(private val context: Context) : DetectObjects {
 
     override var minimumScore: Float = 0f
+    override var useGPU = false
+
     private var localDetector: Classifier? = null
-    private val tfOdApiInputSize: Int = 320//500
+    private var tfOdApiInputSize: Int = 320//500
     private var minimumConfidence: Float = 0.1f
 
     override val models: List<Model>
         get() = listOf(
+                // http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v3_large_coco_2019_08_14.tar.gz
                 Model(0,
                         "ssd_mobilenet_v3_large_coco",
-                        "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v3_large_coco_2019_08_14.tar.gz",
-                        checkDownloadedModel("ssd_mobilenet_v3_large_coco")
+                        "https://www.dropbox.com/s/8z71cy95karsnhf/ssd_mobilenet_v3_large_coco_2019_08_14.tar.gz?dl=1",
+                        checkDownloadedModel("ssd_mobilenet_v3_large_coco"),
+                        false,
+                        320
                 ),
+                // "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v3_small_coco_2019_08_14.tar.gz",
                 Model(1,
                         "ssd_mobilenet_v3_small_coco",
-                        "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v3_small_coco_2019_08_14.tar.gz",
-                        checkDownloadedModel("ssd_mobilenet_v3_small_coco")
+                        "https://www.dropbox.com/s/7jb2jyx7h467hjd/ssd_mobilenet_v3_small_coco_2019_08_14.tar.gz?dl=1",
+                        checkDownloadedModel("ssd_mobilenet_v3_small_coco"),
+                        false,
+                        320
+                ),
+                Model(2,
+                        "ssd_mobilenet_v1_fpn_coco",
+                        "https://www.dropbox.com/s/pphefxdmn3ryzk8/ssd_mobilenet_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz?dl=1",
+                        checkDownloadedModel("ssd_mobilenet_v1_fpn_coco"),
+                        false,
+                        640
                 )
         )
 
@@ -48,7 +63,8 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
     override fun loadModel(model: Model, completeCallback: ((JayProto.Status) -> Unit)?) {
         localDetector = null
         thread(name = "DroidTensorflowLite loadModel") {
-            localDetector = TFUtils.loadModel(TFLiteInference(), context, model, "model.tflite", tfOdApiInputSize, isQuantized = true, numThreads = 4, device = "CPU")
+            localDetector = TFUtils.loadModel(TFLiteInference(), context, model, "model.tflite", model.inputSize, isQuantized = model.isQuantized, numThreads = 4, device = if (this.useGPU) "GPU" else "CPU")
+            this.tfOdApiInputSize = model.inputSize
             completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
         }
     }

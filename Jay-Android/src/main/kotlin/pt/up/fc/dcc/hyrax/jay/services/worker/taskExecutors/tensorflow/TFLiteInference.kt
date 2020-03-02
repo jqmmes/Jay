@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow
 
 import android.content.res.AssetManager
 import android.graphics.Bitmap
+import android.graphics.RectF
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
 import org.tensorflow.lite.nnapi.NnApiDelegate
@@ -22,17 +23,17 @@ import java.util.*
 class TFLiteInference : Classifier {
 
     // Constant Values
-    private val numDetections = 2034 // 10 // Only return this many results.
+    private val numDetections = 10 //2034 // 10 // Only return this many results.
     private val imageMean = 128.0f // Float model
     private val imageStd = 128.0f // Float model
 
     // Config values.
     private var isModelQuantized = false
     private var inputSize = 0
-    //private val labels = Vector<String>()
     private lateinit var intValues: IntArray
     private lateinit var outputLocations: Array<Array<FloatArray>>
-    private lateinit var outputClasses: Array<Array<Array<FloatArray>>>
+    private lateinit var outputClasses: Array<FloatArray>
+    private lateinit var outputScores: Array<FloatArray>
     private var imgData: ByteBuffer? = null
     private var tfLite: Interpreter? = null
 
@@ -54,8 +55,9 @@ class TFLiteInference : Classifier {
         this.imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * 3 * numBytesPerChannel)
         this.imgData!!.order(ByteOrder.nativeOrder())
         this.intValues = IntArray(inputSize * inputSize)
-        this.outputLocations = Array(1) { Array(numDetections) { FloatArray(91) } }
-        this.outputClasses = Array(1) { Array(numDetections) { Array(1) { FloatArray(4) } } } //4072 // Expected Shape: [1,2034,1,4]
+        this.outputLocations = Array(1) { Array(this.numDetections) { FloatArray(4) } }
+        this.outputClasses = Array(1) { FloatArray(this.numDetections) } //4072 // Expected Shape: [1,2034,1,4]
+        this.outputScores = Array(1) { FloatArray(this.numDetections) }
 
         loadModel(device!!, numThreads ?: 4, modelPath)
     }
@@ -83,7 +85,8 @@ class TFLiteInference : Classifier {
         val outputMap: MutableMap<Int, Any> = HashMap()
         outputMap[0] = this.outputLocations
         outputMap[1] = this.outputClasses
-        //outputMap[2] = IntArray(numDetections)
+        outputMap[2] = this.outputScores
+        outputMap[3] = FloatArray(1) // numDetections
 
 
         // Run Inference
@@ -94,32 +97,8 @@ class TFLiteInference : Classifier {
          * and in outputMap[1] are the locations [detections_0: [[x,y,up,down]], detections_1: ...]
          * Current TFLite models available on ModelZoo are broken and need to be recompiled locally using latest Object Detection API!
          */
-
-
-        /*
-            val outputs = (outputMap[0] as Array<Array<FloatArray>>)[0]
-            var max = 0f
-            var location = 0
-            outputs.forEach { it ->
-                var i = 0
-                it.forEach {it0 -> if (it0 > max) {
-                        max = it0
-                        location = i
-                    }
-                    i++
-                }
-            }
-            println("$max - $location")
-            */
-
-
-        //println(this.outputLocations.contentDeepToString())
-        //println(this.outputClasses.contentDeepToString())
-
-
-        // PROCESS OUTPUTS
-        //val recognitions = ArrayList<Recognition>(numDetections)
-        /*for (i in 0 until numDetections) {
+        val recognitions = ArrayList<Recognition>(numDetections)
+        for (i in 0 until numDetections) {
             val detection = RectF(
                     outputLocations[0][i][1] * inputSize,
                     outputLocations[0][i][0] * inputSize,
@@ -129,12 +108,11 @@ class TFLiteInference : Classifier {
             /** SSD Mobilenet V1 Model assumes class 0 is background class
              * in label file and class labels start from 1 to number_of_classes+1,
              * while outputClasses correspond to class index from 0 to number_of_classes */
-            // detection_boxes,detection_classes,detection_scores,num_detections
             val labelOffset = 1
-            println()
-            //recognitions.add(Recognition("" + i, labels[outputClasses[0][i].toInt() + labelOffset], outputScores[0][i], detection))
-        }*/
-        return ArrayList(numDetections)
+            recognitions.add(Recognition("" + i, COCODataLabels.label(outputClasses[0][i].toInt() + labelOffset), outputScores[0][i], detection))
+        }
+
+        return recognitions
     }
 
     override fun close() {
