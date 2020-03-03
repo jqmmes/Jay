@@ -54,6 +54,7 @@ internal class CloudletTensorFlow : DetectObjects {
 
     override var minimumScore: Float = 0.3f
     override var useGPU = false
+    override var useNNAPI = false
 
     private var loadedModel: SavedModelBundle? = null
     private var modelClosed = true

@@ -16,6 +16,7 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
 
     override var minimumScore: Float = 0f
     override var useGPU = false
+    override var useNNAPI = false
 
     private var localDetector: Classifier? = null
     private var tfOdApiInputSize: Int = 320//500
@@ -63,7 +64,7 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
     override fun loadModel(model: Model, completeCallback: ((JayProto.Status) -> Unit)?) {
         localDetector = null
         thread(name = "DroidTensorflowLite loadModel") {
-            localDetector = TFUtils.loadModel(TFLiteInference(), context, model, "model.tflite", model.inputSize, isQuantized = model.isQuantized, numThreads = 4, device = if (this.useGPU) "GPU" else "CPU")
+            localDetector = TFUtils.loadModel(TFLiteInference(), context, model, "model.tflite", model.inputSize, isQuantized = model.isQuantized, numThreads = 4, device = if (this.useNNAPI) "NNAPI" else if (this.useGPU) "GPU" else "CPU")
             this.tfOdApiInputSize = model.inputSize
             completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
         }

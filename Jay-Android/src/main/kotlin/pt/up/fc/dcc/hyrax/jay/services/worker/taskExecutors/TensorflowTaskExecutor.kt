@@ -49,11 +49,20 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
 
     override fun setSetting(key: String, value: Any?, statusCallback: ((JayProto.Status) -> Unit)?) {
         when (key) {
-            "GPU" -> classifier.useGPU = true
-            "CPU" -> classifier.useGPU = false
+            "GPU" -> {
+                classifier.useGPU = true
+                statusCallback?.invoke(JayUtils.genStatusSuccess()!!)
+            }
+            "CPU" -> {
+                classifier.useGPU = false
+                statusCallback?.invoke(JayUtils.genStatusSuccess()!!)
+            }
+            "NNAPI" -> {
+                classifier.useNNAPI = true
+                statusCallback?.invoke(JayUtils.genStatusSuccess()!!)
+            }
+            else -> statusCallback?.invoke(JayUtils.genStatusError()!!)
         }
-
-
     }
 
     private fun genModelRequest(listModels: Set<Model>): JayTensorFlowProto.Models? {

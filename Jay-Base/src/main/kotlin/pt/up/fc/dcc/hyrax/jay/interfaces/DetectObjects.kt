@@ -6,6 +6,7 @@ import pt.up.fc.dcc.hyrax.jay.structures.Model
 import java.io.File
 
 interface DetectObjects {
+    var useNNAPI: Boolean
     var minimumScore: Float
     val models: List<Model>
     var useGPU: Boolean

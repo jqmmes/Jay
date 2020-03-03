@@ -109,6 +109,7 @@ class TFLiteInference : Classifier {
              * in label file and class labels start from 1 to number_of_classes+1,
              * while outputClasses correspond to class index from 0 to number_of_classes */
             val labelOffset = 1
+            println(Recognition("" + i, COCODataLabels.label(outputClasses[0][i].toInt() + labelOffset), outputScores[0][i], detection))
             recognitions.add(Recognition("" + i, COCODataLabels.label(outputClasses[0][i].toInt() + labelOffset), outputScores[0][i], detection))
         }
 

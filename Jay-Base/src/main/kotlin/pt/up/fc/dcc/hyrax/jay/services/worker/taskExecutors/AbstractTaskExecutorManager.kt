@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status
+import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusError
 
 abstract class AbstractTaskExecutorManager {
     private var taskExecutor: TaskExecutor? = null
@@ -25,8 +25,7 @@ abstract class AbstractTaskExecutorManager {
         return this.taskExecutor
     }
 
-    open fun setSettings(settingMap: Map<String, Any>): JayProto.Status {
-        this.taskExecutor?.setSettings(settingMap)
-        return JayUtils.genStatusSuccess()!!
+    open fun setSettings(settingMap: Map<String, Any>): Status {
+        return this.taskExecutor?.setSettings(settingMap) ?: genStatusError()!!
     }
 }
