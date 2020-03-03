@@ -30,7 +30,7 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
                         "https://www.dropbox.com/s/8z71cy95karsnhf/ssd_mobilenet_v3_large_coco_2019_08_14.tar.gz?dl=1",
                         checkDownloadedModel("ssd_mobilenet_v3_large_coco"),
                         false,
-                        320
+                        inputSize = 640
                 ),
                 // "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v3_small_coco_2019_08_14.tar.gz",
                 Model(1,
@@ -38,7 +38,7 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
                         "https://www.dropbox.com/s/7jb2jyx7h467hjd/ssd_mobilenet_v3_small_coco_2019_08_14.tar.gz?dl=1",
                         checkDownloadedModel("ssd_mobilenet_v3_small_coco"),
                         false,
-                        320
+                        inputSize = 640
                 ),
                 Model(2,
                         "ssd_mobilenet_v1_fpn_coco",
@@ -46,6 +46,20 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
                         checkDownloadedModel("ssd_mobilenet_v1_fpn_coco"),
                         false,
                         640
+                ),
+                Model(3,
+                        "ssd_resnet50_v1_fpn",
+                        "https://www.dropbox.com/s/2i9vfpjpdyejwp3/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz?dl=1",
+                        checkDownloadedModel("ssd_resnet50_v1_fpn"),
+                        isQuantized = false,
+                        inputSize = 640
+                ),
+                Model(4,
+                        "ssd_mobilenet_v3_quantized_large_coco",
+                        "https://www.dropbox.com/s/j2kewwsapjvi5qu/ssd_mobilenet_v3_quantized_large_coco_2019_08_14.tar.gz?dl=1",
+                        checkDownloadedModel("ssd_mobilenet_v3_quantized_large_coco"),
+                        true,
+                        inputSize = 320
                 )
         )
 

@@ -23,7 +23,7 @@ import java.util.*
 class TFLiteInference : Classifier {
 
     // Constant Values
-    private val numDetections = 10 //2034 // 10 // Only return this many results.
+    private val numDetections = 2034 //2034 // 10 // Only return this many results.
     private val imageMean = 128.0f // Float model
     private val imageStd = 128.0f // Float model
 
@@ -109,7 +109,6 @@ class TFLiteInference : Classifier {
              * in label file and class labels start from 1 to number_of_classes+1,
              * while outputClasses correspond to class index from 0 to number_of_classes */
             val labelOffset = 1
-            println(Recognition("" + i, COCODataLabels.label(outputClasses[0][i].toInt() + labelOffset), outputScores[0][i], detection))
             recognitions.add(Recognition("" + i, COCODataLabels.label(outputClasses[0][i].toInt() + labelOffset), outputScores[0][i], detection))
         }
 
