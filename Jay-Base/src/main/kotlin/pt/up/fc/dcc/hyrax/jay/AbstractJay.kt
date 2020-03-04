@@ -73,8 +73,12 @@ abstract class AbstractJay {
         stopBroker()
     }
 
+    /**
+     * Deprecated
+     * Will be replaced by setSettings
+     */
     fun updateSmartWeights(computeWeight: Float, jobsWeight: Float, queueWeight: Float, batteryWeight: Float, bandwidthWeight: Float, callback: ((Boolean) -> Unit)) {
-        broker.updateSmartSchedulerWeights(computeWeight, queueWeight, jobsWeight, batteryWeight, bandwidthWeight) {S ->
+        broker.updateSmartSchedulerWeights(computeWeight, queueWeight, jobsWeight, batteryWeight, bandwidthWeight) { S ->
             callback(S?.code == JayProto.StatusCode.Success)
         }
     }

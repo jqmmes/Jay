@@ -126,7 +126,7 @@ object WorkerService {
     }
 
     fun setExecutorSettings(settingMap: Map<String, Any>, callback: ((Status?) -> Unit)?) {
-        callback?.invoke(taskExecutorManager?.setSettings(settingMap))
+        callback?.invoke(taskExecutorManager?.getCurrentExecutor()?.setSettings(settingMap))
     }
 
     private class RunnableJobObjects(val job: WorkerJob?, var callback: ((Any) -> Unit)?) : Runnable {
