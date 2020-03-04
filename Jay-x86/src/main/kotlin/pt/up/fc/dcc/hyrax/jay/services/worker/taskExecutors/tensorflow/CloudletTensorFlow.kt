@@ -371,7 +371,7 @@ internal class CloudletTensorFlow : DetectObjects {
                         checkDownloadedModel("faster_rcnn_resnet101_coco")
                 ),
                 Model(5,
-                        "ssd_resnet_50_fpn_coco",
+                        "ssd_resnet50_v1_fpn_coco",
                         "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
                         checkDownloadedModel("ssd_resnet_50_fpn_coco")
                 ),

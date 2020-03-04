@@ -48,9 +48,9 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
                         640
                 ),
                 Model(3,
-                        "ssd_resnet50_v1_fpn",
+                        "ssd_resnet50_v1_fpn_coco",
                         "https://www.dropbox.com/s/2i9vfpjpdyejwp3/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz?dl=1",
-                        checkDownloadedModel("ssd_resnet50_v1_fpn"),
+                        checkDownloadedModel("ssd_resnet50_v1_fpn_coco"),
                         isQuantized = false,
                         inputSize = 640
                 ),
