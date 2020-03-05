@@ -64,21 +64,21 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
         )
 
     override fun extractModel(modelFile: File): String {
-        return TFUtils.extractModel(context, modelFile, "model.tflite")
+        return TFUtils.extractModel(context, modelFile, "model.tflite", true)
     }
 
     override fun downloadModel(model: Model): File? {
-        return TFUtils.downloadModel(context, model)
+        return TFUtils.downloadModel(context, model, true)
     }
 
     override fun checkDownloadedModel(name: String): Boolean {
-        return TFUtils.checkDownloadedModel(context, name)
+        return TFUtils.checkDownloadedModel(context, name, true)
     }
 
     override fun loadModel(model: Model, completeCallback: ((JayProto.Status) -> Unit)?) {
         localDetector = null
         thread(name = "DroidTensorflowLite loadModel") {
-            localDetector = TFUtils.loadModel(TFLiteInference(), context, model, "model.tflite", model.inputSize, isQuantized = model.isQuantized, numThreads = 4, device = if (this.useNNAPI) "NNAPI" else if (this.useGPU) "GPU" else "CPU")
+            localDetector = TFUtils.loadModel(TFLiteInference(), context, model, "model.tflite", model.inputSize, isQuantized = model.isQuantized, numThreads = 4, device = if (this.useNNAPI) "NNAPI" else if (this.useGPU) "GPU" else "CPU", lite = true)
             this.tfOdApiInputSize = model.inputSize
             completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
         }

@@ -85,24 +85,10 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
         return listOf()
     }
 
-    /*private fun loadModel(path: String) { //, score: Float
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_PATH=$path"))
-        localDetector = null
-        try {
-            localDetector = TensorFlowObjectDetection()
-            localDetector!!.init(path, tfOdApiInputSize, assetManager = Resources.getSystem().assets)
-            /*localDetector = TensorFlowObjectDetection.create(
-                    Resources.getSystem().assets, path, tfOdApiInputSize)*/
-            JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_PATH=$path"))
-        } catch (e: IOException) {
-            JayLogger.logError("ERROR", actions = *arrayOf("MODEL_PATH=$path"))
-        }
-    }*/
-
     override fun loadModel(model: Model, completeCallback: ((JayProto.Status) -> Unit)?) {
         localDetector = null
         thread(name = "DroidTensorflow loadModel") {
-            localDetector = TFUtils.loadModel(TensorFlowObjectDetection(), context, model, "frozen_inference_graph.pb", tfOdApiInputSize, assetManager = Resources.getSystem().assets)
+            localDetector = TFUtils.loadModel(TensorFlowObjectDetection(), context, model, "frozen_inference_graph.pb", tfOdApiInputSize, assetManager = Resources.getSystem().assets, lite = false)
             completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
         }
     }
@@ -113,14 +99,14 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
     }
 
     override fun checkDownloadedModel(name: String): Boolean {
-        return TFUtils.checkDownloadedModel(context, name)
+        return TFUtils.checkDownloadedModel(context, name, false)
     }
 
     override fun downloadModel(model: Model): File? {
-        return TFUtils.downloadModel(context, model)
+        return TFUtils.downloadModel(context, model, false)
     }
 
     override fun extractModel(modelFile: File) : String {
-        return TFUtils.extractModel(context, modelFile, "frozen_inference_graph.pb")
+        return TFUtils.extractModel(context, modelFile, "frozen_inference_graph.pb", false)
     }
 }
