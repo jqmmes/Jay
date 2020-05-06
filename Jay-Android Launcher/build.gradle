@@ -25,7 +25,7 @@ protobuf {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     //noinspection GroovyMissingReturnStatement
     packagingOptions {
         exclude 'META-INF/io.netty.versions.properties'
@@ -59,7 +59,7 @@ android {
     defaultConfig {
         applicationId "pt.up.fc.dcc.hyrax.jay_droid_launcher"
         minSdkVersion 24
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
@@ -74,12 +74,12 @@ android {
         javaMaxHeapSize "4g"
         preDexLibraries = false
     }
-    buildToolsVersion '28.0.3'
+    buildToolsVersion '29.0.3'
 }
 
 dependencies {
-    implementation 'com.android.support:multidex:1.0.3'
-    implementation 'com.android.support:appcompat-v7:28.0.0'
+    //implementation 'com.android.support:multidex:1.0.3'
+    //implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
     implementation "io.grpc:grpc-netty:$GRPC_VERSION"
     implementation "io.grpc:grpc-protobuf:$GRPC_VERSION"

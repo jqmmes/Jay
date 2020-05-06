@@ -2,6 +2,7 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="pt.up.fc.dcc.hyrax.jay">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -27,14 +28,14 @@
                  android:permission="android.permission.INTERNET"/>
 
         <receiver
-                android:name="pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.AndroidBatteryMonitor$BatteryChargeStateUpdatesReceiver">
+                android:name="pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.AndroidBatteryMonitor$BatteryChargeStateUpdatesReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
             </intent-filter>
         </receiver>
         <receiver
-                android:name="pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.AndroidBatteryMonitor$BatteryLevelUpdatesReceiver">
+                android:name="pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.AndroidBatteryMonitor$BatteryLevelUpdatesReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BATTERY_CHANGED"/>
             </intent-filter>

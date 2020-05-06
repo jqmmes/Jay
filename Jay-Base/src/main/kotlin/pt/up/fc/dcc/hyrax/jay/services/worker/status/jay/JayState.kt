@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay.services.worker.status.app
+package pt.up.fc.dcc.hyrax.jay.services.worker.status.jay
 
 enum class JayState {
     IDLE,

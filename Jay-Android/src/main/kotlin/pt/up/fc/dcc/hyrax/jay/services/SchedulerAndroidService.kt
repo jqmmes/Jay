@@ -6,7 +6,7 @@ import android.os.IBinder
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.AndroidBatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.AndroidBatteryMonitor
 
 internal class SchedulerAndroidService : Service() {
 

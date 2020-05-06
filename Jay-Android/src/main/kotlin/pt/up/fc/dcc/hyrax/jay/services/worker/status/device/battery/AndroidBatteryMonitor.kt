@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay.services.worker.status.battery
+package pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -17,11 +17,11 @@ import kotlin.math.roundToInt
  * EXTRA_TEMPERATURE                      (ASync) current battery voltage level
  */
 
-class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor() {
+class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
     private val levelMonitor = BatteryLevelUpdatesReceiver()
     private val chargingStateMonitor = BatteryChargeStateUpdatesReceiver()
 
-    val mBatteryManager: BatteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+    private val mBatteryManager: BatteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
     override fun setCallbacks(levelChangeCallback: (Int, Int, Float) -> Unit, statusChangeCallback: (JayProto.Worker.BatteryStatus) -> Unit) {
         levelMonitor.setCallback(levelChangeCallback)

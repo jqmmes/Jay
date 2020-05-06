@@ -8,7 +8,7 @@ import android.support.annotation.RequiresApi
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
-import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.AndroidBatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.AndroidBatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.utils.VideoUtils
 

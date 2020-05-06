@@ -1,4 +1,7 @@
-package pt.up.fc.dcc.hyrax.jay.services.worker.status.usage
+package pt.up.fc.dcc.hyrax.jay.services.worker.status.device.usage
+
+import pt.up.fc.dcc.hyrax.jay.structures.TimeFrame
+
 
 class PackageUsages {
 

@@ -7,7 +7,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
-import pt.up.fc.dcc.hyrax.jay.services.worker.status.battery.BatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*

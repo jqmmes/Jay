@@ -1,10 +1,10 @@
-package pt.up.fc.dcc.hyrax.jay.services.worker.status.cpu
+package pt.up.fc.dcc.hyrax.jay.services.worker.status.device.cpu
 
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-object CpuStatsMonitor {
+abstract class CPUManager {
 
     private var cpuReadsInterval = 500L // time in ms
     private val recordingFlag: AtomicBoolean = AtomicBoolean(false)
@@ -17,7 +17,8 @@ object CpuStatsMonitor {
      * cpuinfo_max_freq to check max and min cpu frequencies available.
      *
      */
-    fun listCpus() {
+    abstract fun getCpus() /*{
+        // Android
         "/sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state"
 
         "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
@@ -26,11 +27,14 @@ object CpuStatsMonitor {
 
         "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq"
         "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
-    }
+
+        // Google Cloud
+        "/proc/cpuinfo"
+    }*/
+
+    abstract fun getCurrentCPUClockSpeed(cpuNumber: Int)
 
     fun getRecordableCPUCount(): Int {
-
-
         return 1
     }
 
@@ -54,7 +58,7 @@ object CpuStatsMonitor {
         if (!recordingFlag.compareAndSet(false, true)) return false
         Thread {
             do {
-                listCpus()
+                getCpus()
                 recordedStats.add(CPUStat(System.currentTimeMillis(), setOf<Int>(1, 2)))
                 sleep(cpuReadsInterval)
             } while (recordingFlag.get())

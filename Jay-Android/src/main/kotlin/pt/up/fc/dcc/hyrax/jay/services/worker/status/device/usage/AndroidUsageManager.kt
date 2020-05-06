@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay.services.worker.status.usage
+package pt.up.fc.dcc.hyrax.jay.services.worker.status.device.usage
 
 import android.annotation.SuppressLint
 import android.app.usage.UsageStatsManager
@@ -6,7 +6,14 @@ import android.app.usage.UsageStatsManager.INTERVAL_DAILY
 import android.content.Context
 import java.util.*
 
-class JayUsageStatsManager(val context: Context) {
+object AndroidUsageManager : UsageManager {
+
+
+    private lateinit var context: Context
+
+    fun setContext(context: Context) {
+        this.context = context
+    }
 
     /**
      * This method should return all usage events during the last usagePeriod.
@@ -15,7 +22,9 @@ class JayUsageStatsManager(val context: Context) {
      */
 
     @SuppressLint("ServiceCast")
-    fun getRecentUsageList(usagePeriod: Long): Set<PackageUsages> {
+    override fun getRecentUsageList(usagePeriod: Long): Set<PackageUsages> {
+        if (!this::context.isInitialized) throw AssertionError("Must setContext before getTransport")
+
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val time = System.currentTimeMillis()
         val pkgUsagesSet = HashSet<PackageUsages>()
