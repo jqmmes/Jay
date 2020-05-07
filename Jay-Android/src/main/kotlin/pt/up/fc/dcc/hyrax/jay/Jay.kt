@@ -11,7 +11,7 @@ import android.content.ServiceConnection
 import android.os.Build
 import android.os.IBinder
 import android.os.Messenger
-import android.support.v4.app.NotificationCompat
+import androidx.core.app.NotificationCompat
 import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.services.BrokerAndroidService

@@ -41,9 +41,6 @@ android {
 }
 
 dependencies {
-    //implementation 'com.android.support:multidex:1.0.3'
-    //implementation 'com.android.support:appcompat-v7:29.0.0'
-    //implementation 'com.android.support:support-compat:29.0.0'
     implementation 'org.kamranzafar:jtar:2.3'
     implementation "org.tensorflow:tensorflow-android:$TENSORFLOW_VERSION"
     implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
@@ -54,4 +51,5 @@ dependencies {
     implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.3.1'
     api 'com.google.guava:guava:29.0-android'
     api project(':Jay-Base')
+    implementation 'androidx.core:core-ktx:1.2.0'
 }

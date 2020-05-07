@@ -68,7 +68,6 @@ message Worker {
     float bandwidthEstimate = 16; // KB/s valor a ser calculado no Broker e enviado para o scheduler
     int64 totalMemory = 17;
     int64 freeMemory = 18;
-
 }
 
 message Ping {

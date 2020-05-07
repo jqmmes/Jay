@@ -4,7 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import android.support.annotation.RequiresApi
+import androidx.annotation.RequiresApi
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService

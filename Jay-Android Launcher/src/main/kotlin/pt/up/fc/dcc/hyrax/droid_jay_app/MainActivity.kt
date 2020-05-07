@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.droid_jay_app
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
