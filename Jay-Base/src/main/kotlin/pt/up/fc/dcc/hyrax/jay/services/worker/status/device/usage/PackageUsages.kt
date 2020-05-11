@@ -11,7 +11,7 @@ class PackageUsages {
         this.pkgName = pkgName
     }
 
-    lateinit var pkgName: String
+    private lateinit var pkgName: String
     private val usageTimes = LinkedHashSet<TimeFrame>()
     var startTime: Long = 0
 

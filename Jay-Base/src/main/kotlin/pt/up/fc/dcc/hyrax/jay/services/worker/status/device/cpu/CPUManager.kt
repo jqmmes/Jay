@@ -59,7 +59,7 @@ abstract class CPUManager {
         Thread {
             do {
                 getCpus()
-                recordedStats.add(CPUStat(System.currentTimeMillis(), setOf<Int>(1, 2)))
+                recordedStats.add(CPUStat(System.currentTimeMillis(), setOf(1, 2)))
                 sleep(cpuReadsInterval)
             } while (recordingFlag.get())
         }.start()

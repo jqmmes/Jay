@@ -40,7 +40,7 @@ dependencies {
     implementation "org.jetbrains.anko:anko:$ANKO_VERSION"
     implementation 'nl.komponents.kovenant:kovenant:3.3.0'
     // GRPC
-    implementation 'com.google.api.grpc:proto-google-common-protos:1.17.0'
+    implementation 'com.google.api.grpc:proto-google-common-protos:1.18.0'
     implementation "io.grpc:grpc-netty:$GRPC_VERSION"
     implementation "io.grpc:grpc-protobuf:$GRPC_VERSION"
     implementation "io.grpc:grpc-stub:$GRPC_VERSION"
@@ -64,16 +64,10 @@ protobuf {
         //noinspection GroovyAssignabilityCheck
         all().each { task ->
             task.builtins {
-                // In most cases you don't need the full Java output
-                // if you use the lite output.
-                //remove java
                 java
             }
             task.plugins {
-                //javalite {}
-                grpc {
-                    //option 'lite'
-                }
+                grpc {}
             }
         }
     }
