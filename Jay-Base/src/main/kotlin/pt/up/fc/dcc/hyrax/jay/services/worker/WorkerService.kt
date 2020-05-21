@@ -4,8 +4,8 @@ import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCServer
-import pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutor
 import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings

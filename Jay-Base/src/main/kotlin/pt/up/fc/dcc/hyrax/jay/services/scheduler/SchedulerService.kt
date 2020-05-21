@@ -3,11 +3,12 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.ServiceStatus.Type.SCHEDULER
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
-import pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
@@ -78,7 +79,7 @@ object SchedulerService {
         this.batteryMonitor = batteryMonitor
         this.server = SchedulerGRPCServer(useNettyServer).start()
         this.running = true
-        this.brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.SCHEDULER).setRunning(true).build()) {
+        this.brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(SCHEDULER).setRunning(true).build()) {
             JayLogger.logInfo("COMPLETE")
         }
         thread {
@@ -125,7 +126,7 @@ object SchedulerService {
     fun stop(stopGRPCServer: Boolean = true) {
         running = false
         if (stopGRPCServer) server?.stop()
-        brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.SCHEDULER).setRunning(false).build()) {
+        brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(SCHEDULER).setRunning(false).build()) {
             JayLogger.logInfo("STOP")
         }
     }

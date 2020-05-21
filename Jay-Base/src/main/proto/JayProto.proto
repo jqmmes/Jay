@@ -79,6 +79,7 @@ message ServiceStatus {
     enum Type {
         SCHEDULER = 0;
         WORKER = 1;
+        PROFILER = 2;
     }
     Type type = 1;
     bool running = 2;
@@ -142,6 +143,83 @@ message Response {
     Status status = 1;
     bytes bytes = 2;
     string id = 3;
+}
+
+message JayState {
+    enum state {
+        IDLE = 0;
+        DATA_SND = 1;
+        DATA_RCV = 2;
+        COMPUTE = 3;
+    }
+    state jayState = 1;
+}
+
+message Time {
+    int64 value = 1;
+}
+
+message Battery {
+    int32 batteryLevel = 1;
+    int32 batteryCurrent = 2;
+    int32 batteryVoltage = 3;
+    float batteryTemperature = 4;
+    int64 batteryEnergy = 5;
+    int32 batteryCharge = 6;
+
+    enum BatteryStatus {
+        CHARGED = 0;
+        CHARGING = 1; // AC Charging
+        USB = 2; // USB Charging
+        DISCHARGING = 3;
+    }
+    BatteryStatus batteryStatus = 7;
+}
+
+message Transport {
+    enum Medium {
+        WIFI = 0;
+        CELLULAR = 1;
+        BLUETOOTH = 2;
+        ETHERNET = 3;
+        VPN = 4;
+        WIFI_AWARE = 5;
+        LOWPAN = 6;
+        UNKNOWN = 7;
+    }
+
+    enum CellularTechnology {
+        SECOND_GEN = 0;
+        THIRD_GEN = 1;
+        FOURTH_GEN = 2;
+        FIFTH_GEN = 3;
+        UNKNOWN_GEN = 4;
+    }
+
+
+    Medium medium = 1;
+    CellularTechnology cellularTechnology = 2;
+    int32 downstreamBandwidth = 3;
+    int32 upstreamBandwidth = 4;
+}
+
+message TimeRange {
+    int64 start = 1;
+    int64 end = 2;
+}
+
+message ProfileRecording {
+    TimeRange timeRange = 1;
+    repeated JayState jayState = 2;
+    Battery battery = 3;
+    int32 cpuCount = 4;
+    repeated int32 cpuFrequency = 5;
+    Transport transport = 6;
+    repeated string systemUsage = 7;
+}
+
+message ProfileRecordings {
+    repeated ProfileRecording profileRecording = 1;
 }
 
 // Internal and External communication Broker
@@ -209,6 +287,28 @@ service BrokerService {
     rpc runExecutorAction (Request) returns (Status) {
     };
     rpc setExecutorSettings (Settings) returns (Status) {
+    };
+}
+
+service ProfilerService {
+    // setState(STATE)  stack states
+    rpc setState (JayState) returns (Status) {
+    };
+    // unsetState(STATE) unstack states
+    rpc unSetState (JayState) returns (Status) {
+    };
+    // startRecording()
+    rpc startRecording (google.protobuf.Empty) returns (Status) {
+    };
+    // stopRecording()
+    rpc stopRecording (google.protobuf.Empty) returns (ProfileRecordings) {
+    };
+    // getDeviceStatus()
+    rpc getDeviceStatus (google.protobuf.Empty) returns (ProfileRecording) {
+    };
+    rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
+    };
+    rpc stopService (google.protobuf.Empty) returns (Status) {
     };
 }
 

@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.jay.utils
 
 object JaySettings {
 
+    const val BLOCKING_STUB_DEADLINE: Long = 150
     var SINGLE_REMOTE_IP: String = "0.0.0.0"
     var CLOUDLET_ID = ""
     var ADVERTISE_WORKER_STATUS: Boolean = false
@@ -10,6 +11,7 @@ object JaySettings {
     var BROKER_PORT: Int = 50051
     var WORKER_PORT: Int = 50053
     var SCHEDULER_PORT: Int = 50055
+    var PROFILER_PORT: Int = 50057
 
     var GRPC_MAX_MESSAGE_SIZE: Int = 150000000
     var RTT_HISTORY_SIZE: Int = 5

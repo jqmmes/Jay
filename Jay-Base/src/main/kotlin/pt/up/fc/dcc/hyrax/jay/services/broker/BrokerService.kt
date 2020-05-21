@@ -11,9 +11,9 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastListener
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
-import pt.up.fc.dcc.hyrax.jay.services.worker.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.structures.Worker
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
