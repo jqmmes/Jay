@@ -58,8 +58,10 @@ class TensorFlowObjectDetection : Classifier {
     override fun init(modelPath: String, inputSize: Int, assetManager: AssetManager?, isQuantized: Boolean?, numThreads: Int?, device: String?) {
         JayLogger.logInfo("INIT")
 
+        this.inferenceInterface = TensorflowInference(assetManager!!, modelPath)
+
         try {
-            this.inferenceInterface = TensorflowInference(assetManager!!, modelPath)
+            this.inferenceInterface = TensorflowInference(assetManager, modelPath)
         } catch (e: RuntimeException) {
             JayLogger.logInfo("ERROR")
         }
@@ -97,7 +99,6 @@ class TensorFlowObjectDetection : Classifier {
 
     override fun recognizeImage(bitmap : Bitmap) : List<Classifier.Recognition>{
         JayLogger.logInfo("INIT")
-
         //Preprocess the image data to extract R, G and B bytes from int of form 0x00RRGGBB
         //on the provided parameters.
         bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)

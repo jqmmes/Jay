@@ -189,7 +189,6 @@ object TFUtils {
             } catch (ignore: Exception) {
                 JayLogger.logWarn("ERROR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "EXTRACT=${File(context.cacheDir.path, entry.name).path}"))
             }
-            println(entry.name)
             entry = tis.nextEntry
         }
         JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
