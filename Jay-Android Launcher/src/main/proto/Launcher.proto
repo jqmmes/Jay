@@ -17,7 +17,12 @@ message String {
 }
 
 service LauncherService {
-    rpc StartScheduler(Empty) returns (BoolValue) {};
-    rpc StartWorker(Empty) returns (BoolValue) {};
-    rpc SetLogName(String) returns (BoolValue) {};
+    rpc StartScheduler (Empty) returns (BoolValue) {
+    };
+    rpc StartWorker (Empty) returns (BoolValue) {
+    };
+    rpc StartProfiler (Empty) returns (BoolValue) {
+    };
+    rpc SetLogName (String) returns (BoolValue) {
+    };
 }

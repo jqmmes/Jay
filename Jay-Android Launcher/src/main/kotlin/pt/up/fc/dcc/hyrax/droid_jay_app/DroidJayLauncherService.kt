@@ -48,6 +48,12 @@ class DroidJayLauncherService : Service() {
             genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
         }
 
+        override fun startProfiler(request: Empty?, responseObserver: StreamObserver<BoolValue>?) {
+            enableLogs()
+            odClient.startProfiler()
+            genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
+        }
+
         override fun setLogName(request: DroidJayLauncher.String?, responseObserver: StreamObserver<BoolValue>?) {
             logName = request?.str ?: "logs"
             genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
@@ -82,7 +88,10 @@ class DroidJayLauncherService : Service() {
 
         @SuppressLint("HardwareIds")
         override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                logFile.write("${Build.ID},$id,ANDROID,$timestamp,${logLevel.name},$callerInfo,$message\n"
+                        .toByteArray())
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
                 logFile.write("${Build.getSerial()},$id,ANDROID,$timestamp,${logLevel.name},$callerInfo,$message\n".toByteArray())
             } else {

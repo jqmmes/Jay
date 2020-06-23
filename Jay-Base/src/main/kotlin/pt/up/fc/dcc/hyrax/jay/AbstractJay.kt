@@ -4,6 +4,7 @@ import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.jay.services.profiler.ProfilerService
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.structures.Job
@@ -81,5 +82,11 @@ abstract class AbstractJay {
         broker.updateSmartSchedulerWeights(computeWeight, queueWeight, jobsWeight, batteryWeight, bandwidthWeight) { S ->
             callback(S?.code == JayProto.StatusCode.Success)
         }
+    }
+
+    open fun startProfiler(fsAssistant: FileSystemAssistant? = null) {
+        startBroker(fsAssistant)
+        sleep(500)
+        ProfilerService.start()
     }
 }

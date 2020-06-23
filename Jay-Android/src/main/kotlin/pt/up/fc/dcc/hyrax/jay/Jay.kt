@@ -14,10 +14,7 @@ import android.os.Messenger
 import androidx.core.app.NotificationCompat
 import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.services.BrokerAndroidService
-import pt.up.fc.dcc.hyrax.jay.services.ClientAndroidService
-import pt.up.fc.dcc.hyrax.jay.services.SchedulerAndroidService
-import pt.up.fc.dcc.hyrax.jay.services.WorkerAndroidService
+import pt.up.fc.dcc.hyrax.jay.services.*
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
 
@@ -92,16 +89,33 @@ class Jay(private val context: Context) : AbstractJay() {
         JayLogger.logInfo("COMPLETE")
     }
 
-    private fun serviceRunningBroker() : Boolean {
+    override fun startProfiler(fsAssistant: FileSystemAssistant?) {
+        startBroker()
+        JayLogger.logInfo("INIT")
+        if (serviceRunningProfiler()) return
+        val profilerIntent = Intent(context, ProfilerAndroidService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(profilerIntent)
+        } else {
+            context.startService(profilerIntent)
+        }
+        JayLogger.logInfo("COMPLETE")
+    }
+
+    private fun serviceRunningBroker(): Boolean {
         return isMyServiceRunning(BrokerAndroidService::class.java)
     }
 
-    private fun serviceRunningWorker() : Boolean {
+    private fun serviceRunningWorker(): Boolean {
         return isMyServiceRunning(WorkerAndroidService::class.java)
     }
 
-    private fun serviceRunningScheduler() : Boolean {
+    private fun serviceRunningScheduler(): Boolean {
         return isMyServiceRunning(SchedulerAndroidService::class.java)
+    }
+
+    private fun serviceRunningProfiler(): Boolean {
+        return isMyServiceRunning(ProfilerAndroidService::class.java)
     }
 
     override fun stopBroker() {

@@ -28,7 +28,6 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         chargingStateMonitor.setCallback(statusChangeCallback)
     }
 
-
     class BatteryChargeStateUpdatesReceiver : BroadcastReceiver() {
 
         private var context: Context? = null

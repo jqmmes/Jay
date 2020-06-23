@@ -25,7 +25,11 @@
         <service
                 android:name="pt.up.fc.dcc.hyrax.jay.services.SchedulerAndroidService"
                 android:exported="true"
-                 android:permission="android.permission.INTERNET"/>
+                android:permission="android.permission.INTERNET"/>
+        <service
+                android:name="pt.up.fc.dcc.hyrax.jay.services.ProfilerAndroidService"
+                android:exported="true"
+                android:permission="android.permission.INTERNET"/>
 
         <receiver
                 android:name="pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.AndroidBatteryMonitor$BatteryChargeStateUpdatesReceiver">

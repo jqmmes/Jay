@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu
 
 import android.content.Context
+import java.io.File
 
 object AndroidCPUManager : CPUManager() {
 
@@ -10,7 +11,7 @@ object AndroidCPUManager : CPUManager() {
         this.context = context
     }
 
-    override fun getCpus() {
+    override fun getCpus(cpu_with_frequency: Boolean): Set<Int> {
         // Android
         "/sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state"
 
@@ -20,9 +21,11 @@ object AndroidCPUManager : CPUManager() {
 
         "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq"
         "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
+        File("/sys/devices/system/cpu/")
+        return emptySet()
     }
 
-    override fun getCurrentCPUClockSpeed(cpuNumber: Int) {
-
+    override fun getCurrentCPUClockSpeed(cpuNumber: Int): Int {
+        return 0
     }
 }

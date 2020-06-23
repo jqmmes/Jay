@@ -242,7 +242,6 @@ service BrokerService {
     }; // ExternalBroker > Broker
     //      SchedulerService::notifyWorkerUpdate
 
-
     rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {
     }; // SchedulerService > Broker
 
