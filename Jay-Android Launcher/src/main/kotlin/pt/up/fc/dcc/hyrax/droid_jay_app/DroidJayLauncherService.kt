@@ -27,6 +27,8 @@ import pt.up.fc.dcc.hyrax.jay.protoc.DroidJayLauncher.Empty
 import pt.up.fc.dcc.hyrax.jay.protoc.LauncherServiceGrpc.LauncherServiceImplBase
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.random.Random
+
 
 @Suppress("PrivatePropertyName")
 class DroidJayLauncherService : Service() {
@@ -75,6 +77,7 @@ class DroidJayLauncherService : Service() {
 
     @Suppress("DEPRECATION")
     internal class Logs(private val logFile: FileOutputStream, private val context: Context) : LogInterface {
+        private var random_id: Int
 
         override fun close() {
             logFile.flush()
@@ -84,12 +87,13 @@ class DroidJayLauncherService : Service() {
         init {
             logFile.write("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION,JOB_ID,ACTIONS\n".toByteArray())
             logFile.flush()
+            random_id = Random.nextInt()
         }
 
         @SuppressLint("HardwareIds")
         override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                logFile.write("${Build.ID},$id,ANDROID,$timestamp,${logLevel.name},$callerInfo,$message\n"
+                logFile.write("${Build.ID}-$random_id,$id,ANDROID,$timestamp,${logLevel.name},$callerInfo,$message\n"
                         .toByteArray())
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)

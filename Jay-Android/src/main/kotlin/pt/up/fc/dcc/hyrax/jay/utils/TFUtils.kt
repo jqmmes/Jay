@@ -20,6 +20,7 @@ object TFUtils {
     fun checkDownloadedModel(context: Context, name: String, lite: Boolean): Boolean {
         val modelCache = File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}")
         if (!modelCache.exists()) return false
+        @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
         for (file in modelCache.listFiles())
             if (file.isDirectory && file.name == name) return true
         return false

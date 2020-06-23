@@ -1,10 +1,14 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.telephony.TelephonyManager
+import androidx.core.app.ActivityCompat
+import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 
 object AndroidTransportManager : TransportManager {
     private lateinit var context: Context
@@ -28,17 +32,23 @@ object AndroidTransportManager : TransportManager {
             nc.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> TransportMedium.BLUETOOTH
             nc.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> TransportMedium.ETHERNET
             nc.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                nt = when (tm.networkType) {
-                    TelephonyManager.NETWORK_TYPE_GSM or TelephonyManager.NETWORK_TYPE_EDGE or TelephonyManager
-                            .NETWORK_TYPE_GPRS or TelephonyManager.NETWORK_TYPE_CDMA -> CellularTechnology.SECOND_GEN // 2G
-                    TelephonyManager.NETWORK_TYPE_UMTS or TelephonyManager.NETWORK_TYPE_HSDPA or
-                            TelephonyManager.NETWORK_TYPE_HSUPA or TelephonyManager.NETWORK_TYPE_HSPA or
-                            TelephonyManager.NETWORK_TYPE_HSPAP or TelephonyManager.NETWORK_TYPE_EVDO_0 or
-                            TelephonyManager.NETWORK_TYPE_EVDO_A or TelephonyManager.NETWORK_TYPE_EVDO_B or
-                            TelephonyManager.NETWORK_TYPE_TD_SCDMA -> CellularTechnology.THIRD_GEN
-                    TelephonyManager.NETWORK_TYPE_LTE -> CellularTechnology.FOURTH_GEN  // 4G
-                    TelephonyManager.NETWORK_TYPE_NR -> CellularTechnology.FIFTH_GEN // API29 (Android 10)
-                    else -> CellularTechnology.UNKNOWN_GEN
+                nt = if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.READ_PHONE_STATE) ==
+                        PackageManager.PERMISSION_GRANTED) {
+                    when (tm.dataNetworkType) {
+                        TelephonyManager.NETWORK_TYPE_GSM or TelephonyManager.NETWORK_TYPE_EDGE or TelephonyManager
+                                .NETWORK_TYPE_GPRS or TelephonyManager.NETWORK_TYPE_CDMA -> CellularTechnology.SECOND_GEN // 2G
+                        TelephonyManager.NETWORK_TYPE_UMTS or TelephonyManager.NETWORK_TYPE_HSDPA or
+                                TelephonyManager.NETWORK_TYPE_HSUPA or TelephonyManager.NETWORK_TYPE_HSPA or
+                                TelephonyManager.NETWORK_TYPE_HSPAP or TelephonyManager.NETWORK_TYPE_EVDO_0 or
+                                TelephonyManager.NETWORK_TYPE_EVDO_A or TelephonyManager.NETWORK_TYPE_EVDO_B or
+                                TelephonyManager.NETWORK_TYPE_TD_SCDMA -> CellularTechnology.THIRD_GEN
+                        TelephonyManager.NETWORK_TYPE_LTE -> CellularTechnology.FOURTH_GEN  // 4G
+                        TelephonyManager.NETWORK_TYPE_NR -> CellularTechnology.FIFTH_GEN // API29 (Android 10)
+                        else -> CellularTechnology.UNKNOWN_GEN
+                    }
+                } else {
+                    JayLogger.logError("GET_TRANSPORT", "", "MISSING READ_PHONE_STATE PERMISSIONS")
+                    CellularTechnology.UNKNOWN_GEN
                 }
                 TransportMedium.CELLULAR
             }

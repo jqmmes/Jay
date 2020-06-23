@@ -39,7 +39,7 @@ class FileSystemAssistant(private val androidService: Service) : FileSystemAssis
     override fun getByteArrayFromId(id: String): ByteArray {
         JayLogger.logInfo("INIT", actions = *arrayOf("FILE_ID=$id"))
         val root = File(androidService.getExternalFilesDir(null)!!.absolutePath)
-        val data = if (id in root.list())
+        @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") val data = if (id in root.list())
             ImageUtils.getByteArrayFromImage(androidService.getExternalFilesDir(null)!!.absolutePath + "/" + id)
         else ByteArray(0)
         JayLogger.logInfo("COMPLETE", actions = *arrayOf("FILE_ID=$id", "DATA_SIZE=${data.size}"))

@@ -151,6 +151,7 @@ class TensorFlowObjectDetection : Classifier {
 
         val recognitions: ArrayList<Classifier.Recognition> = ArrayList()
         for (i: Int in 0..pq.size.coerceAtMost(maxResults)) {
+            @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
             recognitions.add(pq.poll())
         }
         JayLogger.logInfo("CHECK_RESULTS_COMPLETE")

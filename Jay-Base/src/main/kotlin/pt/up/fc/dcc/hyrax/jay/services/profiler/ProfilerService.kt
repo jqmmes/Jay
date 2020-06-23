@@ -76,8 +76,7 @@ object ProfilerService {
         cpus?.forEach { cpu_number ->
             cpuClocks.add(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
         }
-        val cpuStat =
-                JayStateManager.getJayStates()
+        //val cpuStat = JayStateManager.getJayStates()
 
         // Todo: BatteryStats
         // Todo: Usage

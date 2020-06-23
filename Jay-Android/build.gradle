@@ -9,7 +9,7 @@ android {
         return void
     }
 
-    compileSdkVersion 29
+    compileSdkVersion 30
     
     sourceSets {
         main {
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
@@ -40,18 +40,19 @@ android {
         javaMaxHeapSize "4g"
         preDexLibraries = false
     }
+    buildToolsVersion = '30.0.0'
 }
 
 dependencies {
     implementation 'org.kamranzafar:jtar:2.3'
-    implementation "org.tensorflow:tensorflow-android:$TENSORFLOW_VERSION"
+    implementation "org.tensorflow:tensorflow-android:$TENSORFLOW_VERSION_ANDROID"
     implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
     implementation 'com.google.api.grpc:proto-google-common-protos:1.18.0'
     implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.3.1'
-    api 'com.google.guava:guava:29.0-android'
+    api 'com.google.guava:guava:29.0-jre'
     api project(':Jay-Base')
-    implementation 'androidx.core:core-ktx:1.2.0'
+    implementation 'androidx.core:core-ktx:1.3.0'
 }
