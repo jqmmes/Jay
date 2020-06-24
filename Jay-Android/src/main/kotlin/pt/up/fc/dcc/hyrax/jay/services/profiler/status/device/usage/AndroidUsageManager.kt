@@ -1,6 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage
 
-import android.annotation.SuppressLint
+//import android.annotation.SuppressLint
 import android.app.usage.UsageStatsManager
 import android.app.usage.UsageStatsManager.INTERVAL_DAILY
 import android.content.Context
@@ -22,7 +22,7 @@ object AndroidUsageManager : UsageManager {
      * if we ask for a instant usage, retrieve last N seconds
      */
 
-    @SuppressLint("ServiceCast")
+    //@SuppressLint("ServiceCast")
     override fun getRecentUsageList(usagePeriod: Long): Set<PackageUsages> {
         if (!this::context.isInitialized) throw AssertionError("Must setContext before getTransport")
 
@@ -40,9 +40,11 @@ object AndroidUsageManager : UsageManager {
                 newPkg.addUsageTime(newPkg.startTime - (time - usagePeriod), usageStat.lastTimeStamp - (time - usagePeriod))
             } else {
                 pkgInList.startTime =
-                        if ((usageStat.firstTimeStamp < time - usagePeriod)) time - usagePeriod
-                        else if (usageStat.firstTimeStamp < pkgInList.startTime) usageStat.firstTimeStamp
-                        else pkgInList.startTime
+                        when {
+                            usageStat.firstTimeStamp < time - usagePeriod -> time - usagePeriod
+                            usageStat.firstTimeStamp < pkgInList.startTime -> usageStat.firstTimeStamp
+                            else -> pkgInList.startTime
+                        }
                 pkgInList.addUsageTime(pkgInList.startTime - (time - usagePeriod), usageStat.lastTimeStamp - (time - usagePeriod))
             }
         }

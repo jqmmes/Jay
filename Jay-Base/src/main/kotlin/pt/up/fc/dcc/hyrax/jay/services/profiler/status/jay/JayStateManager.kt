@@ -73,15 +73,6 @@ internal object JayStateManager {
         if (!recordingFlag.compareAndSet(false, true)) return false
         Thread {
             do {
-                /*val activeStatesSet = LinkedHashSet<JayState>()
-                var idle = true
-                JayState.values().forEach { state ->
-                    if (activeStates[state]!! > 0) {
-                        activeStatesSet.add(state)
-                        idle = false
-                    }
-                }
-                if (idle) activeStatesSet.add(JayState.IDLE)*/
                 synchronized(SET_LOCK) {
                     recordedStates.add(getJayStates())
                 }

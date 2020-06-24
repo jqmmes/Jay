@@ -8,7 +8,7 @@ abstract class CPUManager {
 
     private var cpuReadsInterval = 500L // time in ms
     private val recordingFlag: AtomicBoolean = AtomicBoolean(false)
-    private val recordedStats: MutableSet<CPUStat> = LinkedHashSet<CPUStat>()
+    private val recordedStats: MutableSet<CPUStat> = LinkedHashSet()
 
     /**
      * To List available CPU's read the /sys/devices/system/cpu/cpuXX
@@ -18,26 +18,16 @@ abstract class CPUManager {
      *
      * If all flag is set return all cpus, else return only cpus that report frequency values
      *
+     * On Google cloud read:
+     * /proc/cpuinfo
+     *
      */
-    abstract fun getCpus(cpu_with_frequency: Boolean = true): Set<Int> /*{
-        // Android
-        "/sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state"
-
-        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
-        "/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq"
-        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
-
-        "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq"
-        "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
-
-        // Google cloud
-        "/proc/cpuinfo"
-    }*/
+    abstract fun getCpus(cpu_with_frequency: Boolean = true): Set<Int>
 
     abstract fun getCurrentCPUClockSpeed(cpuNumber: Int): Int
 
     fun getRecordableCPUCount(): Int {
-        return 1
+        return getCpus(true).size
     }
 
     fun startCPUStatsRecordings() {
