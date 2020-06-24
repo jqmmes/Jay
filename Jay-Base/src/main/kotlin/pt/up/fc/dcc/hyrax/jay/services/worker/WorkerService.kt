@@ -4,6 +4,7 @@ import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutor
@@ -26,7 +27,8 @@ object WorkerService {
     private var executorThreadPool: ExecutorService = Executors.newSingleThreadExecutor()
     private var waitingResultsMap: HashMap<Int, (List<Detection?>) -> Unit> = HashMap()
     private var server: GRPCServerBase? = null
-    private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
+    private val broker = BrokerGRPCClient("127.0.0.1")
+    internal val profiler = ProfilerGRPCClient("127.0.0.1")
 
     init {
         executorThreadPool.shutdown()
@@ -66,7 +68,7 @@ object WorkerService {
             }
             if (!executorThreadPool.isShutdown) executorThreadPool.shutdownNow()
         }
-        brokerGRPC.announceServiceStatus(
+        broker.announceServiceStatus(
                 ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(true).build())
         { JayLogger.logInfo("RUNNING") }
     }
@@ -81,7 +83,7 @@ object WorkerService {
         executorThreadPool.shutdownNow()
         WorkerProfiler.destroy()
         taskExecutorManager?.getCurrentExecutor()?.destroy()
-        brokerGRPC.announceServiceStatus(ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(false).build()) { S ->
+        broker.announceServiceStatus(ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(false).build()) { S ->
             JayLogger.logInfo("COMPLETE")
             callback?.invoke(S)
         }

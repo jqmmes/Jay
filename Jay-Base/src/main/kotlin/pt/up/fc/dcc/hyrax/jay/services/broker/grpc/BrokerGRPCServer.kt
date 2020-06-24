@@ -10,6 +10,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.structures.Job
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatus
@@ -19,7 +20,9 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
         override fun executeJob(request: JayProto.Job?, responseObserver: StreamObserver<JayProto.Response>?) {
+            BrokerService.profiler.setState(JayState.DATA_RCV)
             responseObserver?.onNext(JayProto.Response.newBuilder().setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
+            BrokerService.profiler.unSetState(JayState.DATA_RCV)
             BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver) }
         }
 

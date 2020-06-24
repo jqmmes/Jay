@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import java.net.DatagramPacket
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -85,6 +86,37 @@ object JayUtils {
 
     fun genStatusError(): JayProto.Status? {
         return genStatus(JayProto.StatusCode.Success)
+    }
+
+    fun genStatus(bool: Boolean): JayProto.Status? {
+        return when (bool) {
+            true -> genStatusSuccess()
+            else -> genStatusError()
+        }
+    }
+
+    fun genJayState(stateProto: JayProto.JayState?): JayState? {
+        if (stateProto == null)
+            return null
+        return when (stateProto.jayState) {
+            JayProto.JayState.state.IDLE -> JayState.IDLE
+            JayProto.JayState.state.DATA_RCV -> JayState.DATA_RCV
+            JayProto.JayState.state.DATA_SND -> JayState.DATA_SND
+            JayProto.JayState.state.COMPUTE -> JayState.COMPUTE
+            else -> null
+        }
+    }
+
+    fun genJayStateProto(state: JayState?): JayProto.JayState? {
+        if (state == null)
+            return null
+        val jayState = when (state) {
+            JayState.IDLE -> JayProto.JayState.state.IDLE
+            JayState.DATA_RCV -> JayProto.JayState.state.DATA_RCV
+            JayState.DATA_SND -> JayProto.JayState.state.DATA_SND
+            JayState.COMPUTE -> JayProto.JayState.state.COMPUTE
+        }
+        return JayProto.JayState.newBuilder().setJayState(jayState).build()
     }
 
     fun genWorkerProto(id: String? = null, batteryLevel: Int, batteryCurrent: Int, batteryVoltage: Int,

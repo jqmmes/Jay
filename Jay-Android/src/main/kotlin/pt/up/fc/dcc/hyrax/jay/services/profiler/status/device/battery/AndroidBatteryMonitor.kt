@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.Intent.*
 import android.content.IntentFilter
 import android.os.BatteryManager
+import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import kotlin.math.roundToInt
 
@@ -99,6 +100,7 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         try {
             context.unregisterReceiver(chargingStateMonitor)
         } catch (ignore: Exception) {
+            JayLogger.logError("Failed to destroy AndroidBatteryMonitor")
         }
     }
 

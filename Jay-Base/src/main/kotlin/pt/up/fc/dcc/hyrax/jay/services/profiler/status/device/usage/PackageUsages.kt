@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage
 import pt.up.fc.dcc.hyrax.jay.structures.TimeFrame
 
 
+@Suppress("unused")
 class PackageUsages {
 
     constructor()
@@ -11,7 +12,7 @@ class PackageUsages {
         this.pkgName = pkgName
     }
 
-    private lateinit var pkgName: String
+    lateinit var pkgName: String
     private val usageTimes = LinkedHashSet<TimeFrame>()
     var startTime: Long = 0
 

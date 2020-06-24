@@ -61,6 +61,7 @@ class Jay(private val context: Context) : AbstractJay() {
             context.startService(brokerIntent)
         }
         JayLogger.logInfo("COMPLETE")
+        startProfiler()
     }
 
     override fun startScheduler(fsAssistant: FileSystemAssistant?) {

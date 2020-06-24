@@ -6,6 +6,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
@@ -81,7 +82,9 @@ internal object WorkerProfiler {
                 "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                 "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}"))
         val computationStartTimestamp = System.currentTimeMillis()
+        WorkerService.profiler.setState(JayState.COMPUTE)
         code.invoke()
+        WorkerService.profiler.unSetState(JayState.COMPUTE)
         val totalTime = System.currentTimeMillis() - computationStartTimestamp
         averageComputationTimes.add(totalTime)
         JayLogger.logInfo("END", actions = *arrayOf("COMPUTATION_TIME=$totalTime",

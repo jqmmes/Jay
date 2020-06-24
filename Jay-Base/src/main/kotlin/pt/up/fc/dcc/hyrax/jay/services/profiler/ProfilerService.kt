@@ -2,21 +2,19 @@ package pt.up.fc.dcc.hyrax.jay.services.profiler
 
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.ServiceStatus
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.ServiceStatus.Type.PROFILER
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryInfo
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu.CPUManager
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu.CPUStat
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportInfo
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportManager
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.PackageUsages
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.UsageManager
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.ActiveState
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayStateManager
+import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -32,12 +30,16 @@ object ProfilerService {
     private var recording: AtomicBoolean = AtomicBoolean(false)
     private val LOCK: Any = Object()
     private var recordInterval = 500L // time in ms
+    private var recordingLatch = CountDownLatch(0)
+    private val recordings = LinkedHashSet<ProfileRecording>()
+    private val batteryInfo = BatteryInfo()
 
     fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, transportManager:
     TransportManager? = null, cpuManager: CPUManager? = null, usageManager: UsageManager? = null) {
         JayLogger.logInfo("INIT")
         if (this.running) return
         this.batteryMonitor = batteryMonitor
+        setBatteryCallbacks()
         this.transportManager = transportManager
         this.cpuManager = cpuManager
         this.usageManager = usageManager
@@ -49,44 +51,106 @@ object ProfilerService {
         }
     }
 
-    fun stop(stopGRPCServer: Boolean = true) {
-        this.running = false
-        if (stopGRPCServer) this.server?.stop()
-        this.brokerGRPC.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(false).build())
-        {
-            JayLogger.logInfo("STOP")
-        }
+    fun stop(stopGRPCServer: Boolean = true): Status {
+        return try {
+            this.running = false
+            if (stopGRPCServer) this.server?.stop()
+            this.brokerGRPC.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(false).build())
+            {
+                JayLogger.logInfo("STOP")
+            }
+            JayUtils.genStatusSuccess()
+        } catch (ignore: Exception) {
+            JayLogger.logError("Error Stopping ProfilerService")
+            JayUtils.genStatusError()
+        }!!
     }
 
-    internal data class SystemProfileData(
-            val time: Long,
-            val cpu_count: Int,
-            val cpu: CPUStat,
-            val transport: TransportInfo?,
-            val jayState: ActiveState,
-            val battery: BatteryInfo,
-            var usage: Set<PackageUsages>
-    )
+    private fun getTimeRangeProto(start: Long, end: Long): TimeRange? {
+        val timeRange = TimeRange.newBuilder()
+        timeRange.start = start
+        timeRange.end = end
+        return timeRange.build()
+    }
 
-    internal fun getSystemProfile(): SystemProfileData {
-        val currentTime = System.currentTimeMillis()
-        val cpus = this.cpuManager?.getCpus()
-        this.transportManager?.getTransport()
-        val cpuClocks = LinkedHashSet<Int>()
-        cpus?.forEach { cpu_number ->
-            cpuClocks.add(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
+    private fun getJayStatesProto(): Set<JayState?> {
+        val jayStates = LinkedHashSet<JayState?>()
+        JayStateManager.getJayStates().states.forEach { state ->
+            jayStates.add(JayUtils.genJayStateProto(state))
         }
-        //val cpuStat = JayStateManager.getJayStates()
+        return jayStates
+    }
 
-        // Todo: BatteryStats
-        // Todo: Usage
-        return SystemProfileData(currentTime,
-                cpus?.size ?: -1,
-                CPUStat(currentTime, cpuClocks),
-                this.transportManager?.getTransport(),
-                JayStateManager.getJayStates(),
-                BatteryInfo(0, 0, 0, 0, 0, 0, JayProto.Worker.BatteryStatus.CHARGING),
-                emptySet()
+    private fun getTransportProto(transportInfo: TransportInfo): Transport {
+        val transportBuilder = Transport.newBuilder()
+        transportBuilder.medium = Transport.Medium.forNumber(transportInfo.medium.ordinal)
+        transportBuilder.cellularTechnology = Transport.CellularTechnology.forNumber(
+                transportInfo.cellularTechnology!!.ordinal)
+        transportBuilder.downstreamBandwidth = transportInfo.downstreamBandwidth
+        transportBuilder.upstreamBandwidth = transportInfo.upstreamBandwidth
+        return transportBuilder.build()
+    }
+
+    private fun getBatteryProto(): Battery? {
+        this.batteryInfo.batteryCurrent = this.batteryMonitor?.getBatteryCurrentNow() ?: -1
+        this.batteryInfo.batteryEnergy = this.batteryMonitor?.getBatteryRemainingEnergy() ?: -1
+        this.batteryInfo.batteryCharge = this.batteryMonitor?.getBatteryCharge() ?: -1
+        val batteryBuilder = Battery.newBuilder()
+        batteryBuilder.batteryLevel = this.batteryInfo.batteryLevel
+        batteryBuilder.batteryCurrent = this.batteryInfo.batteryCurrent
+        batteryBuilder.batteryVoltage = this.batteryInfo.batteryVoltage
+        batteryBuilder.batteryTemperature = this.batteryInfo.batteryTemperature
+        batteryBuilder.batteryEnergy = this.batteryInfo.batteryEnergy
+        batteryBuilder.batteryCharge = this.batteryInfo.batteryCharge
+        batteryBuilder.batteryStatus = Battery.BatteryStatus.forNumber(this.batteryInfo.batteryStatus.ordinal)
+        return batteryBuilder.build()
+    }
+
+    /**
+     *     TimeRange timeRange = 1;
+     *     repeated JayState jayState = 2;
+     *     Battery battery = 3
+     *     int32 cpuCount = 4;
+     *     repeated int32 cpuFrequency = 5;
+     *     Transport transport = 6;
+     *     repeated string systemUsage = 7;
+     */
+    internal fun getSystemProfile(): ProfileRecording {
+        if (this.recordingLatch.count <= 0) return ProfileRecording.getDefaultInstance()
+        val recordBuilder = ProfileRecording.newBuilder()
+        val currentTime = System.currentTimeMillis()
+        val cpus = this.cpuManager?.getCpus() ?: emptySet()
+        val medium = this.transportManager?.getTransport()
+
+        recordBuilder.timeRange = getTimeRangeProto(this.recordingStartTime, currentTime)
+        getJayStatesProto().forEach { state -> recordBuilder.jayStateList.add(state!!) }
+        recordBuilder.battery = getBatteryProto()
+        recordBuilder.cpuCount = cpus.size
+        cpus.forEach { cpu_number ->
+            recordBuilder.cpuFrequencyList.add(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
+        }
+        if (medium != null) recordBuilder.transport = getTransportProto(medium)
+        val packageUsages = this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
+        packageUsages?.forEach { pkg -> recordBuilder.systemUsageList.add(pkg.pkgName) }
+        this.recordingStartTime = currentTime
+        return recordBuilder.build()
+    }
+
+    private fun setBatteryCallbacks() {
+        this.batteryMonitor?.setCallbacks(
+                levelChangeCallback = { level, voltage, temperature ->
+                    this.batteryInfo.batteryLevel = level
+                    this.batteryInfo.batteryVoltage = voltage
+                    this.batteryInfo.batteryTemperature = temperature
+                    this.batteryInfo.batteryCurrent = this.batteryMonitor?.getBatteryCurrentNow() ?: -1
+                    this.batteryInfo.batteryEnergy = this.batteryMonitor?.getBatteryRemainingEnergy() ?: -1
+                    this.batteryInfo.batteryCharge = this.batteryMonitor?.getBatteryCharge() ?: -1
+                    JayLogger.logInfo("LEVEL_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_LEVEL=$level", "NEW_BATTERY_VOLTAGE=$voltage", "NEW_BATTERY_TEMPERATURE=$temperature", "NEW_BATTERY_CURRENT=${this.batteryInfo.batteryCurrent}", "REMAINING_ENERGY=${this.batteryInfo.batteryEnergy}", "NEW_BATTERY_CHARGE=${this.batteryInfo.batteryCharge}"))
+                },
+                statusChangeCallback = { status ->
+                    JayLogger.logInfo("STATUS_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
+                    this.batteryInfo.batteryStatus = status
+                }
         )
     }
 
@@ -95,19 +159,25 @@ object ProfilerService {
             if (this.recording.get()) return false
             this.recording.set(true)
             recordingStartTime = System.currentTimeMillis()
+            recordingLatch = CountDownLatch(1)
+            this.recordings.clear()
+            this.batteryMonitor?.monitor()
             thread {
                 do {
-                    getSystemProfile()
-
+                    this.recordings.add(getSystemProfile())
                     Thread.sleep(recordInterval)
                 } while (this.recording.get())
+                this.batteryMonitor?.destroy()
+                recordingLatch.countDown()
             }.start()
         }
         return true
     }
 
-    internal fun stopRecording() {
-        // Todo: UsageManager
+    fun stopRecording(): ProfileRecordings {
+        this.recording.set(false)
+        recordingLatch.await()  // Await recording termination
+        return ProfileRecordings.newBuilder().addAllProfileRecording(this.recordings).build()
     }
 
 }
