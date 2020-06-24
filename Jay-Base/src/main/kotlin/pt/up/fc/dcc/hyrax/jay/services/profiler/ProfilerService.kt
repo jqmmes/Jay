@@ -40,6 +40,7 @@ object ProfilerService {
         if (this.running) return
         this.batteryMonitor = batteryMonitor
         setBatteryCallbacks()
+        this.batteryMonitor?.monitor()
         this.transportManager = transportManager
         this.cpuManager = cpuManager
         this.usageManager = usageManager
@@ -55,6 +56,7 @@ object ProfilerService {
         return try {
             this.running = false
             if (stopGRPCServer) this.server?.stop()
+            this.batteryMonitor?.destroy()
             this.brokerGRPC.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(false).build())
             {
                 JayLogger.logInfo("STOP")
@@ -115,14 +117,19 @@ object ProfilerService {
      *     Transport transport = 6;
      *     repeated string systemUsage = 7;
      */
-    internal fun getSystemProfile(): ProfileRecording {
-        if (this.recordingLatch.count <= 0) return ProfileRecording.getDefaultInstance()
+    internal fun getSystemProfile(recording: Boolean = false, msToRetrieve: Long = 500): ProfileRecording {
+        if (this.recordingLatch.count <= 0 && recording)
+            return ProfileRecording.getDefaultInstance()
+
         val recordBuilder = ProfileRecording.newBuilder()
         val currentTime = System.currentTimeMillis()
         val cpus = this.cpuManager?.getCpus() ?: emptySet()
         val medium = this.transportManager?.getTransport()
 
-        recordBuilder.timeRange = getTimeRangeProto(this.recordingStartTime, currentTime)
+        recordBuilder.timeRange =
+                if (recording) getTimeRangeProto(this.recordingStartTime, currentTime)
+                else getTimeRangeProto(currentTime - msToRetrieve, currentTime)
+
         getJayStatesProto().forEach { state -> recordBuilder.jayStateList.add(state!!) }
         recordBuilder.battery = getBatteryProto()
         recordBuilder.cpuCount = cpus.size
@@ -130,9 +137,11 @@ object ProfilerService {
             recordBuilder.cpuFrequencyList.add(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
         }
         if (medium != null) recordBuilder.transport = getTransportProto(medium)
-        val packageUsages = this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
+        val packageUsages = if (recording)
+            this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
+        else this.usageManager?.getRecentUsageList(msToRetrieve)
         packageUsages?.forEach { pkg -> recordBuilder.systemUsageList.add(pkg.pkgName) }
-        this.recordingStartTime = currentTime
+        if (recording) this.recordingStartTime = currentTime
         return recordBuilder.build()
     }
 
@@ -161,13 +170,11 @@ object ProfilerService {
             recordingStartTime = System.currentTimeMillis()
             recordingLatch = CountDownLatch(1)
             this.recordings.clear()
-            this.batteryMonitor?.monitor()
             thread {
                 do {
-                    this.recordings.add(getSystemProfile())
+                    this.recordings.add(getSystemProfile(true))
                     Thread.sleep(recordInterval)
                 } while (this.recording.get())
-                this.batteryMonitor?.destroy()
                 recordingLatch.countDown()
             }.start()
         }

@@ -85,5 +85,9 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             else WorkerService.setExecutorSettings(request.settingMap) { S -> genericComplete(S, responseObserver) }
             JayLogger.logInfo("COMPLETE")
         }
+
+        override fun getWorkerStatus(request: Empty?, responseObserver: StreamObserver<JayProto.WorkerComputeStatus>?) {
+            genericComplete(WorkerService.getWorkerStatus(), responseObserver)
+        }
     }
 }

@@ -123,9 +123,25 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         val call = futureStub.stopService(Empty.getDefaultInstance())
         call.addListener(Runnable {
             try {
+                JayLogger.logInfo("COMPLETE")
                 callback(call.get())
             } catch (e: Exception) {
+                JayLogger.logInfo("ERROR")
                 callback(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun getWorkerStatus(callback: ((JayProto.WorkerComputeStatus?) -> Unit)?) {
+        JayLogger.logInfo("INIT")
+        val call = futureStub.getWorkerStatus(Empty.getDefaultInstance())
+        call.addListener(Runnable {
+            try {
+                JayLogger.logInfo("COMPLETE")
+                callback?.invoke(call.get())
+            } catch (e: Exception) {
+                JayLogger.logInfo("ERROR")
+                callback?.invoke(null)
             }
         }, AbstractJay.executorPool)
     }

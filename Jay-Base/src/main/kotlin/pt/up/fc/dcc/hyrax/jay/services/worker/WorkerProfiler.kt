@@ -1,3 +1,4 @@
+/*
 package pt.up.fc.dcc.hyrax.jay.services.worker
 
 import org.apache.commons.collections4.queue.CircularFifoQueue
@@ -15,17 +16,22 @@ import kotlin.concurrent.thread
 
 internal object WorkerProfiler {
     private val JOBS_LOCK = Object()
-    private var brokerGRPC = BrokerGRPCClient("127.0.0.1")
-    private var updaterRunning = false
+    //private var updaterRunning = false
 
     private val averageComputationTimes = CircularFifoQueue<Long>(JaySettings.AVERAGE_COMPUTATION_TIME_TO_SCORE)
-    private val cpuCores: Int = Runtime.getRuntime().availableProcessors()
-    private val totalMemory: Long = Runtime.getRuntime().totalMemory()
-    private var freeMemory: Long = Runtime.getRuntime().freeMemory()
-
     var runningJobs: AtomicInteger = AtomicInteger(0)
     var totalJobs: AtomicInteger = AtomicInteger(0)
     private var queueSize: Int = Int.MAX_VALUE
+
+
+
+
+    */
+/*private val cpuCores: Int = Runtime.getRuntime().availableProcessors()
+    private val totalMemory: Long = Runtime.getRuntime().totalMemory()
+    private var freeMemory: Long = Runtime.getRuntime().freeMemory()
+
+
 
     private var batteryLevel: Int = 100
     private var batteryCurrent: Int = -1
@@ -33,24 +39,26 @@ internal object WorkerProfiler {
     private var batteryTemperature: Float = -1f
     private var batteryEnergy: Long = -1
     private var batteryCharge: Int = -1
-    private var batteryStatus: JayProto.Worker.BatteryStatus = JayProto.Worker.BatteryStatus.CHARGED
+    private var batteryStatus: JayProto.Worker.BatteryStatus = JayProto.Worker.BatteryStatus.CHARGED*//*
+
     private var batteryMonitor: BatteryMonitor? = null
 
 
     internal fun start() {
         JayLogger.logInfo("START")
-        periodicStatusUpdate()
+        //periodicStatusUpdate()
     }
 
     internal fun destroy() {
         JayLogger.logInfo("DESTROY")
-        updaterRunning = false
+        //updaterRunning = false
         runningJobs.set(0)
         totalJobs.set(0)
-        batteryMonitor?.destroy()
+        //batteryMonitor?.destroy()
     }
 
-    private fun periodicStatusUpdate() {
+    */
+/*private fun periodicStatusUpdate() {
         if (updaterRunning) return
         thread {
             updaterRunning = true
@@ -59,8 +67,30 @@ internal object WorkerProfiler {
                 sleep(JaySettings.WORKER_STATUS_UPDATE_INTERVAL)
             } while (updaterRunning)
         }
+    }*//*
+
+
+    internal fun profileExecution(code: (() -> Unit)) {
+        JayLogger.logInfo("START")
+        val computationStartTimestamp = System.currentTimeMillis()
+        WorkerService.profiler.setState(JayState.COMPUTE)
+        code.invoke()
+        WorkerService.profiler.unSetState(JayState.COMPUTE)
+        val totalTime = System.currentTimeMillis() - computationStartTimestamp
+        averageComputationTimes.add(totalTime)
+        JayLogger.logInfo("END", actions = *arrayOf("COMPUTATION_TIME=$totalTime",
+                "NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() / averageComputationTimes.size)}"))
     }
 
+    internal fun atomicOperation(vararg values: AtomicInteger, increment: Boolean = false) {
+        synchronized(JOBS_LOCK) {
+            for (value in values)
+                if (increment) value.incrementAndGet() else value.decrementAndGet()
+        }
+    }
+
+    */
+/*
     private fun checkBatteryEnergy(): Long {
         this.batteryEnergy = batteryMonitor?.getBatteryRemainingEnergy() ?: -1
         return this.batteryEnergy
@@ -74,31 +104,6 @@ internal object WorkerProfiler {
     private fun checkBatteryCharge(): Int {
         this.batteryCharge = batteryMonitor?.getBatteryCharge() ?: -1
         return this.batteryCharge
-    }
-
-    internal fun profileExecution(code: (() -> Unit)) {
-        JayLogger.logInfo("START", actions = *arrayOf(
-                "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
-                "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
-                "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}"))
-        val computationStartTimestamp = System.currentTimeMillis()
-        WorkerService.profiler.setState(JayState.COMPUTE)
-        code.invoke()
-        WorkerService.profiler.unSetState(JayState.COMPUTE)
-        val totalTime = System.currentTimeMillis() - computationStartTimestamp
-        averageComputationTimes.add(totalTime)
-        JayLogger.logInfo("END", actions = *arrayOf("COMPUTATION_TIME=$totalTime",
-                "NEW_AVERAGE_COMPUTATION_TIME=${(averageComputationTimes.sum() / averageComputationTimes.size)}",
-                "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
-                "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
-                "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}"))
-    }
-
-    internal fun atomicOperation(vararg values: AtomicInteger, increment: Boolean = false) {
-        synchronized(JOBS_LOCK) {
-            for (value in values)
-                if (increment) value.incrementAndGet() else value.decrementAndGet()
-        }
     }
 
     internal fun setBatteryMonitor(monitor: BatteryMonitor?) {
@@ -126,10 +131,12 @@ internal object WorkerProfiler {
     private fun statusNotify() {
         freeMemory = Runtime.getRuntime().freeMemory()
 
-        brokerGRPC.diffuseWorkerStatus(JayUtils.genWorkerProto(batteryLevel = batteryLevel, batteryCurrent = batteryCurrent, batteryVoltage = batteryVoltage,
+        WorkerService.broker.diffuseWorkerStatus(JayUtils.genWorkerProto(batteryLevel = batteryLevel, batteryCurrent =
+        batteryCurrent, batteryVoltage = batteryVoltage,
                 batteryTemperature = batteryTemperature, batteryEnergy = batteryEnergy, batteryCharge = batteryCharge,
                 avgComputingEstimate = if (averageComputationTimes.size > 0) averageComputationTimes.sum() / averageComputationTimes.size else 0,
                 cpuCores = cpuCores, queueSize = queueSize, queuedJobs = totalJobs.get() - runningJobs.get(), runningJobs = runningJobs.get(),
                 totalMemory = totalMemory, freeMemory = freeMemory))
-    }
-}
+    }*//*
+
+}*/

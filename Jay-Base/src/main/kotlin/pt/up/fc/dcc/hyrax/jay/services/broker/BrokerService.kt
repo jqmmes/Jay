@@ -23,6 +23,9 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 
+/**
+ * todo: worker.getWorkerStatus + profiler.getDeviceStatus to diffuse worker status
+ */
 object BrokerService {
 
     internal var batteryMonitor: BatteryMonitor? = null

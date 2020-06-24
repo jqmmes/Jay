@@ -70,6 +70,13 @@ message Worker {
     int64 freeMemory = 18;
 }
 
+message WorkerComputeStatus {
+    int32 queueSize = 1;
+    int32 runningJobs = 2;
+    int32 queuedJobs = 3;
+    int64 avgTimePerJob = 4;
+}
+
 message Ping {
     bytes data = 1;
     bool reply = 2;
@@ -216,6 +223,8 @@ message ProfileRecording {
     repeated int32 cpuFrequency = 5;
     Transport transport = 6;
     repeated string systemUsage = 7;
+    int64 totalMemory = 8;
+    int64 freeMemory = 9;
 }
 
 message ProfileRecordings {
@@ -351,4 +360,6 @@ service WorkerService {
     };
     rpc setExecutorSettings (Settings) returns (Status) {
     };
+    rpc getWorkerStatus (google.protobuf.Empty) returns (WorkerComputeStatus) {
+    }
 }

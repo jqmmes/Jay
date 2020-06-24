@@ -21,8 +21,6 @@ object AndroidUsageManager : UsageManager {
      * The usage period can be calculated by an interval of time between a startRecording and a stopRecording
      * if we ask for a instant usage, retrieve last N seconds
      */
-
-    //@SuppressLint("ServiceCast")
     override fun getRecentUsageList(usagePeriod: Long): Set<PackageUsages> {
         if (!this::context.isInitialized) throw AssertionError("Must setContext before getTransport")
 
@@ -49,6 +47,14 @@ object AndroidUsageManager : UsageManager {
             }
         }
         return pkgUsagesSet.toSet()
+    }
+
+    override fun getTotalMemory(): Long {
+        return Runtime.getRuntime().totalMemory()
+    }
+
+    override fun getFreeMemory(): Long {
+        return Runtime.getRuntime().freeMemory()
     }
 }
 
