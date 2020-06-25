@@ -22,16 +22,16 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         futureStub = WorkerServiceGrpc.newFutureStub(channel)
     }
 
-    fun execute(job: JayProto.WorkerJob?, callback: ((JayProto.Response?) -> Unit)? = null) {
-        JayLogger.logInfo("INIT", job?.id ?: "")
+    fun execute(task: JayProto.WorkerTask?, callback: ((JayProto.Response?) -> Unit)? = null) {
+        JayLogger.logInfo("INIT", task?.id ?: "")
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val futureJob = futureStub.execute(job)
-        futureJob.addListener(Runnable {
+        val futureTask = futureStub.execute(task)
+        futureTask.addListener(Runnable {
             try {
-                callback?.invoke(futureJob.get())
-                JayLogger.logInfo("COMPLETE", job?.id ?: "")
+                callback?.invoke(futureTask.get())
+                JayLogger.logInfo("COMPLETE", task?.id ?: "")
             } catch (e: ExecutionException) {
-                JayLogger.logWarn("ERROR", job?.id ?: "")
+                JayLogger.logWarn("ERROR", task?.id ?: "")
             }
         }, AbstractJay.executorPool)
     }

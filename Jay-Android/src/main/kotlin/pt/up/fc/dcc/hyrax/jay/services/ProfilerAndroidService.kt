@@ -20,7 +20,6 @@ class ProfilerAndroidService : Service() {
         startForeground(notification.first, notification.second)
         AndroidTransportManager.setContext(this)
         AndroidUsageManager.setContext(this)
-        AndroidCPUManager.setContext(this)
         ProfilerService.start(true, AndroidBatteryMonitor(this), AndroidTransportManager, AndroidCPUManager, AndroidUsageManager)
     }
 

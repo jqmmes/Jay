@@ -1,6 +1,5 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage
 
-//import android.annotation.SuppressLint
 import android.app.usage.UsageStatsManager
 import android.app.usage.UsageStatsManager.INTERVAL_DAILY
 import android.content.Context

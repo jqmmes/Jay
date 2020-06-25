@@ -4,5 +4,7 @@ enum class JayState {
     IDLE,
     DATA_SND,
     DATA_RCV,
-    COMPUTE
+    COMPUTE,
+    MULTICAST_ADVERTISE,
+    MULTICAST_LISTEN
 }

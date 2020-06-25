@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Job
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import kotlin.random.Random
 
@@ -17,13 +17,13 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
         for (device in devices) JayLogger.logInfo("DEVICES", actions = *arrayOf("DEVICE_TYPE=${device.name}"))
         if (JayProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
-                SchedulerService.enableHeartBeat(getWorkerTypes()) {
+                SchedulerService.broker.enableHeartBeats(getWorkerTypes()) {
                     JayLogger.logInfo("COMPLETE")
                     super.init()
                 }
             }
         } else {
-            SchedulerService.enableHeartBeat(getWorkerTypes()) {
+            SchedulerService.broker.enableHeartBeats(getWorkerTypes()) {
                 JayLogger.logInfo("COMPLETE")
                 super.init()
             }
@@ -37,8 +37,8 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
         return "${super.getName()} [$strategy] [${devices.trimEnd(' ', ',')}]"
     }
 
-    override fun scheduleJob(job: Job): JayProto.Worker? {
-        JayLogger.logInfo("INIT", job.id)
+    override fun scheduleTask(task: Task): JayProto.Worker? {
+        JayLogger.logInfo("INIT", task.id)
         val workers = SchedulerService.getWorkers(devices)
         val worker = when {
             workers.isEmpty() -> null
@@ -55,7 +55,7 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     override fun destroy() {
         JayLogger.logInfo("INIT")
         devices = emptyList()
-        SchedulerService.disableHeartBeat()
+        SchedulerService.broker.disableHeartBeats()
         roundRobinCount = 0
         if (JayProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(false)

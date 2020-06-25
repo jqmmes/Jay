@@ -85,12 +85,12 @@ class DroidJayLauncherService : Service() {
         }
 
         init {
-            logFile.write("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION,JOB_ID,ACTIONS\n".toByteArray())
+            logFile.write((("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION,TASK_ID,ACTIONS\n)").toByteArray()))
             logFile.flush()
             random_id = Random.nextInt()
         }
 
-        @SuppressLint("HardwareIds")
+        @SuppressLint("HardwareIds", "MissingPermission")
         override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 logFile.write("${Build.ID}-$random_id,$id,ANDROID,$timestamp,${logLevel.name},$callerInfo,$message\n"

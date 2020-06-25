@@ -24,7 +24,7 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
                 .build()
     }
 
-    override fun executeJob(task: JayProto.WorkerJob?, callback: ((Any) -> Unit)?) {
+    override fun executeTask(task: JayProto.WorkerTask?, callback: ((Any) -> Unit)?) {
         try {
             JayLogger.logInfo("READ_IMAGE_DATA", task?.id ?: "")
             val imgData = fsAssistant?.readTempFile(task?.fileId) ?: ByteArray(0)

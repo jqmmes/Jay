@@ -22,18 +22,18 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         futureStub = SchedulerServiceGrpc.newFutureStub(channel)
     }
 
-    fun schedule(request: JayProto.JobDetails?, callback: ((JayProto.Worker?) -> Unit)? = null) {
+    fun schedule(request: JayProto.TaskDetails?, callback: ((JayProto.Worker?) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.schedule(request)
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
-    fun notifyJobComplete(request: JayProto.JobDetails?) {
+    fun notifyTaskComplete(request: JayProto.TaskDetails?) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()
             return
         }
-        AbstractJay.executorPool.submit { blockingStub.notifyJobComplete(request) }
+        AbstractJay.executorPool.submit { blockingStub.notifyTaskComplete(request) }
     }
 
     fun listSchedulers(callback: ((JayProto.Schedulers?) -> Unit)? = null) {

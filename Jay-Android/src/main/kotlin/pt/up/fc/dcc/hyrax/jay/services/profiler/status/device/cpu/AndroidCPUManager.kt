@@ -1,16 +1,9 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu
 
-import android.content.Context
 import java.io.File
 import java.util.*
 
 object AndroidCPUManager : CPUManager() {
-
-    private lateinit var context: Context
-
-    fun setContext(context: Context) {
-        this.context = context
-    }
 
     /**
      *

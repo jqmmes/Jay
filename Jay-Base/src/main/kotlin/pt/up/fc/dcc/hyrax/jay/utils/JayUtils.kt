@@ -67,9 +67,9 @@ object JayUtils {
         return schedulerSet
     }
 
-    fun getJobDetails(job: JayProto.Job?): JayProto.JobDetails? {
-        if (job == null) return JayProto.JobDetails.getDefaultInstance()
-        return JayProto.JobDetails.newBuilder().setId(job.id).setDataSize(job.data.size()).build()
+    fun getTaskDetails(task: JayProto.Task?): JayProto.TaskDetails? {
+        if (task == null) return JayProto.TaskDetails.getDefaultInstance()
+        return JayProto.TaskDetails.newBuilder().setId(task.id).setDataSize(task.data.size()).build()
     }
 
     fun genWorkerTypes(vararg types: Type): JayProto.WorkerTypes {
@@ -103,6 +103,8 @@ object JayUtils {
             JayProto.JayState.state.DATA_RCV -> JayState.DATA_RCV
             JayProto.JayState.state.DATA_SND -> JayState.DATA_SND
             JayProto.JayState.state.COMPUTE -> JayState.COMPUTE
+            JayProto.JayState.state.MULTICAST_ADVERTISE -> JayState.MULTICAST_ADVERTISE
+            JayProto.JayState.state.MULTICAST_LISTEN -> JayState.MULTICAST_LISTEN
             else -> null
         }
     }
@@ -115,6 +117,8 @@ object JayUtils {
             JayState.DATA_RCV -> JayProto.JayState.state.DATA_RCV
             JayState.DATA_SND -> JayProto.JayState.state.DATA_SND
             JayState.COMPUTE -> JayProto.JayState.state.COMPUTE
+            JayState.MULTICAST_ADVERTISE -> JayProto.JayState.state.MULTICAST_ADVERTISE
+            JayState.MULTICAST_LISTEN -> JayProto.JayState.state.MULTICAST_LISTEN
         }
         return JayProto.JayState.newBuilder().setJayState(jayState).build()
     }
@@ -122,7 +126,7 @@ object JayUtils {
     fun genWorkerProto(id: String? = null, batteryLevel: Int, batteryCurrent: Int, batteryVoltage: Int,
                        batteryTemperature: Float, batteryEnergy: Long, batteryCharge: Int,
                        avgComputingEstimate: Long, cpuCores: Int, queueSize: Int,
-                       queuedJobs: Int, runningJobs: Int, type: Type? = null,
+                       queuedTasks: Int, runningTasks: Int, type: Type? = null,
                        bandwidthEstimate: Float? = null, totalMemory: Long,
                        freeMemory: Long): JayProto.Worker? {
         val worker = JayProto.Worker.newBuilder()
@@ -133,11 +137,11 @@ object JayUtils {
         worker.batteryTemperature = batteryTemperature
         worker.batteryEnergy = batteryEnergy
         worker.batteryCharge = batteryCharge
-        worker.avgTimePerJob = avgComputingEstimate // Modified by Worker
+        worker.avgTimePerTask = avgComputingEstimate // Modified by Worker
         worker.cpuCores = cpuCores // Set by Worker
         worker.queueSize = queueSize // Set by Worker
-        worker.queuedJobs = queuedJobs
-        worker.runningJobs = runningJobs // Modified by Worker
+        worker.queuedTasks = queuedTasks
+        worker.runningTasks = runningTasks // Modified by Worker
         if (type != null) worker.type = type // Set in Broker
         if (bandwidthEstimate != null) worker.bandwidthEstimate = bandwidthEstimate // Set internally
         worker.totalMemory = totalMemory

@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.StatusCode
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerJob
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerTask
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusError
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusSuccess
 import java.util.UUID.randomUUID
@@ -14,7 +14,7 @@ abstract class TaskExecutor(val name: String, val description: String?) {
     open fun init(vararg params: Any?) {}
     open fun destroy() {}
 
-    abstract fun executeJob(task: WorkerJob?, callback: ((Any) -> Unit)?)
+    abstract fun executeTask(task: WorkerTask?, callback: ((Any) -> Unit)?)
     abstract fun setSetting(key: String, value: Any?, statusCallback: ((JayStatus) -> Unit)? = null)
     abstract fun callAction(action: String, statusCallback: ((JayStatus, Any?) -> Unit)? = null, vararg args: Any)
     abstract fun runAction(action: String, statusCallback: ((JayStatus) -> Unit)? = null, vararg args: Any)

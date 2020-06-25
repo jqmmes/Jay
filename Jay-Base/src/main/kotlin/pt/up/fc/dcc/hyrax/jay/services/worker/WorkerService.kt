@@ -24,9 +24,9 @@ object WorkerService {
 
     private var taskExecutorManager: TaskExecutorManager? = null
 
-    private val JOBS_LOCK = Object()
+    private val TASKS_LOCK = Object()
 
-    private val jobQueue = LinkedBlockingQueue<RunnableJobObjects>()
+    private val taskQueue = LinkedBlockingQueue<RunnableTaskObjects>()
     private var running = false
     private var executorThreadPool: ExecutorService = Executors.newSingleThreadExecutor()
     private var waitingResultsMap: HashMap<Int, (List<Detection?>) -> Unit> = HashMap()
@@ -34,8 +34,8 @@ object WorkerService {
     private val broker = BrokerGRPCClient("127.0.0.1")
     private val profiler = ProfilerGRPCClient("127.0.0.1")
     private val averageComputationTimes = CircularFifoQueue<Long>(JaySettings.AVERAGE_COMPUTATION_TIME_TO_SCORE)
-    private var runningJobs: AtomicInteger = AtomicInteger(0)
-    private var totalJobs: AtomicInteger = AtomicInteger(0)
+    private var runningTasks: AtomicInteger = AtomicInteger(0)
+    private var totalTasks: AtomicInteger = AtomicInteger(0)
     private var queueSize: Int = Int.MAX_VALUE
 
     init {
@@ -43,12 +43,12 @@ object WorkerService {
         JayLogger.logInfo("COMPLETE")
     }
 
-    internal fun queueJob(job: WorkerJob, callback: ((Any) -> Unit)?): StatusCode {
-        JayLogger.logInfo("INIT", job.id)
+    internal fun queueTask(task: WorkerTask, callback: ((Any) -> Unit)?): StatusCode {
+        JayLogger.logInfo("INIT", task.id)
         if (!running) throw Exception("WorkerService not running")
-        jobQueue.put(RunnableJobObjects(job, callback))
-        atomicOperation(totalJobs, increment = true)
-        JayLogger.logInfo("JOB_QUEUED", job.id, "JOBS_IN_QUEUE=${totalJobs.get() - runningJobs.get()}")
+        taskQueue.put(RunnableTaskObjects(task, callback))
+        atomicOperation(totalTasks, increment = true)
+        JayLogger.logInfo("TASK_QUEUED", task.id, "TASKS_IN_QUEUE=${totalTasks.get() - runningTasks.get()}")
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
     }
 
@@ -63,9 +63,9 @@ object WorkerService {
             while (running) {
                 try {
                     if (!(executorThreadPool.isShutdown || executorThreadPool.isTerminated) && running) {
-                        val job = jobQueue.take()
-                        JayLogger.logInfo("DEQUEUE_TO_EXECUTOR", job.job?.id ?: "")
-                        executorThreadPool.execute(job)
+                        val task = taskQueue.take()
+                        JayLogger.logInfo("DEQUEUE_TO_EXECUTOR", task.task?.id ?: "")
+                        executorThreadPool.execute(task)
                     } else running = false
 
                 } catch (e: Exception) {
@@ -84,12 +84,12 @@ object WorkerService {
         running = false
         if (stopGRPCServer) server?.stop()
         waitingResultsMap.clear()
-        jobQueue.clear()
-        jobQueue.offer(RunnableJobObjects(null) {})
+        taskQueue.clear()
+        taskQueue.offer(RunnableTaskObjects(null) {})
         executorThreadPool.shutdownNow()
         taskExecutorManager?.getCurrentExecutor()?.destroy()
-        runningJobs.set(0)
-        totalJobs.set(0)
+        runningTasks.set(0)
+        totalTasks.set(0)
         broker.announceServiceStatus(ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(false).build()) { S ->
             JayLogger.logInfo("COMPLETE")
             callback?.invoke(S)
@@ -145,7 +145,7 @@ object WorkerService {
     }
 
     private fun atomicOperation(vararg values: AtomicInteger, increment: Boolean = false) {
-        synchronized(JOBS_LOCK) {
+        synchronized(TASKS_LOCK) {
             for (value in values)
                 if (increment) value.incrementAndGet() else value.decrementAndGet()
         }
@@ -153,19 +153,19 @@ object WorkerService {
 
     fun getWorkerStatus(): WorkerComputeStatus? {
         val workerComputeStatusBuilder = WorkerComputeStatus.newBuilder()
-        workerComputeStatusBuilder.avgTimePerJob = if (averageComputationTimes.size > 0) averageComputationTimes.sum() / averageComputationTimes.size else 0
+        workerComputeStatusBuilder.avgTimePerTask = if (averageComputationTimes.size > 0) averageComputationTimes.sum() / averageComputationTimes.size else 0
         workerComputeStatusBuilder.queueSize = queueSize
-        workerComputeStatusBuilder.runningJobs = runningJobs.get()
-        workerComputeStatusBuilder.queuedJobs = totalJobs.get()
+        workerComputeStatusBuilder.runningTasks = runningTasks.get()
+        workerComputeStatusBuilder.queuedTasks = totalTasks.get()
         return workerComputeStatusBuilder.build()
     }
 
-    private class RunnableJobObjects(val job: WorkerJob?, var callback: ((Any) -> Unit)?) : Runnable {
+    private class RunnableTaskObjects(val task: WorkerTask?, var callback: ((Any) -> Unit)?) : Runnable {
         override fun run() {
-            JayLogger.logInfo("INIT", job?.id ?: "")
-            atomicOperation(runningJobs, increment = true)
-            profileExecution { taskExecutorManager?.getCurrentExecutor()?.executeJob(job, callback) }
-            atomicOperation(runningJobs, totalJobs, increment = false)
+            JayLogger.logInfo("INIT", task?.id ?: "")
+            atomicOperation(runningTasks, increment = true)
+            profileExecution { taskExecutorManager?.getCurrentExecutor()?.executeTask(task, callback) }
+            atomicOperation(runningTasks, totalTasks, increment = false)
         }
     }
 }

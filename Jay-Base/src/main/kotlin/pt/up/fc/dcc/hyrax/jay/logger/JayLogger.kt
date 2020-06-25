@@ -23,24 +23,24 @@ object JayLogger {
         return "${stackTrace[i].className.removePrefix("pt.up.fc.dcc.hyrax.jay.")}_${stackTrace[i].methodName}_${stackTrace[i].lineNumber}"
     }
 
-    private fun buildMessage(operation: String, jobId: String = "", actions: Array<out String>): String {
-        var msg = "$operation$DELIMITER$jobId$DELIMITER\""
+    private fun buildMessage(operation: String, taskId: String = "", actions: Array<out String>): String {
+        var msg = "$operation$DELIMITER$taskId$DELIMITER\""
         for (i in actions.indices) {
             msg += actions[i] + if (i < actions.size - 1) ACTION_DELIMITER else ""
         }
         return msg + "\""
     }
 
-    fun logInfo(operation: String, jobId: String = "", vararg actions: String) {
-        log(buildMessage(operation, jobId, actions), LogLevel.Info, buildCallerInfo(Thread.currentThread().stackTrace))
+    fun logInfo(operation: String, taskId: String = "", vararg actions: String) {
+        log(buildMessage(operation, taskId, actions), LogLevel.Info, buildCallerInfo(Thread.currentThread().stackTrace))
     }
 
-    fun logError(operation: String, jobId: String = "", vararg actions: String) {
-        log(buildMessage(operation, jobId, actions), LogLevel.Error, buildCallerInfo(Thread.currentThread().stackTrace))
+    fun logError(operation: String, taskId: String = "", vararg actions: String) {
+        log(buildMessage(operation, taskId, actions), LogLevel.Error, buildCallerInfo(Thread.currentThread().stackTrace))
     }
 
-    fun logWarn(operation: String, jobId: String = "", vararg actions: String) {
-        log(buildMessage(operation, jobId, actions), LogLevel.Warn, buildCallerInfo(Thread.currentThread().stackTrace))
+    fun logWarn(operation: String, taskId: String = "", vararg actions: String) {
+        log(buildMessage(operation, taskId, actions), LogLevel.Warn, buildCallerInfo(Thread.currentThread().stackTrace))
     }
 
     private fun log(message: String, logLevel: LogLevel, callerInfo: String = "") {

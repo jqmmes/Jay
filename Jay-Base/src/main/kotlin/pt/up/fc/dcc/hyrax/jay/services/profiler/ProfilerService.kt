@@ -24,7 +24,7 @@ object ProfilerService {
     private var transportManager: TransportManager? = null
     private var batteryMonitor: BatteryMonitor? = null
     private var running: Boolean = false
-    private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
+    private val broker = BrokerGRPCClient("127.0.0.1")
     private var server: GRPCServerBase? = null
     private var recordingStartTime: Long = 0
     private var recording: AtomicBoolean = AtomicBoolean(false)
@@ -46,7 +46,7 @@ object ProfilerService {
         this.usageManager = usageManager
         this.server = ProfilerGRPCServer(useNettyServer).start()
         this.running = true
-        this.brokerGRPC.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(true).build())
+        this.broker.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(true).build())
         {
             JayLogger.logInfo("COMPLETE")
         }
@@ -57,7 +57,7 @@ object ProfilerService {
             this.running = false
             if (stopGRPCServer) this.server?.stop()
             this.batteryMonitor?.destroy()
-            this.brokerGRPC.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(false).build())
+            this.broker.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(false).build())
             {
                 JayLogger.logInfo("STOP")
             }

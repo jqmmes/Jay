@@ -14,7 +14,7 @@ class FileSystemAssistant(private val androidService: Service) : FileSystemAssis
     }
 
     override fun createTempFile(data: ByteArray?): String {
-        val tmpFile = File.createTempFile("job", "", androidService.cacheDir)
+        val tmpFile = File.createTempFile("task", "", androidService.cacheDir)
         @Suppress("UnstableApiUsage")
         Files.write(data ?: ByteArray(0), tmpFile)
         return tmpFile.name

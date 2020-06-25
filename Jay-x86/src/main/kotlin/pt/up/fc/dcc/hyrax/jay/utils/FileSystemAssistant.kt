@@ -24,7 +24,7 @@ class FileSystemAssistant : FileSystemAssistant {
     }
 
     override fun createTempFile(data: ByteArray?): String {
-        val tmpFile = createTempFile(prefix = "job", directory = tmpDir)
+        val tmpFile = createTempFile(prefix = "task", directory = tmpDir)
         Files.write(data ?: ByteArray(0), tmpFile)
         return tmpFile.name
     }

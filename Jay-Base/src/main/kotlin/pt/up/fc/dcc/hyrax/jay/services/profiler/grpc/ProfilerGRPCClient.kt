@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.jay.services.profiler.grpc
 
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
+import pt.up.fc.dcc.hyrax.jay.AbstractJay
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCClientBase
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.ProfilerServiceGrpc
@@ -10,6 +11,7 @@ import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusError
 import java.util.concurrent.TimeUnit
 
+@Suppress("DuplicatedCode")
 class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.ProfilerServiceBlockingStub,
         ProfilerServiceGrpc.ProfilerServiceFutureStub>(host, JaySettings.PROFILER_PORT) {
     override var blockingStub: ProfilerServiceGrpc.ProfilerServiceBlockingStub = ProfilerServiceGrpc.newBlockingStub(channel)
@@ -72,15 +74,16 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
         }
     }
 
-    fun testService(): JayProto.ServiceStatus {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        return try {
-            blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
-                    .testService(Empty.getDefaultInstance())
-        } catch (ignore: Exception) {
-            val statusError = JayProto.ServiceStatus.newBuilder()
-            statusError.setType(JayProto.ServiceStatus.Type.PROFILER).setRunning(false).build()
-        }
+    fun testService(serviceStatus: ((JayProto.ServiceStatus?) -> Unit)) {
+        if (channel.getState(true) != ConnectivityState.READY) serviceStatus(null)
+        val call = futureStub.testService(Empty.getDefaultInstance())
+        call.addListener(Runnable {
+            try {
+                serviceStatus(call.get())
+            } catch (e: Exception) {
+                serviceStatus(null)
+            }
+        }, AbstractJay.executorPool)
     }
 
     fun stopService(): JayProto.Status? {

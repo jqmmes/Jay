@@ -12,7 +12,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
-import pt.up.fc.dcc.hyrax.jay.structures.Job
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutionException
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException
  *
  */
 
-@Suppress("DuplicatedCode")
+@Suppress("DuplicatedCode", "unused")
 class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerServiceBlockingStub, BrokerServiceGrpc.BrokerServiceFutureStub>
 (host, JaySettings.BROKER_PORT) {
     override var blockingStub: BrokerServiceGrpc.BrokerServiceBlockingStub = BrokerServiceGrpc.newBlockingStub(channel)
@@ -38,53 +38,53 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         futureStub = BrokerServiceGrpc.newFutureStub(channel)
     }
 
-    fun scheduleJob(job: Job, callback: ((JayProto.Response) -> Unit)? = null) {
+    fun scheduleTask(task: Task, callback: ((JayProto.Response) -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.scheduleJob(job.getProto())
+        val call = futureStub.scheduleTask(task.getProto())
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
-    fun executeJob(job: JayProto.Job?, callback: ((JayProto.Response) -> Unit)? = null, schedulerInformCallback: (() -> Unit)? = null) {
+    fun executeTask(task: JayProto.Task?, callback: ((JayProto.Response) -> Unit)? = null, schedulerInformCallback: (() -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val jobId = job?.id ?: ""
+        val taskId = task?.id ?: ""
         AbstractJay.executorPool.submit {
             val startTime = System.currentTimeMillis()
-            JayLogger.logInfo("INIT", jobId,
+            JayLogger.logInfo("INIT", taskId,
                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
-            asyncStub.executeJob(job, object : StreamObserver<JayProto.Response> {
+            asyncStub.executeTask(task, object : StreamObserver<JayProto.Response> {
                 private var lastResult: JayProto.Response? = null
                 override fun onNext(results: JayProto.Response) {
                     lastResult = results
                     when (results.status.code) {
                         JayProto.StatusCode.Received ->
-                            JayLogger.logInfo("DATA_REACHED_SERVER", jobId,
-                                    "DATA_SIZE=${job?.toByteArray()?.size}",
+                            JayLogger.logInfo("DATA_REACHED_SERVER", taskId,
+                                    "DATA_SIZE=${task?.toByteArray()?.size}",
                                     "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
                                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
                         JayProto.StatusCode.Success ->
-                            JayLogger.logInfo("EXECUTION_COMPLETE", jobId,
-                                    "DATA_SIZE=${job?.toByteArray()?.size}",
+                            JayLogger.logInfo("EXECUTION_COMPLETE", taskId,
+                                    "DATA_SIZE=${task?.toByteArray()?.size}",
                                     "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
                                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
-                        else -> onError(Throwable("Error Received onNext for jobId: $jobId"))
+                        else -> onError(Throwable("Error Received onNext for taskId: $taskId"))
                     }
                     if (JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("PASSIVE", "ALL") && results.status.code == JayProto.StatusCode.Received) {
-                        BrokerService.passiveBandwidthUpdate(jobId, job?.toByteArray()?.size
+                        BrokerService.passiveBandwidthUpdate(taskId, task?.toByteArray()?.size
                                 ?: -1, System.currentTimeMillis() - startTime)
                     } else if (results.status.code == JayProto.StatusCode.Error) {
-                        onError(Throwable("Error Received onNext for jobId: $jobId"))
+                        onError(Throwable("Error Received onNext for taskId: $taskId"))
                     }
                 }
 
                 override fun onError(t: Throwable) {
-                    JayLogger.logError("ERROR", jobId)
-                    callback?.invoke(JayProto.Response.getDefaultInstance()); JayLogger.logError("ERROR", jobId,
+                    JayLogger.logError("ERROR", taskId)
+                    callback?.invoke(JayProto.Response.getDefaultInstance()); JayLogger.logError("ERROR", taskId,
                             "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                             "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                             "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
@@ -92,7 +92,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 }
 
                 override fun onCompleted() {
-                    JayLogger.logInfo("COMPLETE", jobId,
+                    JayLogger.logInfo("COMPLETE", taskId,
                             "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
                             "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                             "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
@@ -275,7 +275,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
-    fun enableHearBeats(workerTypes: JayProto.WorkerTypes, callback: ((JayProto.Status) -> Unit)) {
+    fun enableHeartBeats(workerTypes: JayProto.WorkerTypes, callback: ((JayProto.Status) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.enableHearBeats(workerTypes)
         call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")); callback(call.get()) }, AbstractJay.executorPool)
@@ -287,7 +287,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")); callback(call.get()) }, AbstractJay.executorPool)
     }
 
-    fun disableHearBeats() {
+    fun disableHeartBeats() {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.disableHearBeats(Empty.getDefaultInstance())
         call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")) }, AbstractJay.executorPool)
@@ -299,14 +299,26 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")) }, AbstractJay.executorPool)
     }
 
-    fun updateSmartSchedulerWeights(computeTime: Float, queueSize: Float, runningJobs: Float, battery: Float,
+    fun enableWorkerStatusAdvertisement(workerTypes: JayProto.WorkerTypes?, callback: ((JayProto.Status) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.enableWorkerStatusAdvertisement(workerTypes)
+        call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")); callback(call.get()) }, AbstractJay.executorPool)
+    }
+
+    fun disableWorkerStatusAdvertisement() {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.disableWorkerStatusAdvertisement(Empty.getDefaultInstance())
+        call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")) }, AbstractJay.executorPool)
+    }
+
+    fun updateSmartSchedulerWeights(computeTime: Float, queueSize: Float, runningTasks: Float, battery: Float,
                                     bandwidth: Float, callback: ((JayProto.Status?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()
             callback(JayUtils.genStatusError())
         }
         val call = futureStub.updateSmartSchedulerWeights(JayProto.Weights.newBuilder().setComputeTime(computeTime)
-                .setQueueSize(queueSize).setRunningJobs(runningJobs).setBattery(battery).setBandwidth(bandwidth)
+                .setQueueSize(queueSize).setRunningTasks(runningTasks).setBattery(battery).setBandwidth(bandwidth)
                 .build())
         call.addListener(Runnable {
             try {

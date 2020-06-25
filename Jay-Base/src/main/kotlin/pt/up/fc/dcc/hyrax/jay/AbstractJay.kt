@@ -7,7 +7,7 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.ProfilerService
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.jay.structures.Job
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import java.lang.Thread.sleep
 import java.util.*
@@ -63,8 +63,8 @@ abstract class AbstractJay {
         WorkerService.stop()
     }
 
-    fun scheduleJob(data: ByteArray, result: ((JayProto.Response) -> Unit)? = null) {
-        broker.scheduleJob(Job(data), result)
+    fun scheduleTask(data: ByteArray, result: ((JayProto.Response) -> Unit)? = null) {
+        broker.scheduleTask(Task(data), result)
     }
 
     open fun destroy(keepServices: Boolean = false) {
@@ -78,8 +78,8 @@ abstract class AbstractJay {
      * Deprecated
      * Will be replaced by setSettings
      */
-    fun updateSmartWeights(computeWeight: Float, jobsWeight: Float, queueWeight: Float, batteryWeight: Float, bandwidthWeight: Float, callback: ((Boolean) -> Unit)) {
-        broker.updateSmartSchedulerWeights(computeWeight, queueWeight, jobsWeight, batteryWeight, bandwidthWeight) { S ->
+    fun updateSmartWeights(computeWeight: Float, tasksWeight: Float, queueWeight: Float, batteryWeight: Float, bandwidthWeight: Float, callback: ((Boolean) -> Unit)) {
+        broker.updateSmartSchedulerWeights(computeWeight, queueWeight, tasksWeight, batteryWeight, bandwidthWeight) { S ->
             callback(S?.code == JayProto.StatusCode.Success)
         }
     }

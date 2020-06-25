@@ -16,13 +16,13 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
 
     override val grpcImpl: BindableService = object : SchedulerServiceGrpc.SchedulerServiceImplBase() {
 
-        override fun schedule(request: JayProto.JobDetails?, responseObserver: StreamObserver<JayProto.Worker>?) {
+        override fun schedule(request: JayProto.TaskDetails?, responseObserver: StreamObserver<JayProto.Worker>?) {
             val worker = SchedulerService.schedule(request)
             genericComplete(worker, responseObserver)
         }
 
-        override fun notifyJobComplete(request: JayProto.JobDetails?, responseObserver: StreamObserver<Empty>?) {
-            SchedulerService.notifyJobComplete(request?.id)
+        override fun notifyTaskComplete(request: JayProto.TaskDetails?, responseObserver: StreamObserver<Empty>?) {
+            SchedulerService.notifyTaskComplete(request?.id)
             genericComplete(Empty.getDefaultInstance(), responseObserver)
         }
 
@@ -49,7 +49,8 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
         }
 
         override fun testService(request: Empty?, responseObserver: StreamObserver<JayProto.ServiceStatus>?) {
-            genericComplete(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.SCHEDULER).setRunning(SchedulerService.isRunning()).build(), responseObserver)
+            genericComplete(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.SCHEDULER)
+                    .setRunning(SchedulerService.isRunning()).build(), responseObserver)
         }
 
         override fun stopService(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {

@@ -17,6 +17,7 @@ class ClientAndroidService  : Service() {
      */
     inner class LocalBinder : Binder() {
         // Return this instance of LocalService so clients can call public methods
+        @Suppress("unused")
         fun getService(): ClientAndroidService = this@ClientAndroidService
     }
 

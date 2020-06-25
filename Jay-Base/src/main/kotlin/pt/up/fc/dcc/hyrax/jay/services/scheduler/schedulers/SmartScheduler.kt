@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Job
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
@@ -14,7 +14,7 @@ import kotlin.random.Random
  */
 class SmartScheduler : AbstractScheduler("SmartScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
-    private var maxAvgTimePerJob = 0L
+    private var maxAvgTimePerTask = 0L
     private var maxBandwidthEstimate = 0L
 
     override fun init() {
@@ -22,7 +22,7 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
         SchedulerService.registerNotifyListener { W, S -> if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) rankWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
-            SchedulerService.enableBandwidthEstimates(
+            SchedulerService.broker.enableBandwidthEstimates(
                     JayProto.BandwidthEstimate.newBuilder()
                             .setType(JayProto.BandwidthEstimate.Type.ACTIVE)
                             .addAllWorkerType(getWorkerTypes().typeList)
@@ -42,16 +42,16 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
     }
 
     // Return last ID higher score = Better worker
-    override fun scheduleJob(job: Job): JayProto.Worker? {
-        JayLogger.logInfo("INIT", job.id)
+    override fun scheduleTask(task: Task): JayProto.Worker? {
+        JayLogger.logInfo("INIT", task.id)
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.last.id!!)
-        JayLogger.logInfo("COMPLETE", job.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.last.id}"))
+        JayLogger.logInfo("COMPLETE", task.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.last.id}"))
         return null
     }
 
     override fun destroy() {
         JayLogger.logInfo("INIT")
-        SchedulerService.disableBandwidthEstimates()
+        SchedulerService.broker.disableBandwidthEstimates()
         SchedulerService.listenForWorkers(false)
         rankedWorkers.clear()
         JayLogger.logInfo("COMPLETE")
@@ -77,7 +77,7 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
 
     private fun calcScore(worker: JayProto.Worker?): Float {
         if (worker == null) return 0.0f
-        if (maxAvgTimePerJob < worker.avgTimePerJob) maxAvgTimePerJob = worker.avgTimePerJob
+        if (maxAvgTimePerTask < worker.avgTimePerTask) maxAvgTimePerTask = worker.avgTimePerTask
         if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
 
         /*
@@ -85,12 +85,12 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
         */
         // Assuming 100ms as top latency, reserve score
         //val latency = 1f-crossMultiplication(worker..getAvgLatency().toFloat(), 100f)
-        // Assuming a total of 50 jobs as max, reverse score
-        //val totalJobs = 1f-crossMultiplication(remoteClients[clientID]!!.pendingJobs.toFloat(), 5f)
-        val runningJobs = 1f-crossMultiplication(worker.runningJobs.toFloat(), worker.cpuCores.toFloat())
+        // Assuming a total of 50 tasks as max, reverse score
+        //val totalTasks = 1f-crossMultiplication(remoteClients[clientID]!!.pendingTasks.toFloat(), 5f)
+        val runningTasks = 1f - crossMultiplication(worker.runningTasks.toFloat(), worker.cpuCores.toFloat())
 
         //val available spots
-        val queueSpace = crossMultiplication(worker.queueSize.toFloat() - worker.queuedJobs.toFloat(), Integer.MAX_VALUE.toFloat())
+        val queueSpace = crossMultiplication(worker.queueSize.toFloat() - worker.queuedTasks.toFloat(), Integer.MAX_VALUE.toFloat())
 
         /*
         * Higher the better >= 0
@@ -98,18 +98,21 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
         // assuming 100% battery
         val scaledBattery = crossMultiplication(worker.batteryLevel.toFloat(), 100f)
         // Relative value --- Lower is better
-        val scaledAvgTimePerJob = 1f-crossMultiplication(worker.avgTimePerJob.toFloat(), maxAvgTimePerJob.toFloat())
+        val scaledAvgTimePerTask = 1f - crossMultiplication(worker.avgTimePerTask.toFloat(), maxAvgTimePerTask.toFloat())
 
         val scaledAvgBandwidth = 1f - crossMultiplication(worker.bandwidthEstimate, maxBandwidthEstimate.toFloat())
 
         val score =
-                scaledAvgTimePerJob * SchedulerService.weights.computeTime +
-                        runningJobs * SchedulerService.weights.runningJobs +
+                scaledAvgTimePerTask * SchedulerService.weights.computeTime +
+                        runningTasks * SchedulerService.weights.runningTasks +
                         queueSpace * SchedulerService.weights.queueSize +
                         scaledBattery * SchedulerService.weights.battery +
                         scaledAvgBandwidth * SchedulerService.weights.bandwidth
 
-        JayLogger.logInfo("NEW_SCORE", actions = *arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score", "RUNNING_JOBS=${worker.runningJobs}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${worker.batteryLevel}", "AVG_TIME_PER_JOB=${worker.avgTimePerJob}", "BANDWIDTH_ESTIMATE=${worker.bandwidthEstimate}"))
+        JayLogger.logInfo("NEW_SCORE", actions = *arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score",
+                "RUNNING_TASKS=${worker.runningTasks}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${worker
+                .batteryLevel}", "AVG_TIME_PER_TASK=${worker.avgTimePerTask}", "BANDWIDTH_ESTIMATE=${worker
+                .bandwidthEstimate}"))
         return score
     }
 

@@ -24,14 +24,14 @@ object SchedulerService {
     private var batteryMonitor: BatteryMonitor? = null
     private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker?> = hashMapOf()
-    private val brokerGRPC = BrokerGRPCClient("127.0.0.1")
+    internal val broker = BrokerGRPCClient("127.0.0.1")
     private var scheduler: AbstractScheduler? = null
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
-    private var jobCompleteListener: ((String) -> Unit)? = null
+    private var taskCompleteListener: ((String) -> Unit)? = null
     private var running = false
 
     internal var weights: JayProto.Weights = JayProto.Weights.newBuilder().setComputeTime(0.5f).setQueueSize(0.1f)
-            .setRunningJobs(0.1f).setBattery(0.2f).setBandwidth(0.1f).build()
+            .setRunningTasks(0.1f).setBattery(0.2f).setBandwidth(0.1f).build()
 
     private val schedulers: Array<AbstractScheduler> = arrayOf(
             SingleDeviceScheduler(Worker.Type.LOCAL),
@@ -53,7 +53,8 @@ object SchedulerService {
             MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE),
             SmartScheduler(),
             EstimatedTimeScheduler(),
-            ComputationEstimateScheduler()
+            ComputationEstimateScheduler(),
+            EAScheduler(Worker.Type.LOCAL)
     )
 
     internal fun getWorker(id: String) : Worker? {
@@ -79,17 +80,17 @@ object SchedulerService {
         this.batteryMonitor = batteryMonitor
         this.server = SchedulerGRPCServer(useNettyServer).start()
         this.running = true
-        this.brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(SCHEDULER).setRunning(true).build()) {
+        this.broker.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(SCHEDULER).setRunning(true).build()) {
             JayLogger.logInfo("COMPLETE")
         }
         thread {
-            this.brokerGRPC.updateWorkers { JayLogger.logInfo("COMPLETE") }
+            this.broker.updateWorkers { JayLogger.logInfo("COMPLETE") }
         }
     }
 
-    internal fun schedule(request: JayProto.JobDetails?): Worker? {
+    internal fun schedule(request: JayProto.TaskDetails?): Worker? {
         if (scheduler == null) scheduler = schedulers[0]
-        return scheduler?.scheduleJob(pt.up.fc.dcc.hyrax.jay.structures.Job(request))
+        return scheduler?.scheduleTask(pt.up.fc.dcc.hyrax.jay.structures.Task(request))
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?): JayProto.StatusCode {
@@ -114,19 +115,19 @@ object SchedulerService {
         notifyListeners.addLast(listener)
     }
 
-    internal fun registerNotifyJobListener(listener: ((String) -> Unit)) {
-        this.jobCompleteListener = listener
+    internal fun registerNotifyTaskListener(listener: ((String) -> Unit)) {
+        this.taskCompleteListener = listener
     }
 
     internal fun listenForWorkers(listen: Boolean, callback: ((JayProto.Status) -> Unit)? = null) {
-        if (listen) brokerGRPC.listenMulticastWorkers(callback = callback)
-        else brokerGRPC.listenMulticastWorkers(true, callback)
+        if (listen) broker.listenMulticastWorkers(callback = callback)
+        else broker.listenMulticastWorkers(true, callback)
     }
 
     fun stop(stopGRPCServer: Boolean = true) {
         running = false
         if (stopGRPCServer) server?.stop()
-        brokerGRPC.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(SCHEDULER).setRunning(false).build()) {
+        broker.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(SCHEDULER).setRunning(false).build()) {
             JayLogger.logInfo("STOP")
         }
     }
@@ -149,7 +150,6 @@ object SchedulerService {
         }
         JayLogger.logInfo("COMPLETE")
         return schedulersProto.build()
-
     }
 
     internal fun setScheduler(id: String?): JayProto.StatusCode {
@@ -164,34 +164,20 @@ object SchedulerService {
         return JayProto.StatusCode.Error
     }
 
-    internal fun enableHeartBeat(workerTypes: JayProto.WorkerTypes, callback: (JayProto.Status) -> Unit) {
-        brokerGRPC.enableHearBeats(workerTypes, callback)
-    }
-
-    internal fun enableBandwidthEstimates(bandwidthEstimateConfig: JayProto.BandwidthEstimate, callback: (JayProto.Status) -> Unit) {
-        brokerGRPC.enableBandwidthEstimates(bandwidthEstimateConfig, callback)
-    }
-
-    internal fun disableHeartBeat() {
-        brokerGRPC.disableHearBeats()
-    }
-
-    internal fun disableBandwidthEstimates() {
-        brokerGRPC.disableBandwidthEstimates()
-    }
-
     internal fun updateWeights(newWeights: JayProto.Weights?): JayProto.Status? {
-        if (newWeights == null || (newWeights.computeTime + newWeights.queueSize + newWeights.runningJobs + newWeights
+        if (newWeights == null || (newWeights.computeTime + newWeights.queueSize + newWeights.runningTasks + newWeights
                         .bandwidth + newWeights.battery != 1.0f))
             return JayUtils.genStatus(JayProto.StatusCode.Error)
         weights = newWeights
         return JayUtils.genStatus(JayProto.StatusCode.Success)
     }
 
-    internal fun isRunning() : Boolean { return running }
+    internal fun isRunning(): Boolean {
+        return running
+    }
 
-    internal fun notifyJobComplete(id: String?) {
-        jobCompleteListener?.invoke(id ?: "")
+    internal fun notifyTaskComplete(id: String?) {
+        taskCompleteListener?.invoke(id ?: "")
     }
 
 }

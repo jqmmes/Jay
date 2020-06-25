@@ -11,7 +11,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
-import pt.up.fc.dcc.hyrax.jay.structures.Job
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatus
 import java.util.*
@@ -19,15 +19,15 @@ import java.util.*
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(JaySettings.BROKER_PORT, useNettyServer) {
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
-        override fun executeJob(request: JayProto.Job?, responseObserver: StreamObserver<JayProto.Response>?) {
+        override fun executeTask(request: JayProto.Task?, responseObserver: StreamObserver<JayProto.Response>?) {
             BrokerService.profiler.setState(JayState.DATA_RCV)
             responseObserver?.onNext(JayProto.Response.newBuilder().setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
             BrokerService.profiler.unSetState(JayState.DATA_RCV)
-            BrokerService.executeJob(request) { R -> genericComplete(R, responseObserver) }
+            BrokerService.executeTask(request) { R -> genericComplete(R, responseObserver) }
         }
 
-        override fun scheduleJob(request: JayProto.Job?, responseObserver: StreamObserver<JayProto.Response>?) {
-            BrokerService.scheduleJob(request) { R -> genericComplete(R, responseObserver) }
+        override fun scheduleTask(request: JayProto.Task?, responseObserver: StreamObserver<JayProto.Response>?) {
+            BrokerService.scheduleTask(request) { R -> genericComplete(R, responseObserver) }
         }
 
         override fun calibrateWorker(request: JayProto.String?, responseObserver: StreamObserver<Empty>?) {
@@ -98,6 +98,14 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(BrokerService.disableBandwidthEstimates(), responseObserver)
         }
 
+        override fun enableWorkerStatusAdvertisement(request: JayProto.WorkerTypes?, responseObserver: StreamObserver<JayProto.Status>?) {
+            genericComplete(BrokerService.enableWorkerStatusAdvertisement(request), responseObserver)
+        }
+
+        override fun disableWorkerStatusAdvertisement(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
+            genericComplete(BrokerService.disableWorkerStatusAdvertisement(), responseObserver)
+        }
+
         override fun updateSmartSchedulerWeights(request: JayProto.Weights?, responseObserver: StreamObserver<JayProto.Status>?) {
             BrokerService.updateSmartSchedulerWeights(request) { S -> genericComplete(S, responseObserver) }
         }
@@ -113,7 +121,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun createJob(request: JayProto.String?, responseObserver: StreamObserver<JayProto.Response>?) {
+        override fun createTask(request: JayProto.String?, responseObserver: StreamObserver<JayProto.Response>?) {
             val reqId = request?.str ?: ""
             JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST_ID=$reqId"))
             if (reqId.contains(".mp4")) {
@@ -121,10 +129,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 BrokerService.extractVideoFrames(reqId)
                 JayLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("COMPLETE", "REQUEST_TYPE=VIDEO", "REQUEST_ID=$reqId"))
             } else {
-                JayLogger.logInfo("SUBMITTING_JOB", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
-                scheduleJob(Job(BrokerService.getByteArrayFromId(reqId)
+                JayLogger.logInfo("SUBMITTING_TASK", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
+                scheduleTask(Task(BrokerService.getByteArrayFromId(reqId)
                         ?: ByteArray(0)).getProto(), responseObserver)
-                JayLogger.logInfo("JOB_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
+                JayLogger.logInfo("TASK_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
             JayLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=$reqId"))
         }

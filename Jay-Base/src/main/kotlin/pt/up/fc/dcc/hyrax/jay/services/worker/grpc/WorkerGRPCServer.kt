@@ -16,9 +16,9 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
     override val grpcImpl: BindableService = object : WorkerServiceGrpc.WorkerServiceImplBase() {
 
-        override fun execute(request: JayProto.WorkerJob?, responseObserver: StreamObserver<JayProto.Response>?) {
+        override fun execute(request: JayProto.WorkerTask?, responseObserver: StreamObserver<JayProto.Response>?) {
             JayLogger.logInfo("INIT", request?.id ?: "")
-            WorkerService.queueJob(request!!) { detectionList ->
+            WorkerService.queueTask(request!!) { detectionList ->
                 JayLogger.logInfo("COMPLETE", request.id ?: "")
                 genericComplete(JayUtils.genResponse(request.id, detectionList as ByteString), responseObserver)
             }

@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Job
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 
 class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : AbstractScheduler("SingleDeviceScheduler") {
@@ -15,10 +15,10 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
         if (workerType != JayProto.Worker.Type.LOCAL) {
             SchedulerService.listenForWorkers(true) {
                 JayLogger.logInfo("COMPLETE")
-                SchedulerService.enableHeartBeat(getWorkerTypes()) { super.init() }
+                SchedulerService.broker.enableHeartBeats(getWorkerTypes()) { super.init() }
             }
         } else {
-            SchedulerService.enableHeartBeat(getWorkerTypes()) { super.init() }
+            SchedulerService.broker.enableHeartBeats(getWorkerTypes()) { super.init() }
         }
     }
 
@@ -26,8 +26,8 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
         return "${super.getName()} [${workerType.name}]"
     }
 
-    override fun scheduleJob(job: Job): JayProto.Worker? {
-        JayLogger.logInfo("INIT", job.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
+    override fun scheduleTask(task: Task): JayProto.Worker? {
+        JayLogger.logInfo("INIT", task.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
         if (worker == null) {
             for (w in SchedulerService.getWorkers(workerType).values) {
                 if (w?.type == workerType) {
@@ -36,14 +36,14 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
                 }
             }
         }
-        JayLogger.logInfo("COMPLETE", job.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
+        JayLogger.logInfo("COMPLETE", task.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
         return worker
     }
 
     override fun destroy() {
         JayLogger.logInfo("INIT")
         worker = null
-        SchedulerService.disableHeartBeat()
+        SchedulerService.broker.disableHeartBeats()
         if (workerType == JayProto.Worker.Type.REMOTE) {
             SchedulerService.listenForWorkers(false)
         }

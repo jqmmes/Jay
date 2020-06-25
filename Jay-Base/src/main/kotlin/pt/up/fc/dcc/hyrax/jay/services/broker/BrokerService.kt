@@ -21,17 +21,16 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 
-/**
- * todo: worker.getWorkerStatus + profiler.getDeviceStatus to diffuse worker status
- */
 object BrokerService {
+
 
     internal var batteryMonitor: BatteryMonitor? = null
     private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker> = hashMapOf()
-    private val assignedJobs: MutableMap<String, String> = hashMapOf()
+    private val assignedTasks: MutableMap<String, String> = hashMapOf()
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
     private val worker = WorkerGRPCClient("127.0.0.1")
     internal val profiler = ProfilerGRPCClient("127.0.0.1")
@@ -40,8 +39,11 @@ object BrokerService {
     private var bwEstimates = false
     private var schedulerServiceRunning = false
     private var workerServiceRunning = false
+    private var profilerServiceRunning = false
     private var fsAssistant: FileSystemAssistant? = null
     private var videoUtils: VideoUtils? = null
+    private var readServiceData: Boolean = false
+    private var readServiceDataLatch: CountDownLatch = CountDownLatch(0)
 
     init {
         workers[local.id] = local
@@ -57,10 +59,39 @@ object BrokerService {
             schedulerServiceRunning = ServiceStatus?.running ?: false
             if (schedulerServiceRunning) updateWorkers()
         }
+        profiler.testService { ServiceStatus -> profilerServiceRunning = ServiceStatus?.running ?: false }
+    }
+
+    private fun readAndDiffuseServiceData(workerTypes: WorkerTypes?): Boolean {
+        if (readServiceData || workerTypes == null) return false
+        readServiceData = true
+        thread {
+            readServiceDataLatch = CountDownLatch(1)
+            do {
+                val controlLatch = CountDownLatch(1)
+                try {
+
+                    if (profilerServiceRunning) local.updateStatus(profiler.getDeviceStatus())
+                    if (workerServiceRunning) worker.getWorkerStatus { it ->
+                        local.updateStatus(it)
+                        controlLatch.countDown()
+                    }
+                } catch (ignore: Exception) {
+                    JayLogger.logError("Failed to read Service Data")
+                }
+                controlLatch.await()
+                // todo: diffuse and updateWorker refactored to share info to selected hosts
+                sleep(JaySettings.READ_SERVICE_DATA_INTERVAL)
+            } while (readServiceData)
+            readServiceDataLatch.countDown()
+        }.start()
+        return true
     }
 
     fun stop(stopGRPCServer: Boolean = true) {
         if (stopGRPCServer) server?.stop()
+        readServiceData = false
+        readServiceDataLatch.await()
         workers.values.filter { w -> w.type == Type.CLOUD }.forEach { w -> w.disableAutoStatusUpdate() }
     }
 
@@ -74,49 +105,50 @@ object BrokerService {
     }
 
     internal fun extractVideoFrames(id: String?) {
-        videoUtils?.extractFrames("${fsAssistant?.getAbsolutePath()}/$id", 1, (fsAssistant?.getAbsolutePath() ?: ""), (id?.dropLast(4) ?: "thumb"))
+        videoUtils?.extractFrames("${fsAssistant?.getAbsolutePath()}/$id", 1, (fsAssistant?.getAbsolutePath()
+                ?: ""), (id?.dropLast(4) ?: "thumb"))
     }
 
-    internal fun getByteArrayFromId(id: String?) : ByteArray? {
+    internal fun getByteArrayFromId(id: String?): ByteArray? {
         JayLogger.logInfo("READING_IMAGE_BYTE_ARRAY", actions = *arrayOf("IMAGE_ID=$id"))
         if (id != null)
             return fsAssistant?.getByteArrayFast(id)
         return null
     }
 
-    internal fun executeJob(request: Job?, callback: ((Response?) -> Unit)? = null) {
-        val jobId = request?.id ?: ""
-        JayLogger.logInfo("INIT", jobId)
-        val workerJob = WorkerJob.newBuilder().setId(jobId).setFileId(fsAssistant?.createTempFile(request?.data?.toByteArray())).build()
-        if (workerServiceRunning) worker.execute(workerJob, callback) else callback?.invoke(Response.getDefaultInstance())
-        JayLogger.logInfo("COMPLETE", jobId)
+    internal fun executeTask(request: Task?, callback: ((Response?) -> Unit)? = null) {
+        val taskId = request?.id ?: ""
+        JayLogger.logInfo("INIT", taskId)
+        val workerTask = WorkerTask.newBuilder().setId(taskId).setFileId(fsAssistant?.createTempFile(request?.data?.toByteArray())).build()
+        if (workerServiceRunning) worker.execute(workerTask, callback) else callback?.invoke(Response.getDefaultInstance())
+        JayLogger.logInfo("COMPLETE", taskId)
     }
 
-    internal fun scheduleJob(request: Job?, callback: ((Response?) -> Unit)? = null) {
-        val jobId = request?.id ?: ""
-        JayLogger.logInfo("INIT", jobId)
-        val jobDetails = JayUtils.getJobDetails(request)
-        if (schedulerServiceRunning) scheduler.schedule(jobDetails) { W ->
-            if (request != null) assignedJobs[request.id] = W?.id ?: ""
-            JayLogger.logInfo("SCHEDULED", jobId, "WORKER_ID=${W?.id}")
+    internal fun scheduleTask(request: Task?, callback: ((Response?) -> Unit)? = null) {
+        val taskId = request?.id ?: ""
+        JayLogger.logInfo("INIT", taskId)
+        val taskDetails = JayUtils.getTaskDetails(request)
+        if (schedulerServiceRunning) scheduler.schedule(taskDetails) { W ->
+            if (request != null) assignedTasks[request.id] = W?.id ?: ""
+            JayLogger.logInfo("SCHEDULED", taskId, "WORKER_ID=${W?.id}")
             if (W?.id == "" || W == null) {
                 callback?.invoke(null)
             } else {
                 if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.REMOTE || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
-                    workers[W.id]!!.grpc.executeJob(request, callback) { scheduler.notifyJobComplete(jobDetails) }
+                    workers[W.id]!!.grpc.executeTask(request, callback) { scheduler.notifyTaskComplete(taskDetails) }
                 } else {
-                    workers[local.id]!!.grpc.executeJob(request, callback) { scheduler.notifyJobComplete(jobDetails) }
+                    workers[local.id]!!.grpc.executeTask(request, callback) { scheduler.notifyTaskComplete(taskDetails) }
                 }
             }
         } else {
             callback?.invoke(Response.getDefaultInstance())
         }
-        JayLogger.logInfo("COMPLETE", jobId)
+        JayLogger.logInfo("COMPLETE", taskId)
     }
 
-    internal fun passiveBandwidthUpdate(jobId: String, dataSize: Int, duration: Long) {
-        if (jobId in assignedJobs && assignedJobs[jobId] != "") {
-            workers[assignedJobs[jobId]]?.addRTT(duration.toInt(), dataSize)
+    internal fun passiveBandwidthUpdate(taskId: String, dataSize: Int, duration: Long) {
+        if (taskId in assignedTasks && assignedTasks[taskId] != "") {
+            workers[assignedTasks[taskId]]?.addRTT(duration.toInt(), dataSize)
         }
     }
 
@@ -302,14 +334,17 @@ object BrokerService {
                 if (serviceStatus.running) scheduler.notifyWorkerUpdate(local.getProto()) { S -> completeCallback(S) }
                 else scheduler.notifyWorkerFailure(local.getProto()) { S -> completeCallback(S) }
             } else completeCallback(JayUtils.genStatusSuccess())
+        } else if (serviceStatus?.type == ServiceStatus.Type.PROFILER) {
+            profilerServiceRunning = serviceStatus.running
+            completeCallback(JayUtils.genStatusSuccess())
         }
     }
 
-    fun calibrateWorker(job: JayProto.String?, function: () -> Unit) {
+    fun calibrateWorker(task: JayProto.String?, function: () -> Unit) {
         JayLogger.logInfo("INIT", "CALIBRATION")
-        val workerJob = WorkerJob.newBuilder().setId("CALIBRATION").setFileId(fsAssistant?.createTempFile(fsAssistant?.getByteArrayFast(job?.str
+        val workerTask = WorkerTask.newBuilder().setId("CALIBRATION").setFileId(fsAssistant?.createTempFile(fsAssistant?.getByteArrayFast(task?.str
                 ?: "") ?: ByteArray(0))).build()
-        if (workerServiceRunning) worker.execute(workerJob) { function() } else function()
+        if (workerServiceRunning) worker.execute(workerTask) { function() } else function()
         JayLogger.logInfo("COMPLETE", "CALIBRATION")
     }
 
@@ -365,5 +400,20 @@ object BrokerService {
         JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
         if (workerServiceRunning) worker.setExecutorSettings(request, callback)
         else callback?.invoke(JayUtils.genStatusError())
+    }
+
+    fun enableWorkerStatusAdvertisement(workerTypes: WorkerTypes?): Status? {
+        return JayUtils.genStatus(readAndDiffuseServiceData(workerTypes))
+    }
+
+    fun disableWorkerStatusAdvertisement(): Status? {
+        return try {
+            readServiceData = false
+            readServiceDataLatch.await()
+            JayUtils.genStatusSuccess()
+        } catch (ignore: Exception) {
+            JayLogger.logError("Failed to disableWorkerStatusAdvertisement")
+            JayUtils.genStatusError()
+        }
     }
 }

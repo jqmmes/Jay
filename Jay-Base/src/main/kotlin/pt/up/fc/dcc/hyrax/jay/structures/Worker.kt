@@ -38,8 +38,8 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private var batteryStatus: BatteryStatus = BatteryStatus.CHARGED
     private var cpuCores = 0
     private var queueSize = 1
-    private var queuedJobs = 0
-    private var runningJobs = 0
+    private var queuedTasks = 0
+    private var runningTasks = 0
     private var totalMemory = 0L
     private var freeMemory = 0L
     private var status = Status.OFFLINE
@@ -83,8 +83,26 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private fun genProto() {
         this.proto = JayUtils.genWorkerProto(id, batteryLevel, batteryCurrent, batteryVoltage,
                 batteryTemperature, batteryEnergy, batteryCharge, avgComputingEstimate, cpuCores,
-                queueSize, queuedJobs, runningJobs, type, bandwidthEstimate, totalMemory, freeMemory)
+                queueSize, queuedTasks, runningTasks, type, bandwidthEstimate, totalMemory, freeMemory)
     }
+
+    internal fun updateStatus(proto: JayProto.ProfileRecording?): JayProto.Worker? {
+        JayLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+        if (proto == null) return this.proto
+        // todo implement getters and update worker relevant fields
+        return getProto(true)
+    }
+
+    internal fun updateStatus(proto: JayProto.WorkerComputeStatus?): JayProto.Worker? {
+        JayLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+        if (proto == null) return this.proto
+        runningTasks = proto.runningTasks
+        avgComputingEstimate = proto.avgTimePerTask
+        queueSize = proto.queueSize
+        queuedTasks = proto.queuedTasks
+        return getProto(true)
+    }
+
 
     internal fun updateStatus(proto: JayProto.Worker?): JayProto.Worker? {
         JayLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
@@ -96,11 +114,11 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         batteryEnergy = proto.batteryEnergy
         batteryCharge = proto.batteryCharge
         batteryStatus = proto.batteryStatus
-        avgComputingEstimate = proto.avgTimePerJob
-        runningJobs = proto.runningJobs
+        avgComputingEstimate = proto.avgTimePerTask
+        runningTasks = proto.runningTasks
         cpuCores = proto.cpuCores
         queueSize = proto.queueSize
-        queuedJobs = proto.queuedJobs
+        queuedTasks = proto.queuedTasks
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
         return getProto(true)

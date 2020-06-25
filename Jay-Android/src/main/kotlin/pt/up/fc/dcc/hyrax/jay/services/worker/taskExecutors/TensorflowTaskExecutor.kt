@@ -5,7 +5,7 @@ import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerJob
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerTask
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.DroidTensorflow
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.tensorflow.DroidTensorflowLite
@@ -30,7 +30,7 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
                 .build()
     }
 
-    override fun executeJob(task: WorkerJob?, callback: ((Any) -> Unit)?) {
+    override fun executeTask(task: WorkerTask?, callback: ((Any) -> Unit)?) {
         try {
             JayLogger.logInfo("READ_IMAGE_DATA", task?.id ?: "")
             val imgData = fsAssistant?.readTempFile(task?.fileId) ?: ByteArray(0)

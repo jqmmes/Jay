@@ -5,9 +5,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal object JayStateManager {
 
-    private var stateRecordInterval = 500L // time in ms
     private val recordingFlag: AtomicBoolean = AtomicBoolean(false)
-    private val recordedStates: MutableSet<ActiveState> = LinkedHashSet<ActiveState>()
+    private val recordedStates: MutableSet<ActiveState> = LinkedHashSet()
     private val SET_LOCK: Any = Object()
 
     private val activeStates: HashMap<JayState, Int> =
@@ -28,10 +27,6 @@ internal object JayStateManager {
         }
     }
 
-    fun startRecording() {
-        recordJayStates()
-    }
-
     fun stopRecording() {
         recordingFlag.set(false)
     }
@@ -40,19 +35,6 @@ internal object JayStateManager {
         synchronized(SET_LOCK) {
             recordedStates.clear()
         }
-    }
-
-    fun getRecordings(): Set<ActiveState> {
-        return recordedStates
-    }
-
-    fun getAndEraseRecordings(): Set<ActiveState> {
-        var retRecordedStates: Set<ActiveState>
-        synchronized(SET_LOCK) {
-            retRecordedStates = recordedStates
-            recordedStates.clear()
-        }
-        return retRecordedStates
     }
 
     fun getJayStates(): ActiveState {
@@ -69,17 +51,5 @@ internal object JayStateManager {
     }
 
 
-    private fun recordJayStates(): Boolean {
-        if (!recordingFlag.compareAndSet(false, true)) return false
-        Thread {
-            do {
-                synchronized(SET_LOCK) {
-                    recordedStates.add(getJayStates())
-                }
-                Thread.sleep(stateRecordInterval)
-            } while (recordingFlag.get())
-        }.start()
-        return true
-    }
 }
 

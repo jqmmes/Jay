@@ -119,7 +119,8 @@ class X86JayLauncher {
         constructor(logFile: FileOutputStream) : this(){
             this.logFile = logFile
             logging = true
-            this.logFile.write("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION,JOB_ID,ACTIONS\n".toByteArray())
+            this.logFile.write(("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION," +
+                    "TASK_ID,ACTIONS\n").toByteArray())
             this.logFile.flush()
         }
 

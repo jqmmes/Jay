@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.jay.utils
 
 object JaySettings {
 
+    var READ_SERVICE_DATA_INTERVAL: Long = 500
     const val BLOCKING_STUB_DEADLINE: Long = 150
     var SINGLE_REMOTE_IP: String = "0.0.0.0"
     var CLOUDLET_ID = ""

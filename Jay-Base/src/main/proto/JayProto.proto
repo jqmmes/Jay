@@ -5,17 +5,17 @@ option java_outer_classname = "JayProto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
-message Job {
+message Task {
     string id = 1; // uuid
     bytes data = 2;
 }
 
-message JobDetails {
+message TaskDetails {
     string id = 1;
     int32 dataSize = 2;
 }
 
-message WorkerJob {
+message WorkerTask {
     string id = 1; // uuid
     string fileId = 2;
 }
@@ -53,10 +53,10 @@ message Worker {
 
     int32 cpuCores = 10;
     int32 queueSize = 11;
-    int32 runningJobs = 12;
-    int32 queuedJobs = 13;
+    int32 runningTasks = 12;
+    int32 queuedTasks = 13;
 
-    int64 avgTimePerJob = 14;
+    int64 avgTimePerTask = 14;
 
     enum Type {
         LOCAL = 0;
@@ -65,16 +65,16 @@ message Worker {
     }
     Type type = 15;
 
-    float bandwidthEstimate = 16; // KB/s valor a ser calculado no Broker e enviado para o scheduler
+    float bandwidthEstimate = 16;
     int64 totalMemory = 17;
     int64 freeMemory = 18;
 }
 
 message WorkerComputeStatus {
     int32 queueSize = 1;
-    int32 runningJobs = 2;
-    int32 queuedJobs = 3;
-    int64 avgTimePerJob = 4;
+    int32 runningTasks = 2;
+    int32 queuedTasks = 3;
+    int64 avgTimePerTask = 4;
 }
 
 message Ping {
@@ -122,7 +122,7 @@ message String {
 message Weights {
     float computeTime = 1;
     float queueSize = 2;
-    float runningJobs = 3;
+    float runningTasks = 3;
     float battery = 4;
     float bandwidth = 5;
 }
@@ -158,6 +158,8 @@ message JayState {
         DATA_SND = 1;
         DATA_RCV = 2;
         COMPUTE = 3;
+        MULTICAST_ADVERTISE = 4;
+        MULTICAST_LISTEN = 5;
     }
     state jayState = 1;
 }
@@ -236,9 +238,9 @@ service BrokerService {
     rpc ping (Ping) returns (Ping) {
     }; // ExternalBroker > Broker
 
-    rpc executeJob (Job) returns (stream Response) {
+    rpc executeTask (Task) returns (stream Response) {
     }; // ExternalBroker > Broker --> Calls WorkerService::execute
-    rpc scheduleJob (Job) returns (Response) {
+    rpc scheduleTask (Task) returns (Response) {
     }; // App > Broker --> Calls SchedulerService::schedule
 
     rpc advertiseWorkerStatus (Worker) returns (Status) {
@@ -272,6 +274,11 @@ service BrokerService {
     }; // SchedulerService --> Broker (start HB)
     rpc disableBandwidthEstimates (google.protobuf.Empty) returns (Status) {
     }; // SchedulerService --> Broker (start RTT Estimate)
+    rpc enableWorkerStatusAdvertisement (WorkerTypes) returns (Status) {
+    }
+    rpc disableWorkerStatusAdvertisement (google.protobuf.Empty) returns (Status) {
+    }
+
     rpc updateSmartSchedulerWeights (Weights) returns (Status) {
     };
     rpc announceServiceStatus (ServiceStatus) returns (Status) {
@@ -281,7 +288,7 @@ service BrokerService {
 
     rpc calibrateWorker (String) returns (google.protobuf.Empty) {
     };
-    rpc createJob (String) returns (Response) {
+    rpc createTask (String) returns (Response) {
     };
     rpc setSettings (Settings) returns (Status) {
     };
@@ -322,10 +329,10 @@ service ProfilerService {
 
 // Broker > SchedulerBase
 service SchedulerService {
-    rpc schedule (JobDetails) returns (Worker) {
-    }; // Schedule a Job
-    rpc notifyJobComplete (JobDetails) returns (google.protobuf.Empty) {
-    }; // Report jobcompletion to scheduler
+    rpc schedule (TaskDetails) returns (Worker) {
+    }; // Schedule a Task
+    rpc notifyTaskComplete (TaskDetails) returns (google.protobuf.Empty) {
+    }; // Report Task completion to scheduler
     rpc notifyWorkerUpdate (Worker) returns (Status) {
     }; // Inform about Worker updates
     rpc notifyWorkerFailure (Worker) returns (Status) {
@@ -344,8 +351,8 @@ service SchedulerService {
 
 // Broker > WorkerService
 service WorkerService {
-    rpc execute (WorkerJob) returns (Response) {
-    }; // Queue a Job for execution
+    rpc execute (WorkerTask) returns (Response) {
+    }; // Queue a Task for execution
     rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
     };
     rpc stopService (google.protobuf.Empty) returns (Status) {

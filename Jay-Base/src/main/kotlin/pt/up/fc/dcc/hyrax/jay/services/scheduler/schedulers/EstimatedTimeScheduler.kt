@@ -3,7 +3,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Job
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.LinkedBlockingDeque
@@ -16,7 +16,7 @@ import kotlin.random.Random
 @Suppress("DuplicatedCode")
 class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
-    private val assignedJob = LinkedHashMap<String, String>()
+    private val assignedTask = LinkedHashMap<String, String>()
 
     override fun init() {
         JayLogger.logInfo("INIT")
@@ -24,7 +24,7 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
             JayLogger.logInfo("LISTEN_FOR_WORKERS", actions = *arrayOf("SCHEDULER_ID=$id"))
-            SchedulerService.enableBandwidthEstimates(
+            SchedulerService.broker.enableBandwidthEstimates(
                     JayProto.BandwidthEstimate.newBuilder()
                             .setType(JayProto.BandwidthEstimate.Type.ACTIVE)
                             .addAllWorkerType(getWorkerTypes().typeList)
@@ -34,9 +34,9 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
                 super.init()
             }
         }
-        SchedulerService.registerNotifyJobListener { jobId ->
-            if (jobId == "" || (jobId !in assignedJob.keys)) return@registerNotifyJobListener
-            assignedJob.remove(jobId)
+        SchedulerService.registerNotifyTaskListener { taskId ->
+            if (taskId == "" || (taskId !in assignedTask.keys)) return@registerNotifyTaskListener
+            assignedTask.remove(taskId)
         }
     }
 
@@ -49,22 +49,22 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
     }
 
     // Return last ID higher estimatedDuration = Better worker
-    override fun scheduleJob(job: Job): JayProto.Worker? {
-        JayLogger.logInfo("INIT", job.id)
-        for (worker in rankedWorkers) worker.calcScore(job.dataSize)
-        JayLogger.logInfo("START_SORTING", job.id)
+    override fun scheduleTask(task: Task): JayProto.Worker? {
+        JayLogger.logInfo("INIT", task.id)
+        for (worker in rankedWorkers) worker.calcScore(task.dataSize)
+        JayLogger.logInfo("START_SORTING", task.id)
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy { it.estimatedDuration }))
-        JayLogger.logInfo("COMPLETE_SORTING", job.id)
-        JayLogger.logInfo("SELECTED_WORKER", job.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
+        JayLogger.logInfo("COMPLETE_SORTING", task.id)
+        JayLogger.logInfo("SELECTED_WORKER", task.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
         if (rankedWorkers.isNotEmpty()) {
-            assignedJob[job.id] = rankedWorkers.first.id!!
+            assignedTask[task.id] = rankedWorkers.first.id!!
             return SchedulerService.getWorker(rankedWorkers.first.id!!)
         }
         return null
     }
 
     override fun destroy() {
-        SchedulerService.disableBandwidthEstimates()
+        SchedulerService.broker.disableBandwidthEstimates()
         SchedulerService.listenForWorkers(false)
         rankedWorkers.clear()
         super.destroy()
@@ -88,7 +88,7 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
     }
 
     companion object {
-        private var maxAvgTimePerJob = 0L
+        private var maxAvgTimePerTask = 0L
         private var maxBandwidthEstimate = 0L
     }
 
@@ -105,11 +105,12 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
         fun updateWorker(worker: JayProto.Worker?) {
             JayLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=$id"))
             if (worker == null) return
-            if (maxAvgTimePerJob < worker.avgTimePerJob) maxAvgTimePerJob = worker.avgTimePerJob
+            if (maxAvgTimePerTask < worker.avgTimePerTask) maxAvgTimePerTask = worker.avgTimePerTask
             if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
-            weightQueue = (worker.queuedJobs + 1) * worker.avgTimePerJob
+            weightQueue = (worker.queuedTasks + 1) * worker.avgTimePerTask
             estimatedBandwidth = worker.bandwidthEstimate
-            JayLogger.logInfo("WEIGHT_UPDATED", actions = *arrayOf("WORKER_ID=$id", "QUEUE_SIZE=${worker.queuedJobs}+1", "AVG_TIME_PER_JOB=${worker.avgTimePerJob}", "WEIGHT_QUEUE=$weightQueue", "BANDWIDTH=$estimatedBandwidth"))
+            JayLogger.logInfo("WEIGHT_UPDATED", actions = *arrayOf("WORKER_ID=$id", "QUEUE_SIZE=${worker
+                    .queuedTasks}+1", "AVG_TIME_PER_TASK=${worker.avgTimePerTask}", "WEIGHT_QUEUE=$weightQueue", "BANDWIDTH=$estimatedBandwidth"))
             JayLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=$id"))
         }
 
