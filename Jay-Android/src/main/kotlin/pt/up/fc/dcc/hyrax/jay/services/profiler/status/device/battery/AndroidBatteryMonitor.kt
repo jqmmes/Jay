@@ -16,6 +16,56 @@ import kotlin.math.roundToInt
  * BATTERY_PROPERTY_ENERGY_COUNTER        (Sync) Battery remaining energy in nanowatt-hours
  * EXTRA_VOLTAGE                          (ASync) current battery temperature
  * EXTRA_TEMPERATURE                      (ASync) current battery voltage level
+ *
+ * todo: read system data directly to avoid unavailable information on some devices
+ *
+ *
+ * s7e:
+ * Must read battery and controler folders
+ *
+ *
+ * Nexus9:
+ * Reading battery details is forbidden, must use android api
+ *
+ * Lg g3:
+ * Need to configure device and test it.
+ *
+ * tab s5e:
+ * charging status:
+ *  /sys/class/power_supply/usb/online
+ *  /sys/class/power_supply/ac/online
+ *  /sys/class/power_supply/wireless/online
+ *  /sys/class/power_supply/otg/online
+ *  /sys/class/power_supply/pogo/online
+ *
+ * temperature:
+ *  /sys/class/power_supply/battery/temp
+ *  /sys/class/power_supply/battery/batt_temp
+ *
+ * level:
+ *  /sys/class/power_supply/battery/capacity
+ *
+ * current:
+ *  /sys/class/power_supply/battery/current_now
+ *  /sys/class/power_supply/battery/current_avg
+ *
+ * Capacity:
+ *  /sys/class/power_supply/battery/charge_full
+ *  /sys/class/power_supply/battery/charge_counter  (Valor *10, validar com a capacity e o charge_full)
+ *
+ *
+ * All info in one file:
+ *  /sys/class/power_supply/battery/uevent
+ *
+ *
+ * Pixel 4:
+ * All info in one file:
+ *  /sys/class/power_supply/battery/uevent
+ *
+ * Important folders:
+ *  /sys/class/power_supply/maxfg
+ *  /sys/class/power_supply/battery/
+ *
  */
 
 class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
