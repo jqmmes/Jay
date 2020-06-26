@@ -26,5 +26,5 @@ class BatteryInfo {
     var batteryTemperature: Float = -1f
     var batteryEnergy: Long = -1L
     var batteryCharge: Int = -1
-    var batteryStatus: BatteryStatus = BatteryStatus.UNRECOGNIZED
+    var batteryStatus: BatteryStatus = BatteryStatus.UNKNOWN
 }

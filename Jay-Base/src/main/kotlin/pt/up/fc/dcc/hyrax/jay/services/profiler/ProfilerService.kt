@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMon
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu.CPUManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportInfo
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportManager
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportMedium
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.UsageManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayStateManager
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
@@ -86,8 +87,9 @@ object ProfilerService {
     private fun getTransportProto(transportInfo: TransportInfo): Transport {
         val transportBuilder = Transport.newBuilder()
         transportBuilder.medium = Transport.Medium.forNumber(transportInfo.medium.ordinal)
-        transportBuilder.cellularTechnology = Transport.CellularTechnology.forNumber(
-                transportInfo.cellularTechnology!!.ordinal)
+        if (transportInfo.medium == TransportMedium.CELLULAR)
+            transportBuilder.cellularTechnology = Transport.CellularTechnology.forNumber(
+                    transportInfo.cellularTechnology!!.ordinal)
         transportBuilder.downstreamBandwidth = transportInfo.downstreamBandwidth
         transportBuilder.upstreamBandwidth = transportInfo.upstreamBandwidth
         return transportBuilder.build()
@@ -104,7 +106,7 @@ object ProfilerService {
         batteryBuilder.batteryTemperature = this.batteryInfo.batteryTemperature
         batteryBuilder.batteryEnergy = this.batteryInfo.batteryEnergy
         batteryBuilder.batteryCharge = this.batteryInfo.batteryCharge
-        batteryBuilder.batteryStatus = Battery.BatteryStatus.forNumber(this.batteryInfo.batteryStatus.ordinal)
+        batteryBuilder.batteryStatus = Battery.BatteryStatus.forNumber(this.batteryInfo.batteryStatus.number)
         return batteryBuilder.build()
     }
 
@@ -130,17 +132,17 @@ object ProfilerService {
                 if (recording) getTimeRangeProto(this.recordingStartTime, currentTime)
                 else getTimeRangeProto(currentTime - msToRetrieve, currentTime)
 
-        getJayStatesProto().forEach { state -> recordBuilder.jayStateList.add(state!!) }
+        getJayStatesProto().forEach { state -> recordBuilder.addJayState(state) }
         recordBuilder.battery = getBatteryProto()
         recordBuilder.cpuCount = cpus.size
         cpus.forEach { cpu_number ->
-            recordBuilder.cpuFrequencyList.add(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
+            recordBuilder.addCpuFrequency(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
         }
         if (medium != null) recordBuilder.transport = getTransportProto(medium)
         val packageUsages = if (recording)
             this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
         else this.usageManager?.getRecentUsageList(msToRetrieve)
-        packageUsages?.forEach { pkg -> recordBuilder.systemUsageList.add(pkg.pkgName) }
+        packageUsages?.forEach { pkg -> recordBuilder.addSystemUsage(pkg.pkgName) }
         if (recording) this.recordingStartTime = currentTime
         return recordBuilder.build()
     }
@@ -176,7 +178,7 @@ object ProfilerService {
                     Thread.sleep(recordInterval)
                 } while (this.recording.get())
                 recordingLatch.countDown()
-            }.start()
+            }
         }
         return true
     }

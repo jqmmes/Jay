@@ -48,6 +48,7 @@ message Worker {
         CHARGING = 1; // AC Charging
         USB = 2; // USB Charging
         DISCHARGING = 3;
+        UNKNOWN = 4;
     }
     BatteryStatus batteryStatus = 9;
 
@@ -181,6 +182,7 @@ message Battery {
         CHARGING = 1; // AC Charging
         USB = 2; // USB Charging
         DISCHARGING = 3;
+        UNKNOWN = 4;
     }
     BatteryStatus batteryStatus = 7;
 }
@@ -233,7 +235,6 @@ message ProfileRecordings {
     repeated ProfileRecording profileRecording = 1;
 }
 
-// todo: Remove unused functions
 // Internal and External communication Broker
 service BrokerService {
     rpc ping (Ping) returns (Ping) {
@@ -244,12 +245,6 @@ service BrokerService {
     rpc scheduleTask (Task) returns (Response) {
     }; // App > Broker --> Calls SchedulerService::schedule
 
-    rpc advertiseWorkerStatus (Worker) returns (Status) {
-    }; // ExternalBroker > Broker
-
-    rpc diffuseWorkerStatus (Worker) returns (Status) {
-    }; // WorkerService > Broker --> Calls:
-    //       ExternalBroker::diffuseWorkerStatus
     //       SchedulerService::notifyWorkerUpdate
     rpc requestWorkerStatus (google.protobuf.Empty) returns (Worker) {
     }; // ExternalBroker > Broker
@@ -276,8 +271,7 @@ service BrokerService {
     }; // SchedulerService --> Broker (start HB)
     rpc disableBandwidthEstimates (google.protobuf.Empty) returns (Status) {
     }; // SchedulerService --> Broker (start RTT Estimate)
-    // todo: remove WorkerTypes
-    rpc enableWorkerStatusAdvertisement (WorkerTypes) returns (Status) {
+    rpc enableWorkerStatusAdvertisement (google.protobuf.Empty) returns (Status) {
     }
     rpc disableWorkerStatusAdvertisement (google.protobuf.Empty) returns (Status) {
     }

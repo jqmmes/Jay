@@ -40,20 +40,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(JayProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(0))).build(), responseObserver)
         }
 
-        @Deprecated("Updates are now proactive.")
-        override fun advertiseWorkerStatus(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.Status>?) {
-            BrokerService.receiveWorkerStatus(request) { S -> genericComplete(S, responseObserver) }
-        }
-
-        @Deprecated("Updates are now proactive.")
-        override fun diffuseWorkerStatus(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.Status>?) {
-            val notificationComplete = BrokerService.updateWorker(request)
-            val diffuseComplete = BrokerService.diffuseWorkerStatus()
-            notificationComplete.await()
-            diffuseComplete.await()
-            genericComplete(JayProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
-        }
-
         override fun notifySchedulerForAvailableWorkers(request: Empty?, responseObserver: StreamObserver<Empty>?) {
             BrokerService.notifySchedulerForAvailableWorkers()
             genericComplete(request, responseObserver)
@@ -100,8 +86,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(BrokerService.disableBandwidthEstimates(), responseObserver)
         }
 
-        override fun enableWorkerStatusAdvertisement(request: JayProto.WorkerTypes?, responseObserver: StreamObserver<JayProto.Status>?) {
-            genericComplete(BrokerService.enableWorkerStatusAdvertisement(request), responseObserver)
+        override fun enableWorkerStatusAdvertisement(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
+            genericComplete(BrokerService.enableWorkerStatusAdvertisement(), responseObserver)
         }
 
         override fun disableWorkerStatusAdvertisement(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
@@ -180,7 +166,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "averageComputationTimesToStore" -> JaySettings.AVERAGE_COMPUTATION_TIME_TO_SCORE = V.toInt() //: Int = 10
                         "workingThreads" -> JaySettings.WORKING_THREADS = V.toInt() //: Int = 1
                         "workerStatusUpdateInterval" -> JaySettings.WORKER_STATUS_UPDATE_INTERVAL = V.toLong() //: Long = 5000 // 5s
-                        "AUTO_STATUS_UPDATE_INTERVAL_MS" -> JaySettings.AUTO_STATUS_UPDATE_INTERVAL_MS = V.toLong() //: Long = 5000 // 5s
                         "RTTDelayMillisFailRetry" -> JaySettings.RTT_DELAY_MILLIS_FAIL_RETRY = V.toLong() //: Long = 500 // 0.5s
                         "RTTDelayMillisFailAttempts" -> JaySettings.RTT_DELAY_MILLIS_FAIL_ATTEMPTS = V.toLong() //: Long = 5
                         "DEVICE_ID" -> JaySettings.DEVICE_ID = V

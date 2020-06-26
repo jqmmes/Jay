@@ -240,25 +240,6 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }, AbstractJay.executorPool)
     }
 
-    @Deprecated("Updates are now proactive.")
-    fun advertiseWorkerStatus(request: JayProto.Worker?, completeCallback: () -> Unit) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.advertiseWorkerStatus(request)
-        call.addListener(Runnable { completeCallback() }, AbstractJay.executorPool)
-    }
-
-    @Deprecated("Updates are now proactive.")
-    fun diffuseWorkerStatus(request: JayProto.Worker?) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.diffuseWorkerStatus(request)
-        call.addListener(Runnable {
-            try {
-                JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}"))
-            } catch (e: ExecutionException) {
-            }
-        }, AbstractJay.executorPool)
-    }
-
     fun requestWorkerStatus(callback: ((JayProto.Worker?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.requestWorkerStatus(Empty.getDefaultInstance())
@@ -301,9 +282,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")) }, AbstractJay.executorPool)
     }
 
-    fun enableWorkerStatusAdvertisement(workerTypes: JayProto.WorkerTypes?, callback: ((JayProto.Status) -> Unit)) {
+    fun enableWorkerStatusAdvertisement(callback: ((JayProto.Status) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.enableWorkerStatusAdvertisement(workerTypes)
+        val call = futureStub.enableWorkerStatusAdvertisement(Empty.getDefaultInstance())
         call.addListener(Runnable { JayLogger.logInfo("COMPLETE", actions = *arrayOf("STATUS_CODE=${call.get().code.name}")); callback(call.get()) }, AbstractJay.executorPool)
     }
 

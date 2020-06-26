@@ -37,9 +37,6 @@ object JaySettings {
     var READ_SERVICE_DATA_INTERVAL: Long = 500
     var WORKER_STATUS_UPDATE_INTERVAL: Long = 1000 // 1s
 
-    @Deprecated("Should use only WORKER_STATUS_UPDATE_INTERVAL")
-    var AUTO_STATUS_UPDATE_INTERVAL_MS: Long = 1000 // 5s
-
     var DEVICE_ID: String = ""
 
     var BANDWIDTH_ESTIMATE_TYPE = "ALL" // ACTIVE/PASSIVE/ALL

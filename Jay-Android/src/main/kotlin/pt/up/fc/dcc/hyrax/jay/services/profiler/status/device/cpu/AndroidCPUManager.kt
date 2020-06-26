@@ -33,7 +33,7 @@ object AndroidCPUManager : CPUManager() {
      */
     override fun getCpus(cpu_with_frequency: Boolean): Set<Int> {
         val rootCpuDir = File("/sys/devices/system/cpu/")
-        val cpus: LinkedHashSet<Int> = emptySet<Int>() as LinkedHashSet<Int>
+        val cpus: LinkedHashSet<Int> = LinkedHashSet()
         if (rootCpuDir.isDirectory) {
             rootCpuDir.listFiles { _, s -> s.startsWith("cpu", ignoreCase = true) }?.forEach { cpuDir ->
                 if (File("${rootCpuDir.path}/${cpuDir.name}/cpufreq/scaling_cur_freq").exists() || !cpu_with_frequency) {
@@ -46,6 +46,9 @@ object AndroidCPUManager : CPUManager() {
 
     override fun getCurrentCPUClockSpeed(cpuNumber: Int): Int {
         val cpuFile = File("/sys/devices/system/cpu/cpu$cpuNumber/cpufreq/scaling_cur_freq")
-        return if (cpuFile.exists()) cpuFile.readText().toInt() else -1
+        return if (cpuFile.exists()) {
+            val scanner = Scanner(cpuFile)
+            if (scanner.hasNextInt()) scanner.nextInt() else -1
+        } else -1
     }
 }

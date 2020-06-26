@@ -20,7 +20,6 @@ import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 
@@ -96,7 +95,7 @@ object BrokerService {
                 sleep(JaySettings.READ_SERVICE_DATA_INTERVAL)
             } while (readServiceData)
             readServiceDataLatch.countDown()
-        }.start()
+        }
         return true
     }
 
@@ -181,51 +180,6 @@ object BrokerService {
         countDownLatch.await()
     }
 
-    @Deprecated("Updates are now proactive.")
-    internal fun diffuseWorkerStatus() : CountDownLatch {
-        val countDownLatch = CountDownLatch(1)
-        val atomicLock = AtomicInteger(0)
-        var remoteWorkers = 0
-        for (client in workers.values) {
-            if (client.type == Type.REMOTE) {
-                remoteWorkers++
-                atomicLock.incrementAndGet()
-                client.grpc.advertiseWorkerStatus(local.getProto()) { if (atomicLock.decrementAndGet() == 0) countDownLatch.countDown() }
-            }
-        }
-        if (remoteWorkers == 0) countDownLatch.countDown()
-        return countDownLatch
-    }
-
-    @Deprecated("Updates are now proactive.")
-    internal fun updateWorker(request: JayWorker?): CountDownLatch {//, updateCloud: Boolean = false) : CountDownLatch {
-        JayLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}"))//, "UPDATE_CLOUD=$updateCloud"))
-        val countDownLatch = CountDownLatch(1)
-        JayLogger.logInfo("UPDATE_STATUS", actions = *arrayOf("WORKER_ID=${request?.id}"))//, "UPDATE_CLOUD=$updateCloud"))
-        announceMulticast(worker = local.updateStatus(request))
-        if (schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.getProto()) { countDownLatch.countDown() }
-        else countDownLatch.countDown()
-        return countDownLatch
-    }
-
-    @Deprecated("Updates are now proactive.")
-    internal fun receiveWorkerStatus(request: JayProto.Worker?, completeCallback: (Status?) -> Unit) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${request?.id}"))
-        workers[request?.id]?.updateStatus(request)
-        if (schedulerServiceRunning && request?.id != null && request.id in workers) {
-            JayLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${request.id}"))
-            scheduler.notifyWorkerUpdate(request, completeCallback)
-        } else {
-            completeCallback.invoke(JayUtils.genStatusError())
-            if (!schedulerServiceRunning)
-                JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("WORKER_ID=${request?.id}"))
-            else if (request?.id != null && request.id in workers)
-                JayLogger.logInfo("INVALID_REQUEST")
-            else
-                JayLogger.logInfo("UNKNOWN_ERROR", actions = *arrayOf("WORKER_ID=${request?.id}"))
-        }
-    }
-
     fun getSchedulers(callback: ((Schedulers?) -> Unit)? = null) {
         JayLogger.logInfo("INIT")
         if(schedulerServiceRunning) {
@@ -278,6 +232,17 @@ object BrokerService {
             if (address == JaySettings.SINGLE_REMOTE_IP) JaySettings.CLOUDLET_ID = worker.id
             JayLogger.logInfo("NEW_DEVICE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
+            workers[worker.id]?.enableAutoStatusUpdate { workerProto ->
+                if (!schedulerServiceRunning) {
+                    JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=$address",
+                            "DEVICE_ID=${workers[worker.id]?.id}", "WORKER_TYPE=${workers[worker.id]?.type?.name}"))
+                    return@enableAutoStatusUpdate
+                }
+                val latch = CountDownLatch(1)
+                updateWorker(workers[worker.id]?.getProto(), latch)
+                latch.await()
+                JayLogger.logInfo("PROACTIVE_WORKER_STATUS_UPDATE_COMPLETE", "", "WORKER_ID=${workers[worker.id]?.id}")
+            }
         } else {
             JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id]?.updateStatus(worker)
@@ -425,8 +390,7 @@ object BrokerService {
         else callback?.invoke(JayUtils.genStatusError())
     }
 
-    // TODO(remove workerTypes)
-    fun enableWorkerStatusAdvertisement(workerTypes: WorkerTypes?): Status? {
+    fun enableWorkerStatusAdvertisement(): Status? {
         return JayUtils.genStatus(readAndDiffuseServiceData())
     }
 

@@ -13,7 +13,9 @@ internal object JayStateManager {
             hashMapOf(
                     Pair(JayState.DATA_RCV, 0),
                     Pair(JayState.DATA_SND, 0),
-                    Pair(JayState.COMPUTE, 0)
+                    Pair(JayState.COMPUTE, 0),
+                    Pair(JayState.MULTICAST_LISTEN, 0),
+                    Pair(JayState.MULTICAST_ADVERTISE, 0)
             )
 
     fun setState(state: JayState) {
@@ -41,7 +43,7 @@ internal object JayStateManager {
         val activeStatesSet = LinkedHashSet<JayState>()
         var idle = true
         JayState.values().forEach { state ->
-            if (activeStates[state]!! > 0) {
+            if (state != JayState.IDLE && activeStates[state]!! > 0) {
                 activeStatesSet.add(state)
                 idle = false
             }

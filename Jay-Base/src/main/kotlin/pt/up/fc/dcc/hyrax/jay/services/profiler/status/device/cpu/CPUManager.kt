@@ -54,7 +54,7 @@ abstract class CPUManager {
                 recordedStats.add(CPUStat(System.currentTimeMillis(), setOf(1, 2)))
                 sleep(cpuReadsInterval)
             } while (recordingFlag.get())
-        }.start()
+        }
         return true
     }
 }

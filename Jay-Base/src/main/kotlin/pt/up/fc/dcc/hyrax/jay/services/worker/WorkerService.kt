@@ -77,6 +77,10 @@ object WorkerService {
         broker.announceServiceStatus(
                 ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(true).build())
         { JayLogger.logInfo("RUNNING") }
+        broker.enableWorkerStatusAdvertisement {
+            if (it.code == StatusCode.Success) JayLogger.logInfo("WORKER_STATUS_ADVERTISEMENT_ENABLED")
+            else JayLogger.logError("WORKER_STATUS_ADVERTISEMENT_FAILED")
+        }
     }
 
     fun stop(stopGRPCServer: Boolean = true, callback: ((Status?) -> Unit)? = null) {
