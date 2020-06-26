@@ -14,6 +14,10 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
 import kotlin.concurrent.thread
 
+/**
+ * todo: Scheduler::setSettings(key: val)
+ * todo: Create a method to register scheduler
+ */
 object SchedulerService {
 
     enum class WorkerConnectivityStatus {
@@ -33,6 +37,7 @@ object SchedulerService {
     internal var weights: JayProto.Weights = JayProto.Weights.newBuilder().setComputeTime(0.5f).setQueueSize(0.1f)
             .setRunningTasks(0.1f).setBattery(0.2f).setBandwidth(0.1f).build()
 
+    // todo: remove this list and use a new registerScheduler
     private val schedulers: Array<AbstractScheduler> = arrayOf(
             SingleDeviceScheduler(Worker.Type.LOCAL),
             SingleDeviceScheduler(Worker.Type.CLOUD),
@@ -164,6 +169,7 @@ object SchedulerService {
         return JayProto.StatusCode.Error
     }
 
+    // todo: remove this function
     internal fun updateWeights(newWeights: JayProto.Weights?): JayProto.Status? {
         if (newWeights == null || (newWeights.computeTime + newWeights.queueSize + newWeights.runningTasks + newWeights
                         .bandwidth + newWeights.battery != 1.0f))

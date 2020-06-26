@@ -9,8 +9,6 @@ import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
 /**
- * TOOD: Actualizam o avg computing e avg bandwidth quando se remove um device... ou então utilizar um avg dos
- * ultimos x updates
  */
 class SmartScheduler : AbstractScheduler("SmartScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()

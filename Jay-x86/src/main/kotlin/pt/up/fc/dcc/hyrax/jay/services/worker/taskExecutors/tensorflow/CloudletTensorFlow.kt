@@ -197,21 +197,18 @@ internal class CloudletTensorFlow : DetectObjects {
         }
 
         // Create a buffered image with transparency
-        val bimage = BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_3BYTE_BGR)
+        val bImage = BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_3BYTE_BGR)
 
         // Draw the image on to the buffered image
-        val bGr = bimage.createGraphics()
+        val bGr = bImage.createGraphics()
         bGr.drawImage(img, 0, 0, null)
         bGr.dispose()
 
         // Return the buffered image
-        return bimage
+        return bImage
     }
 
-    private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
-        JayLogger.logInfo("INIT")
-        val img: BufferedImage = toBufferedImage(resizeImage(imageData))
-        val data = (img.raster.dataBuffer as DataBufferByte).data
+    private fun makeTensor(data: ByteArray, img: BufferedImage): Tensor<UInt8> {
         bgr2rgb(data)
         val batchSize: Long = 1
         val channels: Long = 3
@@ -219,6 +216,13 @@ internal class CloudletTensorFlow : DetectObjects {
         val tensor = Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
         JayLogger.logInfo("COMPLETE")
         return tensor
+    }
+
+    private fun makeImageTensor(imageData: ByteArray): Tensor<UInt8> {
+        JayLogger.logInfo("INIT")
+        val img: BufferedImage = toBufferedImage(resizeImage(imageData))
+        return makeTensor((img.raster.dataBuffer as DataBufferByte).data, img)
+
     }
 
     @Throws(IOException::class)
@@ -231,14 +235,7 @@ internal class CloudletTensorFlow : DetectObjects {
                             "Expected 3-byte BGR encoding in BufferedImage, found %d (file: %s). This code could be made more robust",
                             img.type, filename))
         }
-        val data = (img.data.dataBuffer as DataBufferByte).data
-        bgr2rgb(data)
-        val batchSize: Long = 1
-        val channels: Long = 3
-        val shape = longArrayOf(batchSize, img.height.toLong(), img.width.toLong(), channels)
-        val tensor =  Tensor.create(UInt8::class.java, shape, ByteBuffer.wrap(data))
-        JayLogger.logInfo("COMPLETE")
-        return tensor
+        return makeTensor((img.data.dataBuffer as DataBufferByte).data, img)
     }
 
     @Suppress("unused")

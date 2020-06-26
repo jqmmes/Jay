@@ -19,6 +19,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
+/**
+ * todo: perform more logging in profiler and related classes
+ * todo: basic energy profiling statistics should be done here
+ */
 object ProfilerService {
     private var usageManager: UsageManager? = null
     private var cpuManager: CPUManager? = null

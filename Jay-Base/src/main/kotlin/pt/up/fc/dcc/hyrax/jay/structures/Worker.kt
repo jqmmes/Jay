@@ -16,6 +16,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
+/**
+ * todo: Adapt Worker to provide relevant information about energy on specific states and other relevant system
+ * information
+ */
 class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
              val type: JayProto.Worker.Type = JayProto.Worker.Type.REMOTE,
              checkHearBeat: Boolean = false, bwEstimates: Boolean = false,

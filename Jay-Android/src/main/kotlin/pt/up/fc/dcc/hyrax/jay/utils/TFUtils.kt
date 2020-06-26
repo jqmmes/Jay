@@ -139,6 +139,11 @@ object TFUtils {
         return tmpFile
     }
 
+    private fun makeDir(context: Context, lite: Boolean, modelFile: File, name: String) {
+        JayLogger.logInfo("MAKE_DIR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "MK_DIR=${File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${name}").path}"))
+        File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${name}").mkdirs()
+    }
+
     fun extractModel(context: Context, modelFile: File, modelName: String, lite: Boolean): String {
         JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
         val tis: TarInputStream = try {
@@ -150,8 +155,7 @@ object TFUtils {
         var basePath = File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/").absolutePath
         var entry: TarEntry? = tis.nextEntry
         if (entry != null && entry.isDirectory) {
-            JayLogger.logInfo("MAKE_DIR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "MK_DIR=${File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${entry.name}").path}"))
-            File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${entry.name}").mkdirs()
+            makeDir(context, lite, modelFile, entry.name)
             basePath = File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${entry.name}").absolutePath
             entry = tis.nextEntry
         }
@@ -161,8 +165,7 @@ object TFUtils {
                 continue
             }
             if (entry.isDirectory) {
-                JayLogger.logInfo("MAKE_DIR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "MK_DIR=${File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${entry.name}").path}"))
-                File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${entry.name}").mkdirs()
+                makeDir(context, lite, modelFile, entry.name)
                 entry = tis.nextEntry
                 continue
             }

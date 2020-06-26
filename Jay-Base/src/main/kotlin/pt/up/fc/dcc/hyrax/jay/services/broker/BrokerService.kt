@@ -23,6 +23,9 @@ import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 
+/**
+ * todo: enable JayStates when using multicast to receive or send and when offloading data
+ */
 object BrokerService {
 
 

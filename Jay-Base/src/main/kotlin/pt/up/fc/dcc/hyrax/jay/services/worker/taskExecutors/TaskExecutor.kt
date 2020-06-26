@@ -7,6 +7,9 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusSuccess
 import java.util.UUID.randomUUID
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status as JayStatus
 
+/**
+ * todo: Convert this to object and remove device specific implementations. Use registerTaskScheduler
+ */
 abstract class TaskExecutor(val name: String, val description: String?) {
 
     val id: String = randomUUID().toString()
