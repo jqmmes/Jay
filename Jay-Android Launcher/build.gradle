@@ -55,6 +55,12 @@ android {
         }
     }
 
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     //noinspection GroovyMissingReturnStatement
     defaultConfig {
         applicationId "pt.up.fc.dcc.hyrax.jay_droid_launcher"

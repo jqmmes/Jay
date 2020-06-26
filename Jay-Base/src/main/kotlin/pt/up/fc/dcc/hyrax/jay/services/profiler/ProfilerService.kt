@@ -14,13 +14,13 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.Transpor
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportMedium
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.UsageManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayStateManager
+import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 /**
- * todo: perform more logging in profiler and related classes
  * todo: basic energy profiling statistics should be done here
  */
 object ProfilerService {
@@ -75,7 +75,7 @@ object ProfilerService {
 
     private fun getTimeRangeProto(start: Long, end: Long): TimeRange? {
         val timeRange = TimeRange.newBuilder()
-        timeRange.start = start
+        timeRange.start = if (start == 0L) end - JaySettings.WORKER_STATUS_UPDATE_INTERVAL else start
         timeRange.end = end
         return timeRange.build()
     }
@@ -96,6 +96,15 @@ object ProfilerService {
                     transportInfo.cellularTechnology!!.ordinal)
         transportBuilder.downstreamBandwidth = transportInfo.downstreamBandwidth
         transportBuilder.upstreamBandwidth = transportInfo.upstreamBandwidth
+        JayLogger.logInfo("TRANSPORT_INFO", "",
+                "MEDIUM=${transportInfo.medium.name}",
+                "DOWNSTREAM=${transportInfo.downstreamBandwidth}",
+                "UPSTREAM=${transportInfo.upstreamBandwidth}"
+        )
+        if (transportInfo.medium == TransportMedium.CELLULAR)
+            JayLogger.logInfo("TRANSPORT_INFO_CELLULAR", "",
+                    "CELLULAR_TECHNOLOGY=${transportInfo.cellularTechnology?.name}"
+            )
         return transportBuilder.build()
     }
 
@@ -111,6 +120,15 @@ object ProfilerService {
         batteryBuilder.batteryEnergy = this.batteryInfo.batteryEnergy
         batteryBuilder.batteryCharge = this.batteryInfo.batteryCharge
         batteryBuilder.batteryStatus = Battery.BatteryStatus.forNumber(this.batteryInfo.batteryStatus.number)
+        JayLogger.logInfo("BATTERY_DETAILS", "",
+                "CURRENT=${this.batteryInfo.batteryCurrent}",
+                "ENERGY=${this.batteryInfo.batteryEnergy}",
+                "CHARGE=${this.batteryInfo.batteryCharge}",
+                "LEVEL=${this.batteryInfo.batteryLevel}",
+                "VOLTAGE=${this.batteryInfo.batteryVoltage}",
+                "TEMPERATURE=${this.batteryInfo.batteryTemperature}",
+                "STATUS=${this.batteryInfo.batteryStatus.name}"
+        )
         return batteryBuilder.build()
     }
 
@@ -135,18 +153,31 @@ object ProfilerService {
         recordBuilder.timeRange =
                 if (recording) getTimeRangeProto(this.recordingStartTime, currentTime)
                 else getTimeRangeProto(currentTime - msToRetrieve, currentTime)
-
-        getJayStatesProto().forEach { state -> recordBuilder.addJayState(state) }
+        JayLogger.logInfo("TIME_RANGE", "", "START=${this.recordingStartTime}", "END=$currentTime")
+        var states = ""
+        getJayStatesProto().forEach { state ->
+            recordBuilder.addJayState(state)
+            states += "${state?.jayState?.name}, "
+        }
+        JayLogger.logInfo("JAY_STATES", "", states)
         recordBuilder.battery = getBatteryProto()
         recordBuilder.cpuCount = cpus.size
+        var cpuSpeeds = ""
         cpus.forEach { cpu_number ->
             recordBuilder.addCpuFrequency(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
+            cpuSpeeds += "CPU_$cpu_number=${this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0}, "
         }
+        JayLogger.logInfo("CPU", "", "CPU_COUNT=${cpus.size}, $cpuSpeeds")
         if (medium != null) recordBuilder.transport = getTransportProto(medium)
         val packageUsages = if (recording)
             this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
         else this.usageManager?.getRecentUsageList(msToRetrieve)
-        packageUsages?.forEach { pkg -> recordBuilder.addSystemUsage(pkg.pkgName) }
+        var pkgs = ""
+        packageUsages?.forEach { pkg ->
+            recordBuilder.addSystemUsage(pkg.pkgName)
+            pkgs += "$pkg, "
+        }
+        JayLogger.logInfo("PKG_USAGE", "", pkgs)
         if (recording) this.recordingStartTime = currentTime
         return recordBuilder.build()
     }
@@ -172,6 +203,7 @@ object ProfilerService {
     internal fun startRecording(): Boolean {
         synchronized(LOCK) {
             if (this.recording.get()) return false
+            JayLogger.logInfo("START_RECORDING")
             this.recording.set(true)
             recordingStartTime = System.currentTimeMillis()
             recordingLatch = CountDownLatch(1)
@@ -182,14 +214,17 @@ object ProfilerService {
                     Thread.sleep(recordInterval)
                 } while (this.recording.get())
                 recordingLatch.countDown()
+                JayLogger.logInfo("START_RECORDING", "", "END")
             }
         }
         return true
     }
 
     fun stopRecording(): ProfileRecordings {
+        JayLogger.logInfo("STOP_RECORDING")
         this.recording.set(false)
         recordingLatch.await()  // Await recording termination
+        JayLogger.logInfo("STOP_RECORDING", "", "END")
         return ProfileRecordings.newBuilder().addAllProfileRecording(this.recordings).build()
     }
 
