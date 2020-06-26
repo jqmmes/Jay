@@ -159,15 +159,16 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                             V.split("/").forEach { ip -> BrokerService.addCloud(ip) }
                         }
                         "GRPC_MAX_MESSAGE_SIZE" -> JaySettings.GRPC_MAX_MESSAGE_SIZE = V.toInt() //: Int = 150000000
-                        "RTTHistorySize" -> JaySettings.RTT_HISTORY_SIZE = V.toInt() //: Int = 5
-                        "pingTimeout" -> JaySettings.PING_TIMEOUT = V.toLong() //: Long = 10000L // 15s
-                        "RTTDelayMillis" -> JaySettings.RTT_DELAY_MILLIS = V.toLong() //: Long = 10000L // 10s
+                        "RTT_HISTORY_SIZE" -> JaySettings.RTT_HISTORY_SIZE = V.toInt() //: Int = 5
+                        "PING_TIMEOUT" -> JaySettings.PING_TIMEOUT = V.toLong() //: Long = 10000L // 15s
+                        "RTT_DELAY_MILLIS" -> JaySettings.RTT_DELAY_MILLIS = V.toLong() //: Long = 10000L // 10s
                         "PING_PAYLOAD_SIZE" -> JaySettings.PING_PAYLOAD_SIZE = V.toInt() //: Int = 32000 // 32Kb
-                        "averageComputationTimesToStore" -> JaySettings.AVERAGE_COMPUTATION_TIME_TO_SCORE = V.toInt() //: Int = 10
-                        "workingThreads" -> JaySettings.WORKING_THREADS = V.toInt() //: Int = 1
-                        "workerStatusUpdateInterval" -> JaySettings.WORKER_STATUS_UPDATE_INTERVAL = V.toLong() //: Long = 5000 // 5s
-                        "RTTDelayMillisFailRetry" -> JaySettings.RTT_DELAY_MILLIS_FAIL_RETRY = V.toLong() //: Long = 500 // 0.5s
-                        "RTTDelayMillisFailAttempts" -> JaySettings.RTT_DELAY_MILLIS_FAIL_ATTEMPTS = V.toLong() //: Long = 5
+                        "AVERAGE_COMPUTATION_TIME_TO_SCORE" -> JaySettings.AVERAGE_COMPUTATION_TIME_TO_SCORE = V.toInt() //: Int = 10
+                        "WORKING_THREADS" -> JaySettings.WORKING_THREADS = V.toInt() //: Int = 1
+                        "WORKER_STATUS_UPDATE_INTERVAL" -> JaySettings.WORKER_STATUS_UPDATE_INTERVAL = V.toLong() //: Long = 5000 // 5s
+                        "RTT_DELAY_MILLIS_FAIL_RETRY" -> JaySettings.RTT_DELAY_MILLIS_FAIL_RETRY = V.toLong() //: Long = 500 // 0.5s
+                        "RTT_DELAY_MILLIS_FAIL_ATTEMPTS" -> JaySettings.RTT_DELAY_MILLIS_FAIL_ATTEMPTS = V.toLong() //: Long = 5
+                        "READ_SERVICE_DATA_INTERVAL" -> JaySettings.READ_SERVICE_DATA_INTERVAL = V.toLong()
                         "DEVICE_ID" -> JaySettings.DEVICE_ID = V
                         "BANDWIDTH_ESTIMATE_TYPE" -> JaySettings.BANDWIDTH_ESTIMATE_TYPE = V
                         "BANDWIDTH_SCALING_FACTOR" -> JaySettings.BANDWIDTH_SCALING_FACTOR = V.toFloatOrNull() ?: 1.0f
