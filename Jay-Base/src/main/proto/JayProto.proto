@@ -233,6 +233,7 @@ message ProfileRecordings {
     repeated ProfileRecording profileRecording = 1;
 }
 
+// todo: Remove unused functions
 // Internal and External communication Broker
 service BrokerService {
     rpc ping (Ping) returns (Ping) {
@@ -245,6 +246,7 @@ service BrokerService {
 
     rpc advertiseWorkerStatus (Worker) returns (Status) {
     }; // ExternalBroker > Broker
+
     rpc diffuseWorkerStatus (Worker) returns (Status) {
     }; // WorkerService > Broker --> Calls:
     //       ExternalBroker::diffuseWorkerStatus
@@ -253,7 +255,7 @@ service BrokerService {
     }; // ExternalBroker > Broker
     //      SchedulerService::notifyWorkerUpdate
 
-    rpc updateWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {
+    rpc notifySchedulerForAvailableWorkers (google.protobuf.Empty) returns (google.protobuf.Empty) {
     }; // SchedulerService > Broker
 
     rpc getSchedulers (google.protobuf.Empty) returns (Schedulers) {
@@ -274,6 +276,7 @@ service BrokerService {
     }; // SchedulerService --> Broker (start HB)
     rpc disableBandwidthEstimates (google.protobuf.Empty) returns (Status) {
     }; // SchedulerService --> Broker (start RTT Estimate)
+    // todo: remove WorkerTypes
     rpc enableWorkerStatusAdvertisement (WorkerTypes) returns (Status) {
     }
     rpc disableWorkerStatusAdvertisement (google.protobuf.Empty) returns (Status) {

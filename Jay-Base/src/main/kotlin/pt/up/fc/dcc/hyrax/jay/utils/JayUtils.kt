@@ -20,8 +20,8 @@ object JayUtils {
             if (!netInt.isLoopback && !netInt.isPointToPoint && netInt.isUp && netInt.supportsMulticast()) {
                 for (address in netInt.inetAddresses) {
                     if (address is T) {
-                        if (JaySettings.MCAST_INTERFACE == null || (JaySettings.MCAST_INTERFACE != null && netInt.name ==
-                                        JaySettings.MCAST_INTERFACE)) {
+                        if (JaySettings.MULTICAST_INTERFACE == null || (JaySettings.MULTICAST_INTERFACE != null && netInt.name ==
+                                        JaySettings.MULTICAST_INTERFACE)) {
                             JayLogger.logInfo("INTERFACE_AVAILABLE", actions = *arrayOf("INTERFACE=${netInt.name}"))
                             interfaceList.add(netInt)
                         }

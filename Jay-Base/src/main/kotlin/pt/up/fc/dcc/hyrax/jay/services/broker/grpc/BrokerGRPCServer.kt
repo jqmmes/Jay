@@ -40,10 +40,12 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(JayProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(0))).build(), responseObserver)
         }
 
+        @Deprecated("Updates are now proactive.")
         override fun advertiseWorkerStatus(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.Status>?) {
             BrokerService.receiveWorkerStatus(request) { S -> genericComplete(S, responseObserver) }
         }
 
+        @Deprecated("Updates are now proactive.")
         override fun diffuseWorkerStatus(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.Status>?) {
             val notificationComplete = BrokerService.updateWorker(request)
             val diffuseComplete = BrokerService.diffuseWorkerStatus()
@@ -52,8 +54,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(JayProto.Status.newBuilder().setCodeValue(0).build(), responseObserver)
         }
 
-        override fun updateWorkers(request: Empty?, responseObserver: StreamObserver<Empty>?) {
-            BrokerService.updateWorkers()
+        override fun notifySchedulerForAvailableWorkers(request: Empty?, responseObserver: StreamObserver<Empty>?) {
+            BrokerService.notifySchedulerForAvailableWorkers()
             genericComplete(request, responseObserver)
         }
 
@@ -179,12 +181,12 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "workingThreads" -> JaySettings.WORKING_THREADS = V.toInt() //: Int = 1
                         "workerStatusUpdateInterval" -> JaySettings.WORKER_STATUS_UPDATE_INTERVAL = V.toLong() //: Long = 5000 // 5s
                         "AUTO_STATUS_UPDATE_INTERVAL_MS" -> JaySettings.AUTO_STATUS_UPDATE_INTERVAL_MS = V.toLong() //: Long = 5000 // 5s
-                        "RTTDelayMillisFailRetry" -> JaySettings.RTTDelayMillisFailRetry = V.toLong() //: Long = 500 // 0.5s
-                        "RTTDelayMillisFailAttempts" -> JaySettings.RTTDelayMillisFailAttempts = V.toLong() //: Long = 5
+                        "RTTDelayMillisFailRetry" -> JaySettings.RTT_DELAY_MILLIS_FAIL_RETRY = V.toLong() //: Long = 500 // 0.5s
+                        "RTTDelayMillisFailAttempts" -> JaySettings.RTT_DELAY_MILLIS_FAIL_ATTEMPTS = V.toLong() //: Long = 5
                         "DEVICE_ID" -> JaySettings.DEVICE_ID = V
                         "BANDWIDTH_ESTIMATE_TYPE" -> JaySettings.BANDWIDTH_ESTIMATE_TYPE = V
                         "BANDWIDTH_SCALING_FACTOR" -> JaySettings.BANDWIDTH_SCALING_FACTOR = V.toFloatOrNull() ?: 1.0f
-                        "MCAST_INTERFACE" -> JaySettings.MCAST_INTERFACE = V
+                        "MULTICAST_INTERFACE" -> JaySettings.MULTICAST_INTERFACE = V
                         "BANDWIDTH_ESTIMATE_CALC_METHOD" -> {
                             if (V.toLowerCase(Locale.getDefault()) in arrayOf("mean", "median")) JaySettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase(Locale.getDefault())
                         }

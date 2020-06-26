@@ -129,9 +129,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
          }
      }
 
-    fun updateWorkers(callback: (() -> Unit)) {
+    fun notifySchedulerForAvailableWorkers(callback: (() -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.updateWorkers(Empty.getDefaultInstance())
+        val call = futureStub.notifySchedulerForAvailableWorkers(Empty.getDefaultInstance())
         call.addListener(Runnable {
             try {
                 call.get(); callback()
@@ -240,12 +240,14 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }, AbstractJay.executorPool)
     }
 
+    @Deprecated("Updates are now proactive.")
     fun advertiseWorkerStatus(request: JayProto.Worker?, completeCallback: () -> Unit) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.advertiseWorkerStatus(request)
         call.addListener(Runnable { completeCallback() }, AbstractJay.executorPool)
     }
 
+    @Deprecated("Updates are now proactive.")
     fun diffuseWorkerStatus(request: JayProto.Worker?) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.diffuseWorkerStatus(request)

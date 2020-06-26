@@ -10,18 +10,12 @@ import kotlin.concurrent.thread
 
 object MulticastAdvertiser {
     private lateinit var mcSocket : MulticastSocket
-    private var multicastFrequency = 1000L
     private val MESSAGE_LOCK = Object()
     private const val mcPort = 50000
     private const val mcIPStr = "224.0.0.1"
     private var mcIPAddress : InetAddress = Inet4Address.getByName(mcIPStr)
     private var packet: DatagramPacket? = null
     private val runningLock = AtomicBoolean(false)
-
-    @Suppress("unused")
-    fun setFrequency(frequency: Long) {
-        this.multicastFrequency = frequency
-    }
 
     fun setAdvertiseData(data: ByteArray?) {
         val msg = data ?: ByteArray(0)
@@ -70,7 +64,7 @@ object MulticastAdvertiser {
                             JayLogger.logError("MULTICAST_SOCKET_ERROR", actions = *arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
                         }
                 }
-                sleep(multicastFrequency)
+                sleep(JaySettings.MULTICAST_PKT_INTERVAL)
             } while (runningLock.get())
 
             if (!mcSocket.isClosed) {

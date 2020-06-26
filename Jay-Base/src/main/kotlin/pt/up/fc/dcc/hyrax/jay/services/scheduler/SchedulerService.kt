@@ -84,7 +84,7 @@ object SchedulerService {
             JayLogger.logInfo("COMPLETE")
         }
         thread {
-            this.broker.updateWorkers { JayLogger.logInfo("COMPLETE") }
+            this.broker.notifySchedulerForAvailableWorkers { JayLogger.logInfo("COMPLETE") }
         }
     }
 
