@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import java.io.File
 import kotlin.math.roundToInt
 
 /**
@@ -18,6 +19,7 @@ import kotlin.math.roundToInt
  * EXTRA_TEMPERATURE                      (ASync) current battery voltage level
  *
  * todo: read system data directly to avoid unavailable information on some devices
+ * todo: Save in a persistent manner the max read battery
  *
  *
  * s7e:
@@ -66,6 +68,89 @@ import kotlin.math.roundToInt
  *  /sys/class/power_supply/maxfg
  *  /sys/class/power_supply/battery/
  *
+ *
+ * https://elinux.org/images/4/45/Power-supply_Sebastian-Reichel.pdf
+ * POWER_SUPPLY_CAPACITY - Power supply %
+ *
+ *
+ * Charge Counter:
+ * POWER_SUPPLY_CHARGE_NOW=22192904
+ * POWER_SUPPLY_CHARGE_NOW=20772744
+ * + POWER_SUPPLY_CHARGE_COUNTER_SHADOW
+ *
+ * POWER_SUPPLY_CHARGE_COUNTER=
+ *
+ *
+ * POWER_SUPPLY_CHARGE_COUNTER
+ *
+ *
+ * Power supply status (Charging, Full, Discharging, Not charging, Unknown):
+ * POWER_SUPPLY_STATUS
+ *
+ *
+ *
+ * Total capacity (Some don't have):
+ * POWER_SUPPLY_BATT_CE_FULL
+ *
+ * Capacity on s7e??
+ * charge_otg_control:2821160
+ * charge_uno_control:2821160
+ *
+ *
+ * no Pixel4 a current lê ao contrário! positivo é consumo de energia, negativo é a carregar
+ *
+ *
+ * No S7e e no N9 negativo é descarregar
+ *
+ *
+ *
+ * Ler o current com o getCurrentNow() e usar só isto nos que não dão info de charge_counter. nos outros usar também
+ * o charge_counter. Senão, ler a percentagem de bateria e a current para estimar a carga.
+ *
+ *
+ *
+ *
+ * A estatistica mais instantanea é a current no battery.
+ * POWER_SUPPLY_CURRENT_NOW
+ *
+ * Current = Voltagem / Resistencia
+ *
+ * Resistencia: fg_fullcapnom
+ * Voltagem: voltage_now
+ *
+ *
+ *
+ * static char *type_text[] = {
+"Unknown", "Battery", "UPS", "Mains", "USB",
+"USB_DCP", "USB_CDP", "USB_ACA",
+"USB_HVDCP", "USB_HVDCP_3", "Wireless", "BMS", "USB_Parallel",
+"Wipower", "TYPEC", "TYPEC_UFP", "TYPEC_DFP"
+};
+static char *status_text[] = {
+"Unknown", "Charging", "Discharging", "Not charging", "Full"
+};
+static char *charge_type[] = {
+"Unknown", "N/A", "Trickle", "Fast",
+"Taper"
+};
+static char *health_text[] = {
+"Unknown", "Good", "Overheat", "Dead", "Over voltage",
+"Unspecified failure", "Cold", "Watchdog timer expire",
+"Safety timer expire",
+"Warm", "Cool"
+};
+static char *technology_text[] = {
+"Unknown", "NiMH", "Li-ion", "Li-poly", "LiFe", "NiCd",
+"LiMn"
+};
+static char *capacity_level_text[] = {
+"Unknown", "Critical", "Low", "Normal", "High", "Full"
+};
+static char *scope_text[] = {
+"Unknown", "System", "Device"
+};
+ *
+ *
  */
 
 class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
@@ -82,6 +167,8 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
     class BatteryChargeStateUpdatesReceiver : BroadcastReceiver() {
 
         private var context: Context? = null
+
+        private val baseDir: File = File("/sys/class/power_supply/")
 
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
@@ -119,7 +206,7 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         }
     }
 
-    class BatteryLevelUpdatesReceiver:  BroadcastReceiver() {
+    class BatteryLevelUpdatesReceiver : BroadcastReceiver() {
         // levelChangeCallback(Percentage, Voltage, Temperature)
         private var levelChangeCallback: ((Int, Int, Float) -> Unit)? = null
 

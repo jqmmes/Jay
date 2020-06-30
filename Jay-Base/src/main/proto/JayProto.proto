@@ -229,6 +229,7 @@ message ProfileRecording {
     repeated string systemUsage = 7;
     int64 totalMemory = 8;
     int64 freeMemory = 9;
+    repeated string sensors = 10;
 }
 
 message ProfileRecordings {

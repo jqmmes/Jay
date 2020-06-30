@@ -9,6 +9,7 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryInfo
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu.CPUManager
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.sensors.SensorManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportInfo
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportMedium
@@ -27,6 +28,7 @@ object ProfilerService {
     private var usageManager: UsageManager? = null
     private var cpuManager: CPUManager? = null
     private var transportManager: TransportManager? = null
+    private var sensorManager: SensorManager? = null
     private var batteryMonitor: BatteryMonitor? = null
     private var running: Boolean = false
     private val broker = BrokerGRPCClient("127.0.0.1")
@@ -40,7 +42,8 @@ object ProfilerService {
     private val batteryInfo = BatteryInfo()
 
     fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, transportManager:
-    TransportManager? = null, cpuManager: CPUManager? = null, usageManager: UsageManager? = null) {
+    TransportManager? = null, cpuManager: CPUManager? = null, usageManager: UsageManager? = null, sensorManager:
+              SensorManager? = null) {
         JayLogger.logInfo("INIT")
         if (this.running) return
         this.batteryMonitor = batteryMonitor
@@ -49,6 +52,7 @@ object ProfilerService {
         this.transportManager = transportManager
         this.cpuManager = cpuManager
         this.usageManager = usageManager
+        this.sensorManager = sensorManager
         this.server = ProfilerGRPCServer(useNettyServer).start()
         this.running = true
         this.broker.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(true).build())
@@ -178,6 +182,12 @@ object ProfilerService {
             pkgs += "$pkg, "
         }
         JayLogger.logInfo("PKG_USAGE", "", pkgs)
+        var sensorStr = ""
+        this.sensorManager?.getActiveSensors()?.forEach { sensor ->
+            recordBuilder.addSensors(sensor)
+            sensorStr += "$sensor, "
+        }
+        JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)
         if (recording) this.recordingStartTime = currentTime
         return recordBuilder.build()
     }

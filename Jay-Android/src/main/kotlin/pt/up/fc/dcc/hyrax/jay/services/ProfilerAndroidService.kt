@@ -8,6 +8,7 @@ import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.profiler.ProfilerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.AndroidBatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu.AndroidCPUManager
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.sensors.AndroidSensorManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.AndroidTransportManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.AndroidUsageManager
 
@@ -20,6 +21,7 @@ class ProfilerAndroidService : Service() {
         startForeground(notification.first, notification.second)
         AndroidTransportManager.setContext(this)
         AndroidUsageManager.setContext(this)
+        AndroidSensorManager.setContext(this)
         ProfilerService.start(true, AndroidBatteryMonitor(this), AndroidTransportManager, AndroidCPUManager, AndroidUsageManager)
     }
 
