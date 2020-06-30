@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler
 
+import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
@@ -20,6 +21,7 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
+import kotlin.math.abs
 
 /**
  * todo: basic energy profiling statistics should be done here
@@ -50,6 +52,66 @@ object ProfilerService {
     private var recordingLatch = CountDownLatch(0)
     private val recordings = LinkedHashSet<ProfileRecording>()
     private val batteryInfo = BatteryInfo()
+
+
+    private val expectedCpuRawHashMap = LinkedHashMap<Set<JayState>, CircularFifoQueue<Set<Long>>>()
+    private val expectedCurrentHashMap = LinkedHashMap<Set<Long>, HashMap<TransportInfo, HashMap<Set<String>, CircularFifoQueue<Long>>>>()
+
+    private fun setSimilarity(v1: Set<Long>, v2: Set<Long>): Long {
+        var diff = 0L
+        for (i in 0..v1.size) {
+            diff += abs(v1.elementAt(i) - v2.elementAt(i))
+        }
+        return diff
+    }
+
+    private fun mostSimilarSet(v1: Set<Long>, v2: Set<Set<Long>>): Set<Long>? {
+        var maxDiff = Long.MAX_VALUE
+        var retSet: Set<Long>? = null
+        v2.forEach {
+            val diff = setSimilarity(v1, it)
+            if (diff < maxDiff) {
+                maxDiff = diff
+                retSet = it
+            }
+        }
+        return retSet
+    }
+
+    private fun getSetMovingAvg(v1: CircularFifoQueue<Set<Long>>?): Set<Long>? {
+        if (v1 == null) return null
+        val cpuCoreCounts: MutableList<Int> = ArrayList()
+        val cpuCoreSums: MutableList<Long> = ArrayList()
+        val retSet: MutableSet<Long> = LinkedHashSet()
+        v1.forEach {
+            for (i in 0..it.size) {
+                if (cpuCoreCounts.size >= i) cpuCoreCounts[i] = cpuCoreCounts[i] + 1
+                else cpuCoreCounts.add(1)
+                if (cpuCoreSums.size >= 1) cpuCoreSums[i] = cpuCoreSums[i] + it.elementAt(i)
+                else cpuCoreSums.add(it.elementAt(i))
+            }
+        }
+        for (i in 0..cpuCoreCounts.size) {
+            retSet.add((cpuCoreSums[i] / cpuCoreCounts[i]))
+        }
+        return retSet
+    }
+
+    fun getExpectedCpuMhz(v1: Set<JayState>): Set<Long>? {
+        return if ((expectedCpuRawHashMap.containsKey(v1))) getSetMovingAvg(expectedCpuRawHashMap[v1]) else null
+    }
+
+    fun getExpectedCurrent(v1: Set<Long>, v2: TransportInfo, v3: Set<String>): Long? {
+        val cpuSet = mostSimilarSet(v1, expectedCurrentHashMap.keys) ?: return null
+        val subSet = expectedCurrentHashMap[cpuSet]!!
+        if (!subSet.containsKey(v2)) return null
+        if (!subSet[v2]!!.containsKey(v3)) return null
+        var sum = 0L
+        subSet[v2]!![v3]!!.forEach {
+            sum += it
+        }
+        return sum / subSet[v2]!![v3]!!.size
+    }
 
     fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, transportManager:
     TransportManager? = null, cpuManager: CPUManager? = null, usageManager: UsageManager? = null, sensorManager:
