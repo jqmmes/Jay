@@ -23,6 +23,16 @@ import kotlin.concurrent.thread
 
 /**
  * todo: basic energy profiling statistics should be done here
+ * todo: store these pairs and average results
+ *
+ * fun getExpectedCpuMhz(jay_state): Set<Long>
+ * {JAY_STATE} -> EXPECTED_CPU_MhZ
+ * future improvements: {JAY_STATE} + DeviceUsageLoad (RAM, TOTAL_MEMORY, APPS/NUMBER_OF_APPS/CPU_LOAD): Set<Long>
+ *
+ * fun getExpectedCurrent(CPU_SPEEDS, Transport, Sensors): Long uA
+ * EXPECTED_CPU_Mhz + Transport + ACTIVE_SENSORS -> EXPECTED_CURRENT
+ *
+ *
  */
 object ProfilerService {
     private var usageManager: UsageManager? = null
