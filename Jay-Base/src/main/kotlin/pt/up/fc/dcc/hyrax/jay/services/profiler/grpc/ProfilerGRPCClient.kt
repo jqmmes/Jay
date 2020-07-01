@@ -38,7 +38,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
-                    .setState(JayProto.JayState.newBuilder().setJayStateValue(state.ordinal).build())
+                    .unSetState(JayProto.JayState.newBuilder().setJayStateValue(state.ordinal).build())
         } catch (ignore: Exception) {
             genStatusError()
         }

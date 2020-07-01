@@ -28,6 +28,9 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.JayState as JayStateProto
 
 /**
  *
+ * todo: Fix Sensors (returns empty)
+ * todo: Fix BatteryStatus, never updates
+ *
  * todo: create a routine to update expectedCpuHashMap and expectedCurrentHashMap arrays over time
  *
  * fun getExpectedCpuMhz(jay_state): Set<Long>
@@ -63,14 +66,14 @@ object ProfilerService {
                                          val batteryStatus: Worker.BatteryStatus)
 
 
-    private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<Set<Long>>>()
-    private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, HashMap<Set<Long>, CircularFifoQueue<Int>>>()
+    private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<List<Long>>>()
+    private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, HashMap<List<Long>, CircularFifoQueue<Int>>>()
 
     private val expectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, Set<Long>>()
     private val expectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, Int>()
 
 
-    private fun setSimilarity(v1: Set<Long>, v2: Set<Long>): Long {
+    private fun setSimilarity(v1: List<Long>, v2: List<Long>): Long {
         var diff = 0L
         for (i in 0..v1.size) {
             diff += abs(v1.elementAt(i) - v2.elementAt(i))
@@ -78,9 +81,9 @@ object ProfilerService {
         return diff
     }
 
-    private fun mostSimilarSet(v1: Set<Long>, v2: Set<Set<Long>>): Set<Long>? {
+    private fun mostSimilarSet(v1: List<Long>, v2: Set<List<Long>>): List<Long>? {
         var maxDiff = Long.MAX_VALUE
-        var retSet: Set<Long>? = null
+        var retSet: List<Long>? = null
         v2.forEach {
             val diff = setSimilarity(v1, it)
             if (diff < maxDiff) {
@@ -91,11 +94,11 @@ object ProfilerService {
         return retSet
     }
 
-    private fun getSetMovingAvg(v1: CircularFifoQueue<Set<Long>>?): Set<Long>? {
+    private fun getListMovingAvg(v1: CircularFifoQueue<List<Long>>?): List<Long>? {
         if (v1 == null) return null
         val cpuCoreCounts: MutableList<Int> = ArrayList()
         val cpuCoreSums: MutableList<Long> = ArrayList()
-        val retSet: MutableSet<Long> = LinkedHashSet()
+        val retSet: MutableList<Long> = mutableListOf()
         v1.forEach {
             for (i in 0..it.size) {
                 if (cpuCoreCounts.size >= i) cpuCoreCounts[i] = cpuCoreCounts[i] + 1
@@ -110,12 +113,12 @@ object ProfilerService {
         return retSet
     }
 
-    fun getExpectedCpuMhz(v1: Set<JayState>): Set<Long>? {
+    fun getExpectedCpuMhz(v1: Set<JayState>): List<Long>? {
         val k = CpuEstimatorKey(v1, null)
-        return if ((rawExpectedCpuHashMap.containsKey(k))) getSetMovingAvg(rawExpectedCpuHashMap[k]) else null
+        return if ((rawExpectedCpuHashMap.containsKey(k))) getListMovingAvg(rawExpectedCpuHashMap[k]) else null
     }
 
-    fun getExpectedCurrent(expectedCpuMhz: Set<Long>, transportInfo: TransportInfo, activeSensors: Set<String>,
+    fun getExpectedCurrent(expectedCpuMhz: List<Long>, transportInfo: TransportInfo, activeSensors: Set<String>,
                            batteryStatus: Worker.BatteryStatus): Long? {
         val k = BatteryCurrentKey(transportInfo, activeSensors, batteryStatus)
         if (!rawExpectedCurrentHashMap.containsKey(k)) return null
@@ -256,7 +259,7 @@ object ProfilerService {
         recordBuilder.battery = getBatteryProto()
         recordBuilder.cpuCount = cpus.size
         var cpuSpeedsStr = ""
-        val cpuSpeeds = HashSet<Long>()
+        val cpuSpeeds = mutableListOf<Long>()
         cpus.forEach { cpu_number ->
             val cpuSpeed: Long = this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0L
             recordBuilder.addCpuFrequency(cpuSpeed)
@@ -271,7 +274,7 @@ object ProfilerService {
         var pkgs = ""
         packageUsages?.forEach { pkg ->
             recordBuilder.addSystemUsage(pkg.pkgName)
-            pkgs += "$pkg, "
+            pkgs += "${pkg.pkgName}, "
         }
         JayLogger.logInfo("PKG_USAGE", "", pkgs)
         var sensorStr = ""
