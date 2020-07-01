@@ -226,7 +226,7 @@ message ProfileRecording {
     repeated JayState jayState = 2;
     Battery battery = 3;
     int32 cpuCount = 4;
-    repeated int32 cpuFrequency = 5;
+    repeated int64 cpuFrequency = 5;
     Transport transport = 6;
     repeated string systemUsage = 7;
     int64 totalMemory = 8;

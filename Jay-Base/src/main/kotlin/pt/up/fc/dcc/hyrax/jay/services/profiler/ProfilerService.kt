@@ -16,6 +16,7 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.Transpor
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportMedium
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.PackageUsages
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.UsageManager
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayStateManager
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
@@ -23,9 +24,11 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 import kotlin.math.abs
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.JayState as JayStateProto
 
 /**
- * todo: store these pairs and average results
+ *
+ * todo: create a routine to update expectedCpuHashMap and expectedCurrentHashMap arrays over time
  *
  * fun getExpectedCpuMhz(jay_state): Set<Long>
  * {JAY_STATE} -> EXPECTED_CPU_MhZ
@@ -54,16 +57,17 @@ object ProfilerService {
     private val batteryInfo = BatteryInfo()
 
 
-    private data class BatteryCurrentKey(val cpuMhz: Set<Long>, val transportInfo: TransportInfo,
-                                         val sensors: Set<String>, val batteryInfo: Worker.BatteryStatus)
-
     private data class CpuEstimatorKey(val jayState: Set<JayState>, val deviceLoad: PackageUsages?)
 
+    private data class BatteryCurrentKey(val transportInfo: TransportInfo?, val sensors: Set<String>,
+                                         val batteryStatus: Worker.BatteryStatus)
+
+
     private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<Set<Long>>>()
-    private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, CircularFifoQueue<Long>>()
+    private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, HashMap<Set<Long>, CircularFifoQueue<Int>>>()
 
     private val expectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, Set<Long>>()
-    private val expectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, Long>()
+    private val expectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, Int>()
 
 
     private fun setSimilarity(v1: Set<Long>, v2: Set<Long>): Long {
@@ -74,14 +78,14 @@ object ProfilerService {
         return diff
     }
 
-    private fun mostSimilarSet(v1: Set<Long>, v2: Set<BatteryCurrentKey>): Set<Long>? {
+    private fun mostSimilarSet(v1: Set<Long>, v2: Set<Set<Long>>): Set<Long>? {
         var maxDiff = Long.MAX_VALUE
         var retSet: Set<Long>? = null
         v2.forEach {
-            val diff = setSimilarity(v1, it.cpuMhz)
+            val diff = setSimilarity(v1, it)
             if (diff < maxDiff) {
                 maxDiff = diff
-                retSet = it.cpuMhz
+                retSet = it
             }
         }
         return retSet
@@ -113,11 +117,11 @@ object ProfilerService {
 
     fun getExpectedCurrent(expectedCpuMhz: Set<Long>, transportInfo: TransportInfo, activeSensors: Set<String>,
                            batteryStatus: Worker.BatteryStatus): Long? {
-        val cpuSet = mostSimilarSet(expectedCpuMhz, rawExpectedCurrentHashMap.keys) ?: return null
-        val k = BatteryCurrentKey(cpuSet, transportInfo, activeSensors, batteryStatus)
+        val k = BatteryCurrentKey(transportInfo, activeSensors, batteryStatus)
         if (!rawExpectedCurrentHashMap.containsKey(k)) return null
+        val cpuSet = mostSimilarSet(expectedCpuMhz, rawExpectedCurrentHashMap[k]!!.keys) ?: return null
         var sum = 0L
-        rawExpectedCurrentHashMap[k]!!.forEach {
+        rawExpectedCurrentHashMap[k]!![cpuSet]!!.forEach {
             sum += it
         }
         return sum / rawExpectedCurrentHashMap[k]!!.size
@@ -166,9 +170,9 @@ object ProfilerService {
         return timeRange.build()
     }
 
-    private fun getJayStatesProto(): Set<JayState?> {
-        val jayStates = LinkedHashSet<JayState?>()
-        JayStateManager.getJayStates().states.forEach { state ->
+    private fun getJayStatesProto(v1: Set<JayState>): Set<JayStateProto?> {
+        val jayStates = LinkedHashSet<JayStateProto?>()
+        v1.forEach { state ->
             jayStates.add(JayUtils.genJayStateProto(state))
         }
         return jayStates
@@ -235,25 +239,31 @@ object ProfilerService {
         val currentTime = System.currentTimeMillis()
         val cpus = this.cpuManager?.getCpus() ?: emptySet()
         val medium = this.transportManager?.getTransport()
+        val jayStates = JayStateManager.getJayStates().states
+        val activeSensors = this.sensorManager?.getActiveSensors() ?: emptySet()
 
         recordBuilder.timeRange =
                 if (recording) getTimeRangeProto(this.recordingStartTime, currentTime)
                 else getTimeRangeProto(currentTime - msToRetrieve, currentTime)
         JayLogger.logInfo("TIME_RANGE", "", "START=${this.recordingStartTime}", "END=$currentTime")
         var states = ""
-        getJayStatesProto().forEach { state ->
+
+        getJayStatesProto(jayStates).forEach { state ->
             recordBuilder.addJayState(state)
             states += "${state?.jayState?.name}, "
         }
         JayLogger.logInfo("JAY_STATES", "", states)
         recordBuilder.battery = getBatteryProto()
         recordBuilder.cpuCount = cpus.size
-        var cpuSpeeds = ""
+        var cpuSpeedsStr = ""
+        val cpuSpeeds = HashSet<Long>()
         cpus.forEach { cpu_number ->
-            recordBuilder.addCpuFrequency(this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0)
-            cpuSpeeds += "CPU_$cpu_number=${this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0}, "
+            val cpuSpeed: Long = this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0L
+            recordBuilder.addCpuFrequency(cpuSpeed)
+            cpuSpeedsStr += "CPU_$cpu_number=$cpuSpeed, "
+            cpuSpeeds.add(cpuSpeed)
         }
-        JayLogger.logInfo("CPU", "", "CPU_COUNT=${cpus.size}, $cpuSpeeds")
+        JayLogger.logInfo("CPU", "", "CPU_COUNT=${cpus.size}, $cpuSpeedsStr")
         if (medium != null) recordBuilder.transport = getTransportProto(medium)
         val packageUsages = if (recording)
             this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
@@ -265,10 +275,34 @@ object ProfilerService {
         }
         JayLogger.logInfo("PKG_USAGE", "", pkgs)
         var sensorStr = ""
-        this.sensorManager?.getActiveSensors()?.forEach { sensor ->
+
+        activeSensors.forEach { sensor ->
             recordBuilder.addSensors(sensor)
             sensorStr += "$sensor, "
         }
+
+        /**
+         * Insert recorded values in the circular fifos for future processing
+         */
+        val cpuEstimatorKey = CpuEstimatorKey(jayStates, null)
+        if (!this.rawExpectedCpuHashMap.containsKey(cpuEstimatorKey)) {
+            this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+        }
+        this.rawExpectedCpuHashMap[CpuEstimatorKey(jayStates, null)]!!.add(cpuSpeeds)
+
+        JayLogger.logInfo("RAW_EXPECTED_CPU_HASH_MAP", "", "${this.rawExpectedCpuHashMap}")
+
+        val batteryCurrentKey = BatteryCurrentKey(medium, activeSensors, batteryInfo.batteryStatus)
+        if (!this.rawExpectedCurrentHashMap.containsKey(batteryCurrentKey)) {
+            this.rawExpectedCurrentHashMap[batteryCurrentKey] = LinkedHashMap()
+        }
+        if (!this.rawExpectedCurrentHashMap[batteryCurrentKey]!!.containsKey(cpuSpeeds)) {
+            this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds] =
+                    CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+        }
+        this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds]!!.add(batteryInfo.batteryCurrent)
+        JayLogger.logInfo("RAW_EXPECTED_CURRENT_HASH_MAP", "", "${this.rawExpectedCurrentHashMap}")
+
         JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)
         if (recording) this.recordingStartTime = currentTime
         return recordBuilder.build()

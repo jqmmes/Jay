@@ -7,6 +7,8 @@ object AndroidCPUManager : CPUManager() {
 
     /**
      *
+     * todo: Understand why sometimes we only get 3 CPU Values
+     *
      * @param cpu_with_frequency
      * if set, this function returns only cpus with scaling data available
      *
@@ -44,11 +46,11 @@ object AndroidCPUManager : CPUManager() {
         return cpus
     }
 
-    override fun getCurrentCPUClockSpeed(cpuNumber: Int): Int {
+    override fun getCurrentCPUClockSpeed(cpuNumber: Int): Long {
         val cpuFile = File("/sys/devices/system/cpu/cpu$cpuNumber/cpufreq/scaling_cur_freq")
         return if (cpuFile.exists()) {
             val scanner = Scanner(cpuFile)
-            if (scanner.hasNextInt()) scanner.nextInt() else -1
+            if (scanner.hasNextInt()) scanner.nextLong() else -1
         } else -1
     }
 }

@@ -24,7 +24,7 @@ abstract class CPUManager {
      */
     abstract fun getCpus(cpu_with_frequency: Boolean = true): Set<Int>
 
-    abstract fun getCurrentCPUClockSpeed(cpuNumber: Int): Int
+    abstract fun getCurrentCPUClockSpeed(cpuNumber: Int): Long
 
     fun getRecordableCPUCount(): Int {
         return getCpus(true).size

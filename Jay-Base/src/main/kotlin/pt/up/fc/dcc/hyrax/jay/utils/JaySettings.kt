@@ -2,6 +2,9 @@ package pt.up.fc.dcc.hyrax.jay.utils
 
 object JaySettings {
 
+    var CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE: Int = 20
+    var JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE: Int = 20
+
     const val BLOCKING_STUB_DEADLINE: Long = 150
 
     var SINGLE_REMOTE_IP: String = "0.0.0.0"
