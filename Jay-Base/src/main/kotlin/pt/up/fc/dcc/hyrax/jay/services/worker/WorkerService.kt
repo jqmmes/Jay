@@ -81,6 +81,7 @@ object WorkerService {
             if (it.code == StatusCode.Success) JayLogger.logInfo("WORKER_STATUS_ADVERTISEMENT_ENABLED")
             else JayLogger.logError("WORKER_STATUS_ADVERTISEMENT_FAILED")
         }
+        profiler.startRecording()
     }
 
     fun stop(stopGRPCServer: Boolean = true, callback: ((Status?) -> Unit)? = null) {
@@ -98,6 +99,7 @@ object WorkerService {
             JayLogger.logInfo("COMPLETE")
             callback?.invoke(S)
         }
+        profiler.stopRecording()
     }
 
     fun selectTaskExecutor(taskExecutorUUID: String, callback: ((Status?) -> Unit)?) {

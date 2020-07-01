@@ -14,6 +14,7 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.sensors.SensorMana
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportInfo
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.TransportMedium
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.PackageUsages
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.UsageManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayStateManager
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
@@ -24,7 +25,6 @@ import kotlin.concurrent.thread
 import kotlin.math.abs
 
 /**
- * todo: basic energy profiling statistics should be done here
  * todo: store these pairs and average results
  *
  * fun getExpectedCpuMhz(jay_state): Set<Long>
@@ -32,7 +32,7 @@ import kotlin.math.abs
  * future improvements: {JAY_STATE} + DeviceUsageLoad (RAM, TOTAL_MEMORY, APPS/NUMBER_OF_APPS/CPU_LOAD): Set<Long>
  *
  * fun getExpectedCurrent(CPU_SPEEDS, Transport, Sensors): Long uA
- * EXPECTED_CPU_Mhz + Transport + ACTIVE_SENSORS -> EXPECTED_CURRENT
+ * EXPECTED_CPU_Mhz + Transport + ACTIVE_SENSORS + BatteryState -> EXPECTED_CURRENT
  *
  *
  */
@@ -54,8 +54,17 @@ object ProfilerService {
     private val batteryInfo = BatteryInfo()
 
 
-    private val expectedCpuRawHashMap = LinkedHashMap<Set<JayState>, CircularFifoQueue<Set<Long>>>()
-    private val expectedCurrentHashMap = LinkedHashMap<Set<Long>, HashMap<TransportInfo, HashMap<Set<String>, CircularFifoQueue<Long>>>>()
+    private data class BatteryCurrentKey(val cpuMhz: Set<Long>, val transportInfo: TransportInfo,
+                                         val sensors: Set<String>, val batteryInfo: Worker.BatteryStatus)
+
+    private data class CpuEstimatorKey(val jayState: Set<JayState>, val deviceLoad: PackageUsages?)
+
+    private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<Set<Long>>>()
+    private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, CircularFifoQueue<Long>>()
+
+    private val expectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, Set<Long>>()
+    private val expectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, Long>()
+
 
     private fun setSimilarity(v1: Set<Long>, v2: Set<Long>): Long {
         var diff = 0L
@@ -65,14 +74,14 @@ object ProfilerService {
         return diff
     }
 
-    private fun mostSimilarSet(v1: Set<Long>, v2: Set<Set<Long>>): Set<Long>? {
+    private fun mostSimilarSet(v1: Set<Long>, v2: Set<BatteryCurrentKey>): Set<Long>? {
         var maxDiff = Long.MAX_VALUE
         var retSet: Set<Long>? = null
         v2.forEach {
-            val diff = setSimilarity(v1, it)
+            val diff = setSimilarity(v1, it.cpuMhz)
             if (diff < maxDiff) {
                 maxDiff = diff
-                retSet = it
+                retSet = it.cpuMhz
             }
         }
         return retSet
@@ -98,19 +107,20 @@ object ProfilerService {
     }
 
     fun getExpectedCpuMhz(v1: Set<JayState>): Set<Long>? {
-        return if ((expectedCpuRawHashMap.containsKey(v1))) getSetMovingAvg(expectedCpuRawHashMap[v1]) else null
+        val k = CpuEstimatorKey(v1, null)
+        return if ((rawExpectedCpuHashMap.containsKey(k))) getSetMovingAvg(rawExpectedCpuHashMap[k]) else null
     }
 
-    fun getExpectedCurrent(v1: Set<Long>, v2: TransportInfo, v3: Set<String>): Long? {
-        val cpuSet = mostSimilarSet(v1, expectedCurrentHashMap.keys) ?: return null
-        val subSet = expectedCurrentHashMap[cpuSet]!!
-        if (!subSet.containsKey(v2)) return null
-        if (!subSet[v2]!!.containsKey(v3)) return null
+    fun getExpectedCurrent(expectedCpuMhz: Set<Long>, transportInfo: TransportInfo, activeSensors: Set<String>,
+                           batteryStatus: Worker.BatteryStatus): Long? {
+        val cpuSet = mostSimilarSet(expectedCpuMhz, rawExpectedCurrentHashMap.keys) ?: return null
+        val k = BatteryCurrentKey(cpuSet, transportInfo, activeSensors, batteryStatus)
+        if (!rawExpectedCurrentHashMap.containsKey(k)) return null
         var sum = 0L
-        subSet[v2]!![v3]!!.forEach {
+        rawExpectedCurrentHashMap[k]!!.forEach {
             sum += it
         }
-        return sum / subSet[v2]!![v3]!!.size
+        return sum / rawExpectedCurrentHashMap[k]!!.size
     }
 
     fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, transportManager:

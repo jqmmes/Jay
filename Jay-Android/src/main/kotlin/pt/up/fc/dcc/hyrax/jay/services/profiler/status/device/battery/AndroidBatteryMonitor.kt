@@ -185,11 +185,18 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
                 val chargePlug: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: 0
                 val usbCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_USB
                 val acCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_AC
+                val qiCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_WIRELESS
 
-                if (status == BatteryManager.BATTERY_STATUS_FULL) statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.CHARGED)
-                if ((status == BatteryManager.BATTERY_STATUS_CHARGING) && acCharge) statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.CHARGING)
-                if ((status == BatteryManager.BATTERY_STATUS_CHARGING) && usbCharge) statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.USB)
-
+                when (status) {
+                    BatteryManager.BATTERY_STATUS_FULL -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.FULL)
+                    BatteryManager.BATTERY_STATUS_CHARGING -> {
+                        when {
+                            acCharge -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.AC_CHARGING)
+                            usbCharge -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.USB_CHARGING)
+                            qiCharge -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.QI_CHARGING)
+                        }
+                    }
+                }
             } else if ((action == ACTION_POWER_DISCONNECTED) && (status == BatteryManager.BATTERY_STATUS_DISCHARGING)) {
                 statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.DISCHARGING)
             }

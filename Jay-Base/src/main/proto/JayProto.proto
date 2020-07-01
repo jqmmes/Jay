@@ -44,11 +44,12 @@ message Worker {
     int32 batteryCharge = 8;
 
     enum BatteryStatus {
-        CHARGED = 0;
-        CHARGING = 1; // AC Charging
-        USB = 2; // USB Charging
-        DISCHARGING = 3;
-        UNKNOWN = 4;
+        FULL = 0;
+        AC_CHARGING = 1; // AC Charging
+        USB_CHARGING = 2; // USB Charging
+        QI_CHARGING = 3; // Wireless Charging
+        DISCHARGING = 4; // Unplugged
+        UNKNOWN = 5;
     }
     BatteryStatus batteryStatus = 9;
 
@@ -178,11 +179,12 @@ message Battery {
     int32 batteryCharge = 6;
 
     enum BatteryStatus {
-        CHARGED = 0;
-        CHARGING = 1; // AC Charging
-        USB = 2; // USB Charging
-        DISCHARGING = 3;
-        UNKNOWN = 4;
+        FULL = 0;
+        AC_CHARGING = 1; // AC Charging
+        USB_CHARGING = 2; // USB Charging
+        QI_CHARGING = 3; // Wireless Charging
+        DISCHARGING = 4; // Unplugged
+        UNKNOWN = 5;
     }
     BatteryStatus batteryStatus = 7;
 }

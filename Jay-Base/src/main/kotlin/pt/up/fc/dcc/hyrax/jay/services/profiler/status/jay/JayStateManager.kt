@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay
 
+import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -19,14 +20,22 @@ internal object JayStateManager {
             )
 
     fun setState(state: JayState) {
-        if (state in activeStates.keys) activeStates[state]!!.inc()
+        JayLogger.logInfo("SET_STATE", "", "STATE=$state")
+        if (state in activeStates.keys) {
+            JayLogger.logInfo("SET_STATE", "", "INC_STATE=$state")
+            activeStates[state] = activeStates[state]!!.inc()
+        }
+        JayLogger.logInfo("STATES", "", "$activeStates")
     }
 
     fun unsetState(state: JayState) {
+        JayLogger.logInfo("UNSET_STATE", "", "STATE=$state")
         if (state in activeStates.keys) {
-            activeStates[state]!!.dec()
+            JayLogger.logInfo("SET_STATE", "", "DEC_STATE=$state")
+            activeStates[state] = activeStates[state]!!.dec()
             assert(activeStates[state]!! > 0) { throw AssertionError("Cannot unset $state without setting it first") }
         }
+        JayLogger.logInfo("STATES", "", "$activeStates")
     }
 
     fun stopRecording() {
