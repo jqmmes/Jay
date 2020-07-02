@@ -22,7 +22,7 @@ class ProfilerAndroidService : Service() {
         AndroidTransportManager.setContext(this)
         AndroidUsageManager.setContext(this)
         AndroidSensorManager.setContext(this)
-        ProfilerService.start(true, AndroidBatteryMonitor(this), AndroidTransportManager, AndroidCPUManager, AndroidUsageManager)
+        ProfilerService.start(true, AndroidBatteryMonitor(this), AndroidTransportManager, AndroidCPUManager, AndroidUsageManager, AndroidSensorManager)
     }
 
     override fun onDestroy() {

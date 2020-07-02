@@ -6,9 +6,6 @@ import java.util.*
 object AndroidCPUManager : CPUManager() {
 
     /**
-     *
-     * todo: Understand why sometimes we only get 3 CPU Values
-     *
      * @param cpu_with_frequency
      * if set, this function returns only cpus with scaling data available
      *

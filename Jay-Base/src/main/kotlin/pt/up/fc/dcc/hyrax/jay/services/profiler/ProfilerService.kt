@@ -18,6 +18,7 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.PackageUsage
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.UsageManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayStateManager
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayStateManager.genJayStates
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.CountDownLatch
@@ -27,11 +28,6 @@ import kotlin.math.abs
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.JayState as JayStateProto
 
 /**
- *
- * todo: Fix Sensors (returns empty)
- * todo: Fix BatteryStatus, never updates
- *
- * todo: create a routine to update expectedCpuHashMap and expectedCurrentHashMap arrays over time
  *
  * fun getExpectedCpuMhz(jay_state): Set<Long>
  * {JAY_STATE} -> EXPECTED_CPU_MhZ
@@ -55,6 +51,7 @@ object ProfilerService {
     private var recording: AtomicBoolean = AtomicBoolean(false)
     private val LOCK: Any = Object()
     private var recordInterval = 500L // time in ms
+    private var recalculateAveragesInterval = 1000L // time in ms
     private var recordingLatch = CountDownLatch(0)
     private val recordings = LinkedHashSet<ProfileRecording>()
     private val batteryInfo = BatteryInfo()
@@ -63,14 +60,14 @@ object ProfilerService {
     private data class CpuEstimatorKey(val jayState: Set<JayState>, val deviceLoad: PackageUsages?)
 
     private data class BatteryCurrentKey(val transportInfo: TransportInfo?, val sensors: Set<String>,
-                                         val batteryStatus: Worker.BatteryStatus)
+                                         val batteryStatus: BatteryStatus)
 
 
     private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<List<Long>>>()
     private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, HashMap<List<Long>, CircularFifoQueue<Int>>>()
 
-    private val expectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, Set<Long>>()
-    private val expectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, Int>()
+    private val expectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, List<Long>?>()
+    private val expectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, HashMap<List<Long>, Int>>()
 
 
     private fun setSimilarity(v1: List<Long>, v2: List<Long>): Long {
@@ -94,6 +91,12 @@ object ProfilerService {
         return retSet
     }
 
+    private fun getMovingAvg(v1: CircularFifoQueue<Int>?): Int {
+        var tot = 0
+        v1?.forEach { tot += it }
+        return tot / (v1?.size ?: 1)
+    }
+
     private fun getListMovingAvg(v1: CircularFifoQueue<List<Long>>?): List<Long>? {
         if (v1 == null) return null
         val cpuCoreCounts: MutableList<Int> = ArrayList()
@@ -113,21 +116,37 @@ object ProfilerService {
         return retSet
     }
 
-    fun getExpectedCpuMhz(v1: Set<JayState>): List<Long>? {
-        val k = CpuEstimatorKey(v1, null)
+    private fun getExpectedCpuMhz(k: CpuEstimatorKey): List<Long>? {
         return if ((rawExpectedCpuHashMap.containsKey(k))) getListMovingAvg(rawExpectedCpuHashMap[k]) else null
     }
 
-    fun getExpectedCurrent(expectedCpuMhz: List<Long>, transportInfo: TransportInfo, activeSensors: Set<String>,
-                           batteryStatus: Worker.BatteryStatus): Long? {
-        val k = BatteryCurrentKey(transportInfo, activeSensors, batteryStatus)
+    private fun getExpectedCurrent(k: BatteryCurrentKey, expectedCpuMhz: List<Long>): Int? {
         if (!rawExpectedCurrentHashMap.containsKey(k)) return null
-        val cpuSet = mostSimilarSet(expectedCpuMhz, rawExpectedCurrentHashMap[k]!!.keys) ?: return null
-        var sum = 0L
-        rawExpectedCurrentHashMap[k]!![cpuSet]!!.forEach {
-            sum += it
-        }
-        return sum / rawExpectedCurrentHashMap[k]!!.size
+        val cpuSet = mostSimilarSet(expectedCpuMhz, expectedCurrentHashMap[k]!!.keys) ?: return null
+        return expectedCurrentHashMap[k]?.get(cpuSet)
+    }
+
+    // todo: Estimate total battery capacity & time to drop 1%
+    fun getExpectedCurrents(): CurrentEstimations? {
+        val key = BatteryCurrentKey(this.transportManager?.getTransport(),
+                this.sensorManager?.getActiveSensors() ?: setOf(),
+                this.batteryInfo.batteryStatus)
+        val idleCurrent = getExpectedCurrent(key,
+                getExpectedCpuMhz(CpuEstimatorKey(setOf(JayState.IDLE), null)) ?: listOf()) ?: 0
+        val computeCurrent = getExpectedCurrent(key,
+                getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)) ?: listOf()) ?: 0
+        val rxCurrent = getExpectedCurrent(key,
+                getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)) ?: listOf()) ?: 0
+        val txCurrent = getExpectedCurrent(key,
+                getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)) ?: listOf()) ?: 0
+        val builder = CurrentEstimations.newBuilder()
+
+        builder.idleBuilder.batteryAvgCurrent = idleCurrent
+        builder.computeBuilder.batteryAvgCurrent = computeCurrent
+        builder.rxBuilder.batteryAvgCurrent = rxCurrent
+        builder.txBuilder.batteryAvgCurrent = txCurrent
+        builder.batteryLevel = this.batteryInfo.batteryLevel
+        return builder.build()
     }
 
     fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null, transportManager:
@@ -205,6 +224,12 @@ object ProfilerService {
         this.batteryInfo.batteryCurrent = this.batteryMonitor?.getBatteryCurrentNow() ?: -1
         this.batteryInfo.batteryEnergy = this.batteryMonitor?.getBatteryRemainingEnergy() ?: -1
         this.batteryInfo.batteryCharge = this.batteryMonitor?.getBatteryCharge() ?: -1
+        this.batteryInfo.batteryLevel = if (this.batteryInfo.batteryLevel == -1)
+            this.batteryMonitor?.getBatteryCapacity() ?: -1 else this.batteryInfo.batteryLevel
+        if (this.batteryInfo.batteryStatus == BatteryStatus.UNKNOWN) {
+            this.batteryInfo.batteryStatus = this.batteryMonitor?.getBatteryStatus() ?: BatteryStatus.UNKNOWN
+        }
+
         val batteryBuilder = Battery.newBuilder()
         batteryBuilder.batteryLevel = this.batteryInfo.batteryLevel
         batteryBuilder.batteryCurrent = this.batteryInfo.batteryCurrent
@@ -212,7 +237,7 @@ object ProfilerService {
         batteryBuilder.batteryTemperature = this.batteryInfo.batteryTemperature
         batteryBuilder.batteryEnergy = this.batteryInfo.batteryEnergy
         batteryBuilder.batteryCharge = this.batteryInfo.batteryCharge
-        batteryBuilder.batteryStatus = Battery.BatteryStatus.forNumber(this.batteryInfo.batteryStatus.number)
+        batteryBuilder.batteryStatus = this.batteryInfo.batteryStatus
         JayLogger.logInfo("BATTERY_DETAILS", "",
                 "CURRENT=${this.batteryInfo.batteryCurrent}",
                 "ENERGY=${this.batteryInfo.batteryEnergy}",
@@ -335,7 +360,7 @@ object ProfilerService {
             JayLogger.logInfo("START_RECORDING")
             this.recording.set(true)
             recordingStartTime = System.currentTimeMillis()
-            recordingLatch = CountDownLatch(1)
+            recordingLatch = CountDownLatch(2)
             this.recordings.clear()
             thread {
                 do {
@@ -344,6 +369,25 @@ object ProfilerService {
                 } while (this.recording.get())
                 recordingLatch.countDown()
                 JayLogger.logInfo("START_RECORDING", "", "END")
+            }
+            thread {
+                Thread.sleep(recalculateAveragesInterval)
+                do {
+                    rawExpectedCpuHashMap.keys.forEach {
+                        expectedCpuHashMap[it] = getExpectedCpuMhz(it)
+                    }
+                    rawExpectedCurrentHashMap.keys.forEach {
+                        rawExpectedCurrentHashMap[it]?.keys?.forEach { cpu ->
+                            if (!expectedCurrentHashMap.containsKey(it)) {
+                                expectedCurrentHashMap[it] = LinkedHashMap()
+                            }
+                            expectedCurrentHashMap[it]!![cpu] = getMovingAvg(rawExpectedCurrentHashMap[it]!![cpu]!!)
+                        }
+                    }
+                    Thread.sleep(recalculateAveragesInterval)
+                } while (this.recording.get())
+                recordingLatch.countDown()
+                JayLogger.logInfo("START_PROFILE_AVERAGES_RECALCULATION", "", "END")
             }
         }
         return true
@@ -356,5 +400,4 @@ object ProfilerService {
         JayLogger.logInfo("STOP_RECORDING", "", "END")
         return ProfileRecordings.newBuilder().addAllProfileRecording(this.recordings).build()
     }
-
 }

@@ -102,6 +102,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             BrokerService.serviceStatusUpdate(request) { S -> genericComplete(S, responseObserver) }
         }
 
+        override fun getExpectedCurrent(request: Empty?, responseObserver: StreamObserver<JayProto.CurrentEstimations>?) {
+            genericComplete(BrokerService.profiler.getExpectedCurrent(), responseObserver)
+        }
+
         override fun stopService(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
             BrokerService.stopService { S ->
                 genericComplete(S, responseObserver)

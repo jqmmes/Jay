@@ -5,6 +5,23 @@ option java_outer_classname = "JayProto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
+enum StatusCode {
+    Success = 0;
+    Error = 1;
+    Waiting = 2;
+    Received = 3;
+}
+
+enum BatteryStatus {
+    FULL = 0;
+    AC_CHARGING = 1; // AC Charging
+    USB_CHARGING = 2; // USB Charging
+    QI_CHARGING = 3; // Wireless Charging
+    CHARGING = 4; // Charging with unknown method
+    DISCHARGING = 5; // Unplugged
+    UNKNOWN = 6;
+}
+
 message Task {
     string id = 1; // uuid
     bytes data = 2;
@@ -20,15 +37,22 @@ message WorkerTask {
     string fileId = 2;
 }
 
-enum StatusCode {
-    Success = 0;
-    Error = 1;
-    Waiting = 2;
-    Received = 3;
-}
-
 message Status {
     StatusCode code = 1;
+}
+
+message CurrentEstimation {
+    int32 battery_avg_current = 1;
+    int32 time_per_percent = 4; // Time to drop 1% with expected current
+}
+
+message CurrentEstimations {
+    CurrentEstimation idle = 1;
+    CurrentEstimation compute = 2;
+    CurrentEstimation rx = 3;
+    CurrentEstimation tx = 4;
+    int32 batteryLevel = 5;
+    int32 batteryCapacity = 6;
 }
 
 message Worker {
@@ -43,14 +67,6 @@ message Worker {
     int64 batteryEnergy = 7;
     int32 batteryCharge = 8;
 
-    enum BatteryStatus {
-        FULL = 0;
-        AC_CHARGING = 1; // AC Charging
-        USB_CHARGING = 2; // USB Charging
-        QI_CHARGING = 3; // Wireless Charging
-        DISCHARGING = 4; // Unplugged
-        UNKNOWN = 5;
-    }
     BatteryStatus batteryStatus = 9;
 
     int32 cpuCores = 10;
@@ -178,14 +194,6 @@ message Battery {
     int64 batteryEnergy = 5;
     int32 batteryCharge = 6;
 
-    enum BatteryStatus {
-        FULL = 0;
-        AC_CHARGING = 1; // AC Charging
-        USB_CHARGING = 2; // USB Charging
-        QI_CHARGING = 3; // Wireless Charging
-        DISCHARGING = 4; // Unplugged
-        UNKNOWN = 5;
-    }
     BatteryStatus batteryStatus = 7;
 }
 
@@ -303,6 +311,9 @@ service BrokerService {
     };
     rpc setExecutorSettings (Settings) returns (Status) {
     };
+
+    rpc getExpectedCurrent (google.protobuf.Empty) returns (CurrentEstimations) {
+    };
 }
 
 service ProfilerService {
@@ -320,6 +331,8 @@ service ProfilerService {
     };
     // getDeviceStatus()
     rpc getDeviceStatus (google.protobuf.Empty) returns (ProfileRecording) {
+    };
+    rpc getExpectedCurrent (google.protobuf.Empty) returns (CurrentEstimations) {
     };
     rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
     };

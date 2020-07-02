@@ -61,6 +61,17 @@ internal object JayStateManager {
         return ActiveState(System.currentTimeMillis(), activeStatesSet)
     }
 
-
+    fun genJayStates(includeState: JayState): Set<JayState> {
+        val activeStatesSet = LinkedHashSet<JayState>()
+        var idle = true
+        JayState.values().forEach { state ->
+            if (state != JayState.IDLE && (activeStates[state]!! > 0 || state == includeState)) {
+                activeStatesSet.add(state)
+                idle = false
+            }
+        }
+        if (idle) activeStatesSet.add(JayState.IDLE)
+        return activeStatesSet
+    }
 }
 

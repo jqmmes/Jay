@@ -1,15 +1,16 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.*
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.os.BatteryManager.*
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
 import java.io.File
+import java.util.*
 import kotlin.math.roundToInt
 
 /**
@@ -17,10 +18,6 @@ import kotlin.math.roundToInt
  * BATTERY_PROPERTY_ENERGY_COUNTER        (Sync) Battery remaining energy in nanowatt-hours
  * EXTRA_VOLTAGE                          (ASync) current battery temperature
  * EXTRA_TEMPERATURE                      (ASync) current battery voltage level
- *
- * todo: read system data directly to avoid unavailable information on some devices
- * todo: Save in a persistent manner the max read battery
- *
  *
  * s7e:
  * Must read battery and controler folders
@@ -103,12 +100,8 @@ import kotlin.math.roundToInt
  * No S7e e no N9 negativo é descarregar
  *
  *
- *
  * Ler o current com o getCurrentNow() e usar só isto nos que não dão info de charge_counter. nos outros usar também
  * o charge_counter. Senão, ler a percentagem de bateria e a current para estimar a carga.
- *
- *
- *
  *
  * A estatistica mais instantanea é a current no battery.
  * POWER_SUPPLY_CURRENT_NOW
@@ -121,34 +114,34 @@ import kotlin.math.roundToInt
  *
  *
  * static char *type_text[] = {
-"Unknown", "Battery", "UPS", "Mains", "USB",
-"USB_DCP", "USB_CDP", "USB_ACA",
-"USB_HVDCP", "USB_HVDCP_3", "Wireless", "BMS", "USB_Parallel",
-"Wipower", "TYPEC", "TYPEC_UFP", "TYPEC_DFP"
-};
-static char *status_text[] = {
-"Unknown", "Charging", "Discharging", "Not charging", "Full"
-};
-static char *charge_type[] = {
-"Unknown", "N/A", "Trickle", "Fast",
-"Taper"
-};
-static char *health_text[] = {
-"Unknown", "Good", "Overheat", "Dead", "Over voltage",
-"Unspecified failure", "Cold", "Watchdog timer expire",
-"Safety timer expire",
-"Warm", "Cool"
-};
-static char *technology_text[] = {
-"Unknown", "NiMH", "Li-ion", "Li-poly", "LiFe", "NiCd",
-"LiMn"
-};
-static char *capacity_level_text[] = {
-"Unknown", "Critical", "Low", "Normal", "High", "Full"
-};
-static char *scope_text[] = {
-"Unknown", "System", "Device"
-};
+ * "Unknown", "Battery", "UPS", "Mains", "USB",
+ * "USB_DCP", "USB_CDP", "USB_ACA",
+ * "USB_HVDCP", "USB_HVDCP_3", "Wireless", "BMS", "USB_Parallel",
+ * "Wipower", "TYPEC", "TYPEC_UFP", "TYPEC_DFP"
+ * };
+ * static char *status_text[] = {
+ * "Unknown", "Charging", "Discharging", "Not charging", "Full"
+ * };
+ * static char *charge_type[] = {
+ * "Unknown", "N/A", "Trickle", "Fast",
+ * "Taper"
+ * };
+ * static char *health_text[] = {
+ * "Unknown", "Good", "Overheat", "Dead", "Over voltage",
+ * "Unspecified failure", "Cold", "Watchdog timer expire",
+ * "Safety timer expire",
+ * "Warm", "Cool"
+ * };
+ * static char *technology_text[] = {
+ * "Unknown", "NiMH", "Li-ion", "Li-poly", "LiFe", "NiCd",
+ * "LiMn"
+ * };
+ * static char *capacity_level_text[] = {
+ * "Unknown", "Critical", "Low", "Normal", "High", "Full"
+ * };
+ * static char *scope_text[] = {
+ * "Unknown", "System", "Device"
+ * };
  *
  *
  */
@@ -156,10 +149,11 @@ static char *scope_text[] = {
 class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
     private val levelMonitor = BatteryLevelUpdatesReceiver()
     private val chargingStateMonitor = BatteryChargeStateUpdatesReceiver()
+    private val batteryDriverBaseDir = "/sys/class/power_supply"
 
     private val mBatteryManager: BatteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
-    override fun setCallbacks(levelChangeCallback: (Int, Int, Float) -> Unit, statusChangeCallback: (JayProto.Worker.BatteryStatus) -> Unit) {
+    override fun setCallbacks(levelChangeCallback: (Int, Int, Float) -> Unit, statusChangeCallback: (BatteryStatus) -> Unit) {
         levelMonitor.setCallback(levelChangeCallback)
         chargingStateMonitor.setCallback(statusChangeCallback)
     }
@@ -167,8 +161,6 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
     class BatteryChargeStateUpdatesReceiver : BroadcastReceiver() {
 
         private var context: Context? = null
-
-        private val baseDir: File = File("/sys/class/power_supply/")
 
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
@@ -178,33 +170,29 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
                 batteryStatus = IntentFilter(ACTION_BATTERY_CHANGED).let { ifilter ->
                     context?.registerReceiver(null, ifilter)
                 }
-                status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: 0
+                status = batteryStatus?.getIntExtra(EXTRA_STATUS, -1) ?: 0
             }
 
             if (action == ACTION_POWER_CONNECTED) {
-                val chargePlug: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: 0
-                val usbCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_USB
-                val acCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_AC
-                val qiCharge: Boolean = chargePlug == BatteryManager.BATTERY_PLUGGED_WIRELESS
-
                 when (status) {
-                    BatteryManager.BATTERY_STATUS_FULL -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.FULL)
-                    BatteryManager.BATTERY_STATUS_CHARGING -> {
-                        when {
-                            acCharge -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.AC_CHARGING)
-                            usbCharge -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.USB_CHARGING)
-                            qiCharge -> statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.QI_CHARGING)
+                    BATTERY_STATUS_FULL -> statusChangeCallback?.invoke(BatteryStatus.FULL)
+                    BATTERY_STATUS_CHARGING -> {
+                        when (batteryStatus?.getIntExtra(EXTRA_PLUGGED, -1)) {
+                            BATTERY_PLUGGED_AC -> statusChangeCallback?.invoke(BatteryStatus.AC_CHARGING)
+                            BATTERY_PLUGGED_USB -> statusChangeCallback?.invoke(BatteryStatus.USB_CHARGING)
+                            BATTERY_PLUGGED_WIRELESS -> statusChangeCallback?.invoke(BatteryStatus.QI_CHARGING)
+                            else -> statusChangeCallback?.invoke(BatteryStatus.CHARGING)
                         }
                     }
                 }
-            } else if ((action == ACTION_POWER_DISCONNECTED) && (status == BatteryManager.BATTERY_STATUS_DISCHARGING)) {
-                statusChangeCallback?.invoke(JayProto.Worker.BatteryStatus.DISCHARGING)
+            } else if ((action == ACTION_POWER_DISCONNECTED) && (status == BATTERY_STATUS_DISCHARGING)) {
+                statusChangeCallback?.invoke(BatteryStatus.DISCHARGING)
             }
         }
 
-        private var statusChangeCallback: ((JayProto.Worker.BatteryStatus) -> Unit)? = null
+        private var statusChangeCallback: ((BatteryStatus) -> Unit)? = null
 
-        fun setCallback(statusChangeCallback: (JayProto.Worker.BatteryStatus) -> Unit) {
+        fun setCallback(statusChangeCallback: (BatteryStatus) -> Unit) {
             this.statusChangeCallback = statusChangeCallback
         }
 
@@ -217,12 +205,13 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         // levelChangeCallback(Percentage, Voltage, Temperature)
         private var levelChangeCallback: ((Int, Int, Float) -> Unit)? = null
 
-        @SuppressLint("UnsafeProtectedBroadcastReceiver")
         override fun onReceive(context: Context?, intent: Intent?) {
-            val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: 0
-            val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: 0
-            val voltage = intent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1) ?: 0
-            val temperature = (intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1) ?: 0) / 10f
+            val action = intent?.action
+            if (action != ACTION_BATTERY_CHANGED) return
+            val level = intent.getIntExtra(EXTRA_LEVEL, -1)
+            val scale = intent.getIntExtra(EXTRA_SCALE, -1)
+            val voltage = intent.getIntExtra(EXTRA_VOLTAGE, -1)
+            val temperature = intent.getIntExtra(EXTRA_TEMPERATURE, -1) / 10f
             levelChangeCallback?.invoke(((level.toFloat() / scale.toFloat()) * 100f).roundToInt(), voltage, temperature)
         }
 
@@ -248,15 +237,122 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         }
     }
 
+    private fun isCharging(): Boolean {
+        return mBatteryManager.isCharging
+    }
+
+    override fun getBatteryCapacity(): Int {
+        val capacityFile = File("$batteryDriverBaseDir/battery/capacity")
+        if (capacityFile.exists() && capacityFile.isFile && capacityFile.canRead()) {
+            val scanner = Scanner(capacityFile)
+            if (scanner.hasNextInt()) {
+                val probCapacity = scanner.nextInt()
+                if (probCapacity in 1..100) {
+                    return probCapacity
+                }
+            }
+        }
+        val ueventFile = File("$batteryDriverBaseDir/battery/uevent")
+        if (ueventFile.exists() && ueventFile.isFile && ueventFile.canRead()) {
+            val scanner = Scanner(ueventFile)
+            do {
+                val line = scanner.nextLine()
+                if (line.contains("POWER_SUPPLY_CAPACITY")) {
+                    val lineScanner = Scanner(line)
+                    do {
+                        val probCapacity = lineScanner.nextInt()
+                        if (probCapacity in 1..100) {
+                            return probCapacity
+                        }
+                    } while (lineScanner.hasNextInt())
+                }
+            } while (scanner.hasNextLine())
+        }
+        return -1
+    }
+
+    private fun readOnlineStatus(folder: String): Boolean {
+        val onlineFile = File("$batteryDriverBaseDir/$folder/online")
+        if (onlineFile.exists() && onlineFile.isFile && onlineFile.canRead()) {
+            val scanner = Scanner(onlineFile)
+            if (scanner.hasNextInt()) {
+                val probStatus = scanner.nextInt()
+                if (probStatus in 0..1) {
+                    return when (probStatus) {
+                        1 -> true
+                        else -> false
+                    }
+                }
+            }
+        }
+        val ueventFile = File("$batteryDriverBaseDir/$folder/uevent")
+        if (ueventFile.exists() && ueventFile.isFile && ueventFile.canRead()) {
+            val scanner = Scanner(ueventFile)
+            do {
+                val line = scanner.nextLine()
+                if (line.contains("POWER_SUPPLY_ONLINE")) {
+                    val lineScanner = Scanner(line)
+                    do {
+                        val probStatus = lineScanner.nextInt()
+                        if (probStatus in 0..1) {
+                            return when (probStatus) {
+                                1 -> true
+                                else -> false
+                            }
+                        }
+                    } while (lineScanner.hasNextInt())
+                }
+            } while (scanner.hasNextLine())
+        }
+        return false
+    }
+
+    private fun getChargingAC(): Boolean {
+        val acFolder = when {
+            !File("$batteryDriverBaseDir/ac/").exists() &&
+                    File("$batteryDriverBaseDir/pc_port/").exists() -> "usb"
+            else -> "ac"
+        }
+        return readOnlineStatus(acFolder)
+    }
+
+    private fun getChargingUSB(): Boolean {
+        val usbFolder = when {
+            !File("$batteryDriverBaseDir/ac/").exists() &&
+                    File("$batteryDriverBaseDir/pc_port/").exists() -> "pc_port"
+            else -> "usb"
+        }
+        return readOnlineStatus(usbFolder)
+    }
+
+    private fun getChargingQi(): Boolean {
+        val qiFileDir = File("$batteryDriverBaseDir/wireless/")
+        if (!(qiFileDir.exists() && qiFileDir.isDirectory && qiFileDir.canRead()))
+            return false
+        return readOnlineStatus("wireless")
+    }
+
+    override fun getBatteryStatus(): BatteryStatus {
+        return when {
+            isCharging() -> when {
+                getChargingAC() -> BatteryStatus.AC_CHARGING
+                getChargingUSB() -> BatteryStatus.USB_CHARGING
+                getChargingQi() -> BatteryStatus.QI_CHARGING
+                else -> BatteryStatus.CHARGING
+            }
+            else -> BatteryStatus.DISCHARGING
+        }
+    }
+
     override fun getBatteryCurrentNow(): Int {
-        return mBatteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+        return mBatteryManager.getIntProperty(BATTERY_PROPERTY_CURRENT_NOW)
     }
 
     override fun getBatteryRemainingEnergy(): Long {
-        return mBatteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)
+        return mBatteryManager.getLongProperty(BATTERY_PROPERTY_ENERGY_COUNTER)
     }
 
     override fun getBatteryCharge(): Int {
-        return mBatteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+        return mBatteryManager.getIntProperty(BATTERY_PROPERTY_CHARGE_COUNTER)
     }
 }

@@ -95,4 +95,14 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
             genStatusError()
         }
     }
+
+    fun getExpectedCurrent(): JayProto.CurrentEstimations? {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        return try {
+            blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
+                    .getExpectedCurrent(Empty.getDefaultInstance())
+        } catch (ignore: Exception) {
+            JayProto.CurrentEstimations.getDefaultInstance()
+        }
+    }
 }

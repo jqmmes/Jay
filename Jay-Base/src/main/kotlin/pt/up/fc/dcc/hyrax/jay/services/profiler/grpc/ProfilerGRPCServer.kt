@@ -56,5 +56,9 @@ class ProfilerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(JaySe
         override fun testService(request: Empty?, responseObserver: StreamObserver<JayProto.ServiceStatus>?) {
             genericComplete(JayProto.ServiceStatus.newBuilder().setType(JayProto.ServiceStatus.Type.PROFILER).setRunning(true).build(), responseObserver)
         }
+
+        override fun getExpectedCurrent(request: Empty?, responseObserver: StreamObserver<JayProto.CurrentEstimations>?) {
+            genericComplete(ProfilerService.getExpectedCurrents(), responseObserver)
+        }
     }
 }

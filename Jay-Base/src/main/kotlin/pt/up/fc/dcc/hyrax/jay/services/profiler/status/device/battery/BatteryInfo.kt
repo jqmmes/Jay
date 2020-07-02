@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery
 
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.BatteryStatus
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus.UNKNOWN
 
 @Suppress("unused")
 class BatteryInfo {
@@ -26,5 +27,5 @@ class BatteryInfo {
     var batteryTemperature: Float = -1f
     var batteryEnergy: Long = -1L
     var batteryCharge: Int = -1
-    var batteryStatus: BatteryStatus = BatteryStatus.UNKNOWN
+    var batteryStatus: BatteryStatus = UNKNOWN
 }
