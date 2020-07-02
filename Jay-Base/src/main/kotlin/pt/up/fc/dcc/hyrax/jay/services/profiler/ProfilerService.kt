@@ -98,19 +98,19 @@ object ProfilerService {
     }
 
     private fun getListMovingAvg(v1: CircularFifoQueue<List<Long>>?): List<Long>? {
-        if (v1 == null) return null
+        if (v1 == null || v1.isEmpty()) return null
         val cpuCoreCounts: MutableList<Int> = ArrayList()
         val cpuCoreSums: MutableList<Long> = ArrayList()
         val retSet: MutableList<Long> = mutableListOf()
         v1.forEach {
-            for (i in 0..it.size) {
-                if (cpuCoreCounts.size >= i) cpuCoreCounts[i] = cpuCoreCounts[i] + 1
+            for (i in it.indices) {
+                if (cpuCoreCounts.size > i) cpuCoreCounts[i] = cpuCoreCounts[i] + 1
                 else cpuCoreCounts.add(1)
-                if (cpuCoreSums.size >= 1) cpuCoreSums[i] = cpuCoreSums[i] + it.elementAt(i)
+                if (cpuCoreSums.size > i) cpuCoreSums[i] = cpuCoreSums[i] + it.elementAt(i)
                 else cpuCoreSums.add(it.elementAt(i))
             }
         }
-        for (i in 0..cpuCoreCounts.size) {
+        for (i in 0 until cpuCoreCounts.size) {
             retSet.add((cpuCoreSums[i] / cpuCoreCounts[i]))
         }
         return retSet

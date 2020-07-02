@@ -187,6 +187,8 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
                 }
             } else if ((action == ACTION_POWER_DISCONNECTED) && (status == BATTERY_STATUS_DISCHARGING)) {
                 statusChangeCallback?.invoke(BatteryStatus.DISCHARGING)
+            } else if ((action == ACTION_POWER_DISCONNECTED)) {
+                statusChangeCallback?.invoke(BatteryStatus.DISCHARGING)
             }
         }
 
