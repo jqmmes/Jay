@@ -11,6 +11,7 @@ interface BatteryMonitor {
     fun getBatteryRemainingEnergy(): Long
     fun getBatteryCharge(): Int
     fun getBatteryCapacity(): Int
+    fun getBatteryLevel(): Int
     fun getBatteryStatus(): BatteryStatus
 
 }

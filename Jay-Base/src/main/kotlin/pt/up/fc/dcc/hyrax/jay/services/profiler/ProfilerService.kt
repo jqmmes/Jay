@@ -36,7 +36,6 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.JayState as JayStateProto
  * fun getExpectedCurrent(CPU_SPEEDS, Transport, Sensors): Long uA
  * EXPECTED_CPU_Mhz + Transport + ACTIVE_SENSORS + BatteryState -> EXPECTED_CURRENT
  *
- *
  */
 object ProfilerService {
     private var usageManager: UsageManager? = null
@@ -56,12 +55,10 @@ object ProfilerService {
     private val recordings = LinkedHashSet<ProfileRecording>()
     private val batteryInfo = BatteryInfo()
 
-
     private data class CpuEstimatorKey(val jayState: Set<JayState>, val deviceLoad: PackageUsages?)
 
     private data class BatteryCurrentKey(val transportInfo: TransportInfo?, val sensors: Set<String>,
                                          val batteryStatus: BatteryStatus)
-
 
     private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<List<Long>>>()
     private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryCurrentKey, HashMap<List<Long>, CircularFifoQueue<Int>>>()
@@ -146,6 +143,7 @@ object ProfilerService {
         builder.rxBuilder.batteryAvgCurrent = rxCurrent
         builder.txBuilder.batteryAvgCurrent = txCurrent
         builder.batteryLevel = this.batteryInfo.batteryLevel
+        builder.batteryCapacity = this.batteryInfo.batteryCapacity
         return builder.build()
     }
 
@@ -224,8 +222,9 @@ object ProfilerService {
         this.batteryInfo.batteryCurrent = this.batteryMonitor?.getBatteryCurrentNow() ?: -1
         this.batteryInfo.batteryEnergy = this.batteryMonitor?.getBatteryRemainingEnergy() ?: -1
         this.batteryInfo.batteryCharge = this.batteryMonitor?.getBatteryCharge() ?: -1
+        this.batteryInfo.batteryCapacity = this.batteryMonitor?.getBatteryCapacity() ?: -1
         this.batteryInfo.batteryLevel = if (this.batteryInfo.batteryLevel == -1)
-            this.batteryMonitor?.getBatteryCapacity() ?: -1 else this.batteryInfo.batteryLevel
+            this.batteryMonitor?.getBatteryLevel() ?: -1 else this.batteryInfo.batteryLevel
         if (this.batteryInfo.batteryStatus == BatteryStatus.UNKNOWN) {
             this.batteryInfo.batteryStatus = this.batteryMonitor?.getBatteryStatus() ?: BatteryStatus.UNKNOWN
         }
@@ -237,6 +236,7 @@ object ProfilerService {
         batteryBuilder.batteryTemperature = this.batteryInfo.batteryTemperature
         batteryBuilder.batteryEnergy = this.batteryInfo.batteryEnergy
         batteryBuilder.batteryCharge = this.batteryInfo.batteryCharge
+        batteryBuilder.batteryCapacity = this.batteryInfo.batteryCapacity
         batteryBuilder.batteryStatus = this.batteryInfo.batteryStatus
         JayLogger.logInfo("BATTERY_DETAILS", "",
                 "CURRENT=${this.batteryInfo.batteryCurrent}",
@@ -245,6 +245,7 @@ object ProfilerService {
                 "LEVEL=${this.batteryInfo.batteryLevel}",
                 "VOLTAGE=${this.batteryInfo.batteryVoltage}",
                 "TEMPERATURE=${this.batteryInfo.batteryTemperature}",
+                "CAPACITY=${this.batteryInfo.batteryCapacity}",
                 "STATUS=${this.batteryInfo.batteryStatus.name}"
         )
         return batteryBuilder.build()

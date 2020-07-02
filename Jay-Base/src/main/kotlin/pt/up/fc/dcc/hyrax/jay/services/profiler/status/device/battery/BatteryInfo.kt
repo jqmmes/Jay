@@ -11,13 +11,14 @@ class BatteryInfo {
     constructor(batteryLevel: Int, batteryCurrent: Int,
                 batteryVoltage: Int, batteryTemperature: Float,
                 batteryEnergy: Long, batteryCharge: Int,
-                batteryStatus: BatteryStatus) {
+                batteryCapacity: Int, batteryStatus: BatteryStatus) {
         this.batteryLevel = batteryLevel
         this.batteryCurrent = batteryCurrent
         this.batteryVoltage = batteryVoltage
         this.batteryTemperature = batteryTemperature
         this.batteryEnergy = batteryEnergy
         this.batteryCharge = batteryCharge
+        this.batteryCapacity = batteryCapacity
         this.batteryStatus = batteryStatus
     }
 
@@ -27,5 +28,6 @@ class BatteryInfo {
     var batteryTemperature: Float = -1f
     var batteryEnergy: Long = -1L
     var batteryCharge: Int = -1
+    var batteryCapacity: Int = -1
     var batteryStatus: BatteryStatus = UNKNOWN
 }

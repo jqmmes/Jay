@@ -66,26 +66,27 @@ message Worker {
     float batteryTemperature = 6;
     int64 batteryEnergy = 7;
     int32 batteryCharge = 8;
+    int32 batteryCapacity = 9;
 
-    BatteryStatus batteryStatus = 9;
+    BatteryStatus batteryStatus = 10;
 
-    int32 cpuCores = 10;
-    int32 queueSize = 11;
-    int32 runningTasks = 12;
-    int32 queuedTasks = 13;
+    int32 cpuCores = 11;
+    int32 queueSize = 12;
+    int32 runningTasks = 13;
+    int32 queuedTasks = 14;
 
-    int64 avgTimePerTask = 14;
+    int64 avgTimePerTask = 15;
 
     enum Type {
         LOCAL = 0;
         CLOUD = 1;
         REMOTE = 2;
     }
-    Type type = 15;
+    Type type = 16;
 
-    float bandwidthEstimate = 16;
-    int64 totalMemory = 17;
-    int64 freeMemory = 18;
+    float bandwidthEstimate = 17;
+    int64 totalMemory = 18;
+    int64 freeMemory = 19;
 }
 
 message WorkerComputeStatus {
@@ -193,8 +194,9 @@ message Battery {
     float batteryTemperature = 4;
     int64 batteryEnergy = 5;
     int32 batteryCharge = 6;
+    int32 batteryCapacity = 7;
 
-    BatteryStatus batteryStatus = 7;
+    BatteryStatus batteryStatus = 8;
 }
 
 message Transport {

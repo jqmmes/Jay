@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -243,7 +244,14 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         return mBatteryManager.isCharging
     }
 
-    override fun getBatteryCapacity(): Int {
+    override fun getBatteryLevel(): Int {
+        var batteryCapacity = mBatteryManager.getIntProperty(BATTERY_PROPERTY_CAPACITY)
+        if (batteryCapacity == 0 || batteryCapacity == Integer.MIN_VALUE)
+            batteryCapacity = getBatteryLevelDirect()
+        return batteryCapacity
+    }
+
+    private fun getBatteryLevelDirect(): Int {
         val capacityFile = File("$batteryDriverBaseDir/battery/capacity")
         if (capacityFile.exists() && capacityFile.isFile && capacityFile.canRead()) {
             val scanner = Scanner(capacityFile)
@@ -356,5 +364,28 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
 
     override fun getBatteryCharge(): Int {
         return mBatteryManager.getIntProperty(BATTERY_PROPERTY_CHARGE_COUNTER)
+    }
+
+    override fun getBatteryCapacity(): Int {
+        return getBatteryCapacityReflection()
+    }
+
+    @SuppressLint("PrivateApi")
+    private fun getBatteryCapacityReflection(): Int {
+        val mPowerProfile: Any
+        var batteryCapacity = 0.0
+        val powerProfileClass = "com.android.internal.os.PowerProfile"
+        try {
+            mPowerProfile = Class.forName(powerProfileClass)
+                    .getConstructor(Context::class.java)
+                    .newInstance(context)
+            batteryCapacity = Class
+                    .forName(powerProfileClass)
+                    .getMethod("getBatteryCapacity")
+                    .invoke(mPowerProfile) as Double
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+        return batteryCapacity.toInt()
     }
 }
