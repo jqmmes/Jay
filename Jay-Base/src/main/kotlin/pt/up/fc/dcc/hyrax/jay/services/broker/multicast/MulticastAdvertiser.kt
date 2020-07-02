@@ -1,6 +1,8 @@
 package pt.up.fc.dcc.hyrax.jay.services.broker.multicast
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
@@ -35,10 +37,10 @@ object MulticastAdvertiser {
             JayLogger.logWarn("ALREADY_RUNNING")
             return
         }
-
         thread(isDaemon=true, name="Multicast Advertiser") {
             JayLogger.logInfo("INIT_THREAD")
             if(runningLock.getAndSet(true)) return@thread
+            BrokerService.profiler.setState(JayState.MULTICAST_ADVERTISE)
             mcSocket = MulticastSocket()
             if (networkInterface != null) {
                 mcSocket.networkInterface = networkInterface
@@ -71,6 +73,7 @@ object MulticastAdvertiser {
                 mcSocket.leaveGroup(mcIPAddress)
                 mcSocket.close()
             }
+            BrokerService.profiler.unSetState(JayState.MULTICAST_ADVERTISE)
         }
     }
 

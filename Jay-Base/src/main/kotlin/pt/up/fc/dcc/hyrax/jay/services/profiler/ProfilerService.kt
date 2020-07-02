@@ -123,25 +123,20 @@ object ProfilerService {
         return expectedCurrentHashMap[k]?.get(cpuSet)
     }
 
-    // todo: Estimate total battery capacity & time to drop 1%
     fun getExpectedCurrents(): CurrentEstimations? {
         val key = BatteryCurrentKey(this.transportManager?.getTransport(),
                 this.sensorManager?.getActiveSensors() ?: setOf(),
                 this.batteryInfo.batteryStatus)
-        val idleCurrent = getExpectedCurrent(key,
-                getExpectedCpuMhz(CpuEstimatorKey(setOf(JayState.IDLE), null)) ?: listOf()) ?: 0
-        val computeCurrent = getExpectedCurrent(key,
-                getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)) ?: listOf()) ?: 0
-        val rxCurrent = getExpectedCurrent(key,
-                getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)) ?: listOf()) ?: 0
-        val txCurrent = getExpectedCurrent(key,
-                getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)) ?: listOf()) ?: 0
-        val builder = CurrentEstimations.newBuilder()
 
-        builder.idleBuilder.batteryAvgCurrent = idleCurrent
-        builder.computeBuilder.batteryAvgCurrent = computeCurrent
-        builder.rxBuilder.batteryAvgCurrent = rxCurrent
-        builder.txBuilder.batteryAvgCurrent = txCurrent
+        val builder = CurrentEstimations.newBuilder()
+        builder.idle = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(setOf(JayState.IDLE), null))
+                ?: listOf()) ?: 0
+        builder.compute = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.COMPUTE), null))
+                ?: listOf()) ?: 0
+        builder.rx = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null))
+                ?: listOf()) ?: 0
+        builder.tx = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_SND), null))
+                ?: listOf()) ?: 0
         builder.batteryLevel = this.batteryInfo.batteryLevel
         builder.batteryCapacity = this.batteryInfo.batteryCapacity
         return builder.build()

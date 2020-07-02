@@ -12,6 +12,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
@@ -44,7 +45,8 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
-    fun executeTask(task: JayProto.Task?, callback: ((JayProto.Response) -> Unit)? = null, schedulerInformCallback: (() -> Unit)? = null) {
+    fun executeTask(task: JayProto.Task?, local: Boolean = false, callback: ((JayProto.Response) -> Unit)? = null,
+                    schedulerInformCallback: (() -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val taskId = task?.id ?: ""
         AbstractJay.executorPool.submit {
@@ -53,6 +55,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+            if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
             asyncStub.executeTask(task, object : StreamObserver<JayProto.Response> {
                 private var lastResult: JayProto.Response? = null
                 override fun onNext(results: JayProto.Response) {
@@ -79,6 +82,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                 ?: -1, System.currentTimeMillis() - startTime)
                     } else if (results.status.code == JayProto.StatusCode.Error) {
                         onError(Throwable("Error Received onNext for taskId: $taskId"))
+                    }
+                    if (results.status.code == JayProto.StatusCode.Received && !local) {
+                        BrokerService.profiler.unSetState(JayState.DATA_SND)
                     }
                 }
 

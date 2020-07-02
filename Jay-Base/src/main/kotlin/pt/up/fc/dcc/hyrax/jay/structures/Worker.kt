@@ -17,8 +17,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
 /**
- * todo: Adapt Worker to provide relevant information about energy on specific states and other relevant system
- * information
+ * todo: Adapt Worker to provide relevant information about energy on specific states and other relevant system information
  */
 class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
              val type: JayProto.Worker.Type = JayProto.Worker.Type.REMOTE,
@@ -34,11 +33,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
 
     private var avgComputingEstimate = 0L
     private var batteryLevel = 100
-    private var batteryCurrent: Int = -1
-    private var batteryVoltage: Int = -1
-    private var batteryTemperature: Float = -1f
-    private var batteryEnergy: Long = -1
-    private var batteryCharge: Int = -1
+    private var batteryCapacity: Int = -1
     private var batteryStatus: BatteryStatus = BatteryStatus.UNKNOWN
     private var cpuCores = 0
     private var queueSize = 1
@@ -49,7 +44,6 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private var status = Status.OFFLINE
     private var bandwidthEstimate: Float = 0f
     //private var freeSpace = Long.MAX_VALUE
-    //private var computationLoad = 0
     //private var connections = 0
 
     private var smartPingScheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
@@ -88,9 +82,9 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     private fun genProto() {
-        this.proto = JayUtils.genWorkerProto(id, batteryLevel, batteryCurrent, batteryVoltage,
-                batteryTemperature, batteryEnergy, batteryCharge, avgComputingEstimate, cpuCores,
-                queueSize, queuedTasks, runningTasks, type, bandwidthEstimate, totalMemory, freeMemory)
+        this.proto = JayUtils.genWorkerProto(id, batteryLevel, batteryCapacity, batteryStatus,
+                avgComputingEstimate, cpuCores, queueSize, queuedTasks, runningTasks, type,
+                bandwidthEstimate, totalMemory, freeMemory)
     }
 
     private fun updateStatus(proto: JayProto.ProfileRecording?) {
@@ -119,11 +113,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         JayLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
         if (proto == null) return this.proto
         batteryLevel = proto.batteryLevel
-        batteryCurrent = proto.batteryCurrent
-        batteryVoltage = proto.batteryVoltage
-        batteryTemperature = proto.batteryTemperature
-        batteryEnergy = proto.batteryEnergy
-        batteryCharge = proto.batteryCharge
+        batteryCapacity = proto.batteryCapacity
         batteryStatus = proto.batteryStatus
         avgComputingEstimate = proto.avgTimePerTask
         runningTasks = proto.runningTasks

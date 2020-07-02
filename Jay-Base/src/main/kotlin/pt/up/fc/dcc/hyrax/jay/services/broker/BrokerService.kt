@@ -24,7 +24,7 @@ import kotlin.concurrent.thread
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 
 /**
- * todo: enable JayStates when using multicast to receive or send and when offloading data
+ * todo: enable JayStates when offloading data
  */
 object BrokerService {
 
@@ -149,9 +149,9 @@ object BrokerService {
                 callback?.invoke(null)
             } else {
                 if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.REMOTE || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
-                    workers[W.id]!!.grpc.executeTask(request, callback) { scheduler.notifyTaskComplete(taskDetails) }
+                    workers[W.id]!!.grpc.executeTask(request, callback = callback) { scheduler.notifyTaskComplete(taskDetails) }
                 } else {
-                    workers[local.id]!!.grpc.executeTask(request, callback) { scheduler.notifyTaskComplete(taskDetails) }
+                    workers[local.id]!!.grpc.executeTask(Task.newBuilder(request).setLocalTask(true).build(), true, callback) { scheduler.notifyTaskComplete(taskDetails) }
                 }
             }
         } else {
@@ -235,7 +235,7 @@ object BrokerService {
             if (address == JaySettings.SINGLE_REMOTE_IP) JaySettings.CLOUDLET_ID = worker.id
             JayLogger.logInfo("NEW_DEVICE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
-            workers[worker.id]?.enableAutoStatusUpdate { workerProto ->
+            workers[worker.id]?.enableAutoStatusUpdate { _ ->
                 if (!schedulerServiceRunning) {
                     JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=$address",
                             "DEVICE_ID=${workers[worker.id]?.id}", "WORKER_TYPE=${workers[worker.id]?.type?.name}"))

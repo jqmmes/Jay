@@ -18,11 +18,13 @@ import java.util.*
 
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(JaySettings.BROKER_PORT, useNettyServer) {
 
+    // todo: 2-way stream data. first inform you'll send data and then send it
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
         override fun executeTask(request: JayProto.Task?, responseObserver: StreamObserver<JayProto.Response>?) {
-            BrokerService.profiler.setState(JayState.DATA_RCV)
+            // fix this
+            if (request?.localTask != true) BrokerService.profiler.setState(JayState.DATA_RCV)
             responseObserver?.onNext(JayProto.Response.newBuilder().setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
-            BrokerService.profiler.unSetState(JayState.DATA_RCV)
+            if (request?.localTask != true) BrokerService.profiler.unSetState(JayState.DATA_RCV)
             BrokerService.executeTask(request) { R -> genericComplete(R, responseObserver) }
         }
 

@@ -2,6 +2,8 @@ package pt.up.fc.dcc.hyrax.jay.services.broker.multicast
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.getHostAddressFromPacket
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.getLocalIpV4
@@ -40,7 +42,7 @@ object MulticastListener {
             }
             JayLogger.logInfo("RECEIVER", actions = *arrayOf("RUNNING_AT=${listeningSocket.localSocketAddress}"))
             listeningSocket.joinGroup(mcIPAddress)
-
+            BrokerService.profiler.setState(JayState.MULTICAST_LISTEN)
             running = true
             var packet : DatagramPacket?
             do {
@@ -67,6 +69,7 @@ object MulticastListener {
                 listeningSocket.leaveGroup(mcIPAddress)
                 listeningSocket.close()
             }
+            BrokerService.profiler.unSetState(JayState.MULTICAST_LISTEN)
         }
     }
 

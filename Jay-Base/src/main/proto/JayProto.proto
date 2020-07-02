@@ -25,6 +25,7 @@ enum BatteryStatus {
 message Task {
     string id = 1; // uuid
     bytes data = 2;
+    bool localTask = 3;
 }
 
 message TaskDetails {
@@ -41,16 +42,11 @@ message Status {
     StatusCode code = 1;
 }
 
-message CurrentEstimation {
-    int32 battery_avg_current = 1;
-    int32 time_per_percent = 4; // Time to drop 1% with expected current
-}
-
 message CurrentEstimations {
-    CurrentEstimation idle = 1;
-    CurrentEstimation compute = 2;
-    CurrentEstimation rx = 3;
-    CurrentEstimation tx = 4;
+    int32 idle = 1;
+    int32 compute = 2;
+    int32 rx = 3;
+    int32 tx = 4;
     int32 batteryLevel = 5;
     int32 batteryCapacity = 6;
 }
@@ -61,32 +57,26 @@ message Worker {
     string id = 2; // uuid
 
     int32 batteryLevel = 3;
-    int32 batteryCurrent = 4;
-    int32 batteryVoltage = 5;
-    float batteryTemperature = 6;
-    int64 batteryEnergy = 7;
-    int32 batteryCharge = 8;
-    int32 batteryCapacity = 9;
+    int32 batteryCapacity = 4;
+    BatteryStatus batteryStatus = 5;
 
-    BatteryStatus batteryStatus = 10;
+    int32 cpuCores = 6;
+    int32 queueSize = 7;
+    int32 runningTasks = 8;
+    int32 queuedTasks = 9;
 
-    int32 cpuCores = 11;
-    int32 queueSize = 12;
-    int32 runningTasks = 13;
-    int32 queuedTasks = 14;
-
-    int64 avgTimePerTask = 15;
+    int64 avgTimePerTask = 10;
 
     enum Type {
         LOCAL = 0;
         CLOUD = 1;
         REMOTE = 2;
     }
-    Type type = 16;
+    Type type = 11;
 
-    float bandwidthEstimate = 17;
-    int64 totalMemory = 18;
-    int64 freeMemory = 19;
+    float bandwidthEstimate = 12;
+    int64 totalMemory = 13;
+    int64 freeMemory = 14;
 }
 
 message WorkerComputeStatus {
@@ -195,7 +185,6 @@ message Battery {
     int64 batteryEnergy = 5;
     int32 batteryCharge = 6;
     int32 batteryCapacity = 7;
-
     BatteryStatus batteryStatus = 8;
 }
 
@@ -218,7 +207,6 @@ message Transport {
         FIFTH_GEN = 3;
         UNKNOWN_GEN = 4;
     }
-
 
     Medium medium = 1;
     CellularTechnology cellularTechnology = 2;

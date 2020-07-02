@@ -20,14 +20,10 @@ import kotlin.math.roundToInt
  * EXTRA_VOLTAGE                          (ASync) current battery temperature
  * EXTRA_TEMPERATURE                      (ASync) current battery voltage level
  *
- * s7e:
- * Must read battery and controler folders
- *
- *
- * Nexus9:
+ * s7e & Nexus9:
  * Reading battery details is forbidden, must use android api
  *
- * Lg g3:
+ * Lg g2:
  * Need to configure device and test it.
  *
  * tab s5e:
@@ -370,6 +366,7 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         return getBatteryCapacityReflection()
     }
 
+    // https://android.googlesource.com/platform/frameworks/base/+/a029ea1/core/java/com/android/internal/os/PowerProfile.java
     @SuppressLint("PrivateApi")
     private fun getBatteryCapacityReflection(): Int {
         val mPowerProfile: Any
@@ -388,4 +385,39 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         }
         return batteryCapacity.toInt()
     }
+
+    @Suppress("unused")
+    @SuppressLint("PrivateApi")
+    /**
+     * This function may become useful to read system avg consumption by state
+     *
+     * cpu.idle
+     * cpu.awake
+     * cpu.active
+     * wifi.scan
+     * wifi.on
+     * wifi.active
+     * gps.on
+     * bluetooth.on
+     * screen.on
+     * screen.full
+     */
+    private fun getBatteryAvgPowerReflection(property: String): Int {
+        val mPowerProfile: Any
+        var batteryCapacity = 0.0
+        val powerProfileClass = "com.android.internal.os.PowerProfile"
+        try {
+            mPowerProfile = Class.forName(powerProfileClass)
+                    .getConstructor(Context::class.java)
+                    .newInstance(context)
+            batteryCapacity = Class
+                    .forName(powerProfileClass)
+                    .getMethod("getAveragePower", String::class.java)
+                    .invoke(mPowerProfile, property) as Double
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+        return batteryCapacity.toInt()
+    }
+
 }
