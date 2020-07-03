@@ -16,10 +16,10 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-
 
 /**
  * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
@@ -55,19 +55,32 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
-            if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
-            asyncStub.executeTask(task, object : StreamObserver<JayProto.Response> {
+            val waitToSendCountdownLatch = CountDownLatch(1)
+            val dataReachedWorkerCountDownLatch = CountDownLatch(1)
+            val endCountDownLatch = CountDownLatch(1)
+            val taskStreamObserver = asyncStub.executeTask(object : StreamObserver<JayProto.Response> {
                 private var lastResult: JayProto.Response? = null
                 override fun onNext(results: JayProto.Response) {
+                    JayLogger.logInfo("RECEIVED_RESPONSE", "", results.status.code.name)
                     lastResult = results
                     when (results.status.code) {
-                        JayProto.StatusCode.Received ->
+                        JayProto.StatusCode.Ready -> {
+                            waitToSendCountdownLatch.countDown()
+                        }
+                        JayProto.StatusCode.Received -> {
+                            dataReachedWorkerCountDownLatch.countDown()
+                            if (JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("PASSIVE", "ALL")) {
+                                BrokerService.passiveBandwidthUpdate(taskId, task?.toByteArray()?.size
+                                        ?: -1, System.currentTimeMillis() - startTime)
+                            }
+                            if (!local) BrokerService.profiler.unSetState(JayState.DATA_SND)
                             JayLogger.logInfo("DATA_REACHED_SERVER", taskId,
                                     "DATA_SIZE=${task?.toByteArray()?.size}",
                                     "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
                                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+                        }
                         JayProto.StatusCode.Success ->
                             JayLogger.logInfo("EXECUTION_COMPLETE", taskId,
                                     "DATA_SIZE=${task?.toByteArray()?.size}",
@@ -75,16 +88,8 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+                        JayProto.StatusCode.End -> endCountDownLatch.countDown()
                         else -> onError(Throwable("Error Received onNext for taskId: $taskId"))
-                    }
-                    if (JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("PASSIVE", "ALL") && results.status.code == JayProto.StatusCode.Received) {
-                        BrokerService.passiveBandwidthUpdate(taskId, task?.toByteArray()?.size
-                                ?: -1, System.currentTimeMillis() - startTime)
-                    } else if (results.status.code == JayProto.StatusCode.Error) {
-                        onError(Throwable("Error Received onNext for taskId: $taskId"))
-                    }
-                    if (results.status.code == JayProto.StatusCode.Received && !local) {
-                        BrokerService.profiler.unSetState(JayState.DATA_SND)
                     }
                 }
 
@@ -107,6 +112,31 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     schedulerInformCallback?.invoke()
                 }
             })
+            taskStreamObserver.onNext(
+                    JayProto.Task.newBuilder()
+                            .setStatus(JayProto.Task.Status.BEGIN_TRANSFER)
+                            .setLocalTask(local)
+                            .build())
+            try {
+                waitToSendCountdownLatch.await(2, TimeUnit.SECONDS)
+            } catch (e: InterruptedException) {
+                JayLogger.logError("Failed to obtain permission to offload Task")
+                return@submit
+            }
+            if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
+            taskStreamObserver.onNext(JayProto.Task.newBuilder(task).setStatus(JayProto.Task.Status.TRANSFER).build())
+            try {
+                dataReachedWorkerCountDownLatch.await(60, TimeUnit.SECONDS)
+            } catch (e: InterruptedException) {
+                JayLogger.logError("DATA_TAKEN_TOO_MUCH_TO_REACH_SERVER")
+            }
+            taskStreamObserver.onNext(JayProto.Task.newBuilder().setStatus(JayProto.Task.Status.END_TRANSFER).build())
+            try {
+                endCountDownLatch.await(10, TimeUnit.SECONDS)
+            } catch (e: InterruptedException) {
+                JayLogger.logError("DID_NOT_RECEIVE_END_COMMAND", "", "ENDING_CONNECTION_NOW")
+            }
+            taskStreamObserver.onCompleted()
         }
     }
 

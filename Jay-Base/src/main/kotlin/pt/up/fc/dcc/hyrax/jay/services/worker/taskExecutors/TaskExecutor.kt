@@ -25,7 +25,6 @@ abstract class TaskExecutor(val name: String, val description: String?) {
     open fun setSettings(settingsMap: Map<String, Any?>): JayStatus {
         var status = genStatusSuccess()!!
         for (k in settingsMap.keys) {
-            println("SET_TASK_EXECUTOR_SETTING $k: ${settingsMap[k]}")
             setSetting(k, settingsMap[k]) { setting_status ->
                 if (setting_status.code == StatusCode.Error) {
                     status = genStatusError()!!

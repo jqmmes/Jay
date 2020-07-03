@@ -10,6 +10,8 @@ enum StatusCode {
     Error = 1;
     Waiting = 2;
     Received = 3;
+    Ready = 4;
+    End = 5;
 }
 
 enum BatteryStatus {
@@ -26,6 +28,13 @@ message Task {
     string id = 1; // uuid
     bytes data = 2;
     bool localTask = 3;
+    Status status = 4;
+
+    enum Status {
+        BEGIN_TRANSFER = 0;
+        TRANSFER = 1;
+        END_TRANSFER = 2;
+    }
 }
 
 message TaskDetails {
@@ -241,7 +250,7 @@ service BrokerService {
     rpc ping (Ping) returns (Ping) {
     }; // ExternalBroker > Broker
 
-    rpc executeTask (Task) returns (stream Response) {
+    rpc executeTask (stream Task) returns (stream Response) {
     }; // ExternalBroker > Broker --> Calls WorkerService::execute
     rpc scheduleTask (Task) returns (Response) {
     }; // App > Broker --> Calls SchedulerService::schedule

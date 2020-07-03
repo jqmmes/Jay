@@ -132,6 +132,7 @@ object JayUtils {
         if (id != null) worker.id = id // Internal
         worker.batteryLevel = batteryLevel // Modified by Worker
         worker.batteryCapacity = batteryCapacity
+        worker.batteryStatus = batteryStatus
         worker.avgTimePerTask = avgComputingEstimate // Modified by Worker
         worker.cpuCores = cpuCores // Set by Worker
         worker.queueSize = queueSize // Set by Worker
