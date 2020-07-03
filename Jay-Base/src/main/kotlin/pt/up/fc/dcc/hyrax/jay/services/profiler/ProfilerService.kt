@@ -55,6 +55,9 @@ object ProfilerService {
     private val recordings = LinkedHashSet<ProfileRecording>()
     private val batteryInfo = BatteryInfo()
 
+    private val RAW_EXPECTED_CPU_MAP_LOCK = Object()
+    private val RAW_EXPECTED_CURRENT_MAP_LOCK = Object()
+
     private data class CpuEstimatorKey(val jayState: Set<JayState>, val deviceLoad: PackageUsages?)
 
     private data class BatteryCurrentKey(val transportInfo: TransportInfo?, val sensors: Set<String>,
@@ -306,25 +309,29 @@ object ProfilerService {
         }
 
         /**
-         * Insert recorded values in the circular fifos for future processing
+         * Insert recorded values in the circular FIFO for future processing
          */
         val cpuEstimatorKey = CpuEstimatorKey(jayStates, null)
-        if (!this.rawExpectedCpuHashMap.containsKey(cpuEstimatorKey)) {
-            this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+        synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
+            if (!this.rawExpectedCpuHashMap.containsKey(cpuEstimatorKey)) {
+                this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+            }
+            this.rawExpectedCpuHashMap[CpuEstimatorKey(jayStates, null)]!!.add(cpuSpeeds)
         }
-        this.rawExpectedCpuHashMap[CpuEstimatorKey(jayStates, null)]!!.add(cpuSpeeds)
 
         JayLogger.logInfo("EXPECTED_CPU_HASH_MAP", "", "${this.expectedCpuHashMap}")
 
         val batteryCurrentKey = BatteryCurrentKey(medium, activeSensors, batteryInfo.batteryStatus)
-        if (!this.rawExpectedCurrentHashMap.containsKey(batteryCurrentKey)) {
-            this.rawExpectedCurrentHashMap[batteryCurrentKey] = LinkedHashMap()
+        synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+            if (!this.rawExpectedCurrentHashMap.containsKey(batteryCurrentKey)) {
+                this.rawExpectedCurrentHashMap[batteryCurrentKey] = LinkedHashMap()
+            }
+            if (!this.rawExpectedCurrentHashMap[batteryCurrentKey]!!.containsKey(cpuSpeeds)) {
+                this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds] =
+                        CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+            }
+            this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds]!!.add(batteryInfo.batteryCurrent)
         }
-        if (!this.rawExpectedCurrentHashMap[batteryCurrentKey]!!.containsKey(cpuSpeeds)) {
-            this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds] =
-                    CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
-        }
-        this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds]!!.add(batteryInfo.batteryCurrent)
         JayLogger.logInfo("EXPECTED_CURRENT_HASH_MAP", "", "${this.expectedCurrentHashMap}")
 
         JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)
@@ -369,15 +376,19 @@ object ProfilerService {
             thread {
                 Thread.sleep(recalculateAveragesInterval)
                 do {
-                    rawExpectedCpuHashMap.keys.forEach {
-                        expectedCpuHashMap[it] = getExpectedCpuMhz(it)
+                    synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
+                        rawExpectedCpuHashMap.keys.forEach {
+                            expectedCpuHashMap[it] = getExpectedCpuMhz(it)
+                        }
                     }
-                    rawExpectedCurrentHashMap.keys.forEach {
-                        rawExpectedCurrentHashMap[it]?.keys?.forEach { cpu ->
-                            if (!expectedCurrentHashMap.containsKey(it)) {
-                                expectedCurrentHashMap[it] = LinkedHashMap()
+                    synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                        rawExpectedCurrentHashMap.keys.forEach {
+                            rawExpectedCurrentHashMap[it]?.keys?.forEach { cpu ->
+                                if (!expectedCurrentHashMap.containsKey(it)) {
+                                    expectedCurrentHashMap[it] = LinkedHashMap()
+                                }
+                                expectedCurrentHashMap[it]!![cpu] = getMovingAvg(rawExpectedCurrentHashMap[it]!![cpu]!!)
                             }
-                            expectedCurrentHashMap[it]!![cpu] = getMovingAvg(rawExpectedCurrentHashMap[it]!![cpu]!!)
                         }
                     }
                     Thread.sleep(recalculateAveragesInterval)
