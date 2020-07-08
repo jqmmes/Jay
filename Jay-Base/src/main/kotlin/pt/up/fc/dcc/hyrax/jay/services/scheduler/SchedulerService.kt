@@ -95,7 +95,8 @@ object SchedulerService {
 
     internal fun schedule(request: JayProto.TaskDetails?): Worker? {
         if (scheduler == null) scheduler = schedulers[0]
-        return scheduler?.scheduleTask(pt.up.fc.dcc.hyrax.jay.structures.Task(request))
+        val W = scheduler?.scheduleTask(pt.up.fc.dcc.hyrax.jay.structures.Task(request))
+        return W
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?): JayProto.StatusCode {

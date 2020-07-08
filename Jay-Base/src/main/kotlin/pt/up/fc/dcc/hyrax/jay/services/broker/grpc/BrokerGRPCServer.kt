@@ -15,47 +15,58 @@ import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatus
 import java.util.*
+import java.util.concurrent.CountDownLatch
 
 internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(JaySettings.BROKER_PORT, useNettyServer) {
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
-        override fun executeTask(responseObserver: StreamObserver<JayProto.Response>?): StreamObserver<JayProto.Task> {
-            return object : StreamObserver<JayProto.Task> {
-                private var isLocalTransfer = false
 
-                override fun onNext(value: JayProto.Task?) {
-                    if (value == null) {
-                        return genErrorResponse(responseObserver)
-                    }
-                    JayLogger.logInfo("RECEIVED_TASK", "", value.status.name)
-                    when (value.status) {
-                        JayProto.Task.Status.BEGIN_TRANSFER -> {
-                            if (value.localTask) isLocalTransfer = true else BrokerService.profiler.setState(JayState.DATA_RCV)
-                            responseObserver?.onNext(JayProto.Response.newBuilder()
-                                    .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Ready)).build())
-                        }
-                        JayProto.Task.Status.TRANSFER -> {
-                            if (!isLocalTransfer) BrokerService.profiler.unSetState(JayState.DATA_RCV)
-                            responseObserver?.onNext(JayProto.Response.newBuilder()
-                                    .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
-                            BrokerService.executeTask(value) { R -> genericComplete(R, responseObserver) }
-                        }
-                        JayProto.Task.Status.END_TRANSFER -> {
-                            responseObserver?.onNext(JayProto.Response.newBuilder()
-                                    .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.End)).build())
-                        }
-                        else -> return genErrorResponse(responseObserver)
-                    }
+        inner class TaskResponseObserver(val responseObserver: StreamObserver<JayProto.Response>?) :
+                StreamObserver<JayProto.Task> {
+            private var isLocalTransfer = false
+
+            override fun onNext(value: JayProto.Task?) {
+                if (value == null) {
+                    return genErrorResponse(responseObserver)
                 }
-
-                override fun onError(t: Throwable?) {
-                    JayLogger.logError("Error on BrokerGRPCServer::executeTask")
-                }
-
-                override fun onCompleted() {
-                    JayLogger.logInfo("COMPLETE")
+                JayLogger.logInfo("RECEIVED_TASK", "", value.status.name)
+                when (value.status) {
+                    JayProto.Task.Status.BEGIN_TRANSFER -> {
+                        if (value.localTask) isLocalTransfer = true else BrokerService.profiler.setState(JayState.DATA_RCV)
+                        responseObserver?.onNext(JayProto.Response.newBuilder()
+                                .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Ready)).build())
+                    }
+                    JayProto.Task.Status.TRANSFER -> {
+                        if (!isLocalTransfer) BrokerService.profiler.unSetState(JayState.DATA_RCV)
+                        responseObserver?.onNext(JayProto.Response.newBuilder()
+                                .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
+                        val waitCountdownLatch = CountDownLatch(1)
+                        BrokerService.executeTask(value) { R ->
+                            responseObserver?.onNext(R)
+                            waitCountdownLatch.countDown()
+                        }
+                        waitCountdownLatch.await()
+                    }
+                    JayProto.Task.Status.END_TRANSFER -> {
+                        responseObserver?.onNext(JayProto.Response.newBuilder()
+                                .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.End)).build())
+                    }
+                    else -> genErrorResponse(responseObserver)
                 }
             }
+
+            override fun onError(t: Throwable?) {
+                JayLogger.logError("Error on BrokerGRPCServer::executeTask")
+            }
+
+            override fun onCompleted() {
+                JayLogger.logInfo("COMPLETE")
+                responseObserver?.onCompleted()
+            }
+        }
+
+        override fun executeTask(responseObserver: StreamObserver<JayProto.Response>?): StreamObserver<JayProto.Task> {
+            return TaskResponseObserver(responseObserver)
         }
 
         override fun scheduleTask(request: JayProto.Task?, responseObserver: StreamObserver<JayProto.Response>?) {

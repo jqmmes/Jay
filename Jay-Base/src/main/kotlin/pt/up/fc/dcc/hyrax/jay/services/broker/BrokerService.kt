@@ -145,11 +145,9 @@ object BrokerService {
             if (W?.id == "" || W == null) {
                 callback?.invoke(null)
             } else {
-                // todo: confirm that it is offloading tasks
                 if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.LOCAL || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
                     workers[W.id]!!.grpc.executeTask(request, local = (W.id == local.id), callback = callback) {
-                        scheduler
-                                .notifyTaskComplete(taskDetails)
+                        scheduler.notifyTaskComplete(taskDetails)
                     }
                 } else {
                     workers[local.id]!!.grpc.executeTask(request, true, callback) { scheduler.notifyTaskComplete(taskDetails) }
