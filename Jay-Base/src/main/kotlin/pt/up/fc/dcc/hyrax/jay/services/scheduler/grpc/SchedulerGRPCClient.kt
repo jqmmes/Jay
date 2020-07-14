@@ -10,6 +10,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutionException
+import kotlin.concurrent.thread
 
 @Suppress("DuplicatedCode")
 class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.SchedulerServiceBlockingStub, SchedulerServiceGrpc.SchedulerServiceFutureStub>
@@ -33,7 +34,8 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
             channel.resetConnectBackoff()
             return
         }
-        AbstractJay.executorPool.submit { blockingStub.notifyTaskComplete(request) }
+        //AbstractJay.executorPool.execute { blockingStub.notifyTaskComplete(request) }
+        thread { blockingStub.notifyTaskComplete(request) }
     }
 
     fun listSchedulers(callback: ((JayProto.Schedulers?) -> Unit)? = null) {

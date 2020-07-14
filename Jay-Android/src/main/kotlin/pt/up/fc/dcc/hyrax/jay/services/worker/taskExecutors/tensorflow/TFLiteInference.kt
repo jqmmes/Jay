@@ -111,7 +111,7 @@ class TFLiteInference : Classifier {
             val labelOffset = 1
             recognitions.add(Recognition("" + i, COCODataLabels.label(outputClasses[0][i].toInt() + labelOffset), outputScores[0][i], detection))
         }
-
+        println("----> IMAGE_RECOGNIZED_TENSORFLOW_LITE")
         return recognitions
     }
 

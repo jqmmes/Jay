@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import java.util.*
 
 internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBase(JaySettings.WORKER_PORT, useNettyServer) {
 
@@ -18,9 +19,12 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun execute(request: JayProto.WorkerTask?, responseObserver: StreamObserver<JayProto.Response>?) {
             JayLogger.logInfo("INIT", request?.id ?: "")
+            val ran = Random().nextInt()
             WorkerService.queueTask(request!!) { detectionList ->
+                println("----> WORKER_GRPC_SERVER_GOT_DETECTION_LIST $ran")
                 JayLogger.logInfo("COMPLETE", request.id ?: "")
                 genericComplete(JayUtils.genResponse(request.id, detectionList as ByteString), responseObserver)
+                println("----> WORKER_GRPC_SERVER_COMPLETED $ran")
             }
         }
 

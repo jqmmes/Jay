@@ -9,6 +9,8 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.WorkerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 
 @Suppress("DuplicatedCode")
@@ -25,15 +27,28 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
     fun execute(task: JayProto.WorkerTask?, callback: ((JayProto.Response?) -> Unit)? = null) {
         JayLogger.logInfo("INIT", task?.id ?: "")
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val countDownLatch = CountDownLatch(1)
         val futureTask = futureStub.execute(task)
+        val ran = Random().nextInt()
         futureTask.addListener(Runnable {
+            println("----> WORKER_GRPC_CLIENT_EXECUTE_LISTENER $ran")
             try {
-                callback?.invoke(futureTask.get())
+                println("----> WORKER_GRPC_CLIENT_EXECUTE_WAIT_FOR_FUTURE $ran")
+                val R = futureTask.get()
+                println("----> WORKER_GRPC_CLIENT_EXECUTE_GOT_FUTURE $ran\t$R")
+                callback?.invoke(R)
+                println("----> WORKER_GRPC_CLIENT_EXECUTE_CALLBACK_INVOKED $ran")
                 JayLogger.logInfo("COMPLETE", task?.id ?: "")
+                countDownLatch.countDown()
             } catch (e: ExecutionException) {
+                println("----> WORKER_GRPC_CLIENT_EXECUTE_ERROR $ran")
                 JayLogger.logWarn("ERROR", task?.id ?: "")
+                countDownLatch.countDown()
             }
         }, AbstractJay.executorPool)
+        println("----> WORKER_GRPC_CLIENT_EXECUTE_WAIT_COMPLETE")
+        countDownLatch.await()
+        println("----> WORKER_GRPC_CLIENT_EXECUTE_COMPLETE")
     }
 
     fun callExecutorAction(request: JayProto.Request?, callback: ((JayProto.Response?) -> Unit)?) {

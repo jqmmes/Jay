@@ -77,10 +77,12 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
     }
 
     override fun detectObjects(imgPath: String): List<Detection> {
+        println("----> DETECT_OBJECTS_TENSORFLOW")
         return TFUtils.detectObjects(localDetector, minimumConfidence, tfOdApiInputSize, BitmapFactory.decodeFile(imgPath))
     }
 
     override fun detectObjects(imgData: ByteArray): List<Detection> {
+        println("----> DETECT_OBJECTS_TENSORFLOW")
         if (imgData.isNotEmpty()) return TFUtils.detectObjects(localDetector, minimumConfidence, tfOdApiInputSize, ImageUtils.getBitmapFromByteArray(imgData))
         return listOf()
     }

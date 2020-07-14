@@ -20,6 +20,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.concurrent.thread
 
 /**
  * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
@@ -109,7 +110,12 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     schedulerInformCallback: (() -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val taskId = task?.id ?: ""
-        AbstractJay.executorPool.submit {
+        println("----> EXECUTOR_POOL ${AbstractJay.jayExecutorPool.getActiveThreadCount()}\t${AbstractJay.jayExecutorPool.getWorkingThreadCount()}")
+        //AbstractJay.executorPool.execute(Runnable {
+        //AbstractJay.jayExecutorPool.submit( Runnable { ()
+        //val queue = LinkedBlockingQueue<Thread>()
+        thread {
+            println("----> OK")
             val startTime = System.currentTimeMillis()
             JayLogger.logInfo("INIT", taskId,
                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
@@ -128,10 +134,11 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                             .setLocalTask(local)
                             .build())
             try {
+                println("----> WAITING #1")
                 waitToSendCountdownLatch.await(2, TimeUnit.SECONDS)
             } catch (e: InterruptedException) {
                 JayLogger.logError("Failed to obtain permission to offload Task")
-                return@submit
+                return@thread
             }
             if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
             taskStreamObserver.onNext(JayProto.Task.newBuilder(task).setStatus(JayProto.Task.Status.TRANSFER).build())
@@ -147,7 +154,16 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             } catch (e: InterruptedException) {
                 JayLogger.logError("DID_NOT_RECEIVE_END_COMMAND", "", "ENDING_CONNECTION_NOW")
             }
+            println("----> BROKER_CLIENT_COMPLETE")
         }
+
+        /*thread {
+            println("----> TAKE")
+            val t = queue.take()
+            println("----> TAKEN")
+            t.start()
+
+        }*/
     }
 
      fun ping(payload: Int, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
@@ -160,7 +176,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
              callback?.invoke(-3)
              return
          }
-         AbstractJay.executorPool.submit {
+         //AbstractJay.executorPool.execute {
+         //AbstractJay.jayExecutorPool.submit( Runnable {
+         thread {
              val timer = System.currentTimeMillis()
              try {
                  val pingData = blockingStub
@@ -178,13 +196,13 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     fun notifySchedulerForAvailableWorkers(callback: (() -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.notifySchedulerForAvailableWorkers(Empty.getDefaultInstance())
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 call.get(); callback()
             } catch (e: Exception) {
                 callback()
             }
-        }, AbstractJay.executorPool)
+        }, { R -> R.run() })
     }
 
     fun callExecutorAction(request: JayProto.Request?, callback: ((JayProto.Response?) -> Unit)?) {

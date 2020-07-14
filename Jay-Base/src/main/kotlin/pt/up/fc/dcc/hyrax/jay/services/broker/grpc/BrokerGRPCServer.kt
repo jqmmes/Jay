@@ -23,6 +23,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         inner class TaskResponseObserver(val responseObserver: StreamObserver<JayProto.Response>?) :
                 StreamObserver<JayProto.Task> {
+
+            private val ran = Random().nextInt()
             private var isLocalTransfer = false
 
             override fun onNext(value: JayProto.Task?) {
@@ -42,10 +44,15 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                                 .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
                         val waitCountdownLatch = CountDownLatch(1)
                         BrokerService.executeTask(value) { R ->
+                            println("----> BROKER_SERVER_TRANSFER_BEFORE_ON_NEXT $ran")
                             responseObserver?.onNext(R)
+                            println("----> BROKER_SERVER_TRANSFER_AFTER_ON_NEXT $ran")
                             waitCountdownLatch.countDown()
                         }
+
+                        println("----> BROKER_SERVER_TRANSFER_WAIT $ran")
                         waitCountdownLatch.await()
+                        println("----> BROKER_SERVER_TRANSFER_WAIT_COMPLETE $ran")
                     }
                     JayProto.Task.Status.END_TRANSFER -> {
                         responseObserver?.onNext(JayProto.Response.newBuilder()
@@ -61,6 +68,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
             override fun onCompleted() {
                 JayLogger.logInfo("COMPLETE")
+                println("----> BROKER_SERVER_COMPLETE $ran")
                 responseObserver?.onCompleted()
             }
         }

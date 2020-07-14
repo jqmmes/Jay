@@ -46,7 +46,11 @@ object WorkerService {
     internal fun queueTask(task: WorkerTask, callback: ((Any) -> Unit)?): StatusCode {
         JayLogger.logInfo("INIT", task.id)
         if (!running) throw Exception("WorkerService not running")
-        taskQueue.put(RunnableTaskObjects(task, callback))
+        taskQueue.put(RunnableTaskObjects(task) { R ->
+            println("----> WORKER_TASK_QUEUE_COMPLETED")
+            callback?.invoke(R)
+            println("----> WORKER_TASK_QUEUE_CALLBACK_INVOKED")
+        })
         atomicOperation(totalTasks, increment = true)
         JayLogger.logInfo("TASK_QUEUED", task.id, "TASKS_IN_QUEUE=${totalTasks.get() - runningTasks.get()}")
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
