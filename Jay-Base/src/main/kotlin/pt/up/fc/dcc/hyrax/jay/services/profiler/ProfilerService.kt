@@ -72,8 +72,17 @@ object ProfilerService {
 
     private fun setSimilarity(v1: List<Long>, v2: List<Long>): Long {
         var diff = 0L
-        for (i in 0..v1.size) {
-            diff += abs(v1.elementAt(i) - v2.elementAt(i))
+        if (v1.isEmpty() || v2.isEmpty()) return Long.MAX_VALUE
+        for (i in v1.indices) {
+            diff += if (i < v2.size)
+                abs(v1.elementAt(i) - v2.elementAt(i))
+            else
+                abs(v1.elementAt(i) - v2.last())
+        }
+        if (v2.size > v1.size) {
+            for (i in v1.size until v2.size) {
+                diff += abs(v1.last() - v2.elementAt(i))
+            }
         }
         return diff
     }

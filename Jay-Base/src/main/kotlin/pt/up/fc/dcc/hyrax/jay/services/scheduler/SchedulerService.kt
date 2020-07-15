@@ -6,9 +6,11 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.ServiceStatus.Type.SCHEDULER
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
+import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
@@ -29,6 +31,7 @@ object SchedulerService {
     private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker?> = hashMapOf()
     internal val broker = BrokerGRPCClient("127.0.0.1")
+    internal val profiler = ProfilerGRPCClient("127.0.0.1")
     private var scheduler: AbstractScheduler? = null
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
     private var taskCompleteListener: ((String) -> Unit)? = null
@@ -59,7 +62,13 @@ object SchedulerService {
             SmartScheduler(),
             EstimatedTimeScheduler(),
             ComputationEstimateScheduler(),
-            EAScheduler(Worker.Type.LOCAL)
+            EAScheduler(Worker.Type.LOCAL),
+            EAScheduler(Worker.Type.REMOTE),
+            EAScheduler(Worker.Type.CLOUD),
+            EAScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE),
+            EAScheduler(Worker.Type.LOCAL, Worker.Type.CLOUD),
+            EAScheduler(Worker.Type.REMOTE, Worker.Type.CLOUD),
+            EAScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE, Worker.Type.CLOUD)
     )
 
     internal fun getWorker(id: String) : Worker? {
@@ -95,8 +104,7 @@ object SchedulerService {
 
     internal fun schedule(request: JayProto.TaskDetails?): Worker? {
         if (scheduler == null) scheduler = schedulers[0]
-        val W = scheduler?.scheduleTask(pt.up.fc.dcc.hyrax.jay.structures.Task(request))
-        return W
+        return scheduler?.scheduleTask(Task(request))
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?): JayProto.StatusCode {
@@ -185,6 +193,11 @@ object SchedulerService {
 
     internal fun notifyTaskComplete(id: String?) {
         taskCompleteListener?.invoke(id ?: "")
+    }
+
+    internal fun getExpectedCurrent(worker: Worker?, callback: ((JayProto.CurrentEstimations?) -> Unit)) {
+        if (worker?.type == Worker.Type.LOCAL) callback(profiler.getExpectedCurrent())
+        broker.getExpectedCurrentFromRemote(worker) { callback(it) }
     }
 
 }

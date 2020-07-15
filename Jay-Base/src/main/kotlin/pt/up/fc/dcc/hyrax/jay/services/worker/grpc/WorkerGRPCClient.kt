@@ -30,8 +30,8 @@ class WorkerGRPCClient(host: String) : GRPCClientBase<WorkerServiceGrpc.WorkerSe
         val futureTask = futureStub.execute(task)
         futureTask.addListener(Runnable {
             try {
-                val R = futureTask.get()
-                callback?.invoke(R)
+                val p1 = futureTask.get()
+                callback?.invoke(p1)
                 JayLogger.logInfo("COMPLETE", task?.id ?: "")
                 countDownLatch.countDown()
             } catch (e: ExecutionException) {

@@ -342,6 +342,12 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { callback.invoke(call.get()); JayLogger.logInfo("COMPLETE") }, AbstractJay.executorPool)
     }
 
+    fun getExpectedCurrentFromRemote(worker: JayProto.Worker?, callback: ((JayProto.CurrentEstimations?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.getExpectedCurrentFromRemote(worker)
+        call.addListener(Runnable { callback.invoke(call.get()); JayLogger.logInfo("COMPLETE") }, AbstractJay.executorPool)
+    }
+
     fun updateSmartSchedulerWeights(computeTime: Float, queueSize: Float, runningTasks: Float, battery: Float,
                                     bandwidth: Float, callback: ((JayProto.Status?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {

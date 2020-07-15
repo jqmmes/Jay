@@ -313,6 +313,9 @@ service BrokerService {
 
     rpc getExpectedCurrent (google.protobuf.Empty) returns (CurrentEstimations) {
     };
+
+    rpc getExpectedCurrentFromRemote (Worker) returns (CurrentEstimations) {
+    };
 }
 
 service ProfilerService {

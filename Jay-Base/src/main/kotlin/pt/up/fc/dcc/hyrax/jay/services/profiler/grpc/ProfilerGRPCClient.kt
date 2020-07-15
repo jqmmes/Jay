@@ -102,6 +102,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
                     .getExpectedCurrent(Empty.getDefaultInstance())
         } catch (ignore: Exception) {
+            println("----> Exception")
             JayProto.CurrentEstimations.getDefaultInstance()
         }
     }

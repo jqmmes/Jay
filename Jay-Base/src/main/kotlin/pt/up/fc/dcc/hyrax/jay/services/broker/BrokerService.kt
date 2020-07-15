@@ -408,4 +408,9 @@ object BrokerService {
             JayUtils.genStatusError()
         }
     }
+
+    fun getExpectedCurrentFromRemote(id: String?, callback: ((CurrentEstimations?) -> Unit)) {
+        if (!workers.containsKey(id)) callback.invoke(CurrentEstimations.getDefaultInstance())
+        workers[id]!!.grpc.getExpectedCurrent(callback)
+    }
 }
