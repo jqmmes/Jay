@@ -20,7 +20,6 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
     private lateinit var classifier: DetectObjects
 
     override fun init(vararg params: Any?) {
-        println("----> init($lite)")
         classifier = if (lite) DroidTensorflowLite(context) else DroidTensorflow(context)
     }
 
@@ -32,17 +31,17 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
     }
 
     override fun executeTask(task: WorkerTask?, callback: ((Any) -> Unit)?) {
-        println("----> executeTask")
         try {
             JayLogger.logInfo("READ_IMAGE_DATA", task?.id ?: "")
             val imgData = fsAssistant?.readTempFile(task?.fileId) ?: ByteArray(0)
             JayLogger.logInfo("START", task?.id ?: "")
             val results = JayTensorFlowProto.Results.newBuilder()
-            println("----> $imgData")
+            var resultsStr = ""
             for (detection in classifier.detectObjects(imgData)) {
-                println("----> $detection")
+                resultsStr += "${detection.class_}(${detection.score}),"
                 results.addDetections(genDetection(detection))
             }
+            JayLogger.logInfo("TASK_RESULTS", task?.id ?: "", "VALUES=${resultsStr.trimEnd(',')}")
             callback?.invoke(results.build().toByteString())
         } catch (e: Exception) {
             e.printStackTrace()
@@ -103,7 +102,6 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
                 classifier.loadModel(Model(model!!.id, model.name, model.url, model.downloaded, model.isQuantized, model.inputSize), statusCallback)
             }
             else -> {
-                println("----> ERROR_LOADING_MODEL")
                 genErrorWithCallback(statusCallback, NoSuchElementException("Unknown Action: $action"))
             }
         }

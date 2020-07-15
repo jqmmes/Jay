@@ -15,12 +15,11 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
+import pt.up.fc.dcc.hyrax.jay.utils.JayThreadPoolExecutor
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import kotlin.concurrent.thread
 
 /**
  * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
@@ -34,6 +33,8 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     override var blockingStub: BrokerServiceGrpc.BrokerServiceBlockingStub = BrokerServiceGrpc.newBlockingStub(channel)
     override var futureStub: BrokerServiceGrpc.BrokerServiceFutureStub = BrokerServiceGrpc.newFutureStub(channel)
     private var asyncStub: BrokerServiceGrpc.BrokerServiceStub = BrokerServiceGrpc.newStub(channel)
+    private val executePool: JayThreadPoolExecutor = JayThreadPoolExecutor(10)
+    private val pingPool: JayThreadPoolExecutor = JayThreadPoolExecutor(10)
 
     override fun reconnectStubs() {
         blockingStub = BrokerServiceGrpc.newBlockingStub(channel)
@@ -110,60 +111,38 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     schedulerInformCallback: (() -> Unit)? = null) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val taskId = task?.id ?: ""
-        println("----> EXECUTOR_POOL ${AbstractJay.jayExecutorPool.getActiveThreadCount()}\t${AbstractJay.jayExecutorPool.getWorkingThreadCount()}")
-        //AbstractJay.executorPool.execute(Runnable {
-        //AbstractJay.jayExecutorPool.submit( Runnable { ()
-        //val queue = LinkedBlockingQueue<Thread>()
-        thread {
-            println("----> OK")
+        executePool.submit {
             val startTime = System.currentTimeMillis()
             JayLogger.logInfo("INIT", taskId,
                     "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
                     "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
-            val waitToSendCountdownLatch = CountDownLatch(1)
-            val dataReachedWorkerCountDownLatch = CountDownLatch(1)
-            val endCountDownLatch = CountDownLatch(1)
-            val taskStreamObserver = asyncStub.executeTask(ResponseStreamObserver(
-                    task, local, startTime, { waitToSendCountdownLatch.countDown() },
-                    { dataReachedWorkerCountDownLatch.countDown() },
-                    { endCountDownLatch.countDown() }, callback, schedulerInformCallback))
+            var taskStreamObserver: StreamObserver<JayProto.Task>? = null
+
+            taskStreamObserver = asyncStub.executeTask(ResponseStreamObserver(
+                    task, local, startTime, {
+                if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
+                taskStreamObserver?.onNext(
+                        JayProto.Task.newBuilder(task)
+                                .setStatus(JayProto.Task.Status.TRANSFER)
+                                .build())
+            },
+                    {
+                        taskStreamObserver?.onNext(
+                                JayProto.Task.newBuilder()
+                                        .setStatus(JayProto.Task.Status.END_TRANSFER)
+                                        .build())
+                        taskStreamObserver?.onCompleted()
+                    },
+                    { JayLogger.logInfo("EXECUTE_TASK_COMPLETE") },
+                    callback, schedulerInformCallback)
+            )
             taskStreamObserver.onNext(
                     JayProto.Task.newBuilder()
                             .setStatus(JayProto.Task.Status.BEGIN_TRANSFER)
                             .setLocalTask(local)
                             .build())
-            try {
-                println("----> WAITING #1")
-                waitToSendCountdownLatch.await(2, TimeUnit.SECONDS)
-            } catch (e: InterruptedException) {
-                JayLogger.logError("Failed to obtain permission to offload Task")
-                return@thread
-            }
-            if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
-            taskStreamObserver.onNext(JayProto.Task.newBuilder(task).setStatus(JayProto.Task.Status.TRANSFER).build())
-            try {
-                dataReachedWorkerCountDownLatch.await(60, TimeUnit.SECONDS)
-            } catch (e: InterruptedException) {
-                JayLogger.logError("DATA_TAKEN_TOO_MUCH_TO_REACH_SERVER")
-            }
-            taskStreamObserver.onNext(JayProto.Task.newBuilder().setStatus(JayProto.Task.Status.END_TRANSFER).build())
-            taskStreamObserver.onCompleted()
-            try {
-                endCountDownLatch.await()
-            } catch (e: InterruptedException) {
-                JayLogger.logError("DID_NOT_RECEIVE_END_COMMAND", "", "ENDING_CONNECTION_NOW")
-            }
-            println("----> BROKER_CLIENT_COMPLETE")
         }
-
-        /*thread {
-            println("----> TAKE")
-            val t = queue.take()
-            println("----> TAKEN")
-            t.start()
-
-        }*/
     }
 
      fun ping(payload: Int, reply: Boolean = false, timeout: Long = 15000, callback: ((Int) -> Unit)? = null) {
@@ -176,9 +155,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
              callback?.invoke(-3)
              return
          }
-         //AbstractJay.executorPool.execute {
-         //AbstractJay.jayExecutorPool.submit( Runnable {
-         thread {
+         pingPool.submit {
              val timer = System.currentTimeMillis()
              try {
                  val pingData = blockingStub

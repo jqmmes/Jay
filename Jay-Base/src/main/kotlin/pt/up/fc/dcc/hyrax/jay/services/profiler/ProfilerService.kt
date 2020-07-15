@@ -317,9 +317,8 @@ object ProfilerService {
                 this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
             }
             this.rawExpectedCpuHashMap[CpuEstimatorKey(jayStates, null)]!!.add(cpuSpeeds)
+            JayLogger.logInfo("EXPECTED_CPU_HASH_MAP", "", "${this.expectedCpuHashMap}")
         }
-
-        JayLogger.logInfo("EXPECTED_CPU_HASH_MAP", "", "${this.expectedCpuHashMap}")
 
         val batteryCurrentKey = BatteryCurrentKey(medium, activeSensors, batteryInfo.batteryStatus)
         synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
@@ -331,8 +330,9 @@ object ProfilerService {
                         CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
             }
             this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds]!!.add(batteryInfo.batteryCurrent)
+            JayLogger.logInfo("EXPECTED_CURRENT_HASH_MAP", "", "${this.expectedCurrentHashMap}")
         }
-        JayLogger.logInfo("EXPECTED_CURRENT_HASH_MAP", "", "${this.expectedCurrentHashMap}")
+
 
         JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)
         if (recording) this.recordingStartTime = currentTime

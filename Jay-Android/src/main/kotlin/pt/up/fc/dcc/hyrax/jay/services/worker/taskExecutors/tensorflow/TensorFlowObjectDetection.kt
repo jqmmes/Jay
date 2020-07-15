@@ -159,7 +159,6 @@ class TensorFlowObjectDetection : Classifier {
         sessionInferenceInterface.closeSession()
         JayLogger.logInfo("CLOSE_SESSION_COMPLETE")
         JayLogger.logInfo("COMPLETE")
-        println("----> IMAGE_RECOGNIZED_TENSORFLOW")
         return recognitions
     }
 

@@ -9,7 +9,6 @@ import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
-import pt.up.fc.dcc.hyrax.jay.utils.JayThreadPoolExecutor
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
@@ -26,7 +25,6 @@ abstract class AbstractJay {
 
     internal companion object {
         val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(100, 100, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>(Int.MAX_VALUE))
-        val jayExecutorPool: JayThreadPoolExecutor = JayThreadPoolExecutor(5, 5, Long.MAX_VALUE, TimeUnit.MILLISECONDS)
     }
 
     fun listSchedulers(callback: ((Set<Pair<String, String>>) -> Unit)? = null) {

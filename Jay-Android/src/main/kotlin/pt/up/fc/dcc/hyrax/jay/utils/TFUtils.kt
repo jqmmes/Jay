@@ -54,9 +54,7 @@ object TFUtils {
     }
 
     fun loadModel(classifier: Classifier, context: Context, model: Model, modelName: String, tfOdApiInputSize: Int, assetManager: AssetManager? = null, isQuantized: Boolean? = null, numThreads: Int? = null, device: String? = null, lite: Boolean = false): Classifier? {
-        println("----> LOAD_MODEL ${model.modelName}")
         val modelPath = getModelPath(context, model, modelName, lite)
-        println("----> LOAD_MODEL_PATH ${modelPath}")
         JayLogger.logInfo("LOADING_MODEL", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_PATH=$modelPath"))
         try {
             classifier.init(modelPath, tfOdApiInputSize, assetManager, isQuantized, numThreads, device)

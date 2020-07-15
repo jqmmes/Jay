@@ -1,5 +1,6 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu
 
+import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import java.io.File
 import java.util.*
 
@@ -45,9 +46,14 @@ object AndroidCPUManager : CPUManager() {
 
     override fun getCurrentCPUClockSpeed(cpuNumber: Int): Long {
         val cpuFile = File("/sys/devices/system/cpu/cpu$cpuNumber/cpufreq/scaling_cur_freq")
-        return if (cpuFile.exists()) {
-            val scanner = Scanner(cpuFile)
-            if (scanner.hasNextInt()) scanner.nextLong() else -1
-        } else -1
+        return try {
+            if (cpuFile.exists()) {
+                val scanner = Scanner(cpuFile)
+                if (scanner.hasNextInt()) scanner.nextLong() else -1
+            } else -1
+        } catch (ignore: Exception) {
+            JayLogger.logWarn("PROBLEM_READING_CPU_CLOCK_SPEED")
+            -1
+        }
     }
 }

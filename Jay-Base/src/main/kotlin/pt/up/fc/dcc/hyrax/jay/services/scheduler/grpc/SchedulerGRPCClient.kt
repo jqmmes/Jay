@@ -8,15 +8,16 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
+import pt.up.fc.dcc.hyrax.jay.utils.JayThreadPoolExecutor
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutionException
-import kotlin.concurrent.thread
 
 @Suppress("DuplicatedCode")
 class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.SchedulerServiceBlockingStub, SchedulerServiceGrpc.SchedulerServiceFutureStub>
 (host, JaySettings.SCHEDULER_PORT) {
     override var blockingStub: SchedulerServiceGrpc.SchedulerServiceBlockingStub = SchedulerServiceGrpc.newBlockingStub(channel)
     override var futureStub: SchedulerServiceGrpc.SchedulerServiceFutureStub = SchedulerServiceGrpc.newFutureStub(channel)
+    private val notifyPool: JayThreadPoolExecutor = JayThreadPoolExecutor(10)
 
     override fun reconnectStubs() {
         blockingStub = SchedulerServiceGrpc.newBlockingStub(channel)
@@ -34,8 +35,7 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
             channel.resetConnectBackoff()
             return
         }
-        //AbstractJay.executorPool.execute { blockingStub.notifyTaskComplete(request) }
-        thread { blockingStub.notifyTaskComplete(request) }
+        notifyPool.submit { blockingStub.notifyTaskComplete(request) }
     }
 
     fun listSchedulers(callback: ((JayProto.Schedulers?) -> Unit)? = null) {

@@ -132,7 +132,6 @@ object BrokerService {
         JayLogger.logInfo("INIT", taskId)
         val workerTask = WorkerTask.newBuilder().setId(taskId).setFileId(fsAssistant?.createTempFile(request?.data?.toByteArray())).build()
         if (workerServiceRunning) worker.execute(workerTask) { R ->
-            println("----> BROKER_SERVICE_EXECUTE_TASK_END")
             callback?.invoke(R)
         } else callback?.invoke(Response.getDefaultInstance())
         JayLogger.logInfo("COMPLETE", taskId)
