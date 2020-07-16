@@ -123,11 +123,12 @@ object JayUtils {
         return JayProto.JayState.newBuilder().setJayState(jayState).build()
     }
 
-    fun genWorkerProto(id: String? = null, batteryLevel: Int, batteryCapacity: Int, batteryStatus: JayProto.BatteryStatus,
+    /*fun genWorkerProto(id: String? = null, batteryLevel: Int, batteryCapacity: Int, batteryStatus: JayProto
+    .BatteryStatus,
                        avgComputingEstimate: Long, cpuCores: Int, queueSize: Int,
                        queuedTasks: Int, runningTasks: Int, type: Type? = null,
                        bandwidthEstimate: Float? = null, totalMemory: Long,
-                       freeMemory: Long): JayProto.Worker? {
+                       freeMemory: Long, avgResultSize: Long): JayProto.Worker? {
         val worker = JayProto.Worker.newBuilder()
         if (id != null) worker.id = id // Internal
         worker.batteryLevel = batteryLevel // Modified by Worker
@@ -142,6 +143,7 @@ object JayUtils {
         if (bandwidthEstimate != null) worker.bandwidthEstimate = bandwidthEstimate // Set internally
         worker.totalMemory = totalMemory
         worker.freeMemory = freeMemory
+        worker.avgResultSize = avgResultSize
         return worker.build()
-    }
+    }*/
 }

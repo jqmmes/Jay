@@ -15,6 +15,12 @@ import java.util.*
 import kotlin.math.roundToInt
 
 /**
+ *
+ * todo: Make sure I always get correct current readings:
+ *  -> Some devices use positive to discharge and negative to charge:
+ *     Correct is negative do discharge and positive to charge
+ *  -> Some devices use very large values (uA instead of mA?)
+ *
  * BATTERY_PROPERTY_CURRENT_NOW           (Sync) Instantaneous battery current in microamperes
  * BATTERY_PROPERTY_ENERGY_COUNTER        (Sync) Battery remaining energy in nanowatt-hours
  * EXTRA_VOLTAGE                          (ASync) current battery temperature

@@ -86,6 +86,7 @@ message Worker {
     float bandwidthEstimate = 12;
     int64 totalMemory = 13;
     int64 freeMemory = 14;
+    int64 avgResultSize = 15;
 }
 
 message WorkerComputeStatus {

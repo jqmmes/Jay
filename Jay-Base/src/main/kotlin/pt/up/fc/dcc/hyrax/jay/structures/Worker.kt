@@ -8,7 +8,6 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings.PING_PAYLOAD_SIZE
-import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.CountDownLatch
@@ -43,11 +42,13 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private var freeMemory = 0L
     private var status = Status.OFFLINE
     private var bandwidthEstimate: Float = 0f
+    private var avgResultSize = 0L
     //private var freeSpace = Long.MAX_VALUE
     //private var connections = 0
 
     private var smartPingScheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
     private var circularFIFO: CircularFifoQueue<Float> = CircularFifoQueue(JaySettings.RTT_HISTORY_SIZE)
+    private var circularResultsFIFO: CircularFifoQueue<Long> = CircularFifoQueue(JaySettings.RESULTS_CIRCULAR_FIFO_SIZE)
     private var consecutiveTransientFailurePing = 0
     private var proto: JayProto.Worker? = null
     private var autoStatusUpdateEnabledFlag = false
@@ -82,9 +83,22 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     private fun genProto() {
-        this.proto = JayUtils.genWorkerProto(id, batteryLevel, batteryCapacity, batteryStatus,
-                avgComputingEstimate, cpuCores, queueSize, queuedTasks, runningTasks, type,
-                bandwidthEstimate, totalMemory, freeMemory)
+        val worker = JayProto.Worker.newBuilder()
+        worker.id = id // Internal
+        worker.batteryLevel = batteryLevel // Modified by Worker
+        worker.batteryCapacity = batteryCapacity
+        worker.batteryStatus = batteryStatus
+        worker.avgTimePerTask = avgComputingEstimate // Modified by Worker
+        worker.cpuCores = cpuCores // Set by Worker
+        worker.queueSize = queueSize // Set by Worker
+        worker.queuedTasks = queuedTasks
+        worker.runningTasks = runningTasks // Modified by Worker
+        worker.type = type // Set in Broker
+        worker.bandwidthEstimate = bandwidthEstimate // Set internally
+        worker.totalMemory = totalMemory
+        worker.freeMemory = freeMemory
+        worker.avgResultSize = avgResultSize
+        this.proto = worker.build()
     }
 
     private fun updateStatus(proto: JayProto.ProfileRecording?) {
@@ -167,6 +181,13 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     internal fun disableAutoStatusUpdate(wait: Boolean = true) {
         autoStatusUpdateEnabledFlag = false
         if (wait) autoStatusUpdateRunning.await()
+    }
+
+    fun addResultSize(size: Long) {
+        circularResultsFIFO.add(size)
+        var tot = 0L
+        circularResultsFIFO.forEach { tot += it }
+        avgResultSize = tot / circularResultsFIFO.size
     }
 
     fun addRTT(millis: Int, payloadSize: Int = PING_PAYLOAD_SIZE) {

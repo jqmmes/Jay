@@ -54,6 +54,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                  private val schedulerInformCallback: (() -> Unit)? = null) : StreamObserver<JayProto.Response> {
         private var lastResult: JayProto.Response? = null
 
+        // todo: Enable average rx size
         override fun onNext(results: JayProto.Response) {
             JayLogger.logInfo("RECEIVED_RESPONSE", "", results.status.code.name)
             lastResult = results

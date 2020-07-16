@@ -48,6 +48,22 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
         return "${super.getName()} [${devices.trimEnd(' ', ',')}]"
     }
 
+    /**
+     * In here we have to estimate how much energy will be spent on the remote device
+     * i.e. task receive, queue time (remote device will be working), compute, result send
+     *
+     * In the future, I should account for my own energy in this calculation.
+     * Variations:
+     *  -> Energy spent per task per device
+     *  -> Energy spent per task, globaly (includes my energy offloading and receiving and waiting)
+     *  -> Energy spent globaly on all devices I know
+     *
+     * Addon:
+     *   -> Deal with energy and include deadlines.
+     *
+     * Future Work:
+     *   -> Deal with Task Failures
+     */
     override fun scheduleTask(task: Task): JayProto.Worker? {
         var chosenWorker: JayProto.Worker? = null
         val workers = SchedulerService.getWorkers(devices).values
@@ -64,7 +80,11 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
         currentLatch.await()
         var minSpend = Long.MIN_VALUE
         currentMap.forEach { (t, u) ->
-            val spend = t.avgTimePerTask * (u?.compute ?: 0)
+            val spend: Long =
+                    t.avgTimePerTask * (u?.compute ?: 0) +
+                            t.bandwidthEstimate.toLong() * task.dataSize.toLong() * (u?.rx ?: 0) +
+                            t.queueSize * t.avgTimePerTask * (u?.idle ?: 0) +
+                            t.avgResultSize * (u?.tx ?: 0)
             if (spend > minSpend) {
                 minSpend = spend
                 chosenWorker = t

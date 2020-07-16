@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.jay.utils
 
 object JaySettings {
 
+    var RESULTS_CIRCULAR_FIFO_SIZE: Int = 20
     var CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE: Int = 20
     var JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE: Int = 20
 
