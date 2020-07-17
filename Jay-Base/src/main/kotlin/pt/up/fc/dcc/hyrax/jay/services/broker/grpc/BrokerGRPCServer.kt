@@ -24,7 +24,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         inner class TaskResponseObserver(val responseObserver: StreamObserver<JayProto.Response>?) :
                 StreamObserver<JayProto.Task> {
 
-            private val ran = Random().nextInt()
             private var isLocalTransfer = false
 
             override fun onNext(value: JayProto.Task?) {
@@ -139,10 +138,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(BrokerService.disableWorkerStatusAdvertisement(), responseObserver)
         }
 
-        override fun updateSmartSchedulerWeights(request: JayProto.Weights?, responseObserver: StreamObserver<JayProto.Status>?) {
-            BrokerService.updateSmartSchedulerWeights(request) { S -> genericComplete(S, responseObserver) }
-        }
-
         override fun announceServiceStatus(request: JayProto.ServiceStatus?, responseObserver: StreamObserver<JayProto.Status>?) {
             BrokerService.serviceStatusUpdate(request) { S -> genericComplete(S, responseObserver) }
         }
@@ -162,8 +157,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun createTask(request: JayProto.String?, responseObserver: StreamObserver<JayProto.Response>?) {
-            val reqId = request?.str ?: ""
+        override fun createTask(request: JayProto.TaskInfo?, responseObserver: StreamObserver<JayProto.Response>?) {
+            val reqId = request?.path ?: ""
             JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST_ID=$reqId"))
             if (reqId.contains(".mp4")) {
                 JayLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("INIT", " REQUEST_TYPE=VIDEO", "REQUEST_ID=$reqId"))
@@ -198,6 +193,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
         override fun setExecutorSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
             BrokerService.setExecutorSettings(request) { S -> genericComplete(S, responseObserver) }
+        }
+
+        override fun setSchedulerSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
+            BrokerService.setSchedulerSettings(request) { S -> genericComplete(S, responseObserver) }
         }
 
         override fun setSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {

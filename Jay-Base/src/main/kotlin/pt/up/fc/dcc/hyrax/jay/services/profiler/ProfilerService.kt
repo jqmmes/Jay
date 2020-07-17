@@ -187,7 +187,7 @@ object ProfilerService {
         } catch (ignore: Exception) {
             JayLogger.logError("Error Stopping ProfilerService")
             JayUtils.genStatusError()
-        }!!
+        }
     }
 
     private fun getTimeRangeProto(start: Long, end: Long): TimeRange? {
@@ -360,8 +360,10 @@ object ProfilerService {
                     JayLogger.logInfo("LEVEL_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_LEVEL=$level", "NEW_BATTERY_VOLTAGE=$voltage", "NEW_BATTERY_TEMPERATURE=$temperature", "NEW_BATTERY_CURRENT=${this.batteryInfo.batteryCurrent}", "REMAINING_ENERGY=${this.batteryInfo.batteryEnergy}", "NEW_BATTERY_CHARGE=${this.batteryInfo.batteryCharge}"))
                 },
                 _statusChangeCallback = { status ->
-                    JayLogger.logInfo("STATUS_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
-                    this.batteryInfo.batteryStatus = status
+                    if (status != this.batteryInfo.batteryStatus) {
+                        JayLogger.logInfo("STATUS_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
+                        this.batteryInfo.batteryStatus = status
+                    }
                 }
         )
     }

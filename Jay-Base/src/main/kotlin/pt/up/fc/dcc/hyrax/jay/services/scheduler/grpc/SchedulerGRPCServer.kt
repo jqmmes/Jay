@@ -44,8 +44,11 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
             genericComplete(JayUtils.genStatus(SchedulerService.setScheduler(request?.id)), responseObserver)
         }
 
-        override fun updateSmartSchedulerWeights(request: JayProto.Weights?, responseObserver: StreamObserver<JayProto.Status>?) {
-            genericComplete(SchedulerService.updateWeights(request), responseObserver)
+        override fun setSchedulerSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
+            JayLogger.logInfo("INIT")
+            if (request == null) genericComplete(JayUtils.genStatusError(), responseObserver)
+            else SchedulerService.setSchedulerSettings(request.settingMap) { S -> genericComplete(S, responseObserver) }
+            JayLogger.logInfo("COMPLETE")
         }
 
         override fun testService(request: Empty?, responseObserver: StreamObserver<JayProto.ServiceStatus>?) {

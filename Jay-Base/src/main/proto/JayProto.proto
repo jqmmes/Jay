@@ -12,6 +12,7 @@ enum StatusCode {
     Received = 3;
     Ready = 4;
     End = 5;
+    TimedOut = 6;
 }
 
 enum BatteryStatus {
@@ -29,6 +30,8 @@ message Task {
     bytes data = 2;
     bool localTask = 3;
     Status status = 4;
+    int64 creationTimeStamp = 5;
+    int64 deadlineTimeStamp = 6;
 
     enum Status {
         BEGIN_TRANSFER = 0;
@@ -246,6 +249,11 @@ message ProfileRecordings {
     repeated ProfileRecording profileRecording = 1;
 }
 
+message TaskInfo {
+    string path = 1;
+    int64 deadline = 2;
+}
+
 // Internal and External communication Broker
 service BrokerService {
     rpc ping (Ping) returns (Ping) {
@@ -269,6 +277,9 @@ service BrokerService {
     rpc setScheduler (Scheduler) returns (Status) {
     }; // App > Broker --> Calls SchedulerService::setScheduler
 
+    rpc setSchedulerSettings (Settings) returns (Status) {
+    };
+
     rpc listenMulticast (google.protobuf.BoolValue) returns (Status) {
     }; // SchedulerService --> Broker (Starts MC listen)
     rpc announceMulticast (google.protobuf.Empty) returns (Status) {
@@ -287,8 +298,6 @@ service BrokerService {
     rpc disableWorkerStatusAdvertisement (google.protobuf.Empty) returns (Status) {
     }
 
-    rpc updateSmartSchedulerWeights (Weights) returns (Status) {
-    };
     rpc announceServiceStatus (ServiceStatus) returns (Status) {
     };
     rpc stopService (google.protobuf.Empty) returns (Status) {
@@ -296,7 +305,7 @@ service BrokerService {
 
     rpc calibrateWorker (String) returns (google.protobuf.Empty) {
     };
-    rpc createTask (String) returns (Response) {
+    rpc createTask (TaskInfo) returns (Response) {
     };
     rpc setSettings (Settings) returns (Status) {
     };
@@ -357,11 +366,11 @@ service SchedulerService {
     }; // Select Scheduler to be used
     rpc listSchedulers (google.protobuf.Empty) returns (Schedulers) {
     }; // List available Schedulers
-    rpc updateSmartSchedulerWeights (Weights) returns (Status) {
-    };
     rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
     };
     rpc stopService (google.protobuf.Empty) returns (Status) {
+    };
+    rpc setSchedulerSettings (Settings) returns (Status) {
     };
 }
 

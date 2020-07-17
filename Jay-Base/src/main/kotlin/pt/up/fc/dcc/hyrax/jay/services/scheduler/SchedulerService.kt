@@ -9,19 +9,14 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
-import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
+import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.AbstractScheduler
 import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
 import kotlin.concurrent.thread
 
-/**
- * todo: Scheduler::setSettings(key: val)
- * todo: Create a method to register scheduler
- */
 object SchedulerService {
-
     enum class WorkerConnectivityStatus {
         ONLINE,
         OFFLINE
@@ -36,40 +31,7 @@ object SchedulerService {
     private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
     private var taskCompleteListener: ((String) -> Unit)? = null
     private var running = false
-
-    internal var weights: JayProto.Weights = JayProto.Weights.newBuilder().setComputeTime(0.5f).setQueueSize(0.1f)
-            .setRunningTasks(0.1f).setBattery(0.2f).setBandwidth(0.1f).build()
-
-    // todo: remove this list and use a new registerScheduler
-    private val schedulers: Array<AbstractScheduler> = arrayOf(
-            SingleDeviceScheduler(Worker.Type.LOCAL),
-            SingleDeviceScheduler(Worker.Type.CLOUD),
-            SingleDeviceScheduler(Worker.Type.REMOTE),
-            MultiDeviceScheduler(true, Worker.Type.LOCAL),
-            MultiDeviceScheduler(true, Worker.Type.REMOTE),
-            MultiDeviceScheduler(true, Worker.Type.CLOUD),
-            MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.CLOUD),
-            MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.REMOTE),
-            MultiDeviceScheduler(true, Worker.Type.CLOUD, Worker.Type.REMOTE),
-            MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE),
-            MultiDeviceScheduler(false, Worker.Type.LOCAL),
-            MultiDeviceScheduler(false, Worker.Type.REMOTE),
-            MultiDeviceScheduler(false, Worker.Type.CLOUD),
-            MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD),
-            MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.REMOTE),
-            MultiDeviceScheduler(false, Worker.Type.CLOUD, Worker.Type.REMOTE),
-            MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE),
-            SmartScheduler(),
-            EstimatedTimeScheduler(),
-            ComputationEstimateScheduler(),
-            EAScheduler(Worker.Type.LOCAL),
-            EAScheduler(Worker.Type.REMOTE),
-            EAScheduler(Worker.Type.CLOUD),
-            EAScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE),
-            EAScheduler(Worker.Type.LOCAL, Worker.Type.CLOUD),
-            EAScheduler(Worker.Type.REMOTE, Worker.Type.CLOUD),
-            EAScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE, Worker.Type.CLOUD)
-    )
+    private val schedulers: MutableSet<AbstractScheduler> = mutableSetOf()
 
     internal fun getWorker(id: String) : Worker? {
         return if (workers.containsKey(id)) workers[id] else null
@@ -88,6 +50,10 @@ object SchedulerService {
         return filteredWorkers as HashMap<String, Worker?>
     }
 
+    fun registerScheduler(scheduler: AbstractScheduler) {
+        schedulers.add(scheduler)
+    }
+
     fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null) {
         JayLogger.logInfo("INIT")
         if (running) return
@@ -103,7 +69,8 @@ object SchedulerService {
     }
 
     internal fun schedule(request: JayProto.TaskDetails?): Worker? {
-        if (scheduler == null) scheduler = schedulers[0]
+        //if (scheduler == null) scheduler = schedulers[0]
+        if (scheduler == null) scheduler = schedulers.first()
         return scheduler?.scheduleTask(Task(request))
     }
 
@@ -178,15 +145,6 @@ object SchedulerService {
         return JayProto.StatusCode.Error
     }
 
-    // todo: remove this function
-    internal fun updateWeights(newWeights: JayProto.Weights?): JayProto.Status? {
-        if (newWeights == null || (newWeights.computeTime + newWeights.queueSize + newWeights.runningTasks + newWeights
-                        .bandwidth + newWeights.battery != 1.0f))
-            return JayUtils.genStatus(JayProto.StatusCode.Error)
-        weights = newWeights
-        return JayUtils.genStatus(JayProto.StatusCode.Success)
-    }
-
     internal fun isRunning(): Boolean {
         return running
     }
@@ -198,6 +156,10 @@ object SchedulerService {
     internal fun getExpectedCurrent(worker: Worker?, callback: ((JayProto.CurrentEstimations?) -> Unit)) {
         if (worker?.type == Worker.Type.LOCAL) callback(profiler.getExpectedCurrent())
         broker.getExpectedCurrentFromRemote(worker) { callback(it) }
+    }
+
+    fun setSchedulerSettings(settingMap: Map<String, Any>, callback: ((JayProto.Status?) -> Unit)?) {
+        callback?.invoke(this.scheduler?.setSettings(settingMap))
     }
 
 }

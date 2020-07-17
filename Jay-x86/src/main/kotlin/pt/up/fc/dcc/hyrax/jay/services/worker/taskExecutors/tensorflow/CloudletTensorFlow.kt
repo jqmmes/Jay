@@ -84,7 +84,7 @@ internal class CloudletTensorFlow : DetectObjects {
                 .run()
         modelClosed = false
         if (score != minimumScore) setMinAcceptScore(score)
-        completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
+        completeCallback?.invoke(JayUtils.genStatusSuccess())
     }
 
     override fun setMinAcceptScore(score: Float) {

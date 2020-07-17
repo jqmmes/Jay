@@ -53,16 +53,16 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
 
     override fun callAction(action: String, statusCallback: ((JayProto.Status, Any?) -> Unit)?, vararg args: Any) {
         when (action) {
-            "listModels" -> statusCallback?.invoke(JayUtils.genStatusSuccess()!!, genModelRequest(classifier.models.toSet())?.toByteArray())
+            "listModels" -> statusCallback?.invoke(JayUtils.genStatusSuccess(), genModelRequest(classifier.models.toSet())?.toByteArray())
             else -> {
-                statusCallback?.invoke(JayUtils.genStatusError()!!, ByteArray(0))
+                statusCallback?.invoke(JayUtils.genStatusError(), ByteArray(0))
                 throw(NoSuchElementException("Unknown Action: $action"))
             }
         }
     }
 
     private fun genErrorWithCallback(callback: ((JayProto.Status) -> Unit)?, error: Throwable) {
-        callback?.invoke(JayUtils.genStatusError()!!)
+        callback?.invoke(JayUtils.genStatusError())
         throw error
     }
 

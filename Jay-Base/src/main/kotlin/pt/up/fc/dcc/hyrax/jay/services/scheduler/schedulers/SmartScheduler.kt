@@ -8,12 +8,12 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.random.Random
 
-/**
- */
 class SmartScheduler : AbstractScheduler("SmartScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
     private var maxAvgTimePerTask = 0L
     private var maxBandwidthEstimate = 0L
+    private var weights: JayProto.Weights = JayProto.Weights.newBuilder().setComputeTime(0.5f).setQueueSize(0.1f)
+            .setRunningTasks(0.1f).setBattery(0.2f).setBandwidth(0.1f).build()
 
     override fun init() {
         JayLogger.logInfo("INIT")
@@ -101,11 +101,11 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
         val scaledAvgBandwidth = 1f - crossMultiplication(worker.bandwidthEstimate, maxBandwidthEstimate.toFloat())
 
         val score =
-                scaledAvgTimePerTask * SchedulerService.weights.computeTime +
-                        runningTasks * SchedulerService.weights.runningTasks +
-                        queueSpace * SchedulerService.weights.queueSize +
-                        scaledBattery * SchedulerService.weights.battery +
-                        scaledAvgBandwidth * SchedulerService.weights.bandwidth
+                scaledAvgTimePerTask * weights.computeTime +
+                        runningTasks * weights.runningTasks +
+                        queueSpace * weights.queueSize +
+                        scaledBattery * weights.battery +
+                        scaledAvgBandwidth * weights.bandwidth
 
         JayLogger.logInfo("NEW_SCORE", actions = *arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score",
                 "RUNNING_TASKS=${worker.runningTasks}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${worker

@@ -9,11 +9,13 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.BatteryManager.*
 import android.os.Build
+import eu.chainfire.libsuperuser.Shell
+import eu.chainfire.libsuperuser.Shell.OnSyncCommandLineListener
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
-import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
-import java.io.*
+import java.io.File
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -243,89 +245,30 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
                     isChargingStatus = true
                 }
         }
-
-        if (JayUtils.isRooted()) {
-            /**
-             * Pixel 4:
-             *   AC powered: false
-             *   USB powered: true
-             *   Wireless powered: false
-             *   Max charging current: 500000
-             *   Max charging voltage: 5000000
-             *   Charge counter: 2282000
-             *   status: 2
-             *   health: 2
-             *   present: true
-             *   level: 75
-             *   scale: 100
-             *   voltage: 4120
-             *   temperature: 313
-             *   technology: Li-ion
-             *
-             *   Tab S5e:
-             *   AC powered: false
-             *   USB powered: true
-             *   Wireless powered: false
-             *   Max charging current: 0
-             *   Max charging voltage: 0
-             *   Charge counter: 471680
-             *   status: 2
-             *   health: 2
-             *   present: true
-             *   level: 67
-             *   scale: 100
-             *   voltage: 3960
-             *   temperature: 303
-             *   technology: Li-ion
-             *   batterySWSelfDischarging: false
-             *   batteryMiscEvent: 0
-             *   batteryCurrentEvent: 131072
-             *   mSecPlugTypeSummary: 2
-             *   LED Charging: true
-             *   LED Low Battery: true
-             *   current now: 172
-             *   charge counter: 471680
-             *   Adaptive Fast Charging Settings: true
-             *   USE_FAKE_BATTERY: false
-             *   SEC_FEATURE_BATTERY_SIMULATION: false
-             *   FEATURE_WIRELESS_FAST_CHARGER_CONTROL: false
-             *   mWasUsedWirelessFastChargerPreviously: false
-             *   mWirelessFastChargingSettingsEnable: true
-             *   LLB CAL:
-             *   LLB MAN: 20200521
-             *   LLB CURRENT: YEAR2020M7D2
-             *   LLB DIFF: 6
-             *   FEATURE_HICCUP_CONTROL: true
-             *   FEATURE_SUPPORTED_DAILY_BOARD: true
-             *   SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
-             *   BatteryInfoBackUp
-             *   mSavedBatteryAsoc: -1
-             *   mSavedBatteryMaxTemp: 412
-             *   mSavedBatteryMaxCurrent: 3226
-             *   mSavedBatteryUsage: 953
-             *   FEATURE_SAVE_BATTERY_CYCLE: true
-             *   SEC_FEATURE_PREVENT_SWELLING: true
-             */
-            try {
-                val su = Runtime.getRuntime().exec("su")
-                val outputStream = DataOutputStream(su.outputStream)
-                outputStream.writeBytes("dumpsys battery\n")
-                val input: InputStream = su.inputStream
-                val reader = BufferedReader(InputStreamReader(input))
-
-                var line: String?
-                while (reader.readLine().also { line = it } != null) {
-                    println("----> $line")
+        if (Shell.SU.available()) {
+            val countDownLatch = CountDownLatch(1)
+            Shell.Pool.SU.run("dumpsys battery", object : OnSyncCommandLineListener {
+                override fun onSTDOUT(line: String) {
+                    val lowerLine = line.toLowerCase(Locale.ROOT)
+                    if (lowerLine.contains("ac powered") && lowerLine.contains("true")) {
+                        statusChangeCallback?.invoke(BatteryStatus.AC_CHARGING)
+                        isChargingStatus = true
+                    } else if (lowerLine.contains("usb powered") && lowerLine.contains("true")) {
+                        statusChangeCallback?.invoke(BatteryStatus.USB_CHARGING)
+                        isChargingStatus = true
+                    } else if (lowerLine.contains("wireless powered") && lowerLine.contains("true")) {
+                        statusChangeCallback?.invoke(BatteryStatus.QI_CHARGING)
+                        isChargingStatus = true
+                    }
+                    countDownLatch.countDown()
                 }
-                outputStream.flush()
-                outputStream.writeBytes("exit\n")
-                outputStream.flush()
-                su.waitFor()
-            } catch (e: IOException) {
-                throw java.lang.Exception(e)
-            } catch (e: InterruptedException) {
-                throw java.lang.Exception(e)
-            }
+
+                override fun onSTDERR(line: String) {
+                    JayLogger.logWarn("SU_ERROR")
+                    countDownLatch.countDown()
+                }
+            })
+            countDownLatch.await()
         }
         return isChargingStatus ?: mBatteryManager.isCharging
     }

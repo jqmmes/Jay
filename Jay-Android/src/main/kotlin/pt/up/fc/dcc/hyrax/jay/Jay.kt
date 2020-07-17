@@ -18,10 +18,6 @@ import pt.up.fc.dcc.hyrax.jay.services.*
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
 
-/**
- * todo: registerTaskExecutor
- *
- */
 class Jay(private val context: Context) : AbstractJay() {
 
     private val clientConnection = object : ServiceConnection {

@@ -15,9 +15,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-/**
- * todo: Adapt Worker to provide relevant information about energy on specific states and other relevant system information
- */
 class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
              val type: JayProto.Worker.Type = JayProto.Worker.Type.REMOTE,
              checkHearBeat: Boolean = false, bwEstimates: Boolean = false,
@@ -58,7 +55,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
 
     private var statusChangeCallback: ((Status) -> Unit)? = null
 
-    private var lastStatusUpdateTimastamp: Long = -1
+    private var lastStatusUpdateTimestamp: Long = -1
 
 
     constructor(proto: JayProto.Worker?, address: String, checkHearBeat: Boolean,
@@ -103,7 +100,6 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
 
     private fun updateStatus(proto: JayProto.ProfileRecording?) {
         if (proto == null) return
-        // todo implement getters and update worker relevant fields
     }
 
     private fun updateStatus(proto: JayProto.WorkerComputeStatus?) {
@@ -119,7 +115,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         if (computeProto == null && profileProto == null) return this.proto
         updateStatus(computeProto)
         updateStatus(profileProto)
-        this.lastStatusUpdateTimastamp = System.currentTimeMillis()
+        this.lastStatusUpdateTimestamp = System.currentTimeMillis()
         return getProto(true)
     }
 
@@ -136,7 +132,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         queuedTasks = proto.queuedTasks
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
-        this.lastStatusUpdateTimastamp = System.currentTimeMillis()
+        this.lastStatusUpdateTimestamp = System.currentTimeMillis()
         return getProto(true)
     }
 
@@ -159,7 +155,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                 if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
                     JayLogger.logInfo("REQUEST_WORKER_STATUS_INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     // Reduce a little bit the wait time because it takes time to update information and record last
-                    if (isOnline() && System.currentTimeMillis() - this.lastStatusUpdateTimastamp >= JaySettings.WORKER_STATUS_UPDATE_INTERVAL * 0.8) {
+                    if (isOnline() && System.currentTimeMillis() - this.lastStatusUpdateTimestamp >= JaySettings.WORKER_STATUS_UPDATE_INTERVAL * 0.8) {
                         grpc.requestWorkerStatus { W ->
                             JayLogger.logInfo("REQUEST_WORKER_STATUS_ONLINE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                             updateNotificationCb.invoke(updateStatus(W))

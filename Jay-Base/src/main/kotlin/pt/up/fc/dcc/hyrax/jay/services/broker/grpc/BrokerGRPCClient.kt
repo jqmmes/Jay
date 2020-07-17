@@ -24,7 +24,6 @@ import java.util.concurrent.TimeoutException
 /**
  * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
  * TRANSIENT_FAILURE
- *
  */
 
 @Suppress("DuplicatedCode", "unused")
@@ -54,7 +53,6 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                  private val schedulerInformCallback: (() -> Unit)? = null) : StreamObserver<JayProto.Response> {
         private var lastResult: JayProto.Response? = null
 
-        // todo: Enable average rx size
         override fun onNext(results: JayProto.Response) {
             JayLogger.logInfo("RECEIVED_RESPONSE", "", results.status.code.name)
             lastResult = results
@@ -121,22 +119,24 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             var taskStreamObserver: StreamObserver<JayProto.Task>? = null
 
             taskStreamObserver = asyncStub.executeTask(ResponseStreamObserver(
-                    task, local, startTime, {
-                if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
-                taskStreamObserver?.onNext(
-                        JayProto.Task.newBuilder(task)
-                                .setStatus(JayProto.Task.Status.TRANSFER)
-                                .build())
-            },
-                    {
+                    task, local, startTime,
+                    sendCb = {
+                        if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
+                        taskStreamObserver?.onNext(
+                                JayProto.Task.newBuilder(task)
+                                        .setStatus(JayProto.Task.Status.TRANSFER)
+                                        .build())
+                    },
+                    dataReachedWorkerCb = {
                         taskStreamObserver?.onNext(
                                 JayProto.Task.newBuilder()
                                         .setStatus(JayProto.Task.Status.END_TRANSFER)
                                         .build())
                         taskStreamObserver?.onCompleted()
                     },
-                    { JayLogger.logInfo("EXECUTE_TASK_COMPLETE") },
-                    callback, schedulerInformCallback)
+                    endCb = { JayLogger.logInfo("EXECUTE_TASK_COMPLETE") },
+                    callback = callback,
+                    schedulerInformCallback = schedulerInformCallback)
             )
             taskStreamObserver.onNext(
                     JayProto.Task.newBuilder()
@@ -282,6 +282,21 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }, AbstractJay.executorPool)
     }
 
+    fun setSchedulerSettings(request: JayProto.Settings?, callback: ((JayProto.Status?) -> Unit)?) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        val call = futureStub.setSchedulerSettings(request)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+                JayLogger.logInfo("COMPLETE", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+            } catch (e: ExecutionException) {
+                JayLogger.logInfo("ERROR", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+                callback?.invoke(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
+
     fun requestWorkerStatus(callback: ((JayProto.Worker?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.requestWorkerStatus(Empty.getDefaultInstance())
@@ -347,24 +362,6 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.getExpectedCurrentFromRemote(worker)
         call.addListener(Runnable { callback.invoke(call.get()); JayLogger.logInfo("COMPLETE") }, AbstractJay.executorPool)
-    }
-
-    fun updateSmartSchedulerWeights(computeTime: Float, queueSize: Float, runningTasks: Float, battery: Float,
-                                    bandwidth: Float, callback: ((JayProto.Status?) -> Unit)) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
-            channel.resetConnectBackoff()
-            callback(JayUtils.genStatusError())
-        }
-        val call = futureStub.updateSmartSchedulerWeights(JayProto.Weights.newBuilder().setComputeTime(computeTime)
-                .setQueueSize(queueSize).setRunningTasks(runningTasks).setBattery(battery).setBandwidth(bandwidth)
-                .build())
-        call.addListener(Runnable {
-            try {
-                callback(call.get())
-            } catch (e: RuntimeException) {
-                callback(JayUtils.genStatusError())
-            }
-        }, AbstractJay.executorPool)
     }
 
     fun announceServiceStatus(serviceStatus: JayProto.ServiceStatus, callback: ((JayProto.Status?) -> Unit)) {

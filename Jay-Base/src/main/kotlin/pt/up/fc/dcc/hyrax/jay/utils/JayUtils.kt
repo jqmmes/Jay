@@ -5,7 +5,6 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
-import java.io.File
 import java.net.DatagramPacket
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -58,7 +57,7 @@ object JayUtils {
         return builder.build()
     }
 
-    fun genStatus(code: JayProto.StatusCode): JayProto.Status? {
+    fun genStatus(code: JayProto.StatusCode): JayProto.Status {
         return JayProto.Status.newBuilder().setCode(code).build()
     }
 
@@ -81,15 +80,15 @@ object JayUtils {
         return JayProto.WorkerTypes.newBuilder().addAllType(types).build()
     }
 
-    fun genStatusSuccess(): JayProto.Status? {
+    fun genStatusSuccess(): JayProto.Status {
         return genStatus(JayProto.StatusCode.Success)
     }
 
-    fun genStatusError(): JayProto.Status? {
+    fun genStatusError(): JayProto.Status {
         return genStatus(JayProto.StatusCode.Success)
     }
 
-    fun genStatus(bool: Boolean): JayProto.Status? {
+    fun genStatus(bool: Boolean): JayProto.Status {
         return when (bool) {
             true -> genStatusSuccess()
             else -> genStatusError()
@@ -122,30 +121,5 @@ object JayUtils {
             JayState.MULTICAST_LISTEN -> JayProto.JayState.state.MULTICAST_LISTEN
         }
         return JayProto.JayState.newBuilder().setJayState(jayState).build()
-    }
-
-    fun isRooted(): Boolean {
-        // check if /system/app/Superuser.apk is present
-        try {
-            val file = File("/system/app/Superuser.apk")
-            if (file.exists()) {
-                return true
-            }
-        } catch (e1: Exception) {
-            // ignore
-        }
-
-        // try executing commands
-        return (canExecuteCommand("/system/xbin/which su")
-                || canExecuteCommand("/system/bin/which su") || canExecuteCommand("which su"))
-    }
-
-    private fun canExecuteCommand(command: String): Boolean {
-        return try {
-            Runtime.getRuntime().exec(command)
-            true
-        } catch (e: Exception) {
-            false
-        }
     }
 }

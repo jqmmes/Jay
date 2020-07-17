@@ -74,16 +74,6 @@ abstract class AbstractJay {
         stopBroker()
     }
 
-    /**
-     * Deprecated
-     * Will be replaced by setSettings
-     */
-    fun updateSmartWeights(computeWeight: Float, tasksWeight: Float, queueWeight: Float, batteryWeight: Float, bandwidthWeight: Float, callback: ((Boolean) -> Unit)) {
-        broker.updateSmartSchedulerWeights(computeWeight, queueWeight, tasksWeight, batteryWeight, bandwidthWeight) { S ->
-            callback(S?.code == JayProto.StatusCode.Success)
-        }
-    }
-
     open fun startProfiler(fsAssistant: FileSystemAssistant? = null) {
         startBroker(fsAssistant)
         sleep(500)

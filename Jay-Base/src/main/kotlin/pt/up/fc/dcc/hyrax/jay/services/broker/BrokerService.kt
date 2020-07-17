@@ -148,11 +148,20 @@ object BrokerService {
                 callback?.invoke(null)
             } else {
                 if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.LOCAL || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
-                    workers[W.id]!!.grpc.executeTask(request, local = (W.id == local.id), callback = callback) {
+                    workers[W.id]!!.grpc.executeTask(request, local = (W.id == local.id), callback = { R ->
+                        workers[W.id]!!.addResultSize(R.bytes.size().toLong())
+                        callback?.invoke(R)
+                    }) {
                         scheduler.notifyTaskComplete(taskDetails)
                     }
                 } else {
-                    workers[local.id]!!.grpc.executeTask(request, true, callback) { scheduler.notifyTaskComplete(taskDetails) }
+                    workers[local.id]!!.grpc.executeTask(request, true, { R ->
+                        workers[local.id]!!.addResultSize(R.bytes.size().toLong())
+                        callback?.invoke(R)
+                    }) {
+                        scheduler
+                                .notifyTaskComplete(taskDetails)
+                    }
                 }
             }
         } else {
@@ -306,11 +315,6 @@ object BrokerService {
         return JayUtils.genStatusSuccess()
     }
 
-    fun updateSmartSchedulerWeights(weights: Weights?, callback: ((Status?) -> Unit)) {
-        if (schedulerServiceRunning) scheduler.updateSmartSchedulerWeights(weights) { S -> callback(S) }
-        else callback(JayUtils.genStatusError())
-    }
-
     fun serviceStatusUpdate(serviceStatus: ServiceStatus?, completeCallback: (Status?) -> Unit) {
         if (serviceStatus?.type == ServiceStatus.Type.SCHEDULER) {
             schedulerServiceRunning = serviceStatus.running
@@ -412,5 +416,11 @@ object BrokerService {
     fun getExpectedCurrentFromRemote(id: String?, callback: ((CurrentEstimations?) -> Unit)) {
         if (!workers.containsKey(id)) callback.invoke(CurrentEstimations.getDefaultInstance())
         workers[id]!!.grpc.getExpectedCurrent(callback)
+    }
+
+    fun setSchedulerSettings(request: Settings?, callback: ((Status?) -> Unit)?) {
+        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        if (schedulerServiceRunning) scheduler.setSchedulerSettings(request, callback)
+        else callback?.invoke(JayUtils.genStatusError())
     }
 }

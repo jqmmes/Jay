@@ -7,9 +7,6 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusSuccess
 import java.util.UUID.randomUUID
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status as JayStatus
 
-/**
- * todo: Convert this to object and remove device specific implementations. Use registerTaskScheduler
- */
 abstract class TaskExecutor(val name: String, val description: String?) {
 
     val id: String = randomUUID().toString()
@@ -23,11 +20,11 @@ abstract class TaskExecutor(val name: String, val description: String?) {
     abstract fun runAction(action: String, statusCallback: ((JayStatus) -> Unit)? = null, vararg args: Any)
 
     open fun setSettings(settingsMap: Map<String, Any?>): JayStatus {
-        var status = genStatusSuccess()!!
+        var status = genStatusSuccess()
         for (k in settingsMap.keys) {
             setSetting(k, settingsMap[k]) { setting_status ->
                 if (setting_status.code == StatusCode.Error) {
-                    status = genStatusError()!!
+                    status = genStatusError()
                 }
             }
         }

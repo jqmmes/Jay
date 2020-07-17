@@ -7,16 +7,14 @@ import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JayThreadPoolExecutor
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.CountDownLatch
+import kotlin.random.Random
 
 /**
- * todo: deal with 0 values. Should know how many entries were used to calc estimation
- *
  * This scheduler should control readings from Profiler. Samples can be obtained via:
  * - Random Sampling
  * - On<Action> (OnBoot, OnScheduler, onLocalScheduling (Control task completion) or onOffloading
  *
  * Sampling should be processed using JayStates and Battery/Load/CPU usage factors
- *
  *
  */
 
@@ -65,10 +63,10 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
      *   -> Deal with Task Failures
      */
     override fun scheduleTask(task: Task): JayProto.Worker? {
-        var chosenWorker: JayProto.Worker? = null
         val workers = SchedulerService.getWorkers(devices).values
         val currentLatch = CountDownLatch(workers.size)
         val currentMap = mutableMapOf<JayProto.Worker, JayProto.CurrentEstimations?>()
+        val possibleWorkers = mutableSetOf<JayProto.Worker>()
         workers.forEach { worker ->
             executionPool.submit {
                 SchedulerService.getExpectedCurrent(worker) {
@@ -79,18 +77,26 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
         }
         currentLatch.await()
         var minSpend = Long.MIN_VALUE
-        currentMap.forEach { (t, u) ->
-            val spend: Long =
-                    t.avgTimePerTask * (u?.compute ?: 0) +
-                            t.bandwidthEstimate.toLong() * task.dataSize.toLong() * (u?.rx ?: 0) +
-                            t.queueSize * t.avgTimePerTask * (u?.idle ?: 0) +
-                            t.avgResultSize * (u?.tx ?: 0)
+        currentMap.forEach { (w, c) ->
+            val spend: Long = getEnergySpentRemote(task, w, c)
+            //energy spend is negative, so higher value the better
             if (spend > minSpend) {
+                possibleWorkers.clear()
                 minSpend = spend
-                chosenWorker = t
+                possibleWorkers.add(w)
+            } else if (spend == minSpend) {
+                possibleWorkers.add(w)
             }
         }
-        return chosenWorker
+        return possibleWorkers.elementAt((Random.nextInt(possibleWorkers.size)))
+    }
+
+    // This only takes into account the energy spent on remote host
+    private fun getEnergySpentRemote(task: Task, worker: JayProto.Worker, current: JayProto.CurrentEstimations?): Long {
+        return worker.avgTimePerTask * (current?.compute ?: 0) +
+                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * (current?.rx ?: 0) +
+                worker.queueSize * worker.avgTimePerTask * (current?.idle ?: 0) +
+                worker.avgResultSize * (current?.tx ?: 0)
     }
 
     override fun destroy() {

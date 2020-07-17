@@ -80,7 +80,7 @@ class DroidTensorflowLite(private val context: Context) : DetectObjects {
         thread(name = "DroidTensorflowLite loadModel") {
             localDetector = TFUtils.loadModel(TFLiteInference(), context, model, "model.tflite", model.inputSize, isQuantized = model.isQuantized, numThreads = 4, device = if (this.useNNAPI) "NNAPI" else if (this.useGPU) "GPU" else "CPU", lite = true)
             this.tfOdApiInputSize = model.inputSize
-            completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
+            completeCallback?.invoke(JayUtils.genStatusSuccess())
         }
     }
 

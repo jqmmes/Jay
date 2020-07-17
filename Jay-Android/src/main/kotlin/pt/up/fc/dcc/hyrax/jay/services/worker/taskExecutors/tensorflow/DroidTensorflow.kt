@@ -89,7 +89,7 @@ class DroidTensorflow(private val context: Context) : DetectObjects {
         localDetector = null
         thread(name = "DroidTensorflow loadModel") {
             localDetector = TFUtils.loadModel(TensorFlowObjectDetection(), context, model, "frozen_inference_graph.pb", tfOdApiInputSize, assetManager = Resources.getSystem().assets, lite = false)
-            completeCallback?.invoke(JayUtils.genStatusSuccess()!!)
+            completeCallback?.invoke(JayUtils.genStatusSuccess())
         }
     }
 

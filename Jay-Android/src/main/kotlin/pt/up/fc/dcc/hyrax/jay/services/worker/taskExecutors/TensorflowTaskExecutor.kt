@@ -54,17 +54,17 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
         when (key) {
             "GPU" -> {
                 classifier.useGPU = true
-                statusCallback?.invoke(JayUtils.genStatusSuccess()!!)
+                statusCallback?.invoke(JayUtils.genStatusSuccess())
             }
             "CPU" -> {
                 classifier.useGPU = false
-                statusCallback?.invoke(JayUtils.genStatusSuccess()!!)
+                statusCallback?.invoke(JayUtils.genStatusSuccess())
             }
             "NNAPI" -> {
                 classifier.useNNAPI = true
-                statusCallback?.invoke(JayUtils.genStatusSuccess()!!)
+                statusCallback?.invoke(JayUtils.genStatusSuccess())
             }
-            else -> statusCallback?.invoke(JayUtils.genStatusError()!!)
+            else -> statusCallback?.invoke(JayUtils.genStatusError())
         }
     }
 
@@ -78,16 +78,16 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
 
     override fun callAction(action: String, statusCallback: ((JayProto.Status, Any?) -> Unit)?, vararg args: Any) {
         when (action) {
-            "listModels" -> statusCallback?.invoke(JayUtils.genStatusSuccess()!!, genModelRequest(classifier.models.toSet())?.toByteArray())
+            "listModels" -> statusCallback?.invoke(JayUtils.genStatusSuccess(), genModelRequest(classifier.models.toSet())?.toByteArray())
             else -> {
-                statusCallback?.invoke(JayUtils.genStatusError()!!, ByteArray(0))
+                statusCallback?.invoke(JayUtils.genStatusError(), ByteArray(0))
                 throw(NoSuchElementException("Unknown Action: $action"))
             }
         }
     }
 
     private fun genErrorWithCallback(callback: ((JayProto.Status) -> Unit)?, error: Throwable) {
-        callback?.invoke(JayUtils.genStatusError()!!)
+        callback?.invoke(JayUtils.genStatusError())
         throw error
     }
 

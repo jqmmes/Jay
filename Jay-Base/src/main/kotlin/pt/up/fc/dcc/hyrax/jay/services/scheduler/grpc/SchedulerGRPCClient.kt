@@ -56,6 +56,20 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
         call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
+    fun setSchedulerSettings(request: JayProto.Settings?, callback: ((JayProto.Status?) -> Unit)?) {
+        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        val call = futureStub.setSchedulerSettings(request)
+        call.addListener(Runnable {
+            try {
+                callback?.invoke(call.get())
+                JayLogger.logInfo("COMPLETE", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+            } catch (e: ExecutionException) {
+                JayLogger.logInfo("ERROR", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+                callback?.invoke(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
+
     fun notifyWorkerUpdate(request: JayProto.Worker?, callback: ((JayProto.Status?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()
@@ -84,15 +98,6 @@ class SchedulerGRPCClient(host: String) : GRPCClientBase<SchedulerServiceGrpc.Sc
                 callback(JayUtils.genStatus(JayProto.StatusCode.Error))
             }
         }, AbstractJay.executorPool)
-    }
-
-    fun updateSmartSchedulerWeights(weights: JayProto.Weights?, callback: ((JayProto.Status?) -> Unit)) {
-        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
-            channel.resetConnectBackoff()
-            callback(JayUtils.genStatus(JayProto.StatusCode.Error))
-        }
-        val call = futureStub.updateSmartSchedulerWeights(weights)
-        call.addListener(Runnable { callback(call.get()) }, AbstractJay.executorPool)
     }
 
     fun testService(serviceStatus: ((JayProto.ServiceStatus?) -> Unit)) {

@@ -9,23 +9,31 @@ class Task {
     val id: String
     val data: ByteArray
     val dataSize: Int
+    val creationTimeStamp: Long
+    val deadline: Long?
 
-    constructor(taskData: ByteArray) {
+    constructor(taskData: ByteArray, deadline: Long? = null) {
         id = UUID.randomUUID().toString()
         data = taskData
         dataSize = data.size
+        creationTimeStamp = System.currentTimeMillis()
+        if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
     }
 
-    internal constructor(taskData: JayProto.Task?) {
+    internal constructor(taskData: JayProto.Task?, deadline: Long? = null) {
         id = taskData!!.id
         data = taskData.data.toByteArray()
         dataSize = data.size
+        creationTimeStamp = System.currentTimeMillis()
+        if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
     }
 
-    internal constructor(taskData: JayProto.TaskDetails?) {
+    internal constructor(taskData: JayProto.TaskDetails?, deadline: Long? = null) {
         id = taskData!!.id
         data = ByteArray(0)
         dataSize = taskData.dataSize
+        creationTimeStamp = System.currentTimeMillis()
+        if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
     }
 
     override fun equals(other: Any?): Boolean {
@@ -42,6 +50,12 @@ class Task {
     }
 
     internal fun getProto(): JayProto.Task? {
-        return JayProto.Task.newBuilder().setId(id).setData(ByteString.copyFrom(data)).build()
+        val proto = JayProto.Task
+                .newBuilder()
+                .setId(id)
+                .setData(ByteString.copyFrom(data))
+                .setCreationTimeStamp(creationTimeStamp)
+        if (deadline != null) proto.deadlineTimeStamp = deadline
+        return proto.build()
     }
 }
