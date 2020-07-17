@@ -5,6 +5,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
+import java.io.File
 import java.net.DatagramPacket
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -123,27 +124,28 @@ object JayUtils {
         return JayProto.JayState.newBuilder().setJayState(jayState).build()
     }
 
-    /*fun genWorkerProto(id: String? = null, batteryLevel: Int, batteryCapacity: Int, batteryStatus: JayProto
-    .BatteryStatus,
-                       avgComputingEstimate: Long, cpuCores: Int, queueSize: Int,
-                       queuedTasks: Int, runningTasks: Int, type: Type? = null,
-                       bandwidthEstimate: Float? = null, totalMemory: Long,
-                       freeMemory: Long, avgResultSize: Long): JayProto.Worker? {
-        val worker = JayProto.Worker.newBuilder()
-        if (id != null) worker.id = id // Internal
-        worker.batteryLevel = batteryLevel // Modified by Worker
-        worker.batteryCapacity = batteryCapacity
-        worker.batteryStatus = batteryStatus
-        worker.avgTimePerTask = avgComputingEstimate // Modified by Worker
-        worker.cpuCores = cpuCores // Set by Worker
-        worker.queueSize = queueSize // Set by Worker
-        worker.queuedTasks = queuedTasks
-        worker.runningTasks = runningTasks // Modified by Worker
-        if (type != null) worker.type = type // Set in Broker
-        if (bandwidthEstimate != null) worker.bandwidthEstimate = bandwidthEstimate // Set internally
-        worker.totalMemory = totalMemory
-        worker.freeMemory = freeMemory
-        worker.avgResultSize = avgResultSize
-        return worker.build()
-    }*/
+    fun isRooted(): Boolean {
+        // check if /system/app/Superuser.apk is present
+        try {
+            val file = File("/system/app/Superuser.apk")
+            if (file.exists()) {
+                return true
+            }
+        } catch (e1: Exception) {
+            // ignore
+        }
+
+        // try executing commands
+        return (canExecuteCommand("/system/xbin/which su")
+                || canExecuteCommand("/system/bin/which su") || canExecuteCommand("which su"))
+    }
+
+    private fun canExecuteCommand(command: String): Boolean {
+        return try {
+            Runtime.getRuntime().exec(command)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

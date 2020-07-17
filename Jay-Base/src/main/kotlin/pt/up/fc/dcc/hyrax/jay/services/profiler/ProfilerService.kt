@@ -350,7 +350,7 @@ object ProfilerService {
 
     private fun setBatteryCallbacks() {
         this.batteryMonitor?.setCallbacks(
-                levelChangeCallback = { level, voltage, temperature ->
+                _levelChangeCallback = { level, voltage, temperature ->
                     this.batteryInfo.batteryLevel = level
                     this.batteryInfo.batteryVoltage = voltage
                     this.batteryInfo.batteryTemperature = temperature
@@ -359,7 +359,7 @@ object ProfilerService {
                     this.batteryInfo.batteryCharge = this.batteryMonitor?.getBatteryCharge() ?: -1
                     JayLogger.logInfo("LEVEL_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_LEVEL=$level", "NEW_BATTERY_VOLTAGE=$voltage", "NEW_BATTERY_TEMPERATURE=$temperature", "NEW_BATTERY_CURRENT=${this.batteryInfo.batteryCurrent}", "REMAINING_ENERGY=${this.batteryInfo.batteryEnergy}", "NEW_BATTERY_CHARGE=${this.batteryInfo.batteryCharge}"))
                 },
-                statusChangeCallback = { status ->
+                _statusChangeCallback = { status ->
                     JayLogger.logInfo("STATUS_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
                     this.batteryInfo.batteryStatus = status
                 }

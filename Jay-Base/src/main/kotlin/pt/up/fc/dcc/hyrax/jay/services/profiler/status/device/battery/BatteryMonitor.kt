@@ -4,7 +4,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
 
 
 interface BatteryMonitor {
-    fun setCallbacks(levelChangeCallback: (Int, Int, Float) -> Unit, statusChangeCallback: (BatteryStatus) -> Unit)
+    fun setCallbacks(_levelChangeCallback: (Int, Int, Float) -> Unit, _statusChangeCallback: (BatteryStatus) -> Unit)
     fun monitor()
     fun destroy()
     fun getBatteryCurrentNow(): Int
