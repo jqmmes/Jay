@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 import kotlin.math.abs
+import kotlin.random.Random
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.JayState as JayStateProto
 
 /**
@@ -166,7 +167,12 @@ object ProfilerService {
         this.cpuManager = cpuManager
         this.usageManager = usageManager
         this.sensorManager = sensorManager
-        this.server = ProfilerGRPCServer(useNettyServer).start()
+        repeat(30) {
+            if (this.server == null) {
+                this.server = ProfilerGRPCServer(useNettyServer).start()
+                if (this.server == null) JaySettings.PROFILER_PORT = Random.nextInt(30000, 64000)
+            }
+        }
         this.running = true
         this.broker.announceServiceStatus(ServiceStatus.newBuilder().setType(PROFILER).setRunning(true).build())
         {

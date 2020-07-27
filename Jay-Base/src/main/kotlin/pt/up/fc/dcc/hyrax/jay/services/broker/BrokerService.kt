@@ -21,6 +21,7 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
+import kotlin.random.Random
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 
 object BrokerService {
@@ -52,7 +53,13 @@ object BrokerService {
         this.fsAssistant = fsAssistant
         this.videoUtils = videoUtils
         this.batteryMonitor = batteryMonitor
-        server = BrokerGRPCServer(useNettyServer).start()
+        repeat(30) {
+            if (this.server == null) {
+                this.server = BrokerGRPCServer(useNettyServer).start()
+                if (this.server == null) JaySettings.BROKER_PORT = Random.nextInt(30000, 64000)
+            }
+        }
+        announceMulticast()
         worker.testService { ServiceStatus -> workerServiceRunning = ServiceStatus?.running ?: false }
         scheduler.testService { ServiceStatus ->
             schedulerServiceRunning = ServiceStatus?.running ?: false

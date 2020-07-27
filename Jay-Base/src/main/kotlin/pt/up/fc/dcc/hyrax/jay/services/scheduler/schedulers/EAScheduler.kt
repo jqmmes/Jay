@@ -67,25 +67,39 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
         val currentLatch = CountDownLatch(workers.size)
         val currentMap = mutableMapOf<JayProto.Worker, JayProto.CurrentEstimations?>()
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
+        val lock = Object()
         workers.forEach { worker ->
             executionPool.submit {
                 SchedulerService.getExpectedCurrent(worker) {
-                    currentMap[worker!!] = it
+                    JayLogger.logInfo("GOT_EXPECTED_CURRENT", task.id,
+                            "WORKER=$worker",
+                            "BAT_CAPACITY=${it?.batteryCapacity}",
+                            "BAT_LEVEL=${it?.batteryLevel}",
+                            "BAT_COMPUTE=${it?.compute}",
+                            "BAT_IDLE=${it?.idle}",
+                            "BAT_TX=${it?.tx}",
+                            "BAT_RX=${it?.rx}")
+                    synchronized(lock) {
+                        currentMap[worker!!] = it
+                    }
                     currentLatch.countDown()
                 }
             }
         }
         currentLatch.await()
         var minSpend = Long.MIN_VALUE
-        currentMap.forEach { (w, c) ->
-            val spend: Long = getEnergySpentRemote(task, w, c)
-            //energy spend is negative, so higher value the better
-            if (spend > minSpend) {
-                possibleWorkers.clear()
-                minSpend = spend
-                possibleWorkers.add(w)
-            } else if (spend == minSpend) {
-                possibleWorkers.add(w)
+        synchronized(lock) {
+            currentMap.forEach { (w, c) ->
+                val spend: Long = getEnergySpentRemote(task, w, c)
+                JayLogger.logInfo("BATTERY_SPENT_REMOTE", task.id, "WORKER=$w", "SPEND=$spend")
+                //energy spend is negative, so higher value the better
+                if (spend > minSpend) {
+                    possibleWorkers.clear()
+                    minSpend = spend
+                    possibleWorkers.add(w)
+                } else if (spend == minSpend) {
+                    possibleWorkers.add(w)
+                }
             }
         }
         return possibleWorkers.elementAt((Random.nextInt(possibleWorkers.size)))

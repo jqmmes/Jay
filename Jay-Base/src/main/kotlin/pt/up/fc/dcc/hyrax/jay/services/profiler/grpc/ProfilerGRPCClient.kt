@@ -12,11 +12,17 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusError
 import java.util.concurrent.TimeUnit
 
 @Suppress("DuplicatedCode")
-class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.ProfilerServiceBlockingStub,
+class ProfilerGRPCClient(private val host: String) : GRPCClientBase<ProfilerServiceGrpc.ProfilerServiceBlockingStub,
         ProfilerServiceGrpc.ProfilerServiceFutureStub>(host, JaySettings.PROFILER_PORT) {
     override var blockingStub: ProfilerServiceGrpc.ProfilerServiceBlockingStub = ProfilerServiceGrpc.newBlockingStub(channel)
     override var futureStub: ProfilerServiceGrpc.ProfilerServiceFutureStub = ProfilerServiceGrpc.newFutureStub(channel)
     private var asyncStub: ProfilerServiceGrpc.ProfilerServiceStub = ProfilerServiceGrpc.newStub(channel)
+
+    private fun checkConnection() {
+        if (this.port != JaySettings.PROFILER_PORT) {
+            reconnectChannel(host, JaySettings.PROFILER_PORT)
+        }
+    }
 
     override fun reconnectStubs() {
         blockingStub = ProfilerServiceGrpc.newBlockingStub(channel)
@@ -25,6 +31,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun setState(state: JayState): JayProto.Status? {
+        checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
@@ -35,6 +42,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun unSetState(state: JayState): JayProto.Status? {
+        checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
@@ -45,6 +53,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun startRecording(): JayProto.Status? {
+        checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
@@ -55,6 +64,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun stopRecording(): JayProto.ProfileRecordings? {
+        checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
@@ -65,6 +75,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun getDeviceStatus(): JayProto.ProfileRecording? {
+        checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
@@ -75,6 +86,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun testService(serviceStatus: ((JayProto.ServiceStatus?) -> Unit)) {
+        checkConnection()
         if (channel.getState(true) != ConnectivityState.READY) serviceStatus(null)
         val call = futureStub.testService(Empty.getDefaultInstance())
         call.addListener(Runnable {
@@ -87,6 +99,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun stopService(): JayProto.Status? {
+        checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE * 2, TimeUnit.MILLISECONDS)
@@ -97,6 +110,7 @@ class ProfilerGRPCClient(host: String) : GRPCClientBase<ProfilerServiceGrpc.Prof
     }
 
     fun getExpectedCurrent(): JayProto.CurrentEstimations? {
+        checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         return try {
             blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)

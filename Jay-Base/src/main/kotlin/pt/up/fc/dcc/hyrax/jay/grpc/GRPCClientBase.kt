@@ -8,7 +8,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import java.util.concurrent.TimeUnit
 
-abstract class GRPCClientBase<T1, T2>(private val host: String, private val port: Int) {
+abstract class GRPCClientBase<T1, T2>(private var host: String, var port: Int) {
     /** Construct client for accessing RouteGuide server using the existing channel.  */
     var channel: ManagedChannel
     abstract var blockingStub: T1
@@ -25,8 +25,10 @@ abstract class GRPCClientBase<T1, T2>(private val host: String, private val port
 
     abstract fun reconnectStubs()
 
-    fun reconnectChannel() {
+    fun reconnectChannel(host: String = this.host, port: Int = this.port) {
         if (!(channel.isShutdown || channel.isTerminated)) channel.shutdownNow()
+        this.port = port
+        this.host = host
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build()

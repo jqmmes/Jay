@@ -17,6 +17,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
+import kotlin.random.Random
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.AbstractTaskExecutorManager as TaskExecutorManager
 
 
@@ -59,7 +60,12 @@ object WorkerService {
         if (running) return
         if (executorThreadPool.isShutdown || executorThreadPool.isTerminated) executorThreadPool = Executors.newFixedThreadPool(JaySettings.WORKING_THREADS)
         this.taskExecutorManager = taskExecutorManager
-        server = WorkerGRPCServer(useNettyServer).start()
+        repeat(30) {
+            if (this.server == null) {
+                this.server = WorkerGRPCServer(useNettyServer).start()
+                if (this.server == null) JaySettings.WORKER_PORT = Random.nextInt(30000, 64000)
+            }
+        }
         thread(start = true, isDaemon = true, name = "WorkerService") {
             running = true
             while (running) {

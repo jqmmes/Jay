@@ -95,6 +95,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         worker.totalMemory = totalMemory
         worker.freeMemory = freeMemory
         worker.avgResultSize = avgResultSize
+        worker.brokerPort = this.grpc.port
         this.proto = worker.build()
     }
 
@@ -132,6 +133,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         queuedTasks = proto.queuedTasks
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
+        if (proto.brokerPort != this.grpc.port) this.grpc.setNewPort(proto.brokerPort)
         this.lastStatusUpdateTimestamp = System.currentTimeMillis()
         return getProto(true)
     }

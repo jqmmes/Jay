@@ -90,6 +90,7 @@ message Worker {
     int64 totalMemory = 13;
     int64 freeMemory = 14;
     int64 avgResultSize = 15;
+    int32 brokerPort = 16;
 }
 
 message WorkerComputeStatus {

@@ -11,15 +11,15 @@ object JaySettings {
     var SINGLE_REMOTE_IP: String = "0.0.0.0"
     var CLOUDLET_ID = ""
 
-    var ADVERTISE_WORKER_STATUS: Boolean = false
+    var ADVERTISE_WORKER_STATUS: Boolean = true
 
     var BANDWIDTH_ESTIMATE_CALC_METHOD: String = "mean"
     var BANDWIDTH_SCALING_FACTOR: Float = 1.0f
 
-    var BROKER_PORT: Int = 50051
-    var WORKER_PORT: Int = 50053
-    var SCHEDULER_PORT: Int = 50055
-    var PROFILER_PORT: Int = 50057
+    var BROKER_PORT: Int = 45923
+    var WORKER_PORT: Int = 62508
+    var SCHEDULER_PORT: Int = 59052
+    var PROFILER_PORT: Int = 60031
 
     var GRPC_MAX_MESSAGE_SIZE: Int = 150000000
 

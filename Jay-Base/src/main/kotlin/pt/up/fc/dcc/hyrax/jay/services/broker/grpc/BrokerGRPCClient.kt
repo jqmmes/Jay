@@ -35,6 +35,11 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
     private val executePool: JayThreadPoolExecutor = JayThreadPoolExecutor(10)
     private val pingPool: JayThreadPoolExecutor = JayThreadPoolExecutor(10)
 
+    fun setNewPort(port: Int) {
+        this.reconnectChannel(port = port)
+        this.port = port
+    }
+
     override fun reconnectStubs() {
         blockingStub = BrokerServiceGrpc.newBlockingStub(channel)
         futureStub = BrokerServiceGrpc.newFutureStub(channel)
@@ -54,7 +59,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         private var lastResult: JayProto.Response? = null
 
         override fun onNext(results: JayProto.Response) {
-            JayLogger.logInfo("RECEIVED_RESPONSE", "", results.status.code.name)
+            JayLogger.logInfo("RECEIVED_RESPONSE", task?.id ?: "", results.status.code.name)
             lastResult = results
             when (results.status.code) {
                 JayProto.StatusCode.Ready -> sendCb()
@@ -83,8 +88,8 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     schedulerInformCallback?.invoke()
                     endCb()
                 }
-                JayProto.StatusCode.End -> JayLogger.logInfo("END_TRANSFER")
-                else -> onError(Throwable("Error Received onNext for taskId: $task?.id"))
+                JayProto.StatusCode.End -> JayLogger.logInfo("END_TRANSFER", task?.id ?: "")
+                else -> onError(Throwable("Error Received onNext for taskId: ${task?.id}"))
             }
         }
 
@@ -134,7 +139,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                         .build())
                         taskStreamObserver?.onCompleted()
                     },
-                    endCb = { JayLogger.logInfo("EXECUTE_TASK_COMPLETE") },
+                    endCb = { JayLogger.logInfo("EXECUTE_TASK_COMPLETE", taskId) },
                     callback = callback,
                     schedulerInformCallback = schedulerInformCallback)
             )

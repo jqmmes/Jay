@@ -17,7 +17,12 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.services.*
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
+import java.util.concurrent.atomic.AtomicBoolean
 
+
+/**
+ *
+ */
 class Jay(private val context: Context) : AbstractJay() {
 
     private val clientConnection = object : ServiceConnection {
@@ -36,8 +41,12 @@ class Jay(private val context: Context) : AbstractJay() {
         Intent(context, ClientAndroidService::class.java).also { intent -> context.bindService(intent, clientConnection, Context.BIND_AUTO_CREATE) }
     }
 
-    private var clientService : Messenger? = null
-    private var clientBound : Boolean = false
+    private var clientService: Messenger? = null
+    private var clientBound: Boolean = false
+    private val brokerStarted: AtomicBoolean = AtomicBoolean(false)
+    private val schedulerStarted: AtomicBoolean = AtomicBoolean(false)
+    private val workerStarted: AtomicBoolean = AtomicBoolean(false)
+    private val profilerStarted: AtomicBoolean = AtomicBoolean(false)
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
         val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
@@ -50,56 +59,49 @@ class Jay(private val context: Context) : AbstractJay() {
         return false
     }
 
+    private fun startService(intent: Intent) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+            JayLogger.logInfo("COMPLETE")
+        } catch (ignore: Exception) {
+            JayLogger.logError("START_FAIL")
+        }
+    }
+
     override fun startBroker(fsAssistant: FileSystemAssistant?) {
         JayLogger.logInfo("INIT")
-        if (serviceRunningBroker()) return
+        if (serviceRunningBroker() || !brokerStarted.compareAndSet(false, true)) return
         val brokerIntent = Intent(context, BrokerAndroidService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(brokerIntent)
-        } else {
-            context.startService(brokerIntent)
-        }
-        JayLogger.logInfo("COMPLETE")
+        startService(brokerIntent)
         startProfiler()
     }
 
     override fun startScheduler(fsAssistant: FileSystemAssistant?) {
         startBroker()
         JayLogger.logInfo("INIT")
-        if (serviceRunningScheduler()) return
+        if (serviceRunningScheduler() || !schedulerStarted.compareAndSet(false, true)) return
         val schedulerIntent = Intent(context, SchedulerAndroidService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(schedulerIntent)
-        } else {
-            context.startService(schedulerIntent)
-        }
-        JayLogger.logInfo("COMPLETE")
+        startService(schedulerIntent)
     }
 
     override fun startWorker() {
         startBroker()
         JayLogger.logInfo("INIT")
-        if (serviceRunningWorker()) return
+        if (serviceRunningWorker() || !workerStarted.compareAndSet(false, true)) return
         val workerIntent = Intent(context, WorkerAndroidService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(workerIntent)
-        } else {
-            context.startService(workerIntent)
-        }
-        JayLogger.logInfo("COMPLETE")
+        startService(workerIntent)
     }
 
     override fun startProfiler(fsAssistant: FileSystemAssistant?) {
         startBroker()
         JayLogger.logInfo("INIT")
-        if (serviceRunningProfiler()) return
+        if (serviceRunningProfiler() || !profilerStarted.compareAndSet(false, true)) return
         val profilerIntent = Intent(context, ProfilerAndroidService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(profilerIntent)
-        } else {
-            context.startService(profilerIntent)
-        }
-        JayLogger.logInfo("COMPLETE")
+        startService(profilerIntent)
     }
 
     private fun serviceRunningBroker(): Boolean {
@@ -153,6 +155,7 @@ class Jay(private val context: Context) : AbstractJay() {
         private var notifyID = 1
         private const val CHANNEL_ID = "my_channel_01"// The id of the channel.
         private const val name = "BrokerChannel"// The user-visible name of the channel.
+
         @Suppress("DEPRECATION")
         private val importance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             NotificationManager.IMPORTANCE_MIN

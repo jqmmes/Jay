@@ -15,6 +15,7 @@ import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
 import kotlin.concurrent.thread
+import kotlin.random.Random
 
 object SchedulerService {
     enum class WorkerConnectivityStatus {
@@ -58,7 +59,12 @@ object SchedulerService {
         JayLogger.logInfo("INIT")
         if (running) return
         this.batteryMonitor = batteryMonitor
-        this.server = SchedulerGRPCServer(useNettyServer).start()
+        repeat(30) {
+            if (this.server == null) {
+                this.server = SchedulerGRPCServer(useNettyServer).start()
+                if (this.server == null) JaySettings.SCHEDULER_PORT = Random.nextInt(30000, 64000)
+            }
+        }
         this.running = true
         this.broker.announceServiceStatus(JayProto.ServiceStatus.newBuilder().setType(SCHEDULER).setRunning(true).build()) {
             JayLogger.logInfo("COMPLETE")
@@ -69,9 +75,10 @@ object SchedulerService {
     }
 
     internal fun schedule(request: JayProto.TaskDetails?): Worker? {
-        //if (scheduler == null) scheduler = schedulers[0]
         if (scheduler == null) scheduler = schedulers.first()
-        return scheduler?.scheduleTask(Task(request))
+        val w = scheduler?.scheduleTask(Task(request))
+        JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=$w")
+        return w
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?): JayProto.StatusCode {

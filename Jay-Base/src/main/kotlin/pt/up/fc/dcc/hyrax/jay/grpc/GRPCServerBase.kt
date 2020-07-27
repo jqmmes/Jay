@@ -16,20 +16,25 @@ abstract class GRPCServerBase(private val port: Int,
     abstract val grpcImpl: BindableService
 
     @Throws(IOException::class)
-    fun start(): GRPCServerBase {
+    fun start(): GRPCServerBase? {
         JayLogger.logInfo("INIT", actions = *arrayOf("PORT=$port", "USING_NETTY=$useNettyServer"))
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
-        server =
-                if (useNettyServer) NettyServerBuilder.forPort(port)
-                        .addService(grpcImpl)
-                        .maxInboundMessageSize(JaySettings.GRPC_MAX_MESSAGE_SIZE)
-                    .build()
-                    .start()
-                else ServerBuilder.forPort(port)
-                        .addService(grpcImpl)
-                        .maxInboundMessageSize(JaySettings.GRPC_MAX_MESSAGE_SIZE)
-                    .build()
-                    .start()
+        try {
+            server =
+                    if (useNettyServer) NettyServerBuilder.forPort(port)
+                            .addService(grpcImpl)
+                            .maxInboundMessageSize(JaySettings.GRPC_MAX_MESSAGE_SIZE)
+                            .build()
+                            .start()
+                    else ServerBuilder.forPort(port)
+                            .addService(grpcImpl)
+                            .maxInboundMessageSize(JaySettings.GRPC_MAX_MESSAGE_SIZE)
+                            .build()
+                            .start()
+        } catch (ignore: Exception) {
+            ignore.printStackTrace()
+            return null
+        }
 
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
