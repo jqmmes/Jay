@@ -63,6 +63,7 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
      *   -> Deal with Task Failures
      */
     override fun scheduleTask(task: Task): JayProto.Worker? {
+        JayLogger.logInfo("BEGIN_SCHEDULING", task.id)
         val workers = SchedulerService.getWorkers(devices).values
         val currentLatch = CountDownLatch(workers.size)
         val currentMap = mutableMapOf<JayProto.Worker, JayProto.CurrentEstimations?>()
@@ -72,7 +73,7 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
             executionPool.submit {
                 SchedulerService.getExpectedCurrent(worker) {
                     JayLogger.logInfo("GOT_EXPECTED_CURRENT", task.id,
-                            "WORKER=$worker",
+                            "WORKER=${worker?.id}",
                             "BAT_CAPACITY=${it?.batteryCapacity}",
                             "BAT_LEVEL=${it?.batteryLevel}",
                             "BAT_COMPUTE=${it?.compute}",
@@ -91,7 +92,7 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
         synchronized(lock) {
             currentMap.forEach { (w, c) ->
                 val spend: Long = getEnergySpentRemote(task, w, c)
-                JayLogger.logInfo("BATTERY_SPENT_REMOTE", task.id, "WORKER=$w", "SPEND=$spend")
+                JayLogger.logInfo("BATTERY_SPENT_REMOTE", task.id, "WORKER=${w.id}", "SPEND=$spend")
                 //energy spend is negative, so higher value the better
                 if (spend > minSpend) {
                     possibleWorkers.clear()
@@ -102,7 +103,9 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
                 }
             }
         }
-        return possibleWorkers.elementAt((Random.nextInt(possibleWorkers.size)))
+        val w = possibleWorkers.elementAt((Random.nextInt(possibleWorkers.size)))
+        JayLogger.logInfo("COMPLETE_SCHEDULING", task.id, "WORKER=${w.id}")
+        return w
     }
 
     // This only takes into account the energy spent on remote host

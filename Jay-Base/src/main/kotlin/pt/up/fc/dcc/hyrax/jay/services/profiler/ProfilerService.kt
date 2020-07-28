@@ -58,6 +58,8 @@ object ProfilerService {
 
     private val RAW_EXPECTED_CPU_MAP_LOCK = Object()
     private val RAW_EXPECTED_CURRENT_MAP_LOCK = Object()
+    private val EXPECTED_CPU_MAP_LOCK = Object()
+    private val EXPECTED_CURRENT_MAP_LOCK = Object()
 
     private data class CpuEstimatorKey(val jayState: Set<JayState>, val deviceLoad: PackageUsages?)
 
@@ -131,9 +133,14 @@ object ProfilerService {
     }
 
     private fun getExpectedCurrent(k: BatteryCurrentKey, expectedCpuMhz: List<Long>): Int? {
-        if (!rawExpectedCurrentHashMap.containsKey(k)) return null
-        val cpuSet = mostSimilarSet(expectedCpuMhz, expectedCurrentHashMap[k]!!.keys) ?: return null
-        return expectedCurrentHashMap[k]?.get(cpuSet)
+        var ret: Int? = null
+        synchronized(EXPECTED_CURRENT_MAP_LOCK) {
+            if (expectedCurrentHashMap.containsKey(k)) {
+                val mostSimilarSet = mostSimilarSet(expectedCpuMhz, expectedCurrentHashMap[k]!!.keys)
+                if (mostSimilarSet != null) ret = expectedCurrentHashMap[k]!![mostSimilarSet]
+            }
+        }
+        return ret
     }
 
     fun getExpectedCurrents(): CurrentEstimations? {
@@ -142,14 +149,16 @@ object ProfilerService {
                 this.batteryInfo.batteryStatus)
 
         val builder = CurrentEstimations.newBuilder()
-        builder.idle = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(setOf(JayState.IDLE), null))
-                ?: listOf()) ?: 0
-        builder.compute = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.COMPUTE), null))
-                ?: listOf()) ?: 0
-        builder.rx = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null))
-                ?: listOf()) ?: 0
-        builder.tx = getExpectedCurrent(key, getExpectedCpuMhz(CpuEstimatorKey(genJayStates(JayState.DATA_SND), null))
-                ?: listOf()) ?: 0
+        synchronized(EXPECTED_CPU_MAP_LOCK) {
+            builder.idle = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(setOf(JayState.IDLE), null)]
+                    ?: listOf()) ?: 0
+            builder.compute = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)]
+                    ?: listOf()) ?: 0
+            builder.rx = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)]
+                    ?: listOf()) ?: 0
+            builder.tx = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)]
+                    ?: listOf()) ?: 0
+        }
         builder.batteryLevel = this.batteryInfo.batteryLevel
         builder.batteryCapacity = this.batteryInfo.batteryCapacity
         return builder.build()
@@ -278,79 +287,86 @@ object ProfilerService {
             return ProfileRecording.getDefaultInstance()
 
         val recordBuilder = ProfileRecording.newBuilder()
-        val currentTime = System.currentTimeMillis()
-        val cpus = this.cpuManager?.getCpus() ?: emptySet()
-        val medium = this.transportManager?.getTransport()
-        val jayStates = JayStateManager.getJayStates().states
-        val activeSensors = this.sensorManager?.getActiveSensors() ?: emptySet()
+        try {
+            val currentTime = System.currentTimeMillis()
+            val cpus = this.cpuManager?.getCpus() ?: emptySet()
 
-        recordBuilder.timeRange =
-                if (recording) getTimeRangeProto(this.recordingStartTime, currentTime)
-                else getTimeRangeProto(currentTime - msToRetrieve, currentTime)
-        JayLogger.logInfo("TIME_RANGE", "", "START=${this.recordingStartTime}", "END=$currentTime")
-        var states = ""
+            val medium = this.transportManager?.getTransport()
 
-        getJayStatesProto(jayStates).forEach { state ->
-            recordBuilder.addJayState(state)
-            states += "${state?.jayState?.name}, "
-        }
-        JayLogger.logInfo("JAY_STATES", "", states)
-        recordBuilder.battery = getBatteryProto()
-        recordBuilder.cpuCount = cpus.size
-        var cpuSpeedsStr = ""
-        val cpuSpeeds = mutableListOf<Long>()
-        cpus.forEach { cpu_number ->
-            val cpuSpeed: Long = this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0L
-            recordBuilder.addCpuFrequency(cpuSpeed)
-            cpuSpeedsStr += "CPU_$cpu_number=$cpuSpeed, "
-            cpuSpeeds.add(cpuSpeed)
-        }
-        JayLogger.logInfo("CPU", "", "CPU_COUNT=${cpus.size}, $cpuSpeedsStr")
-        if (medium != null) recordBuilder.transport = getTransportProto(medium)
-        val packageUsages = if (recording)
-            this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
-        else this.usageManager?.getRecentUsageList(msToRetrieve)
-        var pkgs = ""
-        packageUsages?.forEach { pkg ->
-            recordBuilder.addSystemUsage(pkg.pkgName)
-            pkgs += "${pkg.pkgName}, "
-        }
-        JayLogger.logInfo("PKG_USAGE", "", pkgs)
-        var sensorStr = ""
+            val jayStates = JayStateManager.getJayStates().states
+            val activeSensors = this.sensorManager?.getActiveSensors() ?: emptySet()
 
-        activeSensors.forEach { sensor ->
-            recordBuilder.addSensors(sensor)
-            sensorStr += "$sensor, "
-        }
+            recordBuilder.timeRange =
+                    if (recording) getTimeRangeProto(this.recordingStartTime, currentTime)
+                    else getTimeRangeProto(currentTime - msToRetrieve, currentTime)
+            JayLogger.logInfo("TIME_RANGE", "", "START=${this.recordingStartTime}", "END=$currentTime")
+            var states = ""
 
-        /**
-         * Insert recorded values in the circular FIFO for future processing
-         */
-        val cpuEstimatorKey = CpuEstimatorKey(jayStates, null)
-        synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
-            if (!this.rawExpectedCpuHashMap.containsKey(cpuEstimatorKey)) {
-                this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+            getJayStatesProto(jayStates).forEach { state ->
+                recordBuilder.addJayState(state)
+                states += "${state?.jayState?.name}, "
             }
-            this.rawExpectedCpuHashMap[CpuEstimatorKey(jayStates, null)]!!.add(cpuSpeeds)
-            JayLogger.logInfo("EXPECTED_CPU_HASH_MAP", "", "${this.expectedCpuHashMap}")
-        }
-
-        val batteryCurrentKey = BatteryCurrentKey(medium, activeSensors, batteryInfo.batteryStatus)
-        synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
-            if (!this.rawExpectedCurrentHashMap.containsKey(batteryCurrentKey)) {
-                this.rawExpectedCurrentHashMap[batteryCurrentKey] = LinkedHashMap()
+            JayLogger.logInfo("JAY_STATES", "", states)
+            recordBuilder.battery = getBatteryProto()
+            recordBuilder.cpuCount = cpus.size
+            var cpuSpeedsStr = ""
+            val cpuSpeeds = mutableListOf<Long>()
+            cpus.forEach { cpu_number ->
+                val cpuSpeed: Long = this.cpuManager?.getCurrentCPUClockSpeed(cpu_number) ?: 0L
+                recordBuilder.addCpuFrequency(cpuSpeed)
+                cpuSpeedsStr += "CPU_$cpu_number=$cpuSpeed, "
+                cpuSpeeds.add(cpuSpeed)
             }
-            if (!this.rawExpectedCurrentHashMap[batteryCurrentKey]!!.containsKey(cpuSpeeds)) {
-                this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds] =
-                        CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+            JayLogger.logInfo("CPU", "", "CPU_COUNT=${cpus.size}, $cpuSpeedsStr")
+            if (medium != null) recordBuilder.transport = getTransportProto(medium)
+            val packageUsages = if (recording)
+                this.usageManager?.getRecentUsageList(currentTime - this.recordingStartTime)
+            else this.usageManager?.getRecentUsageList(msToRetrieve)
+            var pkgs = ""
+            packageUsages?.forEach { pkg ->
+                recordBuilder.addSystemUsage(pkg.pkgName)
+                pkgs += "${pkg.pkgName}, "
             }
-            this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds]!!.add(batteryInfo.batteryCurrent)
-            JayLogger.logInfo("EXPECTED_CURRENT_HASH_MAP", "", "${this.expectedCurrentHashMap}")
+            JayLogger.logInfo("PKG_USAGE", "", pkgs)
+            var sensorStr = ""
+
+            activeSensors.forEach { sensor ->
+                recordBuilder.addSensors(sensor)
+                sensorStr += "$sensor, "
+            }
+
+            /**
+             * Insert recorded values in the circular FIFO for future processing
+             */
+            val cpuEstimatorKey = CpuEstimatorKey(jayStates, null)
+            synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
+                if (!this.rawExpectedCpuHashMap.containsKey(cpuEstimatorKey)) {
+                    this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+                }
+                this.rawExpectedCpuHashMap[CpuEstimatorKey(jayStates, null)]!!.add(cpuSpeeds)
+                JayLogger.logInfo("EXPECTED_CPU_HASH_MAP", "", "${this.expectedCpuHashMap}")
+            }
+
+            val batteryCurrentKey = BatteryCurrentKey(medium, activeSensors, batteryInfo.batteryStatus)
+            synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                if (!this.rawExpectedCurrentHashMap.containsKey(batteryCurrentKey)) {
+                    this.rawExpectedCurrentHashMap[batteryCurrentKey] = LinkedHashMap()
+                }
+                if (!this.rawExpectedCurrentHashMap[batteryCurrentKey]!!.containsKey(cpuSpeeds)) {
+                    this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds] =
+                            CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+                }
+                this.rawExpectedCurrentHashMap[batteryCurrentKey]!![cpuSpeeds]!!.add(batteryInfo.batteryCurrent)
+                JayLogger.logInfo("EXPECTED_CURRENT_HASH_MAP", "", "${this.expectedCurrentHashMap}")
+            }
+
+
+            JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)
+            if (recording) this.recordingStartTime = currentTime
+        } catch (ignore: java.lang.RuntimeException) {
+            // To prevent java.lang.RuntimeException: android.os.DeadSystemException
+            JayLogger.logError("TRANSPORT_EXCEPTION", "", "ERROR: ${ignore.message}")
         }
-
-
-        JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)
-        if (recording) this.recordingStartTime = currentTime
         return recordBuilder.build()
     }
 
@@ -395,16 +411,20 @@ object ProfilerService {
                 do {
                     synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
                         rawExpectedCpuHashMap.keys.forEach {
-                            expectedCpuHashMap[it] = getExpectedCpuMhz(it)
+                            synchronized(EXPECTED_CPU_MAP_LOCK) {
+                                expectedCpuHashMap[it] = getExpectedCpuMhz(it)
+                            }
                         }
                     }
                     synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
                         rawExpectedCurrentHashMap.keys.forEach {
                             rawExpectedCurrentHashMap[it]?.keys?.forEach { cpu ->
-                                if (!expectedCurrentHashMap.containsKey(it)) {
-                                    expectedCurrentHashMap[it] = LinkedHashMap()
+                                synchronized(EXPECTED_CURRENT_MAP_LOCK) {
+                                    if (!expectedCurrentHashMap.containsKey(it)) {
+                                        expectedCurrentHashMap[it] = LinkedHashMap()
+                                    }
+                                    expectedCurrentHashMap[it]!![cpu] = getMovingAvg(rawExpectedCurrentHashMap[it]!![cpu]!!)
                                 }
-                                expectedCurrentHashMap[it]!![cpu] = getMovingAvg(rawExpectedCurrentHashMap[it]!![cpu]!!)
                             }
                         }
                     }

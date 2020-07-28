@@ -172,6 +172,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
              } catch (e: TimeoutException) {
                  JayLogger.logError("TIMEOUT")
                  callback?.invoke(-1)
+             } catch (e: StatusRuntimeException) {
+                 JayLogger.logError("TIMEOUT")
+                 callback?.invoke(-1)
              }
          }
      }

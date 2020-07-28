@@ -77,7 +77,7 @@ object SchedulerService {
     internal fun schedule(request: JayProto.TaskDetails?): Worker? {
         if (scheduler == null) scheduler = schedulers.first()
         val w = scheduler?.scheduleTask(Task(request))
-        JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=$w")
+        JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=${w?.id}")
         return w
     }
 
