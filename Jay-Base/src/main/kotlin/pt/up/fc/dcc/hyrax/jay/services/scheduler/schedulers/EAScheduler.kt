@@ -91,7 +91,7 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
         var minSpend = Long.MIN_VALUE
         synchronized(lock) {
             currentMap.forEach { (w, c) ->
-                val spend: Long = getEnergySpentRemote(task, w, c)
+                val spend: Long = getEnergySpentComputing(task, w, c)
                 JayLogger.logInfo("BATTERY_SPENT_REMOTE", task.id, "WORKER=${w.id}", "SPEND=$spend")
                 //energy spend is negative, so higher value the better
                 if (spend > minSpend) {
@@ -108,13 +108,41 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
         return w
     }
 
-    // This only takes into account the energy spent on remote host
-    private fun getEnergySpentRemote(task: Task, worker: JayProto.Worker, current: JayProto.CurrentEstimations?): Long {
-        return worker.avgTimePerTask * (current?.compute ?: 0) +
-                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * (current?.rx ?: 0) +
-                worker.queueSize * worker.avgTimePerTask * (current?.idle ?: 0) +
-                worker.avgResultSize * (current?.tx ?: 0)
+    // This only takes into account the energy spent on computing host
+    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, current: JayProto.CurrentEstimations?): Long {
+        return worker.avgTimePerTask * ((current?.compute ?: 0) / 3600) +
+                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((current?.rx ?: 0) / 3600) +
+                worker.queueSize * worker.avgTimePerTask * ((current?.compute ?: 0) / 3600) +
+                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((current?.tx ?: 0) / 3600)
     }
+
+    /*
+    todo:
+        If host is remote, I need to account with MY OWN queue*current.compute*avgTimePerTask +
+        (((remote.queue + 1) * remote.avgTimePerTask) - queue*avgTimePerTask) * current.idle
+
+    private fun getEnergySpentRemoteComputingAndLocalIdle(task: Task, worker: JayProto.Worker, current: JayProto.CurrentEstimations?): Long {
+        return worker.avgTimePerTask * ((current?.compute ?: 0) / 3600)+
+                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((current?.rx ?: 0) / 3600) +
+                worker.queueSize * worker.avgTimePerTask * ((current?.compute ?: 0) / 3600) +
+                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((current?.tx ?: 0) / 3600)
+    }
+
+    todo:
+        If I want to calculate the energy spent on the whole neighborhood of devices I need to
+        check what is the consequence of running a task on each different device and take into account
+        the energy spend with each one queue size and also idle
+    private fun getEnergySpentRemoteGlobal(task: Task, worker: JayProto.Worker, current: JayProto
+    .CurrentEstimations?): Long {
+        return worker.avgTimePerTask * ((current?.compute ?: 0) / 3600)+
+                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((current?.rx ?: 0) / 3600) +
+                worker.queueSize * worker.avgTimePerTask * ((current?.compute ?: 0) / 3600) +
+                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((current?.tx ?: 0) / 3600)
+    }
+
+    todo:
+        Add an option to check if a task can be completed within a timeout
+     */
 
     override fun destroy() {
         JayLogger.logInfo("INIT")
