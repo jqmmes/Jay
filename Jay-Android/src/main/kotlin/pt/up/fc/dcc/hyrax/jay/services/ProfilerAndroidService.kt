@@ -11,6 +11,7 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu.AndroidCPUMana
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.sensors.AndroidSensorManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.AndroidTransportManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.AndroidUsageManager
+import java.io.File
 
 class ProfilerAndroidService : Service() {
 
@@ -22,7 +23,9 @@ class ProfilerAndroidService : Service() {
         AndroidTransportManager.setContext(this)
         AndroidUsageManager.setContext(this)
         AndroidSensorManager.setContext(this)
-        ProfilerService.start(true, AndroidBatteryMonitor(this), AndroidTransportManager, AndroidCPUManager, AndroidUsageManager, AndroidSensorManager)
+        ProfilerService.start(true, AndroidBatteryMonitor(this),
+                AndroidTransportManager, AndroidCPUManager, AndroidUsageManager,
+                AndroidSensorManager, File(cacheDir, "profiler_recordings"))
     }
 
     override fun onDestroy() {
