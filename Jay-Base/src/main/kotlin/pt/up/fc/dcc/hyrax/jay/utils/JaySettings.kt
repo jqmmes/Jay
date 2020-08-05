@@ -45,4 +45,11 @@ object JaySettings {
     var DEVICE_ID: String = ""
 
     var BANDWIDTH_ESTIMATE_TYPE = "ALL" // ACTIVE/PASSIVE/ALL
+
+
+    // Calibration Settings
+    var COMPUTATION_BASELINE_DURATION_FLAG = false
+    var COMPUTATION_BASELINE_DURATION = 10000 // 10 minutess
+
+    var TRANSFER_BASELINE_FLAG = false
 }

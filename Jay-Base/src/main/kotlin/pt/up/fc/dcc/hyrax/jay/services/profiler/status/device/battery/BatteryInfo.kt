@@ -3,7 +3,6 @@ package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus.UNKNOWN
 
-@Suppress("unused")
 class BatteryInfo {
 
     constructor()

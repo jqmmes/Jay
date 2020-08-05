@@ -231,6 +231,13 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "ADVERTISE_WORKER_STATUS" -> if (V.toLowerCase(Locale.getDefault()) != "false") JaySettings.ADVERTISE_WORKER_STATUS = true
                         "SINGLE_REMOTE_IP" -> JaySettings.SINGLE_REMOTE_IP = V
                         "READ_RECORDED_PROFILE_DATA" -> if (V.toLowerCase(Locale.getDefault()) != "true") JaySettings.READ_RECORDED_PROFILE_DATA = false
+                        "COMPUTATION_BASELINE_DURATION_FLAG" -> if (V.toLowerCase(Locale.getDefault()) == "true") JaySettings.COMPUTATION_BASELINE_DURATION_FLAG = true
+                        "COMPUTATION_BASELINE_DURATION" -> JaySettings.COMPUTATION_BASELINE_DURATION = try {
+                            V.toInt()
+                        } catch (ignore: Exception) {
+                            10000
+                        }
+                        "TRANSFER_BASELINE_FLAG" -> if (V.toLowerCase(Locale.getDefault()) == "true") JaySettings.TRANSFER_BASELINE_FLAG = true
                     }
                 }
                 genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
