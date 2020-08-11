@@ -20,6 +20,7 @@ import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.concurrent.thread
 
 /**
  * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
@@ -113,6 +114,13 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
     fun executeTask(task: JayProto.Task?, local: Boolean = false, callback: ((JayProto.Response) -> Unit)? = null,
                     schedulerInformCallback: (() -> Unit)? = null) {
+        if (JaySettings.TRANSFER_BASELINE_FLAG) {
+            thread {
+                BrokerService.benchmarkNetwork(JaySettings.TRANSFER_BASELINE_DURATION, this, task, callback,
+                        schedulerInformCallback)
+            }
+            return
+        }
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val taskId = task?.id ?: ""
         executePool.submit {

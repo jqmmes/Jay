@@ -47,6 +47,15 @@ object WorkerService {
     internal fun queueTask(task: WorkerTask, callback: ((Any) -> Unit)?): StatusCode {
         JayLogger.logInfo("INIT", task.id)
         if (!running) throw Exception("WorkerService not running")
+        if (JaySettings.TRANSFER_BASELINE_FLAG) {
+            thread {
+                Thread.sleep(1000)
+                this.taskExecutorManager?.getCurrentExecutor()?.getDefaultResponse { R ->
+                    callback?.invoke(R)
+                }
+            }
+            return StatusCode.Waiting
+        }
         taskQueue.put(RunnableTaskObjects(task) { R ->
             callback?.invoke(R)
         })
@@ -176,6 +185,15 @@ object WorkerService {
 
     private class RunnableTaskObjects(val task: WorkerTask?, var callback: ((Any) -> Unit)?) : Runnable {
         override fun run() {
+            if (JaySettings.COMPUTATION_BASELINE_DURATION_FLAG) {
+                val time = System.currentTimeMillis()
+                do {
+                    JayLogger.logInfo("INIT", task?.id ?: "")
+                    atomicOperation(runningTasks, increment = true)
+                    profileExecution { taskExecutorManager?.getCurrentExecutor()?.executeTask(task, null) }
+                    atomicOperation(runningTasks, totalTasks, increment = false)
+                } while (System.currentTimeMillis() - time < JaySettings.COMPUTATION_BASELINE_DURATION)
+            }
             JayLogger.logInfo("INIT", task?.id ?: "")
             atomicOperation(runningTasks, increment = true)
             profileExecution { taskExecutorManager?.getCurrentExecutor()?.executeTask(task, callback) }

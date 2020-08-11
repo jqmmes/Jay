@@ -31,6 +31,7 @@ abstract class GRPCClientBase<T1, T2>(private var host: String, var port: Int) {
         this.host = host
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
+                .maxInboundMessageSize(JaySettings.GRPC_MAX_MESSAGE_SIZE)
                 .build()
         reconnectStubs()
     }

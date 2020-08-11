@@ -106,4 +106,8 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
             }
         }
     }
+
+    override fun getDefaultResponse(callback: ((Any) -> Unit)?) {
+        callback?.invoke(JayTensorFlowProto.Results.getDefaultInstance().toByteString())
+    }
 }

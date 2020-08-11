@@ -19,6 +19,9 @@ abstract class TaskExecutor(val name: String, val description: String?) {
     abstract fun callAction(action: String, statusCallback: ((JayStatus, Any?) -> Unit)? = null, vararg args: Any)
     abstract fun runAction(action: String, statusCallback: ((JayStatus) -> Unit)? = null, vararg args: Any)
 
+    // baseline
+    abstract fun getDefaultResponse(callback: ((Any) -> Unit)?)
+
     open fun setSettings(settingsMap: Map<String, Any?>): JayStatus {
         var status = genStatusSuccess()
         for (k in settingsMap.keys) {

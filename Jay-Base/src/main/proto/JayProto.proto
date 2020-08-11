@@ -327,6 +327,9 @@ service BrokerService {
 
     rpc getExpectedCurrentFromRemote (Worker) returns (CurrentEstimations) {
     };
+
+    rpc networkBenchmark (Task) returns (google.protobuf.Empty) {
+    };
 }
 
 service ProfilerService {

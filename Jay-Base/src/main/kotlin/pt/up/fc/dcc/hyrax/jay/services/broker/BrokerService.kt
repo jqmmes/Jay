@@ -8,6 +8,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
+import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastListener
@@ -429,5 +430,19 @@ object BrokerService {
         JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
         if (schedulerServiceRunning) scheduler.setSchedulerSettings(request, callback)
         else callback?.invoke(JayUtils.genStatusError())
+    }
+
+    fun benchmarkNetwork(duration: Long, grpc: BrokerGRPCClient, task: Task?, callback: ((Response) -> Unit)? = null,
+                         schedulerInformCallback: (() -> Unit)? = null) {
+        val startTime = System.currentTimeMillis()
+        JayLogger.logInfo("START_NETWORK_START")
+        do {
+            val ignore = grpc.blockingStub.networkBenchmark(task)
+            JayLogger.logInfo("RUNNING_NETWORK_BENCHMARK", task?.id ?: "",
+                    "DURATION=${System.currentTimeMillis() - startTime}ms", "RESPONSE=$ignore")
+        } while (System.currentTimeMillis() - startTime < duration)
+        JayLogger.logInfo("START_NETWORK_FINISH")
+        callback?.invoke(Response.getDefaultInstance())
+        schedulerInformCallback?.invoke()
     }
 }

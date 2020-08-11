@@ -231,6 +231,18 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "ADVERTISE_WORKER_STATUS" -> if (V.toLowerCase(Locale.getDefault()) != "false") JaySettings.ADVERTISE_WORKER_STATUS = true
                         "SINGLE_REMOTE_IP" -> JaySettings.SINGLE_REMOTE_IP = V
                         "READ_RECORDED_PROFILE_DATA" -> if (V.toLowerCase(Locale.getDefault()) != "true") JaySettings.READ_RECORDED_PROFILE_DATA = false
+                        "COMPUTATION_BASELINE_DURATION_FLAG" -> if (V.toLowerCase(Locale.getDefault()) == "true") JaySettings.COMPUTATION_BASELINE_DURATION_FLAG = true
+                        "COMPUTATION_BASELINE_DURATION" -> JaySettings.COMPUTATION_BASELINE_DURATION = try {
+                            V.toLong()
+                        } catch (ignore: Exception) {
+                            10000
+                        }
+                        "TRANSFER_BASELINE_FLAG" -> if (V.toLowerCase(Locale.getDefault()) == "true") JaySettings.TRANSFER_BASELINE_FLAG = true
+                        "TRANSFER_BASELINE_DURATION" -> JaySettings.TRANSFER_BASELINE_DURATION = try {
+                            V.toLong()
+                        } catch (ignore: Exception) {
+                            10000
+                        }
                     }
                 }
                 genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
@@ -238,6 +250,11 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 genericComplete(genStatus(JayProto.StatusCode.Error), responseObserver)
             }
             JayLogger.logInfo("COMPLETE")
+        }
+
+        override fun networkBenchmark(request: JayProto.Task?, responseObserver: StreamObserver<Empty>?) {
+            JayLogger.logInfo("RECEIVED_TASK_BENCHMARK", request?.id ?: "")
+            genericComplete(Empty.getDefaultInstance(), responseObserver)
         }
     }
 
