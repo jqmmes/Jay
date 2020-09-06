@@ -54,7 +54,19 @@ message Status {
     StatusCode code = 1;
 }
 
+
+// todo: change from current to power
 message CurrentEstimations {
+    int32 idle = 1;
+    int32 compute = 2;
+    int32 rx = 3;
+    int32 tx = 4;
+    int32 batteryLevel = 5;
+    int32 batteryCapacity = 6;
+    float batteryVoltage = 7;
+}
+
+message PowerEstimations {
     int32 idle = 1;
     int32 compute = 2;
     int32 rx = 3;
