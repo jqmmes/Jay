@@ -76,10 +76,10 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
             }
         }
         powerLatch.await()
-        var minSpend = Long.MIN_VALUE
+        var minSpend = Float.MIN_VALUE
         synchronized(lock) {
             powerMap.forEach { (w, c) ->
-                val spend: Long = getEnergySpentComputing(task, w, c)
+                val spend: Float = getEnergySpentComputing(task, w, c)
                 JayLogger.logInfo("BATTERY_SPENT_REMOTE", task.id, "WORKER=${w.id}", "SPEND=$spend")
                 //energy spend is negative, so higher value the better
                 if (spend > minSpend) {
@@ -97,11 +97,12 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
     }
 
     // This only takes into account the energy spent on computing host
-    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, oower: JayProto.PowerEstimations?): Long {
-        return worker.avgTimePerTask * ((oower?.compute ?: 0) / 3600) +
-                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((oower?.rx ?: 0) / 3600) +
-                worker.queueSize * worker.avgTimePerTask * ((oower?.compute ?: 0) / 3600) +
-                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((oower?.tx ?: 0) / 3600)
+    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, power: JayProto.PowerEstimations?): Float {
+        println("ok")
+        return worker.avgTimePerTask * ((power?.compute ?: 0f) / 3600) +
+                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((power?.rx ?: 0f) / 3600) +
+                worker.queueSize * worker.avgTimePerTask * ((power?.compute ?: 0f) / 3600) +
+                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((power?.tx ?: 0f) / 3600)
     }
 
     override fun destroy() {

@@ -35,14 +35,14 @@
                 android:permission="android.permission.INTERNET"/>
 
         <receiver
-                android:name="pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.AndroidBatteryMonitor$BatteryChargeStateUpdatesReceiver">
+                android:name="pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.AndroidPowerMonitor$BatteryChargeStateUpdatesReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
             </intent-filter>
         </receiver>
         <receiver
-                android:name="pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.AndroidBatteryMonitor$BatteryLevelUpdatesReceiver">
+                android:name="pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.AndroidPowerMonitor$BatteryLevelUpdatesReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BATTERY_CHANGED"/>
             </intent-filter>

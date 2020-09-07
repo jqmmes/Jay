@@ -6,8 +6,8 @@ import android.os.IBinder
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.profiler.ProfilerService
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.AndroidBatteryMonitor
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.cpu.AndroidCPUManager
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.AndroidPowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.sensors.AndroidSensorManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.transport.AndroidTransportManager
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.usage.AndroidUsageManager
@@ -23,7 +23,7 @@ class ProfilerAndroidService : Service() {
         AndroidTransportManager.setContext(this)
         AndroidUsageManager.setContext(this)
         AndroidSensorManager.setContext(this)
-        ProfilerService.start(true, AndroidBatteryMonitor(this),
+        ProfilerService.start(true, AndroidPowerMonitor(this),
                 AndroidTransportManager, AndroidCPUManager, AndroidUsageManager,
                 AndroidSensorManager, File(cacheDir, "profiler_recordings"))
     }

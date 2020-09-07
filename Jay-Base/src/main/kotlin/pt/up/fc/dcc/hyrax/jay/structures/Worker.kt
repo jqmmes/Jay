@@ -4,7 +4,8 @@ import io.grpc.ConnectivityState
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus.UNKNOWN
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings.PING_PAYLOAD_SIZE
@@ -30,7 +31,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private var avgComputingEstimate = 0L
     private var batteryLevel = 100
     private var batteryCapacity: Int = -1
-    private var batteryStatus: BatteryStatus = BatteryStatus.UNKNOWN
+    private var batteryStatus: PowerStatus = UNKNOWN
     private var cpuCores = 0
     private var queueSize = 1
     private var queuedTasks = 0

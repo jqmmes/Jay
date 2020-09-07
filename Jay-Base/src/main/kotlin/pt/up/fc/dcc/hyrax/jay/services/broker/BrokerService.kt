@@ -13,7 +13,7 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastAdvertiser
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastListener
 import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.PowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.structures.Worker
@@ -28,7 +28,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
 object BrokerService {
 
 
-    internal var batteryMonitor: BatteryMonitor? = null
+    internal var powerMonitor: PowerMonitor? = null
     private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker> = hashMapOf()
     private val assignedTasks: MutableMap<String, String> = hashMapOf()
@@ -50,10 +50,10 @@ object BrokerService {
         workers[local.id] = local
     }
 
-    fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, videoUtils: VideoUtils? = null, batteryMonitor: BatteryMonitor? = null) {
+    fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, videoUtils: VideoUtils? = null, powerMonitor: PowerMonitor? = null) {
         this.fsAssistant = fsAssistant
         this.videoUtils = videoUtils
-        this.batteryMonitor = batteryMonitor
+        this.powerMonitor = powerMonitor
         repeat(30) {
             if (this.server == null) {
                 this.server = BrokerGRPCServer(useNettyServer).start()

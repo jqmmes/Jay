@@ -6,7 +6,7 @@ import android.os.IBinder
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.AndroidBatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.AndroidPowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
 
@@ -50,7 +50,7 @@ internal class SchedulerAndroidService : Service() {
         SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.CLOUD))
         SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.REMOTE, Worker.Type.CLOUD))
         SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE, Worker.Type.CLOUD))
-        SchedulerService.start(true, AndroidBatteryMonitor(this))
+        SchedulerService.start(true, AndroidPowerMonitor(this))
     }
 
     override fun onDestroy() {

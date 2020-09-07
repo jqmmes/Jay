@@ -81,6 +81,6 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
     }
 
     override fun getDefaultResponse(callback: ((Any) -> Unit)?) {
-        TODO("Not yet implemented")
+        callback?.invoke(JayTensorFlowProto.Results.getDefaultInstance().toByteString())
     }
 }

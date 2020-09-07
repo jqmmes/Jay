@@ -7,7 +7,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto.ServiceStatus.Type.SCHEDULER
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.BatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.PowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.AbstractScheduler
 import pt.up.fc.dcc.hyrax.jay.structures.Task
@@ -23,7 +23,7 @@ object SchedulerService {
         OFFLINE
     }
 
-    private var batteryMonitor: BatteryMonitor? = null
+    private var powerMonitor: PowerMonitor? = null
     private var server: GRPCServerBase? = null
     private val workers: MutableMap<String, Worker?> = hashMapOf()
     internal val broker = BrokerGRPCClient("127.0.0.1")
@@ -55,10 +55,10 @@ object SchedulerService {
         schedulers.add(scheduler)
     }
 
-    fun start(useNettyServer: Boolean = false, batteryMonitor: BatteryMonitor? = null) {
+    fun start(useNettyServer: Boolean = false, powerMonitor: PowerMonitor? = null) {
         JayLogger.logInfo("INIT")
         if (running) return
-        this.batteryMonitor = batteryMonitor
+        this.powerMonitor = powerMonitor
         repeat(30) {
             if (this.server == null) {
                 this.server = SchedulerGRPCServer(useNettyServer).start()

@@ -8,7 +8,7 @@ import androidx.annotation.RequiresApi
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
-import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery.AndroidBatteryMonitor
+import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.AndroidPowerMonitor
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.utils.VideoUtils
 
@@ -19,7 +19,7 @@ class BrokerAndroidService : Service() {
         super.onCreate()
         val notification = Jay.makeNotification(this, "DroidJay Broker", "Running", icon = R.drawable.ic_bird_broker_border)
         startForeground(notification.first, notification.second)
-        BrokerService.start(true, FileSystemAssistant(this), VideoUtils, AndroidBatteryMonitor(this))
+        BrokerService.start(true, FileSystemAssistant(this), VideoUtils, AndroidPowerMonitor(this))
     }
 
     override fun onDestroy() {

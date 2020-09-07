@@ -1,4 +1,4 @@
-package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.battery
+package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -12,7 +12,7 @@ import android.os.Build
 import eu.chainfire.libsuperuser.Shell
 import eu.chainfire.libsuperuser.Shell.OnSyncCommandLineListener
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BatteryStatus
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CountDownLatch
@@ -156,7 +156,7 @@ import kotlin.math.roundToInt
  *
  */
 
-class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
+class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
     private val levelMonitor = BatteryLevelUpdatesReceiver()
     private val chargingStateMonitor = BatteryChargeStateUpdatesReceiver()
     private val batteryDriverBaseDir = "/sys/class/power_supply"
@@ -165,47 +165,48 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
     private var scale = 1
     private var signal = 1
 
-    override fun setCallbacks(_levelChangeCallback: (Int, Int, Float) -> Unit,
-                              _statusChangeCallback: (BatteryStatus) -> Unit) {
+    override fun setCallbacks(_levelChangeCallback: (Int, Float, Float) -> Unit,
+                              _statusChangeCallback: (PowerStatus) -> Unit) {
         statusChangeCallback = _statusChangeCallback
         levelChangeCallback = _levelChangeCallback
     }
 
     private companion object {
         var isChargingStatus: Boolean? = null
-        var statusChangeCallback: ((BatteryStatus) -> Unit)? = null
-        var levelChangeCallback: ((Int, Int, Float) -> Unit)? = null
+        var statusChangeCallback: ((PowerStatus) -> Unit)? = null
+        var levelChangeCallback: ((Int, Float, Float) -> Unit)? = null
+        var lastVoltage: Float? = null
     }
 
     class BatteryChargeStateUpdatesReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
-            var batteryStatus: Intent? = null
+            var powerStatus: Intent? = null
             var status = 0
             if ((action == ACTION_POWER_CONNECTED) || (action == ACTION_POWER_DISCONNECTED)) {
-                batteryStatus = IntentFilter(ACTION_BATTERY_CHANGED).let { ifilter ->
+                powerStatus = IntentFilter(ACTION_BATTERY_CHANGED).let { ifilter ->
                     context?.registerReceiver(null, ifilter)
                 }
-                status = batteryStatus?.getIntExtra(EXTRA_STATUS, -1) ?: 0
+                status = powerStatus?.getIntExtra(EXTRA_STATUS, -1) ?: 0
             }
             isChargingStatus = false
             if (action == ACTION_POWER_CONNECTED) {
                 isChargingStatus = true
                 when (status) {
-                    BATTERY_STATUS_FULL -> statusChangeCallback?.invoke(BatteryStatus.FULL)
+                    BATTERY_STATUS_FULL -> statusChangeCallback?.invoke(PowerStatus.FULL)
                     BATTERY_STATUS_CHARGING -> {
-                        when (batteryStatus?.getIntExtra(EXTRA_PLUGGED, -1)) {
-                            BATTERY_PLUGGED_AC -> statusChangeCallback?.invoke(BatteryStatus.AC_CHARGING)
-                            BATTERY_PLUGGED_USB -> statusChangeCallback?.invoke(BatteryStatus.USB_CHARGING)
-                            BATTERY_PLUGGED_WIRELESS -> statusChangeCallback?.invoke(BatteryStatus.QI_CHARGING)
-                            else -> statusChangeCallback?.invoke(BatteryStatus.CHARGING)
+                        when (powerStatus?.getIntExtra(EXTRA_PLUGGED, -1)) {
+                            BATTERY_PLUGGED_AC -> statusChangeCallback?.invoke(PowerStatus.AC_CHARGING)
+                            BATTERY_PLUGGED_USB -> statusChangeCallback?.invoke(PowerStatus.USB_CHARGING)
+                            BATTERY_PLUGGED_WIRELESS -> statusChangeCallback?.invoke(PowerStatus.QI_CHARGING)
+                            else -> statusChangeCallback?.invoke(PowerStatus.CHARGING)
                         }
                     }
                 }
             } else if ((action == ACTION_POWER_DISCONNECTED) && (status == BATTERY_STATUS_DISCHARGING)) {
-                statusChangeCallback?.invoke(BatteryStatus.DISCHARGING)
+                statusChangeCallback?.invoke(PowerStatus.DISCHARGING)
             } else if ((action == ACTION_POWER_DISCONNECTED)) {
-                statusChangeCallback?.invoke(BatteryStatus.DISCHARGING)
+                statusChangeCallback?.invoke(PowerStatus.DISCHARGING)
             }
         }
     }
@@ -216,7 +217,8 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
             if (action != ACTION_BATTERY_CHANGED) return
             val level = intent.getIntExtra(EXTRA_LEVEL, -1)
             val scale = intent.getIntExtra(EXTRA_SCALE, -1)
-            val voltage = intent.getIntExtra(EXTRA_VOLTAGE, -1)
+            val voltage = intent.getIntExtra(EXTRA_VOLTAGE, -1) / 1000f
+            lastVoltage = voltage
             val temperature = intent.getIntExtra(EXTRA_TEMPERATURE, -1) / 10f
             levelChangeCallback?.invoke(((level.toFloat() / scale.toFloat()) * 100f).roundToInt(), voltage, temperature)
         }
@@ -251,13 +253,13 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
                 override fun onSTDOUT(line: String) {
                     val lowerLine = line.toLowerCase(Locale.ROOT)
                     if (lowerLine.contains("ac powered") && lowerLine.contains("true")) {
-                        statusChangeCallback?.invoke(BatteryStatus.AC_CHARGING)
+                        statusChangeCallback?.invoke(PowerStatus.AC_CHARGING)
                         isChargingStatus = true
                     } else if (lowerLine.contains("usb powered") && lowerLine.contains("true")) {
-                        statusChangeCallback?.invoke(BatteryStatus.USB_CHARGING)
+                        statusChangeCallback?.invoke(PowerStatus.USB_CHARGING)
                         isChargingStatus = true
                     } else if (lowerLine.contains("wireless powered") && lowerLine.contains("true")) {
-                        statusChangeCallback?.invoke(BatteryStatus.QI_CHARGING)
+                        statusChangeCallback?.invoke(PowerStatus.QI_CHARGING)
                         isChargingStatus = true
                     }
                     countDownLatch.countDown()
@@ -273,7 +275,7 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         return isChargingStatus ?: mBatteryManager.isCharging
     }
 
-    override fun getBatteryLevel(): Int {
+    override fun getLevel(): Int {
         var batteryCapacity = mBatteryManager.getIntProperty(BATTERY_PROPERTY_CAPACITY)
         if (batteryCapacity == 0 || batteryCapacity == Integer.MIN_VALUE)
             batteryCapacity = getBatteryLevelDirect()
@@ -371,19 +373,19 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         return readOnlineStatus("wireless")
     }
 
-    override fun getBatteryStatus(): BatteryStatus {
+    override fun getStatus(): PowerStatus {
         return when {
             isCharging() -> when {
-                getChargingAC() -> BatteryStatus.AC_CHARGING
-                getChargingUSB() -> BatteryStatus.USB_CHARGING
-                getChargingQi() -> BatteryStatus.QI_CHARGING
-                else -> BatteryStatus.CHARGING
+                getChargingAC() -> PowerStatus.AC_CHARGING
+                getChargingUSB() -> PowerStatus.USB_CHARGING
+                getChargingQi() -> PowerStatus.QI_CHARGING
+                else -> PowerStatus.CHARGING
             }
-            else -> BatteryStatus.DISCHARGING
+            else -> PowerStatus.DISCHARGING
         }
     }
 
-    override fun getBatteryCurrentNow(): Int {
+    override fun getCurrentNow(): Int {
         val current = mBatteryManager.getIntProperty(BATTERY_PROPERTY_CURRENT_NOW)
         signal = if (!isCharging() && current > 0) -1 else 1
         if (abs(current) > 10000) scale = 100
@@ -391,16 +393,20 @@ class AndroidBatteryMonitor(private val context: Context) : BatteryMonitor {
         return (current * signal) / scale
     }
 
+    override fun getPower(): Float {
+        return if (lastVoltage != null) getCurrentNow() * lastVoltage!! else 0f
+    }
 
-    override fun getBatteryRemainingEnergy(): Long {
+
+    override fun getRemainingEnergy(): Long {
         return mBatteryManager.getLongProperty(BATTERY_PROPERTY_ENERGY_COUNTER)
     }
 
-    override fun getBatteryCharge(): Int {
+    override fun getCharge(): Int {
         return mBatteryManager.getIntProperty(BATTERY_PROPERTY_CHARGE_COUNTER)
     }
 
-    override fun getBatteryCapacity(): Int {
+    override fun getCapacity(): Int {
         return getBatteryCapacityReflection()
     }
 

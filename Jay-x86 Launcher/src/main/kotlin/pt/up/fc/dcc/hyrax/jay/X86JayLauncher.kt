@@ -13,6 +13,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.lang.Thread.sleep
 import java.net.InetAddress
+import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
 class X86JayLauncher {
@@ -21,7 +22,7 @@ class X86JayLauncher {
         private var cloudlet = false
         private val hostname = InetAddress.getLocalHost().hostName
         private var server: Server? = null
-        private var running = false
+        private var runningLatch: CountDownLatch? = null
 
         @JvmStatic
         fun main(args: Array<String>) {
@@ -36,7 +37,7 @@ class X86JayLauncher {
                     JayLogger.logError("ERROR", actions = *arrayOf("ERROR='*** shutting down server since JVM is shutting down'"))
                     jay.destroy()
                     stopNowAndWait()
-                    running = false
+                    runningLatch?.countDown()
                     JayLogger.logError("ERROR", actions = *arrayOf("ERROR='*** server shut down'"))
                 }
             })
@@ -47,7 +48,6 @@ class X86JayLauncher {
                 sleep(1000)
             }
         }
-
 
         private fun startServer() {
             server = ServerBuilder.forPort(50000)
@@ -62,7 +62,7 @@ class X86JayLauncher {
             server?.awaitTermination()
         }
 
-        internal class GrpcImpl(private val odClient: Jay) : LauncherServiceGrpc.LauncherServiceImplBase() {
+        internal class GrpcImpl(private val jay: Jay) : LauncherServiceGrpc.LauncherServiceImplBase() {
 
             private var logName = "logs"
             private var logging = false
@@ -73,18 +73,20 @@ class X86JayLauncher {
             }
 
             override fun startWorker(request: x86JayGRPC.Empty?, responseObserver: StreamObserver<x86JayGRPC.BoolValue>?) {
-                running = true
+                runningLatch = CountDownLatch(1)
                 enableLogs()
                 thread(start = true) {
-                    odClient.startWorker()
-                    do (sleep(1)) while (running)
+                    jay.startProfiler()
+                    sleep(500)
+                    jay.startWorker()
+                    runningLatch?.await()
                 }
                 genericComplete(x86JayGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
             }
 
             override fun stop(request: x86JayGRPC.Empty?, responseObserver: StreamObserver<x86JayGRPC.BoolValue>?) {
-                odClient.destroy()
-                running = false
+                jay.destroy()
+                runningLatch?.countDown()
                 disableLogs()
                 genericComplete(x86JayGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
             }

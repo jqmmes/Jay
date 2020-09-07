@@ -15,7 +15,7 @@ enum StatusCode {
     TimedOut = 6;
 }
 
-enum BatteryStatus {
+enum PowerStatus {
     FULL = 0;
     AC_CHARGING = 1; // AC Charging
     USB_CHARGING = 2; // USB Charging
@@ -67,12 +67,12 @@ message CurrentEstimations {
 }
 
 message PowerEstimations {
-    int32 idle = 1;
-    int32 compute = 2;
-    int32 rx = 3;
-    int32 tx = 4;
+    float idle = 1;
+    float compute = 2;
+    float rx = 3;
+    float tx = 4;
     int32 batteryLevel = 5;
-    int32 batteryCapacity = 6;
+    float batteryCapacity = 6;
 }
 
 message Worker {
@@ -82,7 +82,7 @@ message Worker {
 
     int32 batteryLevel = 3;
     int32 batteryCapacity = 4;
-    BatteryStatus batteryStatus = 5;
+    PowerStatus batteryStatus = 5;
 
     int32 cpuCores = 6;
     int32 queueSize = 7;
@@ -203,15 +203,16 @@ message Time {
     int64 value = 1;
 }
 
-message Battery {
-    int32 batteryLevel = 1;
-    int32 batteryCurrent = 2;
-    int32 batteryVoltage = 3;
-    float batteryTemperature = 4;
-    int64 batteryEnergy = 5;
-    int32 batteryCharge = 6;
-    int32 batteryCapacity = 7;
-    BatteryStatus batteryStatus = 8;
+message Power {
+    int32 level = 1;
+    int32 current = 2;
+    float power = 3;
+    float voltage = 4;
+    float temperature = 5;
+    int64 energy = 6;
+    int32 charge = 7;
+    int32 capacity = 8;
+    PowerStatus status = 9;
 }
 
 message Transport {
@@ -248,7 +249,7 @@ message TimeRange {
 message ProfileRecording {
     TimeRange timeRange = 1;
     repeated JayState jayState = 2;
-    Battery battery = 3;
+    Power power = 3;
     int32 cpuCount = 4;
     repeated int64 cpuFrequency = 5;
     Transport transport = 6;

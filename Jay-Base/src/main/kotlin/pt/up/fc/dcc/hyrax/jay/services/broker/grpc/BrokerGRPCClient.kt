@@ -74,17 +74,17 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     JayLogger.logInfo("DATA_REACHED_SERVER", task?.id ?: "",
                             "DATA_SIZE=${task?.toByteArray()?.size}",
                             "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
-                            "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
-                            "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
-                            "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+                            "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
+                            "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
+                            "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
                 }
                 JayProto.StatusCode.Success -> {
                     JayLogger.logInfo("EXECUTION_COMPLETE", task?.id ?: "",
                             "DATA_SIZE=${task?.toByteArray()?.size}",
                             "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
-                            "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
-                            "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
-                            "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+                            "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
+                            "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
+                            "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
                     callback?.invoke(lastResult ?: JayProto.Response.getDefaultInstance())
                     schedulerInformCallback?.invoke()
                     endCb()
@@ -97,18 +97,18 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         override fun onError(t: Throwable) {
             JayLogger.logError("ERROR", task?.id ?: "")
             callback?.invoke(JayProto.Response.getDefaultInstance()); JayLogger.logError("ERROR", task?.id ?: "",
-                    "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
-                    "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
-                    "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+                    "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
+                    "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
+                    "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
             t.printStackTrace()
         }
 
         override fun onCompleted() {
             JayLogger.logInfo("COMPLETE", task?.id ?: "",
                     "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
-                    "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
-                    "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
-                    "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+                    "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
+                    "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
+                    "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
         }
     }
 
@@ -126,9 +126,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         executePool.submit {
             val startTime = System.currentTimeMillis()
             JayLogger.logInfo("INIT", taskId,
-                    "BATTERY_CHARGE=${BrokerService.batteryMonitor?.getBatteryCharge()}",
-                    "BATTERY_CURRENT=${BrokerService.batteryMonitor?.getBatteryCurrentNow()}",
-                    "BATTERY_REMAINING_ENERGY=${BrokerService.batteryMonitor?.getBatteryRemainingEnergy()}")
+                    "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
+                    "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
+                    "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
             var taskStreamObserver: StreamObserver<JayProto.Task>? = null
 
             taskStreamObserver = asyncStub.executeTask(ResponseStreamObserver(
