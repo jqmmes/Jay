@@ -119,4 +119,15 @@ class ProfilerGRPCClient(private val host: String) : GRPCClientBase<ProfilerServ
             JayProto.CurrentEstimations.getDefaultInstance()
         }
     }
+
+    fun getExpectedPower(): JayProto.PowerEstimations? {
+        checkConnection()
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        return try {
+            blockingStub.withDeadlineAfter(JaySettings.BLOCKING_STUB_DEADLINE, TimeUnit.MILLISECONDS)
+                    .getExpectedPower(Empty.getDefaultInstance())
+        } catch (ignore: Exception) {
+            JayProto.PowerEstimations.getDefaultInstance()
+        }
+    }
 }

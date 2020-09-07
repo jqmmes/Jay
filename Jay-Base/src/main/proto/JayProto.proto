@@ -337,7 +337,13 @@ service BrokerService {
     rpc getExpectedCurrent (google.protobuf.Empty) returns (CurrentEstimations) {
     };
 
+    rpc getExpectedPower (google.protobuf.Empty) returns (PowerEstimations) {
+    };
+
     rpc getExpectedCurrentFromRemote (Worker) returns (CurrentEstimations) {
+    };
+
+    rpc getExpectedPowerFromRemote (Worker) returns (PowerEstimations) {
     };
 
     rpc networkBenchmark (Task) returns (google.protobuf.Empty) {
@@ -361,6 +367,8 @@ service ProfilerService {
     rpc getDeviceStatus (google.protobuf.Empty) returns (ProfileRecording) {
     };
     rpc getExpectedCurrent (google.protobuf.Empty) returns (CurrentEstimations) {
+    };
+    rpc getExpectedPower (google.protobuf.Empty) returns (PowerEstimations) {
     };
     rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
     };

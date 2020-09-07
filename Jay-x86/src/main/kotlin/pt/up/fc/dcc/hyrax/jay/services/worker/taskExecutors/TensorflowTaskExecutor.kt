@@ -79,4 +79,8 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
             else -> genErrorWithCallback(statusCallback, NoSuchElementException("Unknown Action: $action"))
         }
     }
+
+    override fun getDefaultResponse(callback: ((Any) -> Unit)?) {
+        TODO("Not yet implemented")
+    }
 }

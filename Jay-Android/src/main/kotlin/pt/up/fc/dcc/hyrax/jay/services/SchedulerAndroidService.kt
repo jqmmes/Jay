@@ -43,6 +43,13 @@ internal class SchedulerAndroidService : Service() {
         SchedulerService.registerScheduler(EAScheduler(Worker.Type.LOCAL, Worker.Type.CLOUD))
         SchedulerService.registerScheduler(EAScheduler(Worker.Type.REMOTE, Worker.Type.CLOUD))
         SchedulerService.registerScheduler(EAScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE, Worker.Type.CLOUD))
+        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL))
+        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.REMOTE))
+        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.CLOUD))
+        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE))
+        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.CLOUD))
+        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.REMOTE, Worker.Type.CLOUD))
+        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE, Worker.Type.CLOUD))
         SchedulerService.start(true, AndroidBatteryMonitor(this))
     }
 

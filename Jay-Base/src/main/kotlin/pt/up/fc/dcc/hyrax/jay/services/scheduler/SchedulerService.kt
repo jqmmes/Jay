@@ -165,6 +165,11 @@ object SchedulerService {
         broker.getExpectedCurrentFromRemote(worker) { callback(it) }
     }
 
+    internal fun getExpectedPower(worker: Worker?, callback: ((JayProto.PowerEstimations?) -> Unit)) {
+        if (worker?.type == Worker.Type.LOCAL) callback(profiler.getExpectedPower())
+        broker.getExpectedPowerFromRemote(worker) { callback(it) }
+    }
+
     fun setSchedulerSettings(settingMap: Map<String, Any>, callback: ((JayProto.Status?) -> Unit)?) {
         callback?.invoke(this.scheduler?.setSettings(settingMap))
     }

@@ -150,6 +150,14 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             BrokerService.getExpectedCurrentFromRemote(request?.id) { S -> genericComplete(S, responseObserver) }
         }
 
+        override fun getExpectedPower(request: Empty?, responseObserver: StreamObserver<JayProto.PowerEstimations>?) {
+            genericComplete(BrokerService.profiler.getExpectedPower(), responseObserver)
+        }
+
+        override fun getExpectedPowerFromRemote(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.PowerEstimations>?) {
+            BrokerService.getExpectedPowerFromRemote(request?.id) { S -> genericComplete(S, responseObserver) }
+        }
+
         override fun stopService(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
             BrokerService.stopService { S ->
                 genericComplete(S, responseObserver)

@@ -380,6 +380,18 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener(Runnable { callback.invoke(call.get()); JayLogger.logInfo("COMPLETE") }, AbstractJay.executorPool)
     }
 
+    fun getExpectedPower(callback: ((JayProto.PowerEstimations?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.getExpectedPower(Empty.getDefaultInstance())
+        call.addListener(Runnable { callback.invoke(call.get()); JayLogger.logInfo("COMPLETE") }, AbstractJay.executorPool)
+    }
+
+    fun getExpectedPowerFromRemote(worker: JayProto.Worker?, callback: ((JayProto.PowerEstimations?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
+        val call = futureStub.getExpectedPowerFromRemote(worker)
+        call.addListener(Runnable { callback.invoke(call.get()); JayLogger.logInfo("COMPLETE") }, AbstractJay.executorPool)
+    }
+
     fun announceServiceStatus(serviceStatus: JayProto.ServiceStatus, callback: ((JayProto.Status?) -> Unit)) {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()

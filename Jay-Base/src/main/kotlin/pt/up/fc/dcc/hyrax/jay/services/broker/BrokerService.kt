@@ -426,6 +426,11 @@ object BrokerService {
         workers[id]!!.grpc.getExpectedCurrent(callback)
     }
 
+    fun getExpectedPowerFromRemote(id: String?, callback: ((PowerEstimations?) -> Unit)) {
+        if (!workers.containsKey(id)) callback.invoke(PowerEstimations.getDefaultInstance())
+        workers[id]!!.grpc.getExpectedPower(callback)
+    }
+
     fun setSchedulerSettings(request: Settings?, callback: ((Status?) -> Unit)?) {
         JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
         if (schedulerServiceRunning) scheduler.setSchedulerSettings(request, callback)
