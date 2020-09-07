@@ -14,15 +14,20 @@ object X86PowerMonitor : PowerMonitor {
         JayLogger.logInfo("CLOSING", "", "POWER_MONITOR")
     }
 
-    override fun getCurrentNow(): Int {
-        return 0
+    override fun getCurrentNow(): Float {
+        return 0f
     }
 
+    /**
+     * Returns the instant power spent on cloudlet in Watt.
+     *
+     * We need to negate this value to match battery usage, which creates a negative current.
+     */
     override fun getPower(): Float {
         try {
             val powerFile = File("/tmp/instant_consumption.power")
             if (powerFile.exists() && powerFile.isFile) {
-                return Scanner(powerFile).nextFloat()
+                return Scanner(powerFile).nextFloat().unaryMinus()
             }
         } catch (ignore: Exception) {
         }
@@ -33,12 +38,12 @@ object X86PowerMonitor : PowerMonitor {
         return Long.MAX_VALUE
     }
 
-    override fun getCharge(): Int {
-        return Int.MAX_VALUE
+    override fun getCharge(): Float {
+        return Float.MAX_VALUE
     }
 
-    override fun getCapacity(): Int {
-        return Int.MAX_VALUE
+    override fun getCapacity(): Float {
+        return Float.MAX_VALUE
     }
 
     override fun getLevel(): Int {

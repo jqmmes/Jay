@@ -10,15 +10,12 @@ import java.util.concurrent.CountDownLatch
 import kotlin.random.Random
 
 /**
- * This scheduler should control readings from Profiler. Samples can be obtained via:
- * - Random Sampling
- * - On<Action> (OnBoot, OnScheduler, onLocalScheduling (Control task completion) or onOffloading
- *
- * Sampling should be processed using JayStates and Battery/Load/CPU usage factors
+ * Green Task Scheduler will always chose the lowest energy spent per task not looking at queue sizes or idle times.
+ * In order to control the dessimination of tasks, we need to implement deadlines
  *
  */
 
-class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAScheduler") {
+class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("GreenTaskScheduler") {
 
     private var devices = devices.toList()
     private val executionPool = JayThreadPoolExecutor(10)
@@ -56,38 +53,47 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         val powerLatch = CountDownLatch(workers.size)
         val powerMap = mutableMapOf<JayProto.Worker, JayProto.PowerEstimations?>()
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
+        val localExpectedPower = SchedulerService.profiler.getExpectedPower()
         val lock = Object()
         workers.forEach { worker ->
-            executionPool.submit {
-                SchedulerService.getExpectedPower(worker) {
-                    JayLogger.logInfo("GOT_EXPECTED_POWER", task.id,
-                            "WORKER=${worker?.id}",
-                            "BAT_CAPACITY=${it?.batteryCapacity}",
-                            "BAT_LEVEL=${it?.batteryLevel}",
-                            "BAT_COMPUTE=${it?.compute}",
-                            "BAT_IDLE=${it?.idle}",
-                            "BAT_TX=${it?.tx}",
-                            "BAT_RX=${it?.rx}")
-                    synchronized(lock) {
-                        powerMap[worker!!] = it
+            if (canMeetDeadline(task, worker)) {
+                executionPool.submit {
+                    SchedulerService.getExpectedPower(worker) {
+                        JayLogger.logInfo("GOT_EXPECTED_POWER", task.id,
+                                "WORKER=${worker?.id}",
+                                "BAT_CAPACITY=${it?.batteryCapacity}",
+                                "BAT_LEVEL=${it?.batteryLevel}",
+                                "BAT_COMPUTE=${it?.compute}",
+                                "BAT_IDLE=${it?.idle}",
+                                "BAT_TX=${it?.tx}",
+                                "BAT_RX=${it?.rx}")
+                        synchronized(lock) {
+                            powerMap[worker!!] = it
+                        }
+                        powerLatch.countDown()
                     }
-                    powerLatch.countDown()
                 }
+            } else {
+                powerLatch.countDown()
             }
         }
         powerLatch.await()
-        var minSpend = Float.MIN_VALUE
+        var maxSpend = Float.MAX_VALUE
         synchronized(lock) {
-            powerMap.forEach { (w, c) ->
-                val spend: Float = getEnergySpentComputing(task, w, c)
-                JayLogger.logInfo("BATTERY_SPENT_REMOTE", task.id, "WORKER=${w.id}", "SPEND=$spend")
-                //energy spend is negative, so higher value the better
-                if (spend > minSpend) {
+            powerMap.forEach { (worker, powerEstimations) ->
+                // we receive negative power values from profiler, so we negate them to be more readable. We want the minimum consumption
+                val spend: Float = (if (worker.type == JayProto.Worker.Type.LOCAL) {
+                    (worker.avgTimePerTask / 3600f) * (powerEstimations?.compute ?: 0f)
+                } else {
+                    getEnergySpentComputing(task, worker, powerEstimations, localExpectedPower)
+                }).unaryMinus()
+                JayLogger.logInfo("EXPECTED_BATTERY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
+                if (spend < maxSpend) {
                     possibleWorkers.clear()
-                    minSpend = spend
-                    possibleWorkers.add(w)
-                } else if (spend == minSpend) {
-                    possibleWorkers.add(w)
+                    maxSpend = spend
+                    possibleWorkers.add(worker)
+                } else if (spend == maxSpend) {
+                    possibleWorkers.add(worker)
                 }
             }
         }
@@ -96,13 +102,19 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return w
     }
 
-    // This only takes into account the energy spent on computing host
-    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, power: JayProto.PowerEstimations?): Float {
-        println("ok")
-        return worker.avgTimePerTask * ((power?.compute ?: 0f) / 3600) +
-                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((power?.rx ?: 0f) / 3600) +
-                worker.queueSize * worker.avgTimePerTask * ((power?.compute ?: 0f) / 3600) +
-                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((power?.tx ?: 0f) / 3600)
+    private fun canMeetDeadline(task: Task, worker: JayProto.Worker?): Boolean {
+        if (worker == null) return false
+        if (task.deadline == null) return true
+        if (((worker.queueSize + 1) * (worker.avgTimePerTask / 1000f)) <= task.deadline)
+            return true
+        return false
+    }
+
+    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, power: JayProto.PowerEstimations?, local: JayProto.PowerEstimations?): Float {
+        return ((worker.avgTimePerTask / 1000f) / 3600f) * (power?.compute ?: 0f) +
+                (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * (local?.tx ?: 0f) +
+                (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * (power?.rx ?: 0f) +
+                (((worker.avgResultSize * worker.bandwidthEstimate.toLong()) / 1000f) / 3600) * (power?.tx ?: 0f)
     }
 
     override fun destroy() {

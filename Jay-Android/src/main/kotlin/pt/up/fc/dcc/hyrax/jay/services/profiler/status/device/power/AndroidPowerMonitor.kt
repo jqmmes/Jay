@@ -385,12 +385,17 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
         }
     }
 
-    override fun getCurrentNow(): Int {
+    /**
+     * Obtain the current from the battery in Ampere.
+     *
+     * We obtain the value in mAh (with or without a decimal point) and convert it to A before returning.
+     */
+    override fun getCurrentNow(): Float {
         val current = mBatteryManager.getIntProperty(BATTERY_PROPERTY_CURRENT_NOW)
         signal = if (!isCharging() && current > 0) -1 else 1
         if (abs(current) > 10000) scale = 100
         if (abs(current) > 100000) scale = 1000
-        return (current * signal) / scale
+        return ((current * signal) / scale) / 1000f
     }
 
     override fun getPower(): Float {
@@ -402,12 +407,18 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
         return mBatteryManager.getLongProperty(BATTERY_PROPERTY_ENERGY_COUNTER)
     }
 
-    override fun getCharge(): Int {
-        return mBatteryManager.getIntProperty(BATTERY_PROPERTY_CHARGE_COUNTER)
+    override fun getCharge(): Float {
+        return mBatteryManager.getIntProperty(BATTERY_PROPERTY_CHARGE_COUNTER) / 1000f
     }
 
-    override fun getCapacity(): Int {
-        return getBatteryCapacityReflection()
+
+    /**
+     * Return the battery factory capacity in Ampere-Hour.
+     *
+     * We obtain the value in mAmpere-Hour and convert it to Ah before returning
+     */
+    override fun getCapacity(): Float {
+        return getBatteryCapacityReflection() / 1000f
     }
 
     // https://android.googlesource.com/platform/frameworks/base/+/a029ea1/core/java/com/android/internal/os/PowerProfile.java

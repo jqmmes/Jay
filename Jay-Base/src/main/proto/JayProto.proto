@@ -57,12 +57,12 @@ message Status {
 
 // todo: change from current to power
 message CurrentEstimations {
-    int32 idle = 1;
-    int32 compute = 2;
-    int32 rx = 3;
-    int32 tx = 4;
+    float idle = 1;
+    float compute = 2;
+    float rx = 3;
+    float tx = 4;
     int32 batteryLevel = 5;
-    int32 batteryCapacity = 6;
+    float batteryCapacity = 6;
     float batteryVoltage = 7;
 }
 
@@ -205,13 +205,13 @@ message Time {
 
 message Power {
     int32 level = 1;
-    int32 current = 2;
+    float current = 2;
     float power = 3;
     float voltage = 4;
     float temperature = 5;
     int64 energy = 6;
-    int32 charge = 7;
-    int32 capacity = 8;
+    float charge = 7;
+    float capacity = 8;
     PowerStatus status = 9;
 }
 

@@ -88,10 +88,10 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
             }
         }
         currentLatch.await()
-        var minSpend = Long.MIN_VALUE
+        var minSpend = Float.MIN_VALUE
         synchronized(lock) {
             currentMap.forEach { (w, c) ->
-                val spend: Long = getEnergySpentComputing(task, w, c)
+                val spend: Float = getEnergySpentComputing(task, w, c)
                 JayLogger.logInfo("BATTERY_SPENT_REMOTE", task.id, "WORKER=${w.id}", "SPEND=$spend")
                 //energy spend is negative, so higher value the better
                 if (spend > minSpend) {
@@ -109,11 +109,11 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
     }
 
     // This only takes into account the energy spent on computing host
-    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, current: JayProto.CurrentEstimations?): Long {
-        return worker.avgTimePerTask * ((current?.compute ?: 0) / 3600) +
-                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((current?.rx ?: 0) / 3600) +
-                worker.queueSize * worker.avgTimePerTask * ((current?.compute ?: 0) / 3600) +
-                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((current?.tx ?: 0) / 3600)
+    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, current: JayProto.CurrentEstimations?): Float {
+        return worker.avgTimePerTask * ((current?.compute ?: 0f) / 3600) +
+                worker.bandwidthEstimate.toLong() * task.dataSize.toLong() * ((current?.rx ?: 0f) / 3600) +
+                worker.queueSize * worker.avgTimePerTask * ((current?.compute ?: 0f) / 3600) +
+                worker.avgResultSize * worker.bandwidthEstimate.toLong() * ((current?.tx ?: 0f) / 3600)
     }
 
     /*

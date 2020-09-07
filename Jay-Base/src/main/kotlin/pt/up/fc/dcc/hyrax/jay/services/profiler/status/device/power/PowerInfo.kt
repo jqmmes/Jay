@@ -7,10 +7,10 @@ class PowerInfo {
 
     constructor()
 
-    constructor(level: Int, current: Int, power: Float,
+    constructor(level: Int, current: Float, power: Float,
                 voltage: Float, temperature: Float,
-                energy: Long, charge: Int,
-                capacity: Int, status: PowerStatus) {
+                energy: Long, charge: Float,
+                capacity: Float, status: PowerStatus) {
         this.level = level
         this.current = current
         this.power = power
@@ -23,12 +23,12 @@ class PowerInfo {
     }
 
     var level: Int = -1
-    var current: Int = -1
+    var current: Float = -1f
     var power: Float = -1f
     var voltage: Float = -1f
     var temperature: Float = -1f
     var energy: Long = -1L
-    var charge: Int = -1
-    var capacity: Int = -1
+    var charge: Float = -1f
+    var capacity: Float = -1f
     var status: PowerStatus = UNKNOWN
 }

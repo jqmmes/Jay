@@ -7,11 +7,11 @@ interface PowerMonitor {
     fun setCallbacks(_levelChangeCallback: (Int, Float, Float) -> Unit, _statusChangeCallback: (PowerStatus) -> Unit)
     fun monitor()
     fun destroy()
-    fun getCurrentNow(): Int
-    fun getPower(): Float
-    fun getRemainingEnergy(): Long
-    fun getCharge(): Int
-    fun getCapacity(): Int
+    fun getCurrentNow(): Float // Ampere (A)
+    fun getPower(): Float // Watt (W)
+    fun getRemainingEnergy(): Long // Watt-Hour (Wh)
+    fun getCharge(): Float // Ampere-Hour (Ah)
+    fun getCapacity(): Float // Ampere-Hour (Ah)
     fun getLevel(): Int
     fun getStatus(): PowerStatus
 }
