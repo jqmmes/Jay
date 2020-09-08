@@ -462,7 +462,7 @@ object ProfilerService {
                 JayLogger.logInfo("NEW_CPU_READING", "", "STATE=$cpuEstimatorKey", "SPEED=$cpuSpeeds")
             }
 
-            val batteryEstimationKey = BatteryEstimationKey(medium, activeSensors, powerInfo.status)
+            val batteryEstimationKey = BatteryEstimationKey(medium, activeSensors, this.powerInfo.status)
             synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
                 if (!this.rawExpectedCurrentHashMap.containsKey(batteryEstimationKey)) {
                     this.rawExpectedCurrentHashMap[batteryEstimationKey] = LinkedHashMap()
@@ -471,8 +471,8 @@ object ProfilerService {
                     this.rawExpectedCurrentHashMap[batteryEstimationKey]!![cpuSpeeds] =
                             CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
                 }
-                this.rawExpectedCurrentHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(powerInfo.current)
-                JayLogger.logInfo("NEW_CURRENT_READING", "", "STATE=$batteryEstimationKey", "CURRENT=${powerInfo.current}")
+                this.rawExpectedCurrentHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(this.powerInfo.current)
+                JayLogger.logInfo("NEW_CURRENT_READING", "", "STATE=$batteryEstimationKey", "CURRENT=${this.powerInfo.current}")
             }
 
             synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
@@ -483,8 +483,8 @@ object ProfilerService {
                     this.rawExpectedPowerHashMap[batteryEstimationKey]!![cpuSpeeds] =
                             CircularFifoQueue(JaySettings.CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE)
                 }
-                this.rawExpectedPowerHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(powerInfo.power)
-                JayLogger.logInfo("NEW_POWER_READING", "", "STATE=$batteryEstimationKey", "POWER=${powerInfo.power}")
+                this.rawExpectedPowerHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(this.powerInfo.power)
+                JayLogger.logInfo("NEW_POWER_READING", "", "STATE=$batteryEstimationKey", "POWER=${this.powerInfo.power}")
             }
 
             JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)

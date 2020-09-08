@@ -4,7 +4,6 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.PowerMonitor
 import java.io.File
-import java.util.*
 
 object X86PowerMonitor : PowerMonitor {
     override fun setCallbacks(_levelChangeCallback: (Int, Float, Float) -> Unit, _statusChangeCallback: (PowerStatus) -> Unit) {}
@@ -27,7 +26,8 @@ object X86PowerMonitor : PowerMonitor {
         try {
             val powerFile = File("/tmp/instant_consumption.power")
             if (powerFile.exists() && powerFile.isFile) {
-                return Scanner(powerFile).nextFloat().unaryMinus()
+                val value = powerFile.readText().toFloat()
+                return value.unaryMinus()
             }
         } catch (ignore: Exception) {
         }
