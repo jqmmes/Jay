@@ -9,9 +9,11 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.BatteryManager.*
 import android.os.Build
+import com.jaredrummler.android.device.DeviceName
 import eu.chainfire.libsuperuser.Shell
 import eu.chainfire.libsuperuser.Shell.OnSyncCommandLineListener
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus
 import java.io.File
 import java.util.*
@@ -225,7 +227,7 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
     }
 
     override fun monitor() {
-        context.registerReceiver( levelMonitor, IntentFilter( ACTION_BATTERY_CHANGED ) )
+        context.registerReceiver(levelMonitor, IntentFilter(ACTION_BATTERY_CHANGED))
         val filterRefreshUpdate = IntentFilter()
         filterRefreshUpdate.addAction(ACTION_POWER_CONNECTED)
         filterRefreshUpdate.addAction(ACTION_POWER_DISCONNECTED)
@@ -382,6 +384,13 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
                 else -> PowerStatus.CHARGING
             }
             else -> PowerStatus.DISCHARGING
+        }
+    }
+
+    override fun getFixedPowerEstimations(): JayProto.PowerEstimations {
+        DeviceName.init(context)
+        when (DeviceName.getDeviceName()) {
+
         }
     }
 

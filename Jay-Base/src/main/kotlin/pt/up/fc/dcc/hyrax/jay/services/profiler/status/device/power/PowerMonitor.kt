@@ -1,7 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power
 
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerEstimations
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus
-
 
 interface PowerMonitor {
     fun setCallbacks(_levelChangeCallback: (Int, Float, Float) -> Unit, _statusChangeCallback: (PowerStatus) -> Unit)
@@ -14,4 +14,5 @@ interface PowerMonitor {
     fun getCapacity(): Float // Ampere-Hour (Ah)
     fun getLevel(): Int
     fun getStatus(): PowerStatus
+    fun getFixedPowerEstimations(): PowerEstimations
 }

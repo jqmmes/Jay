@@ -54,4 +54,6 @@ object JaySettings {
 
     var TRANSFER_BASELINE_FLAG = false
     var TRANSFER_BASELINE_DURATION = 10000L // 10 minutes
+
+    var USE_FIXED_POWER_ESTIMATIONS: Boolean = true
 }

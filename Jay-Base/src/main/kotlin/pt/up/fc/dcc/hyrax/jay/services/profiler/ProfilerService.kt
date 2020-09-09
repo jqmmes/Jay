@@ -255,24 +255,28 @@ object ProfilerService {
     }
 
     fun getExpectedPowers(): PowerEstimations? {
-        val key = BatteryEstimationKey(this.transportManager?.getTransport(),
-                this.sensorManager?.getActiveSensors() ?: setOf(),
-                this.powerInfo.status)
+        if (JaySettings.USE_FIXED_POWER_ESTIMATIONS) {
+            return powerMonitor?.getFixedPowerEstimations()
+        } else {
+            val key = BatteryEstimationKey(this.transportManager?.getTransport(),
+                    this.sensorManager?.getActiveSensors() ?: setOf(),
+                    this.powerInfo.status)
 
-        val builder = PowerEstimations.newBuilder()
-        synchronized(EXPECTED_CPU_MAP_LOCK) {
-            builder.idle = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(setOf(JayState.IDLE), null)]
-                    ?: listOf()) ?: 0f
-            builder.compute = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)]
-                    ?: listOf()) ?: 0f
-            builder.rx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)]
-                    ?: listOf()) ?: 0f
-            builder.tx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)]
-                    ?: listOf()) ?: 0f
+            val builder = PowerEstimations.newBuilder()
+            synchronized(EXPECTED_CPU_MAP_LOCK) {
+                builder.idle = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(setOf(JayState.IDLE), null)]
+                        ?: listOf()) ?: 0f
+                builder.compute = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)]
+                        ?: listOf()) ?: 0f
+                builder.rx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)]
+                        ?: listOf()) ?: 0f
+                builder.tx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)]
+                        ?: listOf()) ?: 0f
+            }
+            builder.batteryLevel = this.powerInfo.level
+            builder.batteryCapacity = (this.powerInfo.capacity * this.powerInfo.voltage)
+            return builder.build()
         }
-        builder.batteryLevel = this.powerInfo.level
-        builder.batteryCapacity = (this.powerInfo.capacity * this.powerInfo.voltage)
-        return builder.build()
     }
 
     fun start(useNettyServer: Boolean = false, powerMonitor: PowerMonitor? = null, transportManager:
