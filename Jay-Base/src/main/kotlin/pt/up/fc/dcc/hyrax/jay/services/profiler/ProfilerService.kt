@@ -256,7 +256,7 @@ object ProfilerService {
 
     fun getExpectedPowers(): PowerEstimations? {
         if (JaySettings.USE_FIXED_POWER_ESTIMATIONS) {
-            return powerMonitor?.getFixedPowerEstimations()
+            return this.powerMonitor?.getFixedPowerEstimations()
         } else {
             val key = BatteryEstimationKey(this.transportManager?.getTransport(),
                     this.sensorManager?.getActiveSensors() ?: setOf(),

@@ -4,6 +4,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayThreadPoolExecutor
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.CountDownLatch
@@ -11,7 +12,7 @@ import kotlin.random.Random
 
 /**
  * Green Task Scheduler will always chose the lowest energy spent per task not looking at queue sizes or idle times.
- * In order to control the dessimination of tasks, we need to implement deadlines
+ * In order to control the dissemination of tasks, we need to implement deadlines
  *
  */
 
@@ -43,20 +44,14 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return "${super.getName()} [${devices.trimEnd(' ', ',')}]"
     }
 
-    /**
-     * In here we have to estimate how much energy will be spent on the remote device
-     * i.e. task receive, queue time (remote device will be working), compute, result send
-     */
-    override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("BEGIN_SCHEDULING", task.id)
-        val workers = SchedulerService.getWorkers(devices).values
-        val powerLatch = CountDownLatch(workers.size)
+    private fun getPowerMap(workers: Set<JayProto.Worker?>, task: Task, skipDeadline: Boolean = false):
+            MutableMap<JayProto.Worker, JayProto.PowerEstimations?> {
         val powerMap = mutableMapOf<JayProto.Worker, JayProto.PowerEstimations?>()
-        val possibleWorkers = mutableSetOf<JayProto.Worker>()
-        val localExpectedPower = SchedulerService.profiler.getExpectedPower()
         val lock = Object()
+        val powerLatch = CountDownLatch(workers.size)
+
         workers.forEach { worker ->
-            if (canMeetDeadline(task, worker)) {
+            if (canMeetDeadline(task, worker) || skipDeadline) {
                 executionPool.submit {
                     SchedulerService.getExpectedPower(worker) {
                         JayLogger.logInfo("GOT_EXPECTED_POWER", task.id,
@@ -78,6 +73,29 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
             }
         }
         powerLatch.await()
+        return powerMap
+    }
+
+    /**
+     * In here we have to estimate how much energy will be spent on the remote device
+     * i.e. task receive, queue time (remote device will be working), compute, result send
+     */
+    override fun scheduleTask(task: Task): JayProto.Worker? {
+        JayLogger.logInfo("BEGIN_SCHEDULING", task.id)
+        val workers = SchedulerService.getWorkers(devices).values
+        var powerMap = getPowerMap(workers.toSet(), task)
+        val possibleWorkers = mutableSetOf<JayProto.Worker>()
+        val localExpectedPower = SchedulerService.profiler.getExpectedPower()
+        val lock = Object()
+
+        if (powerMap.isEmpty()) {
+            JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
+            when (JaySettings.TASK_DEADLINE_BROKEN_SELECTION) {
+                "EXECUTE_LOCALLY" -> return SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.first()
+                // "FASTER_COMPLETION" -> null // todo
+                "LOWEST_ENERGY" -> powerMap = getPowerMap(workers.toSet(), task, true)
+            }
+        }
         var maxSpend = Float.MAX_VALUE
         synchronized(lock) {
             powerMap.forEach { (worker, powerEstimations) ->
@@ -104,8 +122,8 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
 
     private fun canMeetDeadline(task: Task, worker: JayProto.Worker?): Boolean {
         if (worker == null) return false
-        if (task.deadline == null) return true
-        if (((worker.queueSize + 1) * (worker.avgTimePerTask / 1000f)) <= task.deadline)
+        if (task.deadlineDuration == null) return true
+        if (((worker.queueSize + 1) * (worker.avgTimePerTask / 1000f)) <= task.deadlineDuration)
             return true
         return false
     }

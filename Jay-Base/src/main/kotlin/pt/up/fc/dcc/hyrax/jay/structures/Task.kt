@@ -11,11 +11,13 @@ class Task {
     val dataSize: Int
     val creationTimeStamp: Long
     val deadline: Long?
+    val deadlineDuration: Long?
 
     constructor(taskData: ByteArray, deadline: Long? = null) {
         id = UUID.randomUUID().toString()
         data = taskData
         dataSize = data.size
+        deadlineDuration = deadline
         creationTimeStamp = System.currentTimeMillis()
         if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
     }
@@ -24,6 +26,7 @@ class Task {
         id = taskData!!.id
         data = taskData.data.toByteArray()
         dataSize = data.size
+        deadlineDuration = deadline
         creationTimeStamp = System.currentTimeMillis()
         if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
     }
@@ -32,6 +35,7 @@ class Task {
         id = taskData!!.id
         data = ByteArray(0)
         dataSize = taskData.dataSize
+        deadlineDuration = deadline
         creationTimeStamp = System.currentTimeMillis()
         if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
     }

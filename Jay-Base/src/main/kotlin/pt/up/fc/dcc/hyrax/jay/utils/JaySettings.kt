@@ -55,5 +55,8 @@ object JaySettings {
     var TRANSFER_BASELINE_FLAG = false
     var TRANSFER_BASELINE_DURATION = 10000L // 10 minutes
 
-    var USE_FIXED_POWER_ESTIMATIONS: Boolean = true
+    var USE_FIXED_POWER_ESTIMATIONS: Boolean = false
+
+    // Green Scheduler deadline broken decision
+    var TASK_DEADLINE_BROKEN_SELECTION: String = "LOWEST_ENERGY"
 }

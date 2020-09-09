@@ -174,8 +174,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 JayLogger.logInfo("EXTRACTING_FRAMES", actions = *arrayOf("COMPLETE", "REQUEST_TYPE=VIDEO", "REQUEST_ID=$reqId"))
             } else {
                 JayLogger.logInfo("SUBMITTING_TASK", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
-                scheduleTask(Task(BrokerService.getByteArrayFromId(reqId)
-                        ?: ByteArray(0)).getProto(), responseObserver)
+                scheduleTask(Task(BrokerService.getByteArrayFromId(reqId) ?: ByteArray(0),
+                        request?.deadline).getProto(), responseObserver)
                 JayLogger.logInfo("TASK_SUBMITTED", actions = *arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
             JayLogger.logInfo("COMPLETE", actions = *arrayOf("REQUEST_ID=$reqId"))
@@ -251,6 +251,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         } catch (ignore: Exception) {
                             10000
                         }
+                        "USE_FIXED_POWER_ESTIMATIONS" -> if (V.toLowerCase(Locale.getDefault()) == "true") JaySettings.USE_FIXED_POWER_ESTIMATIONS = true
+                        "TASK_DEADLINE_BROKEN_SELECTION" -> JaySettings.TASK_DEADLINE_BROKEN_SELECTION = V
                     }
                 }
                 genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
