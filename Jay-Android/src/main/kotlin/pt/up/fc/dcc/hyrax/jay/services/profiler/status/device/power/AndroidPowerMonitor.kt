@@ -389,9 +389,18 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
 
     override fun getFixedPowerEstimations(): JayProto.PowerEstimations {
         DeviceName.init(context)
+        JayLogger.logInfo("DEVICE_NAME", "", "NAME=${DeviceName.getDeviceName()}")
         when (DeviceName.getDeviceName()) {
 
         }
+        return JayProto.PowerEstimations.newBuilder()
+                .setBatteryCapacity(getCapacity())
+                .setBatteryLevel(100)
+                .setCompute(94.24f)
+                .setIdle(34.7f)
+                .setRx(35.61f)
+                .setTx(25.61f)
+                .build()
     }
 
     /**

@@ -1,6 +1,7 @@
 package pt.up.fc.dcc.hyrax.jay.services.profiler.status.device
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.PowerMonitor
 import java.io.File
@@ -52,6 +53,17 @@ object X86PowerMonitor : PowerMonitor {
 
     override fun getStatus(): PowerStatus {
         return PowerStatus.FULL
+    }
+
+    override fun getFixedPowerEstimations(): JayProto.PowerEstimations {
+        return JayProto.PowerEstimations.newBuilder()
+                .setBatteryCapacity(getCapacity())
+                .setBatteryLevel(100)
+                .setCompute(94.24f)
+                .setIdle(34.7f)
+                .setRx(35.61f)
+                .setTx(25.61f)
+                .build()
     }
 
 }
