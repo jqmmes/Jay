@@ -69,7 +69,11 @@ object JayUtils {
 
     fun getTaskDetails(task: JayProto.Task?): JayProto.TaskDetails? {
         if (task == null) return JayProto.TaskDetails.getDefaultInstance()
-        return JayProto.TaskDetails.newBuilder().setId(task.id).setDataSize(task.data.size()).build()
+        return JayProto.TaskDetails.newBuilder().setId(task.id)
+                .setDataSize(task.data.size())
+                .setDeadline(task.deadline)
+                .setCreationTimeStamp(task.creationTimeStamp)
+                .build()
     }
 
     fun genWorkerTypes(vararg types: Type): JayProto.WorkerTypes {

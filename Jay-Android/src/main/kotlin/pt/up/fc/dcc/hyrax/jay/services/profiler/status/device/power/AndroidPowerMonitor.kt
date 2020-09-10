@@ -166,6 +166,7 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
 
     private var scale = 1
     private var signal = 1
+    private var deviceName: String = ""
 
     override fun setCallbacks(_levelChangeCallback: (Int, Float, Float) -> Unit,
                               _statusChangeCallback: (PowerStatus) -> Unit) {
@@ -388,9 +389,13 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
     }
 
     override fun getFixedPowerEstimations(): JayProto.PowerEstimations {
-        DeviceName.init(context)
-        JayLogger.logInfo("DEVICE_NAME", "", "NAME=${DeviceName.getDeviceName()}")
-        return when (DeviceName.getDeviceName()) {
+        if (deviceName == "") {
+            DeviceName.init(context)
+            deviceName = DeviceName.getDeviceName(Build.DEVICE, Build.MODEL, "")
+            JayLogger.logInfo("NEW_DEVICE_NAME")
+        }
+        JayLogger.logInfo("GET_FIX_POWERS", "", "NAME=$deviceName")
+        return when (deviceName) {
             "Mi 9T" -> JayProto.PowerEstimations.newBuilder()
                     .setBatteryCapacity(getCapacity())
                     .setBatteryLevel(getLevel())
@@ -431,7 +436,14 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
                     .setRx(2.31f)
                     .setTx(3.13f)
                     .build()
-            else -> JayProto.PowerEstimations.getDefaultInstance()
+            else -> JayProto.PowerEstimations.newBuilder()
+                    .setBatteryCapacity(getCapacity())
+                    .setBatteryLevel(getLevel())
+                    .setCompute(getPower())
+                    .setIdle(getPower())
+                    .setRx(getPower())
+                    .setTx(getPower())
+                    .build()
         }
     }
 

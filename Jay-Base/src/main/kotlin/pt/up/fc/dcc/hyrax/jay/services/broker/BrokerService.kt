@@ -167,8 +167,7 @@ object BrokerService {
                         workers[local.id]!!.addResultSize(R.bytes.size().toLong())
                         callback?.invoke(R)
                     }) {
-                        scheduler
-                                .notifyTaskComplete(taskDetails)
+                        scheduler.notifyTaskComplete(taskDetails)
                     }
                 }
             }

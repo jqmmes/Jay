@@ -21,6 +21,8 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
     private var devices = devices.toList()
     private val executionPool = JayThreadPoolExecutor(10)
     private val offloadedTasks = LinkedHashMap<String, Pair<Long, Long?>>()
+    private val lock = Object()
+    private val offloadedLock = Object()
 
     @Suppress("DuplicatedCode")
     override fun init() {
@@ -39,13 +41,20 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
             }
         }
         SchedulerService.registerNotifyTaskListener { taskId ->
-            if (offloadedTasks.containsKey(taskId)) {
-                if (offloadedTasks[taskId]?.second != null) {
-                    val deltaTask = (System.currentTimeMillis() - offloadedTasks[taskId]!!.first) / 1000f
-                    JayLogger.logInfo("TASK_WITH_DEADLINE_COMPLETED", taskId,
-                            "DEADLINE_MET=${deltaTask <= offloadedTasks[taskId]!!.second!!}")
+            JayLogger.logInfo("TASK_COMPLETE_LISTENER", taskId)
+            synchronized(offloadedLock) {
+                JayLogger.logInfo("DEADLINE_DATA", taskId, offloadedTasks.keys.toString())
+                if (offloadedTasks.containsKey(taskId)) {
+                    JayLogger.logInfo("DEADLINE_DATA_CONTAINS_KEY", taskId, "${offloadedTasks[taskId]?.first}, ${
+                        offloadedTasks[taskId]?.second
+                    }")
+                    if (offloadedTasks[taskId]?.second != null) {
+                        //val deltaTask = (System.currentTimeMillis() - offloadedTasks[taskId]!!.first) / 1000f
+                        JayLogger.logInfo("TASK_WITH_DEADLINE_COMPLETED", taskId,
+                                "DEADLINE_MET=${System.currentTimeMillis() <= offloadedTasks[taskId]!!.second!!}")
+                    }
+                    offloadedTasks.remove(taskId)
                 }
-                offloadedTasks.remove(taskId)
             }
         }
     }
@@ -59,7 +68,6 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
     private fun getPowerMap(workers: Set<JayProto.Worker?>, task: Task, skipDeadline: Boolean = false):
             MutableMap<JayProto.Worker, JayProto.PowerEstimations?> {
         val powerMap = mutableMapOf<JayProto.Worker, JayProto.PowerEstimations?>()
-        val lock = Object()
         val powerLatch = CountDownLatch(workers.size)
 
         workers.forEach { worker ->
@@ -98,7 +106,7 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         var powerMap = getPowerMap(workers.toSet(), task)
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
         val localExpectedPower = SchedulerService.profiler.getExpectedPower()
-        val lock = Object()
+
 
         if (powerMap.isEmpty()) {
             JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
@@ -129,15 +137,32 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         }
         val w = possibleWorkers.elementAt((Random.nextInt(possibleWorkers.size)))
         JayLogger.logInfo("COMPLETE_SCHEDULING", task.id, "WORKER=${w.id}")
-        offloadedTasks[task.id] = Pair(System.currentTimeMillis(), task.deadline)
+        synchronized(offloadedLock) {
+            offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
+        }
         return w
     }
 
     private fun canMeetDeadline(task: Task, worker: JayProto.Worker?): Boolean {
         if (worker == null) return false
-        if (task.deadlineDuration == null) return true
-        if (((worker.queueSize + 1) * (worker.avgTimePerTask / 1000f)) <= task.deadlineDuration)
+        JayLogger.logInfo("CAN_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
+        if (task.deadlineDuration == null && task.deadline == null) {
+            JayLogger.logInfo("NO_DEADLINE_SET", task.id, "WORKER=${worker.id}")
             return true
+        }
+        val deadlineTime: Long = task.deadline ?: System.currentTimeMillis() + ((task.deadlineDuration ?: 0) * 1000)
+        JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", task.id,
+                "WORKER=${worker.id}",
+                "MAX_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask)}",
+                "EXPECTED_DEADLINE=${deadlineTime}",
+                "QUEUE_SIZE=${worker.queuedTasks + 1}",
+                "AVG_TIME_PER_TASK=${worker.avgTimePerTask}"
+        )
+        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask) <= deadlineTime) {
+            JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id}")
+            return true
+        }
+        JayLogger.logInfo("WORKER_CANT_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
         return false
     }
 

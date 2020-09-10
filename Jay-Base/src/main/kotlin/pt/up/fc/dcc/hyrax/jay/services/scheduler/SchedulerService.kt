@@ -33,8 +33,10 @@ object SchedulerService {
     private var taskCompleteListener: ((String) -> Unit)? = null
     private var running = false
     private val schedulers: MutableSet<AbstractScheduler> = mutableSetOf()
+    private val workersLock = Object()
 
-    internal fun getWorker(id: String) : Worker? {
+
+    internal fun getWorker(id: String): Worker? {
         return if (workers.containsKey(id)) workers[id] else null
     }
 
@@ -78,13 +80,22 @@ object SchedulerService {
         if (scheduler == null) scheduler = schedulers.first()
         val w = scheduler?.scheduleTask(Task(request))
         JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=${w?.id}")
+        synchronized(workersLock) {
+            if (w != null && workers.containsKey(w.id)) {
+                workers[w.id] = Worker.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.queuedTasks + 1).build()
+                JayLogger.logInfo("INCREMENT_QUEUED_TASKS", request?.id ?: "", "WORKER=${w.id}",
+                        "NEW_SIZE=${workers[w.id]?.queuedTasks}")
+            }
+        }
         return w
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?): JayProto.StatusCode {
         JayLogger.logInfo("WORKER_UPDATE", actions = arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
         if (worker?.type == Worker.Type.REMOTE && JaySettings.CLOUDLET_ID != "" && JaySettings.CLOUDLET_ID != worker.id) return JayProto.StatusCode.Success
-        workers[worker!!.id] = worker
+        synchronized(workersLock) {
+            workers[worker!!.id] = worker
+        }
         for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
         return JayProto.StatusCode.Success
     }
@@ -92,7 +103,9 @@ object SchedulerService {
     internal fun notifyWorkerFailure(worker: Worker?): JayProto.StatusCode {
         JayLogger.logInfo("WORKER_FAILED", actions = arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
         if (worker!!.id in workers.keys) {
-            workers.remove(worker.id)
+            synchronized(workersLock) {
+                workers.remove(worker.id)
+            }
             for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)
             return JayProto.StatusCode.Success
         }

@@ -173,9 +173,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 BrokerService.extractVideoFrames(reqId)
                 JayLogger.logInfo("EXTRACTING_FRAMES", actions = arrayOf("COMPLETE", "REQUEST_TYPE=VIDEO", "REQUEST_ID=$reqId"))
             } else {
-                JayLogger.logInfo("SUBMITTING_TASK", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
-                scheduleTask(Task(BrokerService.getByteArrayFromId(reqId) ?: ByteArray(0),
-                        request?.deadline).getProto(), responseObserver)
+                JayLogger.logInfo("SUBMITTING_TASK", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId",
+                        "DEADLINE=${request?.deadline}"))
+                scheduleTask(Task(BrokerService.getByteArrayFromId(reqId)
+                        ?: ByteArray(0), request?.deadline).getProto(), responseObserver)
                 JayLogger.logInfo("TASK_SUBMITTED", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
             JayLogger.logInfo("COMPLETE", actions = arrayOf("REQUEST_ID=$reqId"))

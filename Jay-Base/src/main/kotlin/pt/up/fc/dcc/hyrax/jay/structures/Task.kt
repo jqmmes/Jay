@@ -19,25 +19,20 @@ class Task {
         dataSize = data.size
         deadlineDuration = deadline
         creationTimeStamp = System.currentTimeMillis()
-        if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
+        if (deadline != null) this.deadline = creationTimeStamp + (deadline * 1000) else this.deadline = null
     }
 
-    internal constructor(taskData: JayProto.Task?, deadline: Long? = null) {
-        id = taskData!!.id
-        data = taskData.data.toByteArray()
-        dataSize = data.size
-        deadlineDuration = deadline
-        creationTimeStamp = System.currentTimeMillis()
-        if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
-    }
-
-    internal constructor(taskData: JayProto.TaskDetails?, deadline: Long? = null) {
-        id = taskData!!.id
+    internal constructor(oldTaskDetails: JayProto.TaskDetails?) {
+        id = oldTaskDetails?.id ?: ""
+        dataSize = oldTaskDetails?.dataSize ?: 0
+        deadlineDuration = oldTaskDetails?.deadline
         data = ByteArray(0)
-        dataSize = taskData.dataSize
-        deadlineDuration = deadline
-        creationTimeStamp = System.currentTimeMillis()
-        if (deadline != null) this.deadline = creationTimeStamp + deadline else this.deadline = null
+        creationTimeStamp = oldTaskDetails?.creationTimeStamp ?: System.currentTimeMillis()
+        deadline = if (oldTaskDetails != null) {
+            creationTimeStamp + (oldTaskDetails.deadline * 1000)
+        } else {
+            null
+        }
     }
 
     override fun equals(other: Any?): Boolean {
@@ -60,6 +55,7 @@ class Task {
                 .setData(ByteString.copyFrom(data))
                 .setCreationTimeStamp(creationTimeStamp)
         if (deadline != null) proto.deadlineTimeStamp = deadline
+        if (deadlineDuration != null) proto.deadline = deadlineDuration
         return proto.build()
     }
 }

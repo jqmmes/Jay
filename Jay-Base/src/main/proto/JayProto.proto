@@ -32,6 +32,7 @@ message Task {
     Status status = 4;
     int64 creationTimeStamp = 5;
     int64 deadlineTimeStamp = 6;
+    int64 deadline = 7;
 
     enum Status {
         BEGIN_TRANSFER = 0;
@@ -43,6 +44,8 @@ message Task {
 message TaskDetails {
     string id = 1;
     int32 dataSize = 2;
+    int64 deadline = 3;
+    int64 creationTimeStamp = 5;
 }
 
 message WorkerTask {

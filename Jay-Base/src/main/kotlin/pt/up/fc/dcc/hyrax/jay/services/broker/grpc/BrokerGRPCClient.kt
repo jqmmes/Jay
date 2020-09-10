@@ -73,7 +73,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     if (!local) BrokerService.profiler.unSetState(JayState.DATA_SND)
                     JayLogger.logInfo("DATA_REACHED_SERVER", task?.id ?: "",
                             "DATA_SIZE=${task?.toByteArray()?.size}",
-                            "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
+                            "DURATION_MILLIS=${System.currentTimeMillis() - startTime}",
                             "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                             "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
                             "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
@@ -81,7 +81,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                 JayProto.StatusCode.Success -> {
                     JayLogger.logInfo("EXECUTION_COMPLETE", task?.id ?: "",
                             "DATA_SIZE=${task?.toByteArray()?.size}",
-                            "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
+                            "DURATION_MILLIS=${System.currentTimeMillis() - startTime}",
                             "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                             "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
                             "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
@@ -105,7 +105,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
 
         override fun onCompleted() {
             JayLogger.logInfo("COMPLETE", task?.id ?: "",
-                    "DURATION_MILLIS=${startTime - System.currentTimeMillis()}",
+                    "DURATION_MILLIS=${System.currentTimeMillis() - startTime}",
                     "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                     "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
@@ -147,7 +147,9 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                                         .build())
                         taskStreamObserver?.onCompleted()
                     },
-                    endCb = { JayLogger.logInfo("EXECUTE_TASK_COMPLETE", taskId) },
+                    endCb = {
+                        JayLogger.logInfo("EXECUTE_TASK_COMPLETE", taskId)
+                    },
                     callback = callback,
                     schedulerInformCallback = schedulerInformCallback)
             )
