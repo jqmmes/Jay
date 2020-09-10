@@ -20,7 +20,9 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
 
     private var devices = devices.toList()
     private val executionPool = JayThreadPoolExecutor(10)
+    private val offloadedTasks = LinkedHashMap<String, Pair<Long, Long?>>()
 
+    @Suppress("DuplicatedCode")
     override fun init() {
         for (device in devices) JayLogger.logInfo("DEVICES", actions = arrayOf("DEVICE_TYPE=${device.name}"))
         if (JayProto.Worker.Type.REMOTE in devices) {
@@ -34,6 +36,16 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
             SchedulerService.broker.enableHeartBeats(getWorkerTypes()) {
                 JayLogger.logInfo("COMPLETE")
                 super.init()
+            }
+        }
+        SchedulerService.registerNotifyTaskListener { taskId ->
+            if (offloadedTasks.containsKey(taskId)) {
+                if (offloadedTasks[taskId]?.second != null) {
+                    val deltaTask = (System.currentTimeMillis() - offloadedTasks[taskId]!!.first) / 1000f
+                    JayLogger.logInfo("TASK_WITH_DEADLINE_COMPLETED", taskId,
+                            "DEADLINE_MET=${deltaTask <= offloadedTasks[taskId]!!.second!!}")
+                }
+                offloadedTasks.remove(taskId)
             }
         }
     }
@@ -105,7 +117,7 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
                 } else {
                     getEnergySpentComputing(task, worker, powerEstimations, localExpectedPower)
                 }).unaryMinus()
-                JayLogger.logInfo("EXPECTED_BATTERY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
+                JayLogger.logInfo("EXPECTED_ENERGY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
                 if (spend < maxSpend) {
                     possibleWorkers.clear()
                     maxSpend = spend
@@ -117,6 +129,7 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         }
         val w = possibleWorkers.elementAt((Random.nextInt(possibleWorkers.size)))
         JayLogger.logInfo("COMPLETE_SCHEDULING", task.id, "WORKER=${w.id}")
+        offloadedTasks[task.id] = Pair(System.currentTimeMillis(), task.deadline)
         return w
     }
 

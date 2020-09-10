@@ -54,8 +54,6 @@ message Status {
     StatusCode code = 1;
 }
 
-
-// todo: change from current to power
 message CurrentEstimations {
     float idle = 1;
     float compute = 2;
