@@ -34,7 +34,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.schedule(request)
-        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
+        call.addListener({ callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
     fun notifyTaskComplete(request: JayProto.TaskDetails?) {
@@ -50,7 +50,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.listSchedulers(Empty.getDefaultInstance())
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 callback?.invoke(call.get())
             } catch (e: ExecutionException) {
@@ -63,19 +63,19 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.setScheduler(request)
-        call.addListener(Runnable { callback?.invoke(call.get()) }, AbstractJay.executorPool)
+        call.addListener({ callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
     fun setSchedulerSettings(request: JayProto.Settings?, callback: ((JayProto.Status?) -> Unit)?) {
         checkConnection()
-        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("SETTINGS=${request?.settingMap?.keys}"))
         val call = futureStub.setSchedulerSettings(request)
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 callback?.invoke(call.get())
-                JayLogger.logInfo("COMPLETE", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+                JayLogger.logInfo("COMPLETE", actions = arrayOf("SETTINGS=${request?.settingMap?.keys}"))
             } catch (e: ExecutionException) {
-                JayLogger.logInfo("ERROR", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+                JayLogger.logInfo("ERROR", actions = arrayOf("SETTINGS=${request?.settingMap?.keys}"))
                 callback?.invoke(JayUtils.genStatusError())
             }
         }, AbstractJay.executorPool)
@@ -88,7 +88,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
             return callback(JayUtils.genStatus(JayProto.StatusCode.Error))
         }
         val call = futureStub.notifyWorkerUpdate(request)
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 callback(call.get())
             } catch (e: ExecutionException) {
@@ -104,7 +104,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
             return callback(JayUtils.genStatus(JayProto.StatusCode.Error))
         }
         val call = futureStub.notifyWorkerFailure(request)
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 callback(call.get())
             } catch (e: ExecutionException) {
@@ -117,7 +117,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         checkConnection()
         if (channel.getState(true) != ConnectivityState.READY) serviceStatus(null)
         val call = futureStub.testService(Empty.getDefaultInstance())
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 serviceStatus(call.get())
             } catch (e: Exception) {
@@ -130,7 +130,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) callback(JayUtils.genStatusError())
         val call = futureStub.stopService(Empty.getDefaultInstance())
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 callback(call.get())
             } catch (e: Exception) {

@@ -17,7 +17,7 @@ abstract class GRPCServerBase(private val port: Int,
 
     @Throws(IOException::class)
     fun start(): GRPCServerBase? {
-        JayLogger.logInfo("INIT", actions = *arrayOf("PORT=$port", "USING_NETTY=$useNettyServer"))
+        JayLogger.logInfo("INIT", actions = arrayOf("PORT=$port", "USING_NETTY=$useNettyServer"))
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
         try {
             server =
@@ -39,9 +39,9 @@ abstract class GRPCServerBase(private val port: Int,
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
 
-                JayLogger.logError("ERROR", actions = *arrayOf("ERROR='*** shutting down gRPC server since JVM is shutting down'"))
+                JayLogger.logError("ERROR", actions = arrayOf("ERROR='*** shutting down gRPC server since JVM is shutting down'"))
                 this@GRPCServerBase.stop()
-                JayLogger.logError("ERROR", actions = *arrayOf("'*** server shut down'"))
+                JayLogger.logError("ERROR", actions = arrayOf("'*** server shut down'"))
             }
         })
         return this

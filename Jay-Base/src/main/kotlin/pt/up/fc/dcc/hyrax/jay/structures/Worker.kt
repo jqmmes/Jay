@@ -77,7 +77,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
         if (bwEstimates && JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("ACTIVE", "ALL"))
             doActiveRTTEstimates(statusChangeCallback = statusChangeCallback)
-        JayLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
     }
 
     private fun genProto() {
@@ -113,7 +113,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     internal fun updateStatus(computeProto: JayProto.WorkerComputeStatus?, profileProto: JayProto.ProfileRecording?): JayProto.Worker? {
-        JayLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
         if (computeProto == null && profileProto == null) return this.proto
         updateStatus(computeProto)
         updateStatus(profileProto)
@@ -122,7 +122,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     internal fun updateStatus(proto: JayProto.Worker?): JayProto.Worker? {
-        JayLogger.logInfo("INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
         if (proto == null) return this.proto
         batteryLevel = proto.batteryLevel
         batteryCapacity = proto.batteryCapacity
@@ -156,20 +156,20 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
             var backoffCount = 0
             do {
                 if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
-                    JayLogger.logInfo("REQUEST_WORKER_STATUS_INIT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                    JayLogger.logInfo("REQUEST_WORKER_STATUS_INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     // Reduce a little bit the wait time because it takes time to update information and record last
                     if (isOnline() && System.currentTimeMillis() - this.lastStatusUpdateTimestamp >= JaySettings.WORKER_STATUS_UPDATE_INTERVAL * 0.8) {
                         grpc.requestWorkerStatus { W ->
-                            JayLogger.logInfo("REQUEST_WORKER_STATUS_ONLINE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                            JayLogger.logInfo("REQUEST_WORKER_STATUS_ONLINE", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                             updateNotificationCb.invoke(updateStatus(W))
-                            JayLogger.logInfo("REQUEST_WORKER_STATUS_COMPLETE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                            JayLogger.logInfo("REQUEST_WORKER_STATUS_COMPLETE", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                         }
                     } else {
-                        JayLogger.logInfo("REQUEST_WORKER_STATUS_OFFLINE", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                        JayLogger.logInfo("REQUEST_WORKER_STATUS_OFFLINE", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                     }
                 } else {
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
-                    JayLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                    JayLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                 }
                 sleep(JaySettings.WORKER_STATUS_UPDATE_INTERVAL)
             } while (autoStatusUpdateEnabledFlag)
@@ -200,7 +200,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                 else -> circularFIFO.sorted()[(circularFIFO.size - 1) / 2]
             }
         }
-        JayLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = * arrayOf("WORKER_ID=$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))
+        JayLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = arrayOf("WORKER_ID=$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))
     }
 
     fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
@@ -254,7 +254,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
             grpc.ping(PING_PAYLOAD_SIZE, timeout = JaySettings.PING_TIMEOUT, callback = { T ->
                 if (T == -1) {
                     if (status == Status.ONLINE) {
-                        JayLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
+                        JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
                         status = Status.OFFLINE
                         statusChangeCallback?.invoke(status)
                     }
@@ -262,7 +262,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                 } else if (T == -2 || T == -3) { // TRANSIENT_FAILURE || CONNECTING
                     if (status == Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > JaySettings.RTT_DELAY_MILLIS_FAIL_ATTEMPTS) {
-                            JayLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
+                            JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
                             status = Status.OFFLINE
                             statusChangeCallback?.invoke(status)
                             if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), JaySettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
@@ -275,7 +275,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                     }
                 } else {
                     if (status == Status.OFFLINE) {
-                        JayLogger.logInfo("HEARTBEAT", actions = * arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_ONLINE"))
+                        JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_ONLINE"))
                         status = Status.ONLINE
                         statusChangeCallback?.invoke(status)
                     }

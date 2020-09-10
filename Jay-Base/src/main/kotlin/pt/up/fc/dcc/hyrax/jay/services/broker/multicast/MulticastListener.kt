@@ -33,14 +33,14 @@ object MulticastListener {
             } else {
                 val interfaces = JayUtils.getCompatibleInterfaces<Inet4Address>()
                 if (interfaces.isNotEmpty()) {
-                    JayLogger.logInfo("USING_DEFAULT_INTERFACE", actions = *arrayOf("LISTEN_INTERFACE=${interfaces[0]}"))
+                    JayLogger.logInfo("USING_DEFAULT_INTERFACE", actions = arrayOf("LISTEN_INTERFACE=${interfaces[0]}"))
                     listeningSocket.networkInterface = interfaces[0]
                 } else {
                     JayLogger.logError("NO_SUITABLE_INTERFACE_FOUND")
                     return@thread
                 }
             }
-            JayLogger.logInfo("RECEIVER", actions = *arrayOf("RUNNING_AT=${listeningSocket.localSocketAddress}"))
+            JayLogger.logInfo("RECEIVER", actions = arrayOf("RUNNING_AT=${listeningSocket.localSocketAddress}"))
             listeningSocket.joinGroup(mcIPAddress)
             BrokerService.profiler.setState(JayState.MULTICAST_LISTEN)
             running = true
@@ -51,7 +51,7 @@ object MulticastListener {
                 try {
                     listeningSocket.receive(packet)
                 } catch (e: SocketException) {
-                    JayLogger.logWarn("CLOSE", actions = *arrayOf("ERROR=SOCKET_EXCEPTION"))
+                    JayLogger.logWarn("CLOSE", actions = arrayOf("ERROR=SOCKET_EXCEPTION"))
                     running = false
                     continue
                 }

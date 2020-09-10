@@ -21,7 +21,7 @@ class FileSystemAssistant(private val androidService: Service) : FileSystemAssis
     }
 
     override fun readTempFile(fileId: String?): ByteArray {
-        JayLogger.logInfo("INIT", actions = *arrayOf("FILE_ID=$fileId"))
+        JayLogger.logInfo("INIT", actions = arrayOf("FILE_ID=$fileId"))
         if (fileId == null) return ByteArray(0)
         synchronized(tmpLOCK) {
             val tmpFile = File("${androidService.cacheDir}/$fileId")
@@ -29,34 +29,34 @@ class FileSystemAssistant(private val androidService: Service) : FileSystemAssis
                     () < tmpFile.length() * 2) {
                 Thread.sleep(100)
             }
-            JayLogger.logInfo("READ_BYTES_INIT", actions = *arrayOf("FILE_ID=${tmpFile.name}"))
+            JayLogger.logInfo("READ_BYTES_INIT", actions = arrayOf("FILE_ID=${tmpFile.name}"))
             val byteArray = tmpFile.readBytes()
-            JayLogger.logInfo("COMPLETE", actions = *arrayOf("FILE_ID=$fileId"))
+            JayLogger.logInfo("COMPLETE", actions = arrayOf("FILE_ID=$fileId"))
             return byteArray
         }
     }
 
     override fun getByteArrayFromId(id: String): ByteArray {
-        JayLogger.logInfo("INIT", actions = *arrayOf("FILE_ID=$id"))
+        JayLogger.logInfo("INIT", actions = arrayOf("FILE_ID=$id"))
         val root = File(androidService.getExternalFilesDir(null)!!.absolutePath)
         @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") val data = if (id in root.list())
             ImageUtils.getByteArrayFromImage(androidService.getExternalFilesDir(null)!!.absolutePath + "/" + id)
         else ByteArray(0)
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("FILE_ID=$id", "DATA_SIZE=${data.size}"))
+        JayLogger.logInfo("COMPLETE", actions = arrayOf("FILE_ID=$id", "DATA_SIZE=${data.size}"))
         return data
     }
 
     override fun getByteArrayFast(id: String): ByteArray {
-        JayLogger.logInfo("INIT", actions = *arrayOf("FILE_ID=$id"))
+        JayLogger.logInfo("INIT", actions = arrayOf("FILE_ID=$id"))
         synchronized(readLOCK) {
             val file = File(androidService.getExternalFilesDir(null)!!.absolutePath + "/" + id)
             while ((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory()) + Runtime.getRuntime().freeMemory
                     () < 150000000) {
                 Thread.sleep(100)
             }
-            JayLogger.logInfo("READ_BYTES_INIT", actions = *arrayOf("FILE_ID=${file.name}"))
+            JayLogger.logInfo("READ_BYTES_INIT", actions = arrayOf("FILE_ID=${file.name}"))
             val byteArray = file.readBytes()
-            JayLogger.logInfo("COMPLETE", actions = *arrayOf("FILE_ID=$id"))
+            JayLogger.logInfo("COMPLETE", actions = arrayOf("FILE_ID=$id"))
             return byteArray
         }
     }

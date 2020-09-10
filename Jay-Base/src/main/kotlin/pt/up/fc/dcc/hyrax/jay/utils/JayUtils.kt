@@ -22,7 +22,7 @@ object JayUtils {
                     if (address is T) {
                         if (JaySettings.MULTICAST_INTERFACE == null || (JaySettings.MULTICAST_INTERFACE != null && netInt.name ==
                                         JaySettings.MULTICAST_INTERFACE)) {
-                            JayLogger.logInfo("INTERFACE_AVAILABLE", actions = *arrayOf("INTERFACE=${netInt.name}"))
+                            JayLogger.logInfo("INTERFACE_AVAILABLE", actions = arrayOf("INTERFACE=${netInt.name}"))
                             interfaceList.add(netInt)
                         }
                     }

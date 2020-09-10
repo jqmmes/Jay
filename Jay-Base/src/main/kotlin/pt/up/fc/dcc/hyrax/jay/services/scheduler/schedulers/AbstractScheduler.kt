@@ -24,7 +24,7 @@ abstract class AbstractScheduler(name: String) {
     }
 
     open fun init() {
-        JayLogger.logInfo("INIT", actions = *arrayOf("SCHEDULER_ID=$id", "SCHEDULER_NAME=$nameId"))
+        JayLogger.logInfo("INIT", actions = arrayOf("SCHEDULER_ID=$id", "SCHEDULER_NAME=$nameId"))
         waitInit.countDown()
     }
 

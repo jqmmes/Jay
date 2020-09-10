@@ -21,9 +21,13 @@ object ImageUtils {
                     () < imgData.size * 2) {
                 sleep(100)
             }
-            JayLogger.logError("DECODE_BITMAP", actions = *arrayOf("BITMAP_SIZE=${imgData.size}", "MAX_HEAP_SIZE=${Runtime
-                    .getRuntime().maxMemory()}", "FREE_HEAP_SIZE=${Runtime
-                    .getRuntime().freeMemory()}"))
+            JayLogger.logError("DECODE_BITMAP", actions = arrayOf("BITMAP_SIZE=${imgData.size}", "MAX_HEAP_SIZE=${
+                Runtime
+                        .getRuntime().maxMemory()
+            }", "FREE_HEAP_SIZE=${
+                Runtime
+                        .getRuntime().freeMemory()
+            }"))
             data = BitmapFactory.decodeByteArray(imgData, 0, imgData.size)
         }
         return data!!
@@ -56,7 +60,7 @@ object ImageUtils {
         val scaledImage = Bitmap.createScaledBitmap(image, floor(image.width*scale).toInt(), floor(image
                 .height*scale).toInt(), false)
         val scaledData = Bitmap.createBitmap(maxSize, maxSize, scaledImage.config)
-        JayLogger.logInfo("RESIZE_IMAGE", actions = *arrayOf("NEW_DIMENSIONS_WIDTH=${scaledImage.width}, NEW_DIMENSIONS_HEIGHT=${scaledImage.height}"))
+        JayLogger.logInfo("RESIZE_IMAGE", actions = arrayOf("NEW_DIMENSIONS_WIDTH=${scaledImage.width}, NEW_DIMENSIONS_HEIGHT=${scaledImage.height}"))
         val pixels = IntArray(scaledImage.width * scaledImage.height)
         scaledImage.getPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)
         scaledData.setPixels(pixels, 0, scaledImage.width, 0, 0, scaledImage.width, scaledImage.height)

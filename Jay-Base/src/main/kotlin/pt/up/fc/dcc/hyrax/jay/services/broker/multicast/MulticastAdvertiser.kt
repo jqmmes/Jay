@@ -47,7 +47,7 @@ object MulticastAdvertiser {
             } else {
                 val interfaces = JayUtils.getCompatibleInterfaces<Inet4Address>()
                 if (interfaces.isNotEmpty()) {
-                    JayLogger.logInfo("USING_DEFAULT_INTERFACE", actions = *arrayOf("ADVERTISE_INTERFACE=${interfaces[0]}"))
+                    JayLogger.logInfo("USING_DEFAULT_INTERFACE", actions = arrayOf("ADVERTISE_INTERFACE=${interfaces[0]}"))
                     mcSocket.networkInterface = interfaces[0]
                 } else {
                     JayLogger.logWarn("NO_SUITABLE_INTERFACE_FOUND")
@@ -61,9 +61,9 @@ object MulticastAdvertiser {
                     if (packet != null && JaySettings.ADVERTISE_WORKER_STATUS)
                         try {
                             mcSocket.send(packet)
-                            JayLogger.logInfo("SENT_MULTICAST_PACKET", actions = *arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
+                            JayLogger.logInfo("SENT_MULTICAST_PACKET", actions = arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
                         } catch (e: SocketException) {
-                            JayLogger.logError("MULTICAST_SOCKET_ERROR", actions = *arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
+                            JayLogger.logError("MULTICAST_SOCKET_ERROR", actions = arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
                         }
                 }
                 sleep(JaySettings.MULTICAST_PKT_INTERVAL)

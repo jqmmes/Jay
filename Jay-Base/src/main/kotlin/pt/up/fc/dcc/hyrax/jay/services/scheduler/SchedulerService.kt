@@ -82,7 +82,7 @@ object SchedulerService {
     }
 
     internal fun notifyWorkerUpdate(worker: Worker?): JayProto.StatusCode {
-        JayLogger.logInfo("WORKER_UPDATE", actions = *arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
+        JayLogger.logInfo("WORKER_UPDATE", actions = arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
         if (worker?.type == Worker.Type.REMOTE && JaySettings.CLOUDLET_ID != "" && JaySettings.CLOUDLET_ID != worker.id) return JayProto.StatusCode.Success
         workers[worker!!.id] = worker
         for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
@@ -90,7 +90,7 @@ object SchedulerService {
     }
 
     internal fun notifyWorkerFailure(worker: Worker?): JayProto.StatusCode {
-        JayLogger.logInfo("WORKER_FAILED", actions = *arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
+        JayLogger.logInfo("WORKER_FAILED", actions = arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
         if (worker!!.id in workers.keys) {
             workers.remove(worker.id)
             for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)
@@ -133,7 +133,7 @@ object SchedulerService {
         JayLogger.logInfo("INIT")
         val schedulersProto = JayProto.Schedulers.newBuilder()
         for (scheduler in schedulers) {
-            JayLogger.logInfo("SCHEDULER_INFO", actions = *arrayOf("SCHEDULER_NAME=${scheduler.getName()}", "SCHEDULER_ID=${scheduler.id}")) //.replace(",", ";")
+            JayLogger.logInfo("SCHEDULER_INFO", actions = arrayOf("SCHEDULER_NAME=${scheduler.getName()}", "SCHEDULER_ID=${scheduler.id}")) //.replace(",", ";")
             schedulersProto.addScheduler(scheduler.getProto())
         }
         JayLogger.logInfo("COMPLETE")

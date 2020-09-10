@@ -23,7 +23,7 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
         SchedulerService.registerNotifyListener { W, S -> if (S == SchedulerService.WorkerConnectivityStatus.ONLINE) updateWorker(W) else removeWorker(W) }
         rankWorkers(SchedulerService.getWorkers().values.toList())
         SchedulerService.listenForWorkers(true) {
-            JayLogger.logInfo("LISTEN_FOR_WORKERS", actions = *arrayOf("SCHEDULER_ID=$id"))
+            JayLogger.logInfo("LISTEN_FOR_WORKERS", actions = arrayOf("SCHEDULER_ID=$id"))
             SchedulerService.broker.enableBandwidthEstimates(
                     JayProto.BandwidthEstimate.newBuilder()
                             .setType(JayProto.BandwidthEstimate.Type.ACTIVE)
@@ -41,11 +41,11 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
     }
 
     private fun removeWorker(worker: JayProto.Worker?) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=${worker?.id}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=${worker?.id}"))
         val index = rankedWorkers.indexOf(RankedWorker(id = worker?.id))
         if (index == -1) return
         rankedWorkers.remove(rankedWorkers.elementAt(index))
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${worker?.id}"))
+        JayLogger.logInfo("COMPLETE", actions = arrayOf("WORKER_ID=${worker?.id}"))
     }
 
     // Return last ID higher estimatedDuration = Better worker
@@ -55,7 +55,7 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
         JayLogger.logInfo("START_SORTING", task.id)
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy { it.estimatedDuration }))
         JayLogger.logInfo("COMPLETE_SORTING", task.id)
-        JayLogger.logInfo("SELECTED_WORKER", task.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
+        JayLogger.logInfo("SELECTED_WORKER", task.id, actions = arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
         if (rankedWorkers.isNotEmpty()) {
             assignedTask[task.id] = rankedWorkers.first.id!!
             return SchedulerService.getWorker(rankedWorkers.first.id!!)
@@ -103,21 +103,23 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
         private var estimatedBandwidth = 0f
 
         fun updateWorker(worker: JayProto.Worker?) {
-            JayLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=$id"))
+            JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id"))
             if (worker == null) return
             if (maxAvgTimePerTask < worker.avgTimePerTask) maxAvgTimePerTask = worker.avgTimePerTask
             if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
             weightQueue = (worker.queuedTasks + 1) * worker.avgTimePerTask
             estimatedBandwidth = worker.bandwidthEstimate
-            JayLogger.logInfo("WEIGHT_UPDATED", actions = *arrayOf("WORKER_ID=$id", "QUEUE_SIZE=${worker
-                    .queuedTasks}+1", "AVG_TIME_PER_TASK=${worker.avgTimePerTask}", "WEIGHT_QUEUE=$weightQueue", "BANDWIDTH=$estimatedBandwidth"))
-            JayLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=$id"))
+            JayLogger.logInfo("WEIGHT_UPDATED", actions = arrayOf("WORKER_ID=$id", "QUEUE_SIZE=${
+                worker
+                        .queuedTasks
+            }+1", "AVG_TIME_PER_TASK=${worker.avgTimePerTask}", "WEIGHT_QUEUE=$weightQueue", "BANDWIDTH=$estimatedBandwidth"))
+            JayLogger.logInfo("COMPLETE", actions = arrayOf("WORKER_ID=$id"))
         }
 
         fun calcScore(dataSize: Int) {
-            JayLogger.logInfo("INIT", actions = *arrayOf("WORKER_ID=$id"))
+            JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id"))
             estimatedDuration = dataSize*estimatedBandwidth + weightQueue
-            JayLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=$id", "SCORE=$estimatedDuration"))
+            JayLogger.logInfo("COMPLETE", actions = arrayOf("WORKER_ID=$id", "SCORE=$estimatedDuration"))
         }
 
         override fun equals(other: Any?): Boolean {

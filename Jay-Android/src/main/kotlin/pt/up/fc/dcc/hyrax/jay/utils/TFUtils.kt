@@ -27,40 +27,40 @@ object TFUtils {
     }
 
     private fun getModelPath(context: Context, model: Model, modelName: String, lite: Boolean): String {
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("MODEL_ID=${model.modelId}"))
         var modelPath = File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${model.modelName}").absolutePath
         if (!checkDownloadedModel(context, model.modelName, lite)) {
-            JayLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_INIT", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            JayLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_INIT", actions = arrayOf("MODEL_ID=${model.modelId}"))
             val tmpFile = downloadModel(context, model, lite)
-            JayLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            JayLogger.logInfo("NEED_TO_DOWNLOAD_MODEL_COMPLETE", actions = arrayOf("MODEL_ID=${model.modelId}"))
             if (tmpFile != null) {
                 try {
                     modelPath = extractModel(context, tmpFile, modelName, lite)
                     if (File(modelPath) != File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${model.modelName}")) {
                         File(modelPath).renameTo(File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${model.modelName}"))
-                        JayLogger.logInfo("RENAME", actions = *arrayOf("MODEL_ID=${model.modelId}", "NEW_NAME=${File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${model.modelName}").absolutePath}"))
+                        JayLogger.logInfo("RENAME", actions = arrayOf("MODEL_ID=${model.modelId}", "NEW_NAME=${File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${model.modelName}").absolutePath}"))
                         modelPath = File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${model.modelName}").absolutePath
                     }
                 } catch (e: EOFException) {
-                    JayLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=BAD_EOF"))
+                    JayLogger.logError("ERROR", actions = arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=BAD_EOF"))
                 }
                 tmpFile.delete()
             } else {
-                JayLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=DOWNLOAD_FAILED"))
+                JayLogger.logError("ERROR", actions = arrayOf("MODEL_ID=${model.modelId}", "ERROR_MSG=DOWNLOAD_FAILED"))
             }
         }
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+        JayLogger.logInfo("COMPLETE", actions = arrayOf("MODEL_ID=${model.modelId}"))
         return File(modelPath, modelName).absolutePath
     }
 
     fun loadModel(classifier: Classifier, context: Context, model: Model, modelName: String, tfOdApiInputSize: Int, assetManager: AssetManager? = null, isQuantized: Boolean? = null, numThreads: Int? = null, device: String? = null, lite: Boolean = false): Classifier? {
         val modelPath = getModelPath(context, model, modelName, lite)
-        JayLogger.logInfo("LOADING_MODEL", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_PATH=$modelPath"))
+        JayLogger.logInfo("LOADING_MODEL", actions = arrayOf("MODEL_ID=${model.modelId}", "MODEL_PATH=$modelPath"))
         try {
             classifier.init(modelPath, tfOdApiInputSize, assetManager, isQuantized, numThreads, device)
-            JayLogger.logInfo("LOADING_MODEL_COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            JayLogger.logInfo("LOADING_MODEL_COMPLETE", actions = arrayOf("MODEL_ID=${model.modelId}"))
         } catch (e: IOException) {
-            JayLogger.logError("ERROR", actions = *arrayOf("MODEL_PATH=$modelPath"))
+            JayLogger.logError("ERROR", actions = arrayOf("MODEL_PATH=$modelPath"))
         }
         return classifier
     }
@@ -68,7 +68,7 @@ object TFUtils {
     fun detectObjects(localDetector: Classifier?, minimumConfidence: Float, tfOdApiInputSize: Int, imgBitmap: Bitmap): List<Detection> {
         JayLogger.logInfo("INIT")
         if (localDetector == null) {
-            JayLogger.logWarn("ERROR", actions = *arrayOf("ERROR_MESSAGE=NO_MODEL_LOADED"))
+            JayLogger.logWarn("ERROR", actions = arrayOf("ERROR_MESSAGE=NO_MODEL_LOADED"))
             return emptyList()
         }
         JayLogger.logInfo("RECOGNIZE_IMAGE_INIT")
@@ -91,7 +91,7 @@ object TFUtils {
     }
 
     fun downloadModel(context: Context, model: Model, lite: Boolean): File? {
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_NAME=${model.modelName}", "MODEL_URL=${model.remoteUrl}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("MODEL_ID=${model.modelId}", "MODEL_NAME=${model.modelName}", "MODEL_URL=${model.remoteUrl}"))
         var count: Int
         if (File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}").exists() || !File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}").isDirectory) File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}").mkdirs()
         val tmpFile = File.createTempFile(model.modelName + "-", ".tar.gz", File(context.cacheDir, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}"))
@@ -106,7 +106,7 @@ object TFUtils {
 
             // download the file
             val input = BufferedInputStream(url.openStream(), 8192)
-            JayLogger.logInfo("MODEL_INFO", actions = *arrayOf("MODEL_ID=${model.modelId}", "MODEL_SIZE=$lengthOfFile"))
+            JayLogger.logInfo("MODEL_INFO", actions = arrayOf("MODEL_ID=${model.modelId}", "MODEL_SIZE=$lengthOfFile"))
 
             // Output stream
             val output = FileOutputStream(tmpFile)
@@ -131,20 +131,20 @@ object TFUtils {
             input.close()
 
         } catch (e: Exception) {
-            JayLogger.logError("ERROR", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+            JayLogger.logError("ERROR", actions = arrayOf("MODEL_ID=${model.modelId}"))
         }
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_ID=${model.modelId}"))
+        JayLogger.logInfo("COMPLETE", actions = arrayOf("MODEL_ID=${model.modelId}"))
 
         return tmpFile
     }
 
     private fun makeDir(context: Context, lite: Boolean, modelFile: File, name: String) {
-        JayLogger.logInfo("MAKE_DIR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "MK_DIR=${File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${name}").path}"))
+        JayLogger.logInfo("MAKE_DIR", actions = arrayOf("MODEL_FILE=${modelFile.absolutePath}", "MK_DIR=${File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${name}").path}"))
         File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${name}").mkdirs()
     }
 
     fun extractModel(context: Context, modelFile: File, modelName: String, lite: Boolean): String {
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
         val tis: TarInputStream = try {
             TarInputStream(BufferedInputStream(GZIPInputStream(FileInputStream(modelFile))))
         } catch (e: java.lang.Exception) {
@@ -173,7 +173,7 @@ object TFUtils {
             }
             var count: Int
             val data = ByteArray(2048)
-            JayLogger.logInfo("EXTRACT_FILE", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "FILE=${File(context.cacheDir.path, entry.name).path}"))
+            JayLogger.logInfo("EXTRACT_FILE", actions = arrayOf("MODEL_FILE=${modelFile.absolutePath}", "FILE=${File(context.cacheDir.path, entry.name).path}"))
             try {
                 File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${entry.name}").mkdirs()
                 File(context.cacheDir.path, "Models/${if (lite) "TensorflowLite" else "Tensorflow"}/${entry.name}").delete()
@@ -190,11 +190,11 @@ object TFUtils {
                 dest.flush()
                 dest.close()
             } catch (ignore: Exception) {
-                JayLogger.logWarn("ERROR", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}", "EXTRACT=${File(context.cacheDir.path, entry.name).path}"))
+                JayLogger.logWarn("ERROR", actions = arrayOf("MODEL_FILE=${modelFile.absolutePath}", "EXTRACT=${File(context.cacheDir.path, entry.name).path}"))
             }
             entry = tis.nextEntry
         }
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
+        JayLogger.logInfo("COMPLETE", actions = arrayOf("MODEL_FILE=${modelFile.absolutePath}"))
         return basePath
     }
 }

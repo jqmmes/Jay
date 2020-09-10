@@ -43,7 +43,7 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
     override fun scheduleTask(task: Task): JayProto.Worker? {
         JayLogger.logInfo("INIT", task.id)
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.last.id!!)
-        JayLogger.logInfo("COMPLETE", task.id, actions = *arrayOf("WORKER_ID=${rankedWorkers.last.id}"))
+        JayLogger.logInfo("COMPLETE", task.id, actions = arrayOf("WORKER_ID=${rankedWorkers.last.id}"))
         return null
     }
 
@@ -107,10 +107,14 @@ class SmartScheduler : AbstractScheduler("SmartScheduler") {
                         scaledBattery * weights.battery +
                         scaledAvgBandwidth * weights.bandwidth
 
-        JayLogger.logInfo("NEW_SCORE", actions = *arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score",
-                "RUNNING_TASKS=${worker.runningTasks}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${worker
-                .batteryLevel}", "AVG_TIME_PER_TASK=${worker.avgTimePerTask}", "BANDWIDTH_ESTIMATE=${worker
-                .bandwidthEstimate}"))
+        JayLogger.logInfo("NEW_SCORE", actions = arrayOf("WORKER_ID=$${worker.id}", "SCORE=$score",
+                "RUNNING_TASKS=${worker.runningTasks}", "QUEUE_SIZE=${worker.queueSize}", "BATTERY=${
+            worker
+                    .batteryLevel
+        }", "AVG_TIME_PER_TASK=${worker.avgTimePerTask}", "BANDWIDTH_ESTIMATE=${
+            worker
+                    .bandwidthEstimate
+        }"))
         return score
     }
 

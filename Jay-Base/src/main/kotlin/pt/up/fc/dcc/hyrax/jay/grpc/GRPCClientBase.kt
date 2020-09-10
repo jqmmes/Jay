@@ -20,7 +20,7 @@ abstract class GRPCClientBase<T1, T2>(private var host: String, var port: Int) {
                 .usePlaintext()
                 .maxInboundMessageSize(JaySettings.GRPC_MAX_MESSAGE_SIZE)
                 .build()
-        JayLogger.logInfo("CHANNEL_BUILT", actions = *arrayOf("HOST=$host", "PORT=$port", "CHANNEL_STATE=${channel.getState(true).name}"))
+        JayLogger.logInfo("CHANNEL_BUILT", actions = arrayOf("HOST=$host", "PORT=$port", "CHANNEL_STATE=${channel.getState(true).name}"))
     }
 
     abstract fun reconnectStubs()

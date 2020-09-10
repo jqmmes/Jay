@@ -13,8 +13,8 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
     private var roundRobinCount: Int = 0
 
     override fun init() {
-        JayLogger.logInfo("INIT", actions = *arrayOf("SCHEDULE_STRATEGY=${if (roundRobin) "ROUND_ROBIN" else "RANDOM"}"))
-        for (device in devices) JayLogger.logInfo("DEVICES", actions = *arrayOf("DEVICE_TYPE=${device.name}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("SCHEDULE_STRATEGY=${if (roundRobin) "ROUND_ROBIN" else "RANDOM"}"))
+        for (device in devices) JayLogger.logInfo("DEVICES", actions = arrayOf("DEVICE_TYPE=${device.name}"))
         if (JayProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
                 SchedulerService.broker.enableHeartBeats(getWorkerTypes()) {
@@ -48,7 +48,7 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
             }
             else -> workers.values.toTypedArray()[if (workers.values.size > 1) Random.nextInt(workers.values.size) else 0]
         }
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("WORKER_ID=${worker?.id}"))
+        JayLogger.logInfo("COMPLETE", actions = arrayOf("WORKER_ID=${worker?.id}"))
         return worker
     }
 

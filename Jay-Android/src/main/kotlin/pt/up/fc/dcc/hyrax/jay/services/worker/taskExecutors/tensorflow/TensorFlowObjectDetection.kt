@@ -133,7 +133,7 @@ class TensorFlowObjectDetection : Classifier {
         sessionInferenceInterface.fetch(outputNames[3], outputNumDetections)
 
         //Find the best detections.
-        val pq: PriorityQueue<Classifier.Recognition> = PriorityQueue(1, kotlin.Comparator<Classifier.Recognition> { lhs, rhs -> compareValues(rhs.confidence, lhs.confidence) })
+        val pq: PriorityQueue<Classifier.Recognition> = PriorityQueue(1, { lhs, rhs -> compareValues(rhs.confidence, lhs.confidence) })
 
         JayLogger.logInfo("CHECK_RESULTS_INIT")
         //Scale them back to the input size.
@@ -146,7 +146,7 @@ class TensorFlowObjectDetection : Classifier {
                             outputLocations[4 * i + 2] * inputSize)
             pq.add(Classifier.Recognition("" + i, outputClasses[i].toString(), outputScores[i], detection))
             if (outputScores[i] >= 0.3f)
-                JayLogger.logInfo("CHECK_RESULTS", actions = *arrayOf("RESULT_CLASS=${COCODataLabels.label(outputClasses[i].toInt())}", "RESULT_SCORE=${outputScores[i]}"))
+                JayLogger.logInfo("CHECK_RESULTS", actions = arrayOf("RESULT_CLASS=${COCODataLabels.label(outputClasses[i].toInt())}", "RESULT_SCORE=${outputScores[i]}"))
         }
 
         val recognitions: ArrayList<Classifier.Recognition> = ArrayList()

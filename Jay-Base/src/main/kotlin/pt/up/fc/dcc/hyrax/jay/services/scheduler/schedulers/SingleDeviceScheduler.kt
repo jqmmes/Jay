@@ -27,7 +27,7 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
     }
 
     override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("INIT", task.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
+        JayLogger.logInfo("INIT", task.id, actions = arrayOf("WORKER_ID=${worker?.id}"))
         if (worker == null) {
             for (w in SchedulerService.getWorkers(workerType).values) {
                 if (w?.type == workerType) {
@@ -36,7 +36,7 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
                 }
             }
         }
-        JayLogger.logInfo("COMPLETE", task.id, actions = *arrayOf("WORKER_ID=${worker?.id}"))
+        JayLogger.logInfo("COMPLETE", task.id, actions = arrayOf("WORKER_ID=${worker?.id}"))
         return worker
     }
 

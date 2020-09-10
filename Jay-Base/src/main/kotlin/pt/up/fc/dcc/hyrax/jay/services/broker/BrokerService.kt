@@ -129,7 +129,7 @@ object BrokerService {
     }
 
     internal fun getByteArrayFromId(id: String?): ByteArray? {
-        JayLogger.logInfo("READING_IMAGE_BYTE_ARRAY", actions = *arrayOf("IMAGE_ID=$id"))
+        JayLogger.logInfo("READING_IMAGE_BYTE_ARRAY", actions = arrayOf("IMAGE_ID=$id"))
         if (id != null)
             return fsAssistant?.getByteArrayFast(id)
         return null
@@ -223,23 +223,23 @@ object BrokerService {
     }
 
     private fun notifySchedulerOfWorkerStatusUpdate(statusUpdate: Worker.Status, workerId: String) {
-        JayLogger.logInfo("STATUS_UPDATE", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+        JayLogger.logInfo("STATUS_UPDATE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
         if (!schedulerServiceRunning) {
-            JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+            JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
             return
         }
-        JayLogger.logInfo("SCHEDULER_RUNNING", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+        JayLogger.logInfo("SCHEDULER_RUNNING", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
         if (statusUpdate == Worker.Status.ONLINE) {
-            JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+            JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
             scheduler.notifyWorkerUpdate(workers[workerId]?.getProto()) {
-                JayLogger.logInfo("NOTIFY_WORKER_UPDATE_COMPLETE", actions = *arrayOf(
+                JayLogger.logInfo("NOTIFY_WORKER_UPDATE_COMPLETE", actions = arrayOf(
                         "STATUS=${it?.codeValue}", "DEVICE_IP=${workers[workerId]?.address}",
                         "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
             }
         } else {
-            JayLogger.logInfo("NOTIFY_WORKER_FAILURE", actions = *arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+            JayLogger.logInfo("NOTIFY_WORKER_FAILURE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
             scheduler.notifyWorkerFailure(workers[workerId]?.getProto()) {
-                JayLogger.logInfo("NOTIFY_WORKER_FAILURE_COMPLETE", actions = *arrayOf(
+                JayLogger.logInfo("NOTIFY_WORKER_FAILURE_COMPLETE", actions = arrayOf(
                         "STATUS=${it?.codeValue}; DEVICE_IP=${workers[workerId]?.address}",
                         "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
             }
@@ -247,15 +247,15 @@ object BrokerService {
     }
 
     private fun addOrUpdateWorker(worker: JayProto.Worker?, address: String) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker?.id}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker?.id}"))
         if (worker == null) return
         if (worker.id !in workers) {
             if (address == JaySettings.SINGLE_REMOTE_IP) JaySettings.CLOUDLET_ID = worker.id
-            JayLogger.logInfo("NEW_DEVICE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
+            JayLogger.logInfo("NEW_DEVICE", actions = arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
             workers[worker.id]?.enableAutoStatusUpdate { _ ->
                 if (!schedulerServiceRunning) {
-                    JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=$address",
+                    JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=$address",
                             "DEVICE_ID=${workers[worker.id]?.id}", "WORKER_TYPE=${workers[worker.id]?.type?.name}"))
                     return@enableAutoStatusUpdate
                 }
@@ -265,7 +265,7 @@ object BrokerService {
                 JayLogger.logInfo("PROACTIVE_WORKER_STATUS_UPDATE_COMPLETE", "", "WORKER_ID=${workers[worker.id]?.id}")
             }
         } else {
-            JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = *arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
+            JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
             workers[worker.id]?.updateStatus(worker)
         }
         notifySchedulerOfWorkerStatusUpdate(Worker.Status.ONLINE, worker.id)
@@ -359,7 +359,7 @@ object BrokerService {
             val cloud = Worker(address = cloud_ip, type = Type.CLOUD, checkHearBeat = true, bwEstimates = bwEstimates)
             cloud.enableAutoStatusUpdate { workerProto ->
                 if (!schedulerServiceRunning) {
-                    JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = *arrayOf("DEVICE_IP=$cloud_ip", "DEVICE_ID=${cloud.id}", "WORKER_TYPE=${cloud.type.name}"))
+                    JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=$cloud_ip", "DEVICE_ID=${cloud.id}", "WORKER_TYPE=${cloud.type.name}"))
                     return@enableAutoStatusUpdate
                 }
                 scheduler.notifyWorkerUpdate(workerProto) { status ->
@@ -373,7 +373,7 @@ object BrokerService {
     }
 
     fun callExecutorAction(request: Request?, callback: ((Response?) -> Unit)? = null) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST=${request?.request}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("REQUEST=${request?.request}"))
         if (workerServiceRunning) worker.callExecutorAction(request, callback)
         else {
             val errCallResponse = Response.newBuilder()
@@ -389,19 +389,19 @@ object BrokerService {
     }
 
     fun runExecutorAction(request: Request?, callback: ((Status?) -> Unit)?) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("REQUEST=${request?.request}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("REQUEST=${request?.request}"))
         if (workerServiceRunning) worker.runExecutorAction(request, callback)
         else callback?.invoke(JayUtils.genStatusError())
     }
 
     fun selectTaskExecutor(request: TaskExecutor?, callback: ((Status?) -> Unit)?) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("EXECUTOR_NAME=${request?.name}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("EXECUTOR_NAME=${request?.name}"))
         if (workerServiceRunning) worker.selectTaskExecutor(request, callback)
         else callback?.invoke(JayUtils.genStatusError())
     }
 
     fun setExecutorSettings(request: Settings?, callback: ((Status?) -> Unit)?) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("SETTINGS=${request?.settingMap?.keys}"))
         if (workerServiceRunning) worker.setExecutorSettings(request, callback)
         else callback?.invoke(JayUtils.genStatusError())
     }
@@ -432,7 +432,7 @@ object BrokerService {
     }
 
     fun setSchedulerSettings(request: Settings?, callback: ((Status?) -> Unit)?) {
-        JayLogger.logInfo("INIT", actions = *arrayOf("SETTINGS=${request?.settingMap?.keys}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("SETTINGS=${request?.settingMap?.keys}"))
         if (schedulerServiceRunning) scheduler.setSchedulerSettings(request, callback)
         else callback?.invoke(JayUtils.genStatusError())
     }

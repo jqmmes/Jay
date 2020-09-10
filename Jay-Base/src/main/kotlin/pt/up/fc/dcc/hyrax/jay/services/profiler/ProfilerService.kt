@@ -510,11 +510,11 @@ object ProfilerService {
                     this.powerInfo.power = this.powerMonitor?.getPower() ?: -1f
                     this.powerInfo.energy = this.powerMonitor?.getRemainingEnergy() ?: -1
                     this.powerInfo.charge = this.powerMonitor?.getCharge() ?: -1f
-                    JayLogger.logInfo("LEVEL_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_LEVEL=$level", "NEW_BATTERY_VOLTAGE=$voltage", "NEW_BATTERY_TEMPERATURE=$temperature", "NEW_BATTERY_CURRENT=${this.powerInfo.current}", "NEW_POWER=${this.powerInfo.power}", "REMAINING_ENERGY=${this.powerInfo.energy}", "NEW_BATTERY_CHARGE=${this.powerInfo.charge}"))
+                    JayLogger.logInfo("LEVEL_CHANGE_CB", actions = arrayOf("NEW_BATTERY_LEVEL=$level", "NEW_BATTERY_VOLTAGE=$voltage", "NEW_BATTERY_TEMPERATURE=$temperature", "NEW_BATTERY_CURRENT=${this.powerInfo.current}", "NEW_POWER=${this.powerInfo.power}", "REMAINING_ENERGY=${this.powerInfo.energy}", "NEW_BATTERY_CHARGE=${this.powerInfo.charge}"))
                 },
                 _statusChangeCallback = { status ->
                     if (status != this.powerInfo.status) {
-                        JayLogger.logInfo("STATUS_CHANGE_CB", actions = *arrayOf("NEW_BATTERY_STATUS=${status.name}"))
+                        JayLogger.logInfo("STATUS_CHANGE_CB", actions = arrayOf("NEW_BATTERY_STATUS=${status.name}"))
                         this.powerInfo.status = status
                     }
                 }

@@ -163,7 +163,7 @@ object WorkerService {
         profiler.unSetState(JayState.COMPUTE)
         val totalTime = System.currentTimeMillis() - computationStartTimestamp
         averageComputationTimes.add(totalTime)
-        JayLogger.logInfo("END", actions = *arrayOf("COMPUTATION_TIME=$totalTime",
+        JayLogger.logInfo("END", actions = arrayOf("COMPUTATION_TIME=$totalTime",
                 "NEW_AVERAGE_COMPUTATION_TIME=${(this.averageComputationTimes.sum() / this.averageComputationTimes.size)}"))
     }
 

@@ -46,7 +46,7 @@ android {
         javaMaxHeapSize "4g"
         preDexLibraries = false
     }
-    buildToolsVersion = '30.0.0'
+    buildToolsVersion = '30.0.2'
 }
 
 dependencies {
@@ -56,7 +56,7 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
-    implementation 'com.google.api.grpc:proto-google-common-protos:1.18.0'
+    implementation 'com.google.api.grpc:proto-google-common-protos:1.18.1'
     implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.3.1'
     implementation 'com.jaredrummler:android-device-names:2.0.0'
     api 'com.google.guava:guava:29.0-jre'

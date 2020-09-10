@@ -24,7 +24,7 @@ class EAScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("EAS
     private val executionPool = JayThreadPoolExecutor(10)
 
     override fun init() {
-        for (device in devices) JayLogger.logInfo("DEVICES", actions = *arrayOf("DEVICE_TYPE=${device.name}"))
+        for (device in devices) JayLogger.logInfo("DEVICES", actions = arrayOf("DEVICE_TYPE=${device.name}"))
         if (JayProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
                 SchedulerService.broker.enableHeartBeats(getWorkerTypes()) {
