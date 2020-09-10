@@ -42,14 +42,14 @@ internal class CloudletTensorFlow : DetectObjects {
                 JayLogger.logInfo("EXTRACT_MODEL_COMPLETE")
                 if (modelPath != newModel) {
                     newModel.renameTo(modelPath)
-                    JayLogger.logInfo("RENAME_MODEL_DIR", actions = *arrayOf("NEW_NAME=${modelPath.absolutePath}"))
+                    JayLogger.logInfo("RENAME_MODEL_DIR", actions = arrayOf("NEW_NAME=${modelPath.absolutePath}"))
                 }
             }
             tmpFile?.delete()
         }
-        JayLogger.logInfo("LOADING_MODEL_INIT", actions = *arrayOf("MODEL_NAME=${model.modelName}"))
+        JayLogger.logInfo("LOADING_MODEL_INIT", actions = arrayOf("MODEL_NAME=${model.modelName}"))
         loadModel(File(modelPath, "saved_model/").absolutePath, completeCallback = completeCallback)
-        JayLogger.logInfo("LOADING_MODEL_COMPLETE", actions = *arrayOf("MODEL_NAME=${model.modelName}"))
+        JayLogger.logInfo("LOADING_MODEL_COMPLETE", actions = arrayOf("MODEL_NAME=${model.modelName}"))
     }
 
     override var minimumScore: Float = 0.3f
@@ -113,14 +113,14 @@ internal class CloudletTensorFlow : DetectObjects {
     private fun resizeImage(imgData: ByteArray, maxSize: Int = 300): Image {
         JayLogger.logInfo("INIT")
         try {
-            JayLogger.logInfo("READ_IMAGE_DATA_INIT", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
+            JayLogger.logInfo("READ_IMAGE_DATA_INIT", actions = arrayOf("IMAGE_SIZE=${imgData.size}"))
             val image = ImageIO.read(ByteArrayInputStream(imgData))
-            JayLogger.logInfo("READ_IMAGE_DATA_COMPLETE", actions = *arrayOf("IMAGE_SIZE=${imgData.size}"))
+            JayLogger.logInfo("READ_IMAGE_DATA_COMPLETE", actions = arrayOf("IMAGE_SIZE=${imgData.size}"))
             if (image.width == maxSize && image.height <= maxSize ||
                     image.width <= maxSize && image.height == maxSize) return image
             val scale = maxSize.toFloat() / max(image.width, image.height)
             //val scale = 1.0
-            JayLogger.logInfo("SCALE_IMAGE", actions = *arrayOf("IMAGE_SCALE=$scale"))
+            JayLogger.logInfo("SCALE_IMAGE", actions = arrayOf("IMAGE_SCALE=$scale"))
             return image.getScaledInstance(floor(image.width * scale).toInt(), floor(image.height * scale).toInt(),
                     SCALE_FAST)
         } catch (e: Exception) {
@@ -132,7 +132,7 @@ internal class CloudletTensorFlow : DetectObjects {
     private fun processOutputs(model: SavedModelBundle, tensor: Tensor<UInt8>): List<Detection> {
         JayLogger.logInfo("INIT")
         JayLogger.logInfo("RUN_MODEL_INIT")
-        var outputs: List<Tensor<*>>? = null
+        var outputs: List<Tensor<*>>?
         tensor.use { input ->
             outputs = model
                     .session()
@@ -165,7 +165,7 @@ internal class CloudletTensorFlow : DetectObjects {
                             continue
                         }
                         returnList.add(Detection(scores[i], classes[i].toInt()))
-                        JayLogger.logInfo("CHECK_RESULTS", actions = *arrayOf("RESULT_CLASS=${COCODataLabels.label(classes[i].toInt())}", "RESULT_SCORE=${scores[i]}"))
+                        JayLogger.logInfo("CHECK_RESULTS", actions = arrayOf("RESULT_CLASS=${COCODataLabels.label(classes[i].toInt())}", "RESULT_SCORE=${scores[i]}"))
                     }
                 }
             }
@@ -244,7 +244,7 @@ internal class CloudletTensorFlow : DetectObjects {
         val converted = BufferedImage(300, 300, BufferedImage.TYPE_3BYTE_BGR)
         if (bufferedImage.type == BufferedImage.TYPE_4BYTE_ABGR) {
             JayLogger.logInfo("Converting image to correct type (YPE_3BYTE_BGR)")
-            JayLogger.logInfo("CONVERT_IMAGE_INIT", actions = *arrayOf("IMAGE_FORMAT=TYPE_3BYTE_BGR"))
+            JayLogger.logInfo("CONVERT_IMAGE_INIT", actions = arrayOf("IMAGE_FORMAT=TYPE_3BYTE_BGR"))
             for (y in 0 until bufferedImage.height) {
                 for (x in 0 until bufferedImage.width) {
                     val argb = bufferedImage.getRGB(x, y)
@@ -255,7 +255,7 @@ internal class CloudletTensorFlow : DetectObjects {
                     }
                 }
             }
-            JayLogger.logInfo("CONVERT_IMAGE_COMPLETE", actions = *arrayOf("IMAGE_FORMAT=TYPE_3BYTE_BGR"))
+            JayLogger.logInfo("CONVERT_IMAGE_COMPLETE", actions = arrayOf("IMAGE_FORMAT=TYPE_3BYTE_BGR"))
         }
         JayLogger.logInfo("COMPLETE")
         return converted
@@ -268,26 +268,26 @@ internal class CloudletTensorFlow : DetectObjects {
         try {
             for (file in cacheDir.listFiles()!!)
                 if (file.isDirectory && file.name == name) {
-                    JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_LOADED=TRUE"))
+                    JayLogger.logInfo("COMPLETE", actions = arrayOf("MODEL_LOADED=TRUE"))
                     return true
                 }
         } catch (ignore: Exception) {
         }
-        JayLogger.logInfo("COMPLETE", actions = *arrayOf("MODEL_LOADED=FALSE"))
+        JayLogger.logInfo("COMPLETE", actions = arrayOf("MODEL_LOADED=FALSE"))
         return false
     }
 
     override fun downloadModel(model: Model): File? {
-        JayLogger.logInfo("INIT", actions = *arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}"))
+        JayLogger.logInfo("INIT", actions = arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}"))
         if (!File(modelCacheDir).exists()) File(modelCacheDir).mkdirs()
         val modelUrl = URL(model.remoteUrl)
         val rbc = Channels.newChannel(modelUrl.openStream())
         val tmpFile = File.createTempFile(modelCacheDir + model.modelName, ".tar.gz")
-        JayLogger.logInfo("DOWNLOAD_INIT", actions = *arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}", "DOWNLOAD_LOCATION=${tmpFile.absolutePath}"))
+        JayLogger.logInfo("DOWNLOAD_INIT", actions = arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}", "DOWNLOAD_LOCATION=${tmpFile.absolutePath}"))
         val fos = FileOutputStream(tmpFile)
         fos.channel.transferFrom(rbc, 0, java.lang.Long.MAX_VALUE)
         model.downloaded = true
-        JayLogger.logInfo("DOWNLOAD_COMPLETE", actions = *arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}", "DOWNLOAD_LOCATION=${tmpFile.absolutePath}"))
+        JayLogger.logInfo("DOWNLOAD_COMPLETE", actions = arrayOf("MODEL_NAME=${model.modelName}", "MODEL_ID=${model.modelId}", "MODEL_URL=${model.remoteUrl}", "DOWNLOAD_LOCATION=${tmpFile.absolutePath}"))
         return tmpFile
     }
 
@@ -302,7 +302,7 @@ internal class CloudletTensorFlow : DetectObjects {
             entry = tis.nextEntry
         }
         while (entry != null) {
-            JayLogger.logInfo("EXTRACT", actions = *arrayOf("FILE_NAME=${entry.name}"))
+            JayLogger.logInfo("EXTRACT", actions = arrayOf("FILE_NAME=${entry.name}"))
             if (entry.name.contains("PaxHeader")) {
                 entry = tis.nextEntry
                 continue
