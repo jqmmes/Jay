@@ -168,6 +168,8 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
     private var signal = 1
     private var deviceName: String = ""
 
+    private var suAvailable: Boolean? = null
+
     override fun setCallbacks(_levelChangeCallback: (Int, Float, Float) -> Unit,
                               _statusChangeCallback: (PowerStatus) -> Unit) {
         statusChangeCallback = _statusChangeCallback
@@ -250,7 +252,13 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
                     isChargingStatus = true
                 }
         }
-        if (Shell.SU.available()) {
+        if (suAvailable == null)
+            suAvailable = try {
+                Shell.SU.available()
+            } catch (ignore: Exception) {
+                false
+            }
+        if (suAvailable == true) {
             val countDownLatch = CountDownLatch(1)
             Shell.Pool.SU.run("dumpsys battery", object : OnSyncCommandLineListener {
                 override fun onSTDOUT(line: String) {
@@ -387,6 +395,7 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
             else -> PowerStatus.DISCHARGING
         }
     }
+
 
     override fun getFixedPowerEstimations(): JayProto.PowerEstimations {
         if (deviceName == "") {

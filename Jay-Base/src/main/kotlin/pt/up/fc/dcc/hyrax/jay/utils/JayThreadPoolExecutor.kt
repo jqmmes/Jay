@@ -1,10 +1,12 @@
 package pt.up.fc.dcc.hyrax.jay.utils
 
+import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
+import kotlin.random.Random
 
 class JayThreadPoolExecutor(private val coreThreads: Int, maxQueueSize: Int = Int.MAX_VALUE) {
 
@@ -13,17 +15,32 @@ class JayThreadPoolExecutor(private val coreThreads: Int, maxQueueSize: Int = In
         var running = false
     }
 
-    private var runnableQueue: BlockingQueue<() -> Unit> = LinkedBlockingQueue<() -> Unit>(maxQueueSize)
+    private var runnableQueue: BlockingQueue<() -> Unit> = LinkedBlockingQueue(maxQueueSize)
     private val mainThread = thread(start = false) {
         do {
             val r = runnableQueue.take()
             semaphore.acquire()
             atomicInteger.incrementAndGet()
-            thread {
-                r()
-                atomicInteger.decrementAndGet()
-                semaphore.release()
+            try {
+                thread {
+                    val id = Random.nextInt()
+                    JayLogger.logInfo("RUNNING_THREAD", "", "THREAD_ID=$id")
+                    r()
+                    atomicInteger.decrementAndGet()
+                    semaphore.release()
+                    JayLogger.logInfo("CLOSING_THREAD", "", "THREAD_ID=$id")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Thread.sleep(100)
+                thread {
+                    r()
+                    atomicInteger.decrementAndGet()
+                    semaphore.release()
+                }
             }
+            JayLogger.logInfo("SUBMIT_THREAD", "", "ACTIVE_THREADS=${atomicInteger.get()}",
+                    "QUEUE_SIZE=${runnableQueue.size}")
         } while (running)
     }
     private val semaphore: Semaphore = Semaphore(coreThreads)

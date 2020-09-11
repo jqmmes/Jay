@@ -52,7 +52,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener({ callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
-    class ResponseStreamObserver(val task: JayProto.Task?, val local: Boolean = false,
+    class ResponseStreamObserver(val taskId: String, val taskSize: Int, val local: Boolean = false,
                                  private val startTime: Long, val sendCb: (() -> Unit),
                                  val dataReachedWorkerCb: (() -> Unit), val endCb: (() -> Unit),
                                  val callback: ((JayProto.Response) -> Unit)? = null,
@@ -60,27 +60,26 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         private var lastResult: JayProto.Response? = null
 
         override fun onNext(results: JayProto.Response) {
-            JayLogger.logInfo("RECEIVED_RESPONSE", task?.id ?: "", results.status.code.name)
+            JayLogger.logInfo("RECEIVED_RESPONSE", taskId, results.status.code.name)
             lastResult = results
             when (results.status.code) {
                 JayProto.StatusCode.Ready -> sendCb()
                 JayProto.StatusCode.Received -> {
                     dataReachedWorkerCb()
                     if (JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("PASSIVE", "ALL")) {
-                        BrokerService.passiveBandwidthUpdate(task?.id ?: "", task?.toByteArray()?.size
-                                ?: -1, System.currentTimeMillis() - startTime)
+                        BrokerService.passiveBandwidthUpdate(taskId, taskSize, System.currentTimeMillis() - startTime)
                     }
                     if (!local) BrokerService.profiler.unSetState(JayState.DATA_SND)
-                    JayLogger.logInfo("DATA_REACHED_SERVER", task?.id ?: "",
-                            "DATA_SIZE=${task?.toByteArray()?.size}",
+                    JayLogger.logInfo("DATA_REACHED_SERVER", taskId,
+                            "DATA_SIZE=$taskSize",
                             "DURATION_MILLIS=${System.currentTimeMillis() - startTime}",
                             "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                             "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
                             "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
                 }
                 JayProto.StatusCode.Success -> {
-                    JayLogger.logInfo("EXECUTION_COMPLETE", task?.id ?: "",
-                            "DATA_SIZE=${task?.toByteArray()?.size}",
+                    JayLogger.logInfo("EXECUTION_COMPLETE", taskId,
+                            "DATA_SIZE=$taskSize",
                             "DURATION_MILLIS=${System.currentTimeMillis() - startTime}",
                             "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                             "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
@@ -89,14 +88,14 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     schedulerInformCallback?.invoke()
                     endCb()
                 }
-                JayProto.StatusCode.End -> JayLogger.logInfo("END_TRANSFER", task?.id ?: "")
-                else -> onError(Throwable("Error Received onNext for taskId: ${task?.id}"))
+                JayProto.StatusCode.End -> JayLogger.logInfo("END_TRANSFER", taskId)
+                else -> onError(Throwable("Error Received onNext for taskId: $taskId"))
             }
         }
 
         override fun onError(t: Throwable) {
-            JayLogger.logError("ERROR", task?.id ?: "")
-            callback?.invoke(JayProto.Response.getDefaultInstance()); JayLogger.logError("ERROR", task?.id ?: "",
+            JayLogger.logError("ERROR", taskId)
+            callback?.invoke(JayProto.Response.getDefaultInstance()); JayLogger.logError("ERROR", taskId,
                     "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                     "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
@@ -104,7 +103,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }
 
         override fun onCompleted() {
-            JayLogger.logInfo("COMPLETE", task?.id ?: "",
+            JayLogger.logInfo("COMPLETE", taskId,
                     "DURATION_MILLIS=${System.currentTimeMillis() - startTime}",
                     "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                     "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
@@ -132,7 +131,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             var taskStreamObserver: StreamObserver<JayProto.Task>? = null
 
             taskStreamObserver = asyncStub.executeTask(ResponseStreamObserver(
-                    task, local, startTime,
+                    task?.id ?: "", task?.toByteArray()?.size ?: 0, local, startTime,
                     sendCb = {
                         if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
                         taskStreamObserver?.onNext(

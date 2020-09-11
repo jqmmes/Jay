@@ -95,6 +95,14 @@ object SchedulerService {
         if (worker?.type == Worker.Type.REMOTE && JaySettings.CLOUDLET_ID != "" && JaySettings.CLOUDLET_ID != worker.id) return JayProto.StatusCode.Success
         synchronized(workersLock) {
             workers[worker!!.id] = worker
+            JayLogger.logInfo(
+                    "WORKER=${worker.id}",
+                    "BAT_CAPACITY=${workers[worker.id]?.powerEstimations?.batteryCapacity}",
+                    "BAT_LEVEL=${workers[worker.id]?.powerEstimations?.batteryLevel}",
+                    "BAT_COMPUTE=${workers[worker.id]?.powerEstimations?.compute}",
+                    "BAT_IDLE=${workers[worker.id]?.powerEstimations?.idle}",
+                    "BAT_TX=${workers[worker.id]?.powerEstimations?.tx}",
+                    "BAT_RX=${workers[worker.id]?.powerEstimations?.rx}")
         }
         for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
         return JayProto.StatusCode.Success
@@ -181,6 +189,29 @@ object SchedulerService {
     internal fun getExpectedPower(worker: Worker?, callback: ((JayProto.PowerEstimations?) -> Unit)) {
         if (worker?.type == Worker.Type.LOCAL) callback(profiler.getExpectedPower())
         broker.getExpectedPowerFromRemote(worker) { callback(it) }
+    }
+
+    internal fun canMeetDeadline(task: Task, worker: Worker?): Boolean {
+        if (worker == null) return false
+        JayLogger.logInfo("CAN_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
+        if (task.deadlineDuration == null && task.deadline == null) {
+            JayLogger.logInfo("NO_DEADLINE_SET", task.id, "WORKER=${worker.id}")
+            return true
+        }
+        val deadlineTime: Long = task.deadline ?: System.currentTimeMillis() + ((task.deadlineDuration ?: 0) * 1000)
+        JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", task.id,
+                "WORKER=${worker.id}",
+                "MAX_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask)}",
+                "EXPECTED_DEADLINE=${deadlineTime}",
+                "QUEUE_SIZE=${worker.queuedTasks + 1}",
+                "AVG_TIME_PER_TASK=${worker.avgTimePerTask}"
+        )
+        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask) <= deadlineTime) {
+            JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id}")
+            return true
+        }
+        JayLogger.logInfo("WORKER_CANT_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
+        return false
     }
 
     fun setSchedulerSettings(settingMap: Map<String, Any>, callback: ((JayProto.Status?) -> Unit)?) {

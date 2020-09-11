@@ -26,6 +26,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         OFFLINE
     }
 
+
     val grpc: BrokerGRPCClient = BrokerGRPCClient(address)
 
     private var avgComputingEstimate = 0L
@@ -41,8 +42,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private var status = Status.OFFLINE
     private var bandwidthEstimate: Float = 0f
     private var avgResultSize = 0L
-    //private var freeSpace = Long.MAX_VALUE
-    //private var connections = 0
+    private var powerEstimations: JayProto.PowerEstimations? = null
 
     private var smartPingScheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
     private var circularFIFO: CircularFifoQueue<Float> = CircularFifoQueue(JaySettings.RTT_HISTORY_SIZE)
@@ -70,7 +70,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     init {
         bandwidthEstimate = when (type) {
             JayProto.Worker.Type.LOCAL -> 0f
-            JayProto.Worker.Type.REMOTE -> 0.05f
+            JayProto.Worker.Type.REMOTE -> 0.003f
             JayProto.Worker.Type.CLOUD -> 0.1f
             else -> 0.07f
         }
@@ -97,6 +97,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         worker.freeMemory = freeMemory
         worker.avgResultSize = avgResultSize
         worker.brokerPort = this.grpc.port
+        if (this.powerEstimations != null) worker.powerEstimations = this.powerEstimations
         this.proto = worker.build()
     }
 
@@ -134,9 +135,14 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         queuedTasks = proto.queuedTasks
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
+        powerEstimations = proto.powerEstimations
         if (proto.brokerPort != this.grpc.port) this.grpc.setNewPort(proto.brokerPort)
         this.lastStatusUpdateTimestamp = System.currentTimeMillis()
         return getProto(true)
+    }
+
+    internal fun updateStatus(expectedPower: JayProto.PowerEstimations?) {
+        this.powerEstimations = expectedPower
     }
 
     internal fun getProto(genProto: Boolean = false): JayProto.Worker? {
@@ -171,6 +177,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
                     JayLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                 }
+                JayLogger.logInfo("AVAILABLE_MEMORY", "", "MEMORY=${Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()}")
                 sleep(JaySettings.WORKER_STATUS_UPDATE_INTERVAL)
             } while (autoStatusUpdateEnabledFlag)
             autoStatusUpdateRunning.countDown()
@@ -248,6 +255,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     fun getStatus(): Status {
         return status
     }
+
 
     private inner class RTTTimer : Runnable {
         override fun run() {

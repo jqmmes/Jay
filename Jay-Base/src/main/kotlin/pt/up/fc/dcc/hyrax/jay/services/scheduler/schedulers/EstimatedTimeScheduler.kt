@@ -17,6 +17,8 @@ import kotlin.random.Random
 class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
     private var rankedWorkers = LinkedBlockingDeque<RankedWorker>()
     private val assignedTask = LinkedHashMap<String, String>()
+    private val offloadedTasks = LinkedHashMap<String, Pair<Long, Long?>>()
+    private val offloadedLock = Object()
 
     override fun init() {
         JayLogger.logInfo("INIT")
@@ -36,7 +38,22 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
         }
         SchedulerService.registerNotifyTaskListener { taskId ->
             if (taskId == "" || (taskId !in assignedTask.keys)) return@registerNotifyTaskListener
-            assignedTask.remove(taskId)
+            synchronized(offloadedLock) {
+                assignedTask.remove(taskId)
+                JayLogger.logInfo("TASK_COMPLETE_LISTENER", taskId)
+                JayLogger.logInfo("DEADLINE_DATA", taskId, offloadedTasks.keys.toString())
+                if (offloadedTasks.containsKey(taskId)) {
+                    JayLogger.logInfo("DEADLINE_DATA_CONTAINS_KEY", taskId, "${offloadedTasks[taskId]?.first}, ${
+                        offloadedTasks[taskId]?.second
+                    }")
+                    if (offloadedTasks[taskId]?.second != null) {
+                        //val deltaTask = (System.currentTimeMillis() - offloadedTasks[taskId]!!.first) / 1000f
+                        JayLogger.logInfo("TASK_WITH_DEADLINE_COMPLETED", taskId,
+                                "DEADLINE_MET=${System.currentTimeMillis() <= offloadedTasks[taskId]!!.second!!}")
+                    }
+                    offloadedTasks.remove(taskId)
+                }
+            }
         }
     }
 
@@ -57,11 +74,27 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
         JayLogger.logInfo("COMPLETE_SORTING", task.id)
         JayLogger.logInfo("SELECTED_WORKER", task.id, actions = arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
         if (rankedWorkers.isNotEmpty()) {
+            if (task.deadline != null || task.deadlineDuration != null) {
+                val workerInfoMap = SchedulerService.getWorkers()
+                rankedWorkers.forEach { rankedWorker ->
+                    if (workerInfoMap.containsKey(rankedWorker.id)) {
+                        if (SchedulerService.canMeetDeadline(task, workerInfoMap[rankedWorker.id])) {
+                            synchronized(offloadedLock) {
+                                assignedTask[task.id] = rankedWorker.id!!
+                                offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
+                            }
+                            return workerInfoMap[rankedWorker.id]
+                        }
+                    }
+                }
+                JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
+            }
             assignedTask[task.id] = rankedWorkers.first.id!!
             return SchedulerService.getWorker(rankedWorkers.first.id!!)
         }
         return null
     }
+
 
     override fun destroy() {
         SchedulerService.broker.disableBandwidthEstimates()

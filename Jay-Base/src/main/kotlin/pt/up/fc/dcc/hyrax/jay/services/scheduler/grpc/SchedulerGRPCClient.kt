@@ -43,7 +43,11 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
             channel.resetConnectBackoff()
             return
         }
-        notifyPool.submit { blockingStub.notifyTaskComplete(request) }
+        notifyPool.submit {
+            JayLogger.logInfo("WILL_NOTIFY_SCHEDULER", request?.id ?: "", "BEGIN")
+            blockingStub.notifyTaskComplete(request)
+            JayLogger.logInfo("NOTIFIED_SCHEDULER", request?.id ?: "", "END")
+        }
     }
 
     fun listSchedulers(callback: ((JayProto.Schedulers?) -> Unit)? = null) {

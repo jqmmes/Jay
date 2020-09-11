@@ -84,12 +84,12 @@ object BrokerService {
             do {
                 val controlLatch = CountDownLatch(1)
                 try {
-
                     val profile = if (profilerServiceRunning) profiler.getDeviceStatus() else null
                     if (workerServiceRunning) worker.getWorkerStatus {
                         local.updateStatus(it, profile)
                         controlLatch.countDown()
                     }
+                    if (profilerServiceRunning) local.updateStatus(profiler.getExpectedPower())
                 } catch (ignore: Exception) {
                     JayLogger.logError("Failed to read Service Data")
                 }

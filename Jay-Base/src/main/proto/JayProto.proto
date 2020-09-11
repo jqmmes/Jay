@@ -104,6 +104,7 @@ message Worker {
     int64 freeMemory = 14;
     int64 avgResultSize = 15;
     int32 brokerPort = 16;
+    PowerEstimations powerEstimations = 17;
 }
 
 message WorkerComputeStatus {

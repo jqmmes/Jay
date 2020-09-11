@@ -5,9 +5,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
-import pt.up.fc.dcc.hyrax.jay.utils.JayThreadPoolExecutor
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
-import java.util.concurrent.CountDownLatch
 import kotlin.random.Random
 
 /**
@@ -19,7 +17,6 @@ import kotlin.random.Random
 class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractScheduler("GreenTaskScheduler") {
 
     private var devices = devices.toList()
-    private val executionPool = JayThreadPoolExecutor(10)
     private val offloadedTasks = LinkedHashMap<String, Pair<Long, Long?>>()
     private val lock = Object()
     private val offloadedLock = Object()
@@ -29,7 +26,12 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         for (device in devices) JayLogger.logInfo("DEVICES", actions = arrayOf("DEVICE_TYPE=${device.name}"))
         if (JayProto.Worker.Type.REMOTE in devices) {
             SchedulerService.listenForWorkers(true) {
-                SchedulerService.broker.enableHeartBeats(getWorkerTypes()) {
+                SchedulerService.broker.enableBandwidthEstimates(
+                        JayProto.BandwidthEstimate.newBuilder()
+                                .setType(JayProto.BandwidthEstimate.Type.ACTIVE)
+                                .addAllWorkerType(getWorkerTypes().typeList)
+                                .build()
+                ) {
                     JayLogger.logInfo("COMPLETE")
                     super.init()
                 }
@@ -49,7 +51,6 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
                         offloadedTasks[taskId]?.second
                     }")
                     if (offloadedTasks[taskId]?.second != null) {
-                        //val deltaTask = (System.currentTimeMillis() - offloadedTasks[taskId]!!.first) / 1000f
                         JayLogger.logInfo("TASK_WITH_DEADLINE_COMPLETED", taskId,
                                 "DEADLINE_MET=${System.currentTimeMillis() <= offloadedTasks[taskId]!!.second!!}")
                     }
@@ -65,37 +66,6 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return "${super.getName()} [${devices.trimEnd(' ', ',')}]"
     }
 
-    private fun getPowerMap(workers: Set<JayProto.Worker?>, task: Task, skipDeadline: Boolean = false):
-            MutableMap<JayProto.Worker, JayProto.PowerEstimations?> {
-        val powerMap = mutableMapOf<JayProto.Worker, JayProto.PowerEstimations?>()
-        val powerLatch = CountDownLatch(workers.size)
-
-        workers.forEach { worker ->
-            if (canMeetDeadline(task, worker) || skipDeadline) {
-                executionPool.submit {
-                    SchedulerService.getExpectedPower(worker) {
-                        JayLogger.logInfo("GOT_EXPECTED_POWER", task.id,
-                                "WORKER=${worker?.id}",
-                                "BAT_CAPACITY=${it?.batteryCapacity}",
-                                "BAT_LEVEL=${it?.batteryLevel}",
-                                "BAT_COMPUTE=${it?.compute}",
-                                "BAT_IDLE=${it?.idle}",
-                                "BAT_TX=${it?.tx}",
-                                "BAT_RX=${it?.rx}")
-                        synchronized(lock) {
-                            powerMap[worker!!] = it
-                        }
-                        powerLatch.countDown()
-                    }
-                }
-            } else {
-                powerLatch.countDown()
-            }
-        }
-        powerLatch.await()
-        return powerMap
-    }
-
     /**
      * In here we have to estimate how much energy will be spent on the remote device
      * i.e. task receive, queue time (remote device will be working), compute, result send
@@ -103,30 +73,30 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
     override fun scheduleTask(task: Task): JayProto.Worker? {
         JayLogger.logInfo("BEGIN_SCHEDULING", task.id)
         val workers = SchedulerService.getWorkers(devices).values
-        var powerMap = getPowerMap(workers.toSet(), task)
+        val meetDeadlines = mutableSetOf<JayProto.Worker>()
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
-        val localExpectedPower = SchedulerService.profiler.getExpectedPower()
+        val localExpectedPower = SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.elementAt(0)!!.powerEstimations
 
+        workers.forEach { worker ->
+            if (SchedulerService.canMeetDeadline(task, worker) && worker != null) {
+                meetDeadlines.add(worker)
+            }
+        }
 
-        if (powerMap.isEmpty()) {
+        if (meetDeadlines.isEmpty()) {
             JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
             when (JaySettings.TASK_DEADLINE_BROKEN_SELECTION) {
                 "EXECUTE_LOCALLY" -> return SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.first()
                 // "FASTER_COMPLETION" -> null // todo
-                "LOWEST_ENERGY" -> powerMap = getPowerMap(workers.toSet(), task, true)
+                "LOWEST_ENERGY" -> workers.forEach { if (it != null) meetDeadlines.add(it) }
             }
         }
-        var maxSpend = Float.MAX_VALUE
+        var maxSpend = Float.NEGATIVE_INFINITY
         synchronized(lock) {
-            powerMap.forEach { (worker, powerEstimations) ->
-                // we receive negative power values from profiler, so we negate them to be more readable. We want the minimum consumption
-                val spend: Float = (if (worker.type == JayProto.Worker.Type.LOCAL) {
-                    (worker.avgTimePerTask / 3600f) * (powerEstimations?.compute ?: 0f)
-                } else {
-                    getEnergySpentComputing(task, worker, powerEstimations, localExpectedPower)
-                }).unaryMinus()
+            meetDeadlines.forEach { worker ->
+                val spend: Float = getEnergySpentComputing(task, worker, localExpectedPower).unaryMinus()
                 JayLogger.logInfo("EXPECTED_ENERGY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
-                if (spend < maxSpend) {
+                if (spend > maxSpend) {
                     possibleWorkers.clear()
                     maxSpend = spend
                     possibleWorkers.add(worker)
@@ -135,7 +105,11 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
                 }
             }
         }
-        val w = possibleWorkers.elementAt((Random.nextInt(possibleWorkers.size)))
+        val w = if (possibleWorkers.size > 0) {
+            possibleWorkers.elementAt(Random.nextInt(possibleWorkers.size))
+        } else {
+            workers.elementAt(Random.nextInt(workers.size))!!
+        }
         JayLogger.logInfo("COMPLETE_SCHEDULING", task.id, "WORKER=${w.id}")
         synchronized(offloadedLock) {
             offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
@@ -143,34 +117,28 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return w
     }
 
-    private fun canMeetDeadline(task: Task, worker: JayProto.Worker?): Boolean {
-        if (worker == null) return false
-        JayLogger.logInfo("CAN_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
-        if (task.deadlineDuration == null && task.deadline == null) {
-            JayLogger.logInfo("NO_DEADLINE_SET", task.id, "WORKER=${worker.id}")
-            return true
-        }
-        val deadlineTime: Long = task.deadline ?: System.currentTimeMillis() + ((task.deadlineDuration ?: 0) * 1000)
-        JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", task.id,
-                "WORKER=${worker.id}",
-                "MAX_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask)}",
-                "EXPECTED_DEADLINE=${deadlineTime}",
-                "QUEUE_SIZE=${worker.queuedTasks + 1}",
-                "AVG_TIME_PER_TASK=${worker.avgTimePerTask}"
-        )
-        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask) <= deadlineTime) {
-            JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id}")
-            return true
-        }
-        JayLogger.logInfo("WORKER_CANT_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
-        return false
-    }
 
-    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, power: JayProto.PowerEstimations?, local: JayProto.PowerEstimations?): Float {
-        return ((worker.avgTimePerTask / 1000f) / 3600f) * (power?.compute ?: 0f) +
-                (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * (local?.tx ?: 0f) +
-                (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * (power?.rx ?: 0f) +
-                (((worker.avgResultSize * worker.bandwidthEstimate.toLong()) / 1000f) / 3600) * (power?.tx ?: 0f)
+    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, local: JayProto.PowerEstimations): Float {
+        if (worker.powerEstimations.compute == 0.0f && worker.powerEstimations.idle == 0.0f
+                && worker.powerEstimations.rx == 0.0f && worker.powerEstimations.tx == 0.0f
+        ) return Float.NEGATIVE_INFINITY
+        JayLogger.logInfo("ENERGY_SPENT_ESTIMATION_PARAMS", task.id,
+                "AVG_TIME_PER_TASK=${worker.avgTimePerTask}",
+                "BANDWIDTH_ESTIMATE=${worker.bandwidthEstimate}",
+                "AVG_RESULT_SIZE=${worker.avgResultSize}",
+                "POWER_REMOTE_COMPUTE=${worker.powerEstimations.compute}",
+                "POWER_LOCAL_TX=${local.tx}",
+                "POWER_REMOTE_RX=${worker.powerEstimations.rx}",
+                "POWER_REMOTE_TX=${worker.powerEstimations.tx}"
+        )
+        return ((worker.avgTimePerTask / 1000f) / 3600f) * worker.powerEstimations.compute +
+                if (worker.type == JayProto.Worker.Type.LOCAL) {
+                    (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * local.tx +
+                            (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * worker.powerEstimations.rx +
+                            (((worker.avgResultSize * worker.bandwidthEstimate.toLong()) / 1000f) / 3600) * worker.powerEstimations.tx
+                } else {
+                    0f
+                }
     }
 
     override fun destroy() {
