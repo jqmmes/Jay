@@ -29,6 +29,14 @@ class FileSystemAssistant : FileSystemAssistant {
         return tmpFile.name
     }
 
+    override fun clearTempFile(fileId: String?) {
+
+    }
+
+    override fun getFileSizeFromId(id: String): Long {
+        return File(tmpDir, id).length()
+    }
+
     override fun getByteArrayFromId(id: String): ByteArray {
         return ByteArray(0)
     }
