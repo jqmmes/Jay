@@ -33,4 +33,8 @@ abstract class TaskExecutor(val name: String, val description: String?) {
         }
         return status
     }
+
+    open fun getQueueSize(): Int {
+        return Integer.MAX_VALUE
+    }
 }

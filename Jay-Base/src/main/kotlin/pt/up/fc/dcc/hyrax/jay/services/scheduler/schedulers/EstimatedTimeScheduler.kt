@@ -149,9 +149,9 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
             JayLogger.logInfo("COMPLETE", actions = arrayOf("WORKER_ID=$id"))
         }
 
-        fun calcScore(dataSize: Int) {
+        fun calcScore(dataSize: Long) {
             JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id"))
-            estimatedDuration = dataSize*estimatedBandwidth + weightQueue
+            estimatedDuration = dataSize * estimatedBandwidth + weightQueue
             JayLogger.logInfo("COMPLETE", actions = arrayOf("WORKER_ID=$id", "SCORE=$estimatedDuration"))
         }
 

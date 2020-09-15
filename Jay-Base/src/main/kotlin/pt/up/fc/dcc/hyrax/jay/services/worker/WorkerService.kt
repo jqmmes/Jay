@@ -37,7 +37,6 @@ object WorkerService {
     private val averageComputationTimes = CircularFifoQueue<Long>(JaySettings.AVERAGE_COMPUTATION_TIME_TO_SCORE)
     private var runningTasks: AtomicInteger = AtomicInteger(0)
     private var totalTasks: AtomicInteger = AtomicInteger(0)
-    private var queueSize: Int = Int.MAX_VALUE
 
     init {
         executorThreadPool.shutdown()
@@ -177,7 +176,8 @@ object WorkerService {
     fun getWorkerStatus(): WorkerComputeStatus? {
         val workerComputeStatusBuilder = WorkerComputeStatus.newBuilder()
         workerComputeStatusBuilder.avgTimePerTask = if (averageComputationTimes.size > 0) averageComputationTimes.sum() / averageComputationTimes.size else 0
-        workerComputeStatusBuilder.queueSize = queueSize
+        workerComputeStatusBuilder.queueSize = taskExecutorManager?.getCurrentExecutor()?.getQueueSize()
+                ?: Integer.MAX_VALUE
         workerComputeStatusBuilder.runningTasks = runningTasks.get()
         workerComputeStatusBuilder.queuedTasks = totalTasks.get()
         return workerComputeStatusBuilder.build()

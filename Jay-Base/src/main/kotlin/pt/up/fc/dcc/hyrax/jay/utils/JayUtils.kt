@@ -70,7 +70,7 @@ object JayUtils {
     fun getTaskDetails(task: JayProto.Task?): JayProto.TaskDetails? {
         if (task == null) return JayProto.TaskDetails.getDefaultInstance()
         return JayProto.TaskDetails.newBuilder().setId(task.id)
-                .setDataSize(task.data.size())
+                .setDataSize(task.data.size().toLong())
                 .setDeadline(task.deadline)
                 .setCreationTimeStamp(task.creationTimeStamp)
                 .build()

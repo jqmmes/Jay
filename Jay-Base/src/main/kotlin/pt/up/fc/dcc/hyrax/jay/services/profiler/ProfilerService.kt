@@ -176,12 +176,6 @@ object ProfilerService {
         return retSet
     }
 
-    private fun getMovingAvg(v1: CircularFifoQueue<Int>?): Int {
-        var tot = 0
-        v1?.forEach { tot += it }
-        return tot / (v1?.size ?: 1)
-    }
-
     private fun getMovingAvg(v1: CircularFifoQueue<Float>?): Float {
         var tot = 0f
         v1?.forEach { tot += it }
@@ -520,6 +514,7 @@ object ProfilerService {
                 }
         )
     }
+    private var saveCounter = 0
 
     internal fun startRecording(): Boolean {
         synchronized(LOCK) {
@@ -627,7 +622,9 @@ object ProfilerService {
                                 expectedCpuHashMap[it] = getExpectedCpuMhz(it)
                             }
                         }
-                        cpuRecordingsFile?.writeText(Gson().toJson(rawExpectedCpuHashMap))
+                        if (saveCounter % 30 == 0) {
+                            cpuRecordingsFile?.writeText(Gson().toJson(rawExpectedCpuHashMap))
+                        }
                     }
                     synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
                         rawExpectedCurrentHashMap.keys.forEach {
@@ -640,7 +637,9 @@ object ProfilerService {
                                 }
                             }
                         }
-                        currentRecordingsFile?.writeText(Gson().toJson(rawExpectedCurrentHashMap))
+                        if (saveCounter % 30 == 0) {
+                            currentRecordingsFile?.writeText(Gson().toJson(rawExpectedCurrentHashMap))
+                        }
                     }
                     synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
                         rawExpectedPowerHashMap.keys.forEach {
@@ -653,9 +652,13 @@ object ProfilerService {
                                 }
                             }
                         }
-                        powerRecordingsFile?.writeText(Gson().toJson(rawExpectedPowerHashMap))
+                        if (saveCounter % 30 == 0) {
+                            powerRecordingsFile?.writeText(Gson().toJson(rawExpectedPowerHashMap))
+                        }
                     }
                     Thread.sleep(recalculateAveragesInterval)
+                    if (saveCounter % 30 == 0) saveCounter = 0
+                    saveCounter++
                 } while (this.recording.get())
                 recordingLatch.countDown()
                 JayLogger.logInfo("START_PROFILE_AVERAGES_RECALCULATION", "", "END")

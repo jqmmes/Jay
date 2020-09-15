@@ -94,7 +94,8 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         var maxSpend = Float.NEGATIVE_INFINITY
         synchronized(lock) {
             meetDeadlines.forEach { worker ->
-                val spend: Float = getEnergySpentComputing(task, worker, localExpectedPower).unaryMinus()
+                var spend: Float = getEnergySpentComputing(task, worker, localExpectedPower)
+                if (spend > 0) spend = spend.unaryMinus()
                 JayLogger.logInfo("EXPECTED_ENERGY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
                 if (spend > maxSpend) {
                     possibleWorkers.clear()
@@ -110,10 +111,10 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         } else {
             workers.elementAt(Random.nextInt(workers.size))!!
         }
-        JayLogger.logInfo("COMPLETE_SCHEDULING", task.id, "WORKER=${w.id}")
         synchronized(offloadedLock) {
             offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
         }
+        JayLogger.logInfo("COMPLETE_SCHEDULING", task.id, "WORKER=${w.id}")
         return w
     }
 

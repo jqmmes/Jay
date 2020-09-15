@@ -14,7 +14,10 @@ import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.Semaphore
 import kotlin.concurrent.thread
+import kotlin.math.max
 import kotlin.random.Random
 
 object SchedulerService {
@@ -34,10 +37,13 @@ object SchedulerService {
     private var running = false
     private val schedulers: MutableSet<AbstractScheduler> = mutableSetOf()
     private val workersLock = Object()
-
+    private val concurrentFIFOQueueSemaphore = ConcurrentLinkedDeque<Semaphore>()
+    private val concurrentSemaphoreLock = Object()
 
     internal fun getWorker(id: String): Worker? {
-        return if (workers.containsKey(id)) workers[id] else null
+        return synchronized(workersLock) {
+            if (workers.containsKey(id)) workers[id] else null
+        }
     }
 
     internal fun getWorkers(vararg filter: Worker.Type): HashMap<String, Worker?> {
@@ -80,12 +86,24 @@ object SchedulerService {
         if (scheduler == null) scheduler = schedulers.first()
         val w = scheduler?.scheduleTask(Task(request))
         JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=${w?.id}")
-        synchronized(workersLock) {
-            if (w != null && workers.containsKey(w.id)) {
-                workers[w.id] = Worker.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.queuedTasks + 1).build()
-                JayLogger.logInfo("INCREMENT_QUEUED_TASKS", request?.id ?: "", "WORKER=${w.id}",
-                        "NEW_SIZE=${workers[w.id]?.queuedTasks}")
+        if (w != null && workers.containsKey(w.id)) {
+            val lock = Semaphore(0)
+            synchronized(concurrentSemaphoreLock) {
+                concurrentFIFOQueueSemaphore.addLast(lock)
             }
+            while (workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)) {
+                JayLogger.logInfo("WORKER_QUEUE_FULL", request!!.id, "WORKER=${w.id}",
+                        "CURRENT_QUEUE=${workers[w.id]!!.queuedTasks}", "MAX_QUEUE=${workers[w.id]!!.queueSize}")
+                lock.acquire()
+            }
+            synchronized(workersLock) {
+                workers[w.id] = Worker.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.queuedTasks + 1).build()
+            }
+            synchronized(concurrentSemaphoreLock) {
+                concurrentFIFOQueueSemaphore.remove(lock)
+            }
+            JayLogger.logInfo("INCREMENT_QUEUED_TASKS", request?.id ?: "", "WORKER=${w.id}",
+                    "NEW_SIZE=${workers[w.id]?.queuedTasks}")
         }
         return w
     }
@@ -95,15 +113,18 @@ object SchedulerService {
         if (worker?.type == Worker.Type.REMOTE && JaySettings.CLOUDLET_ID != "" && JaySettings.CLOUDLET_ID != worker.id) return JayProto.StatusCode.Success
         synchronized(workersLock) {
             workers[worker!!.id] = worker
-            JayLogger.logInfo(
-                    "WORKER=${worker.id}",
-                    "BAT_CAPACITY=${workers[worker.id]?.powerEstimations?.batteryCapacity}",
-                    "BAT_LEVEL=${workers[worker.id]?.powerEstimations?.batteryLevel}",
-                    "BAT_COMPUTE=${workers[worker.id]?.powerEstimations?.compute}",
-                    "BAT_IDLE=${workers[worker.id]?.powerEstimations?.idle}",
-                    "BAT_TX=${workers[worker.id]?.powerEstimations?.tx}",
-                    "BAT_RX=${workers[worker.id]?.powerEstimations?.rx}")
         }
+        synchronized(concurrentSemaphoreLock) {
+            concurrentFIFOQueueSemaphore.peekFirst()?.release()
+        }
+        JayLogger.logInfo(
+                "WORKER=${worker!!.id}",
+                "BAT_CAPACITY=${workers[worker.id]?.powerEstimations?.batteryCapacity}",
+                "BAT_LEVEL=${workers[worker.id]?.powerEstimations?.batteryLevel}",
+                "BAT_COMPUTE=${workers[worker.id]?.powerEstimations?.compute}",
+                "BAT_IDLE=${workers[worker.id]?.powerEstimations?.idle}",
+                "BAT_TX=${workers[worker.id]?.powerEstimations?.tx}",
+                "BAT_RX=${workers[worker.id]?.powerEstimations?.rx}")
         for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
         return JayProto.StatusCode.Success
     }

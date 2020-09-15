@@ -159,6 +159,7 @@ import kotlin.math.roundToInt
  */
 
 class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
+    private var lastIsChargingUpdateTime: Long = 0
     private val levelMonitor = BatteryLevelUpdatesReceiver()
     private val chargingStateMonitor = BatteryChargeStateUpdatesReceiver()
     private val batteryDriverBaseDir = "/sys/class/power_supply"
@@ -258,7 +259,8 @@ class AndroidPowerMonitor(private val context: Context) : PowerMonitor {
             } catch (ignore: Exception) {
                 false
             }
-        if (suAvailable == true) {
+        if (suAvailable == true && (System.currentTimeMillis() - lastIsChargingUpdateTime) > 10000) {
+            lastIsChargingUpdateTime = System.currentTimeMillis()
             val countDownLatch = CountDownLatch(1)
             Shell.Pool.SU.run("dumpsys battery", object : OnSyncCommandLineListener {
                 override fun onSTDOUT(line: String) {

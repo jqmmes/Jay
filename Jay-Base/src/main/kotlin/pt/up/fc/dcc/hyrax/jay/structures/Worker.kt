@@ -177,7 +177,11 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
                     JayLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
                 }
-                JayLogger.logInfo("AVAILABLE_MEMORY", "", "MEMORY=${Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()}")
+                JayLogger.logInfo("AVAILABLE_MEMORY", "", "MAX_MEMORY=${Runtime.getRuntime().maxMemory()}", "MEMORY=${
+                    Runtime
+                            .getRuntime().totalMemory
+                            () - Runtime.getRuntime().freeMemory()
+                }")
                 sleep(JaySettings.WORKER_STATUS_UPDATE_INTERVAL)
             } while (autoStatusUpdateEnabledFlag)
             autoStatusUpdateRunning.countDown()

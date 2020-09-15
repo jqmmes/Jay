@@ -79,8 +79,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun ping(request: JayProto.Ping, responseObserver: StreamObserver<JayProto.Ping>?) {
-            if (request.hasField(request.descriptorForType.findFieldByName("reply")))
+            try {
                 if (request.reply) return genericComplete(request, responseObserver)
+            } catch (ignore: Exception) {
+            }
             genericComplete(JayProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(0))).build(), responseObserver)
         }
 
@@ -175,8 +177,10 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             } else {
                 JayLogger.logInfo("SUBMITTING_TASK", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId",
                         "DEADLINE=${request?.deadline}"))
-                scheduleTask(Task(BrokerService.getByteArrayFromId(reqId)
-                        ?: ByteArray(0), request?.deadline).getProto(), responseObserver)
+                //scheduleTask(Task(BrokerService.getByteArrayFromId(reqId)
+                //        ?: ByteArray(0), request?.deadline).getProto(), responseObserver)
+                scheduleTask(Task(reqId, BrokerService.getFileSizeFromId(reqId) ?: 0, request?.deadline).getProto(),
+                        responseObserver)
                 JayLogger.logInfo("TASK_SUBMITTED", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
             JayLogger.logInfo("COMPLETE", actions = arrayOf("REQUEST_ID=$reqId"))

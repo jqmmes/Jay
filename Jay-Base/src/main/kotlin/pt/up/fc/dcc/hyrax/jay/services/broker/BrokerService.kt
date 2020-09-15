@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 import kotlin.random.Random
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
+import pt.up.fc.dcc.hyrax.jay.structures.Task as JayTask
 
 object BrokerService {
 
@@ -135,6 +136,12 @@ object BrokerService {
         return null
     }
 
+    internal fun getFileSizeFromId(id: String?): Long? {
+        if (id != null)
+            return fsAssistant?.getFileSizeFromId(id)
+        return null
+    }
+
     internal fun executeTask(request: Task?, callback: ((Response?) -> Unit)? = null) {
         val taskId = request?.id ?: ""
         JayLogger.logInfo("INIT", taskId)
@@ -156,14 +163,18 @@ object BrokerService {
                 callback?.invoke(null)
             } else {
                 if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.LOCAL || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
-                    workers[W.id]!!.grpc.executeTask(request, local = (W.id == local.id), callback = { R ->
+                    //workers[W.id]!!.grpc.executeTask(request, local = (W.id == local.id), callback = { R ->
+                    workers[W.id]!!.grpc.executeTask(JayTask(taskDetails).getProto(getByteArrayFromId(request?.fileId)),
+                            local = (W.id == local.id), callback = { R ->
                         workers[W.id]!!.addResultSize(R.bytes.size().toLong())
                         callback?.invoke(R)
                     }) {
                         scheduler.notifyTaskComplete(taskDetails)
                     }
                 } else {
-                    workers[local.id]!!.grpc.executeTask(request, true, { R ->
+                    //workers[local.id]!!.grpc.executeTask(request, true, { R ->
+                    workers[local.id]!!.grpc.executeTask(JayTask(taskDetails).getProto(getByteArrayFromId(request?.fileId)),
+                            true, { R ->
                         workers[local.id]!!.addResultSize(R.bytes.size().toLong())
                         callback?.invoke(R)
                     }) {
