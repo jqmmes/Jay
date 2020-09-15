@@ -91,10 +91,20 @@ object SchedulerService {
             synchronized(concurrentSemaphoreLock) {
                 concurrentFIFOQueueSemaphore.addLast(lock)
             }
-            while (workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)) {
-                JayLogger.logInfo("WORKER_QUEUE_FULL", request!!.id, "WORKER=${w.id}",
-                        "CURRENT_QUEUE=${workers[w.id]!!.queuedTasks}", "MAX_QUEUE=${workers[w.id]!!.queueSize}")
+            var queueIsFull: Boolean
+            synchronized(workersLock) {
+                queueIsFull = workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+            }
+            while (queueIsFull) {
+                try {
+                    JayLogger.logInfo("WORKER_QUEUE_FULL", request?.id ?: "", "WORKER=${w.id}",
+                            "CURRENT_QUEUE=${workers[w.id]?.queuedTasks}", "MAX_QUEUE=${workers[w.id]?.queueSize}")
+                } catch (ignore: Exception) {
+                }
                 lock.acquire()
+                synchronized(workersLock) {
+                    queueIsFull = workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+                }
             }
             synchronized(workersLock) {
                 workers[w.id] = Worker.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.queuedTasks + 1).build()
@@ -102,8 +112,11 @@ object SchedulerService {
             synchronized(concurrentSemaphoreLock) {
                 concurrentFIFOQueueSemaphore.remove(lock)
             }
-            JayLogger.logInfo("INCREMENT_QUEUED_TASKS", request?.id ?: "", "WORKER=${w.id}",
-                    "NEW_SIZE=${workers[w.id]?.queuedTasks}")
+            try {
+                JayLogger.logInfo("INCREMENT_QUEUED_TASKS", request?.id ?: "", "WORKER=${w.id}",
+                        "NEW_SIZE=${workers[w.id]?.queuedTasks}")
+            } catch (ignore: Exception) {
+            }
         }
         return w
     }
