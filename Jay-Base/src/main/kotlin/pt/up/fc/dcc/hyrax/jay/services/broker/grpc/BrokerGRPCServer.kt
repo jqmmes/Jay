@@ -258,6 +258,8 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         }
                         "USE_FIXED_POWER_ESTIMATIONS" -> if (V.toLowerCase(Locale.getDefault()) == "true") JaySettings.USE_FIXED_POWER_ESTIMATIONS = true
                         "TASK_DEADLINE_BROKEN_SELECTION" -> JaySettings.TASK_DEADLINE_BROKEN_SELECTION = V
+                        "INCLUDE_IDLE_COSTS" -> JaySettings.INCLUDE_IDLE_COSTS = (V.toLowerCase(Locale.getDefault())
+                                == "true")
                     }
                 }
                 genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)

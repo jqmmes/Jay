@@ -6,6 +6,7 @@ import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import kotlin.math.max
 import kotlin.random.Random
 
 /**
@@ -75,7 +76,8 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         val workers = SchedulerService.getWorkers(devices).values
         val meetDeadlines = mutableSetOf<JayProto.Worker>()
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
-        val localExpectedPower = SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.elementAt(0)!!.powerEstimations
+        val local = SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.elementAt(0)!!
+        val localExpectedPower = local.powerEstimations
 
         workers.forEach { worker ->
             if (SchedulerService.canMeetDeadline(task, worker) && worker != null) {
@@ -88,6 +90,7 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
             when (JaySettings.TASK_DEADLINE_BROKEN_SELECTION) {
                 "EXECUTE_LOCALLY" -> return SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.first()
                 // "FASTER_COMPLETION" -> null // todo
+                "RANDOM" -> meetDeadlines.add(workers.elementAt(Random.nextInt(workers.size))!!)
                 "LOWEST_ENERGY" -> workers.forEach { if (it != null) meetDeadlines.add(it) }
             }
         }
@@ -95,6 +98,7 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         synchronized(lock) {
             meetDeadlines.forEach { worker ->
                 var spend: Float = getEnergySpentComputing(task, worker, localExpectedPower)
+                if (JaySettings.INCLUDE_IDLE_COSTS) spend += getIdleCost(task, worker, local)
                 if (spend > 0) spend = spend.unaryMinus()
                 JayLogger.logInfo("EXPECTED_ENERGY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
                 if (spend > maxSpend) {
@@ -119,6 +123,17 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
     }
 
 
+    private fun getIdleCost(task: Task, worker: JayProto.Worker, local: JayProto.Worker): Float {
+        if (worker.id == local.id) {
+            return 0.0f
+        }
+        val expectedTaskTime = ((worker.queuedTasks + 1) * worker.avgTimePerTask) +
+                (worker.bandwidthEstimate.toLong() * task.dataSize) +
+                (worker.avgResultSize * worker.bandwidthEstimate)
+        val localComputingTime = (local.queuedTasks * local.avgTimePerTask)
+        return ((max(0f, expectedTaskTime - localComputingTime) / 1000) / 3600) * local.powerEstimations.idle
+    }
+
     private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, local: JayProto.PowerEstimations): Float {
         if (worker.powerEstimations.compute == 0.0f && worker.powerEstimations.idle == 0.0f
                 && worker.powerEstimations.rx == 0.0f && worker.powerEstimations.tx == 0.0f
@@ -134,8 +149,8 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         )
         return ((worker.avgTimePerTask / 1000f) / 3600f) * worker.powerEstimations.compute +
                 if (worker.type == JayProto.Worker.Type.LOCAL) {
-                    (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * local.tx +
-                            (((worker.bandwidthEstimate.toLong() * task.dataSize.toLong()) / 1000f) / 3600) * worker.powerEstimations.rx +
+                    (((worker.bandwidthEstimate.toLong() * task.dataSize) / 1000f) / 3600) * local.tx +
+                            (((worker.bandwidthEstimate.toLong() * task.dataSize) / 1000f) / 3600) * worker.powerEstimations.rx +
                             (((worker.avgResultSize * worker.bandwidthEstimate.toLong()) / 1000f) / 3600) * worker.powerEstimations.tx
                 } else {
                     0f

@@ -58,6 +58,9 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
 
     private var lastStatusUpdateTimestamp: Long = -1
 
+    private val rttLock = Object()
+    private val resultsLock = Object()
+
 
     constructor(proto: JayProto.Worker?, address: String, checkHearBeat: Boolean,
                 bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address) {
@@ -194,21 +197,27 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     }
 
     fun addResultSize(size: Long) {
-        circularResultsFIFO.add(size)
-        var tot = 0L
-        circularResultsFIFO.forEach { tot += it }
-        avgResultSize = tot / circularResultsFIFO.size
+        synchronized(resultsLock) {
+            circularResultsFIFO.add(size)
+            var tot = 0L
+            circularResultsFIFO.forEach { tot += it }
+            avgResultSize = tot / circularResultsFIFO.size
+        }
     }
 
     fun addRTT(millis: Int, payloadSize: Int = PING_PAYLOAD_SIZE) {
         bandwidthEstimate = JaySettings.BANDWIDTH_SCALING_FACTOR * if (JaySettings.BANDWIDTH_ESTIMATE_CALC_METHOD == "mean") {
-            circularFIFO.add(millis.toFloat() / payloadSize)
-            if (circularFIFO.size > 0) circularFIFO.sum() / circularFIFO.size else 0f
+            synchronized(rttLock) {
+                circularFIFO.add(millis.toFloat() / payloadSize)
+                if (circularFIFO.size > 0) circularFIFO.sum() / circularFIFO.size else 0f
+            }
         } else {
-            when {
-                circularFIFO.size == 0 -> 0f
-                circularFIFO.size % 2 == 0 -> (circularFIFO.sorted()[circularFIFO.size / 2] + circularFIFO.sorted()[(circularFIFO.size / 2) - 1]) / 2.0f
-                else -> circularFIFO.sorted()[(circularFIFO.size - 1) / 2]
+            synchronized(rttLock) {
+                when {
+                    circularFIFO.size == 0 -> 0f
+                    circularFIFO.size % 2 == 0 -> (circularFIFO.sorted()[circularFIFO.size / 2] + circularFIFO.sorted()[(circularFIFO.size / 2) - 1]) / 2.0f
+                    else -> circularFIFO.sorted()[(circularFIFO.size - 1) / 2]
+                }
             }
         }
         JayLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = arrayOf("WORKER_ID=$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))

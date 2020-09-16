@@ -195,8 +195,8 @@ class TensorflowInference {
     }
 
     private class TensorId private constructor() {
-        internal lateinit var name: String
-        internal var outputIndex: Int = 0
+        lateinit var name: String
+        var outputIndex: Int = 0
 
         companion object {
 

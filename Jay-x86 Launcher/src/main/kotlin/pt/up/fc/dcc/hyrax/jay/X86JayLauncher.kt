@@ -68,7 +68,7 @@ class X86JayLauncher {
             private var logging = false
 
             override fun setLogName(request: x86JayGRPC.String?, responseObserver: StreamObserver<x86JayGRPC.BoolValue>?) {
-                logName = request?.str ?: "logs"
+                logName = request.str ?: "logs"
                 genericComplete(x86JayGRPC.BoolValue.newBuilder().setValue(true).build(), responseObserver)
             }
 

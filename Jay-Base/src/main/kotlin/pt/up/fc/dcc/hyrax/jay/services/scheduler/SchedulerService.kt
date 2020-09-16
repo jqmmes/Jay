@@ -53,8 +53,10 @@ object SchedulerService {
     internal fun getWorkers(filter: List<Worker.Type>): HashMap<String, Worker?> {
         if (filter.isEmpty()) return workers as HashMap<String, Worker?>
         val filteredWorkers = mutableMapOf<String, Worker?>()
-        for (worker in workers) {
-            if (worker.value?.type in filter) filteredWorkers[worker.key] = worker.value
+        synchronized(workersLock) {
+            for (worker in workers) {
+                if (worker.value?.type in filter) filteredWorkers[worker.key] = worker.value
+            }
         }
         return filteredWorkers as HashMap<String, Worker?>
     }
@@ -87,13 +89,17 @@ object SchedulerService {
         val w = scheduler?.scheduleTask(Task(request))
         JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=${w?.id}")
         if (w != null && workers.containsKey(w.id)) {
-            val lock = Semaphore(0)
+            val semaphore = Semaphore(0)
             synchronized(concurrentSemaphoreLock) {
-                concurrentFIFOQueueSemaphore.addLast(lock)
+                concurrentFIFOQueueSemaphore.addLast(semaphore)
             }
             var queueIsFull: Boolean
             synchronized(workersLock) {
-                queueIsFull = workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+                queueIsFull = try {
+                    workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+                } catch (ignore: Exception) {
+                    false
+                }
             }
             while (queueIsFull) {
                 try {
@@ -101,16 +107,23 @@ object SchedulerService {
                             "CURRENT_QUEUE=${workers[w.id]?.queuedTasks}", "MAX_QUEUE=${workers[w.id]?.queueSize}")
                 } catch (ignore: Exception) {
                 }
-                lock.acquire()
+                semaphore.acquire()
                 synchronized(workersLock) {
-                    queueIsFull = workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+                    queueIsFull = try {
+                        workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+                    } catch (ignore: Exception) {
+                        false
+                    }
                 }
             }
             synchronized(workersLock) {
-                workers[w.id] = Worker.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.queuedTasks + 1).build()
+                try {
+                    workers[w.id] = Worker.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.queuedTasks + 1).build()
+                } catch (ignore: Exception) {
+                }
             }
             synchronized(concurrentSemaphoreLock) {
-                concurrentFIFOQueueSemaphore.remove(lock)
+                concurrentFIFOQueueSemaphore.remove(semaphore)
             }
             try {
                 JayLogger.logInfo("INCREMENT_QUEUED_TASKS", request?.id ?: "", "WORKER=${w.id}",

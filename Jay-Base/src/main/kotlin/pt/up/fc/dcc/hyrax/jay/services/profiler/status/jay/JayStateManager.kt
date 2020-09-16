@@ -32,10 +32,11 @@ internal object JayStateManager {
         JayLogger.logInfo("UNSET_STATE", "", "STATE=$state")
         if (state in activeStates.keys) {
             JayLogger.logInfo("SET_STATE", "", "DEC_STATE=$state")
-            if (activeStates[state]!! <= 0) {
-                throw AssertionError("Cannot unset $state without setting it first")
+            if (activeStates[state]!! > 0) {
+                activeStates[state] = activeStates[state]!!.dec()
+            } else {
+                JayLogger.logWarn("INVALID_STATE", "", "CANNOT_DECREASE=$state")
             }
-            activeStates[state] = activeStates[state]!!.dec()
         }
         JayLogger.logInfo("STATES", "", "$activeStates")
     }
