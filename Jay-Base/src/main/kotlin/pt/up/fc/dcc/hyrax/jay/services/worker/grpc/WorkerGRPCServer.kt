@@ -89,5 +89,9 @@ internal class WorkerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun getWorkerStatus(request: Empty?, responseObserver: StreamObserver<JayProto.WorkerComputeStatus>?) {
             genericComplete(WorkerService.getWorkerStatus(), responseObserver)
         }
+
+        override fun informAllocatedTask(request: JayProto.String, responseObserver: StreamObserver<JayProto.Status>?) {
+            genericComplete(WorkerService.informAllocatedTask(request.str), responseObserver)
+        }
     }
 }

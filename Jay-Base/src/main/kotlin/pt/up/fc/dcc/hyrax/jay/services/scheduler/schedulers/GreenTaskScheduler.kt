@@ -67,37 +67,12 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return "${super.getName()} [${devices.trimEnd(' ', ',')}]"
     }
 
-    /**
-     * In here we have to estimate how much energy will be spent on the remote device
-     * i.e. task receive, queue time (remote device will be working), compute, result send
-     */
-    override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("BEGIN_SCHEDULING", task.id)
-        val workers = SchedulerService.getWorkers(devices).values
-        val meetDeadlines = mutableSetOf<JayProto.Worker>()
+    private fun greenSelection(workers: Set<JayProto.Worker>, task: Task, local: JayProto.Worker): Set<JayProto.Worker> {
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
-        val local = SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.elementAt(0)!!
-        val localExpectedPower = local.powerEstimations
-
-        workers.forEach { worker ->
-            if (SchedulerService.canMeetDeadline(task, worker) && worker != null) {
-                meetDeadlines.add(worker)
-            }
-        }
-
-        if (meetDeadlines.isEmpty()) {
-            JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
-            when (JaySettings.TASK_DEADLINE_BROKEN_SELECTION) {
-                "EXECUTE_LOCALLY" -> return SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.first()
-                // "FASTER_COMPLETION" -> null // todo
-                "RANDOM" -> meetDeadlines.add(workers.elementAt(Random.nextInt(workers.size))!!)
-                "LOWEST_ENERGY" -> workers.forEach { if (it != null) meetDeadlines.add(it) }
-            }
-        }
         var maxSpend = Float.NEGATIVE_INFINITY
         synchronized(lock) {
-            meetDeadlines.forEach { worker ->
-                var spend: Float = getEnergySpentComputing(task, worker, localExpectedPower)
+            workers.forEach { worker ->
+                var spend: Float = getEnergySpentComputing(task, worker, local.powerEstimations)
                 if (JaySettings.INCLUDE_IDLE_COSTS) spend += getIdleCost(task, worker, local)
                 if (spend > 0) spend = spend.unaryMinus()
                 JayLogger.logInfo("EXPECTED_ENERGY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
@@ -110,10 +85,68 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
                 }
             }
         }
-        val w = if (possibleWorkers.size > 0) {
+        return possibleWorkers
+    }
+
+    private fun estimateCompletionTime(worker: JayProto.Worker, task: Task): Float {
+        return (worker.queuedTasks + 1) * worker.avgTimePerTask + task.dataSize * worker.bandwidthEstimate +
+                worker.avgResultSize * worker.bandwidthEstimate
+    }
+
+    private fun performanceSelection(workers: Set<JayProto.Worker>, task: Task): Set<JayProto.Worker> {
+        val possibleWorkers = mutableSetOf<JayProto.Worker>()
+        var faster = Float.POSITIVE_INFINITY
+        synchronized(lock) {
+            workers.forEach { worker ->
+                val estimatedTime = estimateCompletionTime(worker, task)
+                JayLogger.logInfo("EXPECTED_COMPLETION_TIME", task.id, "WORKER=${worker.id}", "TIME=$estimatedTime")
+                if (estimatedTime < faster) {
+                    possibleWorkers.clear()
+                    possibleWorkers.add(worker)
+                    faster = estimatedTime
+                } else if (estimatedTime == faster) {
+                    possibleWorkers.add(worker)
+                }
+            }
+        }
+        return possibleWorkers
+    }
+
+
+    /**
+     * In here we have to estimate how much energy will be spent on the remote device
+     * i.e. task receive, queue time (remote device will be working), compute, result send
+     */
+    override fun scheduleTask(task: Task): JayProto.Worker? {
+        JayLogger.logInfo("BEGIN_SCHEDULING", task.id)
+        val workers = SchedulerService.getWorkers(devices).values
+        val meetDeadlines = mutableSetOf<JayProto.Worker>()
+        val local = SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.elementAt(0)!!
+
+        workers.forEach { worker ->
+            if (SchedulerService.canMeetDeadline(task, worker) && worker != null) {
+                meetDeadlines.add(worker)
+            }
+        }
+        val possibleWorkers = if (meetDeadlines.isEmpty()) {
+            JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
+            workers.forEach { if (it != null) meetDeadlines.add(it) }
+            when (JaySettings.TASK_DEADLINE_BROKEN_SELECTION) {
+                "EXECUTE_LOCALLY" -> setOf(SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.first()!!)
+                "FASTER_COMPLETION" -> performanceSelection(meetDeadlines, task)
+                "RANDOM" -> meetDeadlines
+                "LOWEST_ENERGY" -> greenSelection(meetDeadlines, task, local)
+                else -> meetDeadlines
+            }
+        } else {
+            greenSelection(meetDeadlines, task, local)
+        }
+
+        val w = if (possibleWorkers.isNotEmpty()) {
             possibleWorkers.elementAt(Random.nextInt(possibleWorkers.size))
         } else {
-            workers.elementAt(Random.nextInt(workers.size))!!
+            workers.forEach { if (it != null) meetDeadlines.add(it) }
+            meetDeadlines.elementAt(Random.nextInt(workers.size))
         }
         synchronized(offloadedLock) {
             offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)

@@ -34,7 +34,7 @@ object BrokerService {
     private val workers: MutableMap<String, Worker> = hashMapOf()
     private val assignedTasks: MutableMap<String, String> = hashMapOf()
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
-    private val worker = WorkerGRPCClient("127.0.0.1")
+    internal val worker = WorkerGRPCClient("127.0.0.1")
     internal val profiler = ProfilerGRPCClient("127.0.0.1")
     private val local: Worker = if (JaySettings.DEVICE_ID != "") Worker(id = JaySettings.DEVICE_ID, address = "127.0.0.1", type = Type.LOCAL) else Worker(address = "127.0.0.1", type = Type.LOCAL)
     private var heartBeats = false
@@ -163,7 +163,6 @@ object BrokerService {
                 callback?.invoke(null)
             } else {
                 if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.LOCAL || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
-                    //workers[W.id]!!.grpc.executeTask(request, local = (W.id == local.id), callback = { R ->
                     workers[W.id]!!.grpc.executeTask(JayTask(taskDetails).getProto(getByteArrayFromId(request?.fileId)),
                             local = (W.id == local.id), callback = { R ->
                         workers[W.id]!!.addResultSize(R.bytes.size().toLong())
@@ -172,7 +171,6 @@ object BrokerService {
                         scheduler.notifyTaskComplete(taskDetails)
                     }
                 } else {
-                    //workers[local.id]!!.grpc.executeTask(request, true, { R ->
                     workers[local.id]!!.grpc.executeTask(JayTask(taskDetails).getProto(getByteArrayFromId(request?.fileId)),
                             true, { R ->
                         workers[local.id]!!.addResultSize(R.bytes.size().toLong())
@@ -230,6 +228,23 @@ object BrokerService {
     internal fun listenMulticast(stopListener: Boolean = false) {
         if (stopListener) MulticastListener.stop()
         else MulticastListener.listen(callback = { W, A -> addOrUpdateWorker(W, A) })
+    }
+
+    internal fun notifyAllocatedTask(notification: TaskAllocationNotification, callback: ((Status?) -> Unit)) {
+        if (notification.workerId in workers) {
+            try {
+                val protoStr = JayProto.String.newBuilder().setStr(notification.taskId).build()
+                if (notification.workerId == local.id) {
+                    worker.informAllocatedTask(protoStr) { callback.invoke(it) }
+                } else {
+                    workers[notification.workerId]!!.grpc.informAllocatedTask(protoStr) { callback.invoke(it) }
+                }
+            } catch (e: Exception) {
+                callback(JayUtils.genStatusError())
+            }
+        } else {
+            callback(JayUtils.genStatusError())
+        }
     }
 
     private fun notifySchedulerOfWorkerStatusUpdate(statusUpdate: Worker.Status, workerId: String) {

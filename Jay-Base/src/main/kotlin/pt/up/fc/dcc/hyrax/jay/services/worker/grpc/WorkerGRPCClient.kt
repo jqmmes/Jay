@@ -166,4 +166,17 @@ class WorkerGRPCClient(private val host: String) : GRPCClientBase<WorkerServiceG
             }
         }, AbstractJay.executorPool)
     }
+
+    fun informAllocatedTask(request: JayProto.String?, callback: ((JayProto.Status?) -> Unit)) {
+        val call = futureStub.informAllocatedTask(request)
+        call.addListener({
+            try {
+                JayLogger.logInfo("COMPLETE")
+                callback.invoke(call.get())
+            } catch (e: Exception) {
+                JayLogger.logInfo("ERROR")
+                callback(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
 }

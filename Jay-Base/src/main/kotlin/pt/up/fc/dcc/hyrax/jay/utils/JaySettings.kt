@@ -58,6 +58,6 @@ object JaySettings {
     var USE_FIXED_POWER_ESTIMATIONS: Boolean = false
 
     // Green Scheduler deadline broken decision
-    var TASK_DEADLINE_BROKEN_SELECTION: String = "LOWEST_ENERGY"
+    var TASK_DEADLINE_BROKEN_SELECTION: String = "FASTER_COMPLETION"
     var INCLUDE_IDLE_COSTS: Boolean = false
 }

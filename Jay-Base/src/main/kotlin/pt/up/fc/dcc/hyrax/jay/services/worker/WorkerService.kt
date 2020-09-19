@@ -3,6 +3,7 @@ package pt.up.fc.dcc.hyrax.jay.services.worker
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.*
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
@@ -37,6 +38,9 @@ object WorkerService {
     private val averageComputationTimes = CircularFifoQueue<Long>(JaySettings.AVERAGE_COMPUTATION_TIME_TO_SCORE)
     private var runningTasks: AtomicInteger = AtomicInteger(0)
     private var totalTasks: AtomicInteger = AtomicInteger(0)
+    private val receivedTasks = HashSet<String>()
+    private val waitingToReceiveTasks = HashSet<String>()
+    private val tasksLock = Object()
 
     init {
         executorThreadPool.shutdown()
@@ -55,12 +59,25 @@ object WorkerService {
             }
             return StatusCode.Waiting
         }
+        synchronized(tasksLock) {
+            receivedTasks.add(task.id)
+            if (task.id in waitingToReceiveTasks) {
+                waitingToReceiveTasks.remove(task.id)
+            }
+        }
         taskQueue.put(RunnableTaskObjects(task) { R ->
             callback?.invoke(R)
         })
         atomicOperation(totalTasks, increment = true)
         JayLogger.logInfo("TASK_QUEUED", task.id, "TASKS_IN_QUEUE=${totalTasks.get() - runningTasks.get()}")
         return if (callback == null) StatusCode.Success else StatusCode.Waiting
+    }
+
+    internal fun informAllocatedTask(taskId: String): JayProto.Status {
+        synchronized(tasksLock) {
+            if (taskId !in receivedTasks) waitingToReceiveTasks.add(taskId)
+        }
+        return JayUtils.genStatusSuccess()
     }
 
     fun start(taskExecutorManager: TaskExecutorManager, useNettyServer: Boolean = false) {
@@ -179,7 +196,9 @@ object WorkerService {
         workerComputeStatusBuilder.queueSize = taskExecutorManager?.getCurrentExecutor()?.getQueueSize()
                 ?: Integer.MAX_VALUE
         workerComputeStatusBuilder.runningTasks = runningTasks.get()
-        workerComputeStatusBuilder.queuedTasks = totalTasks.get()
+        synchronized(tasksLock) {
+            workerComputeStatusBuilder.queuedTasks = totalTasks.get() + waitingToReceiveTasks.size
+        }
         return workerComputeStatusBuilder.build()
     }
 

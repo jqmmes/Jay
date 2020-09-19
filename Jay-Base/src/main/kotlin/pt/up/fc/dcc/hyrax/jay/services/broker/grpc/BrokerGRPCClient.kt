@@ -52,7 +52,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener({ callback?.invoke(call.get()) }, AbstractJay.executorPool)
     }
 
-    class ResponseStreamObserver(val taskId: String, val taskSize: Int, val local: Boolean = false,
+    class ResponseStreamObserver(val taskId: String, private val taskSize: Int, val local: Boolean = false,
                                  private val startTime: Long, val sendCb: (() -> Unit),
                                  val dataReachedWorkerCb: (() -> Unit), val endCb: (() -> Unit),
                                  val callback: ((JayProto.Response) -> Unit)? = null,
@@ -60,7 +60,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         private var lastResult: JayProto.Response? = null
 
         override fun onNext(results: JayProto.Response) {
-            JayLogger.logInfo("RECEIVED_RESPONSE", taskId, results.status.code.name)
+            JayLogger.logInfo("RECEIVED_RESPONSE", taskId, "CODE=${results.status.code.name}")
             lastResult = results
             when (results.status.code) {
                 JayProto.StatusCode.Ready -> sendCb()
@@ -142,6 +142,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     dataReachedWorkerCb = {
                         taskStreamObserver?.onNext(
                                 JayProto.Task.newBuilder()
+                                        .setId(taskId)
                                         .setStatus(JayProto.Task.Status.END_TRANSFER)
                                         .build())
                         taskStreamObserver?.onCompleted()
@@ -154,6 +155,7 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             )
             taskStreamObserver.onNext(
                     JayProto.Task.newBuilder()
+                            .setId(taskId)
                             .setStatus(JayProto.Task.Status.BEGIN_TRANSFER)
                             .setLocalTask(local)
                             .build())
@@ -416,6 +418,30 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         call.addListener({
             try {
                 callback(call.get())
+            } catch (e: Exception) {
+                callback(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun notifyAllocatedTask(request: JayProto.TaskAllocationNotification, callback: ((JayProto.Status?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) callback(JayUtils.genStatusError())
+        val call = futureStub.notifyAllocatedTask(request)
+        call.addListener({
+            try {
+                callback.invoke(call.get())
+            } catch (e: Exception) {
+                callback(JayUtils.genStatusError())
+            }
+        }, AbstractJay.executorPool)
+    }
+
+    fun informAllocatedTask(request: JayProto.String, callback: ((JayProto.Status?) -> Unit)) {
+        if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) callback(JayUtils.genStatusError())
+        val call = futureStub.informAllocatedTask(request)
+        call.addListener({
+            try {
+                callback.invoke(call.get())
             } catch (e: Exception) {
                 callback(JayUtils.genStatusError())
             }

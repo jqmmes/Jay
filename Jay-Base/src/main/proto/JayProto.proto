@@ -271,6 +271,11 @@ message TaskInfo {
     int64 deadline = 2;
 }
 
+message TaskAllocationNotification {
+    string workerId = 1;
+    string taskId = 2;
+}
+
 // Internal and External communication Broker
 service BrokerService {
     rpc ping (Ping) returns (Ping) {
@@ -352,6 +357,10 @@ service BrokerService {
 
     rpc networkBenchmark (Task) returns (google.protobuf.Empty) {
     };
+    rpc informAllocatedTask (String) returns (Status) {
+    };
+    rpc notifyAllocatedTask (TaskAllocationNotification) returns (Status) {
+    };
 }
 
 service ProfilerService {
@@ -421,5 +430,7 @@ service WorkerService {
     rpc setExecutorSettings (Settings) returns (Status) {
     };
     rpc getWorkerStatus (google.protobuf.Empty) returns (WorkerComputeStatus) {
-    }
+    };
+    rpc informAllocatedTask (String) returns (Status) {
+    };
 }

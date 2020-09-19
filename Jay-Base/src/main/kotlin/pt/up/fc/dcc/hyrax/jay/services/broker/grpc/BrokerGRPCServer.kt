@@ -30,7 +30,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 if (value == null) {
                     return genErrorResponse(responseObserver)
                 }
-                JayLogger.logInfo("RECEIVED_TASK", "", value.status.name)
+                JayLogger.logInfo("RECEIVED_TASK", value.id ?: "", "ACTION=${value.status.name}")
                 when (value.status) {
                     JayProto.Task.Status.BEGIN_TRANSFER -> {
                         if (value.localTask) isLocalTransfer = true else BrokerService.profiler.setState(JayState.DATA_RCV)
@@ -177,8 +177,6 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             } else {
                 JayLogger.logInfo("SUBMITTING_TASK", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId",
                         "DEADLINE=${request?.deadline}"))
-                //scheduleTask(Task(BrokerService.getByteArrayFromId(reqId)
-                //        ?: ByteArray(0), request?.deadline).getProto(), responseObserver)
                 scheduleTask(Task(reqId, BrokerService.getFileSizeFromId(reqId) ?: 0, request?.deadline).getProto(),
                         responseObserver)
                 JayLogger.logInfo("TASK_SUBMITTED", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
@@ -272,6 +270,18 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         override fun networkBenchmark(request: JayProto.Task?, responseObserver: StreamObserver<Empty>?) {
             JayLogger.logInfo("RECEIVED_TASK_BENCHMARK", request?.id ?: "")
             genericComplete(Empty.getDefaultInstance(), responseObserver)
+        }
+
+        override fun notifyAllocatedTask(request: JayProto.TaskAllocationNotification?, responseObserver: StreamObserver<JayProto.Status>?) {
+            BrokerService.notifyAllocatedTask(request!!) {
+                genericComplete(it, responseObserver)
+            }
+        }
+
+        override fun informAllocatedTask(request: JayProto.String?, responseObserver: StreamObserver<JayProto.Status>?) {
+            BrokerService.worker.informAllocatedTask(request) {
+                genericComplete(it, responseObserver)
+            }
         }
     }
 

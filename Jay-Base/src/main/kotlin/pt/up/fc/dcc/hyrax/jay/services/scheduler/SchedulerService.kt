@@ -89,6 +89,15 @@ object SchedulerService {
         val w = scheduler?.scheduleTask(Task(request))
         JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=${w?.id}")
         if (w != null && workers.containsKey(w.id)) {
+            broker.notifyAllocatedTask(JayProto.TaskAllocationNotification.newBuilder()
+                    .setTaskId(request?.id ?: "")
+                    .setWorkerId(w.id)
+                    .build()
+            ) {
+                JayLogger.logInfo("WORKER_TASK_ALLOCATION_NOTIFIED", request?.id ?: "",
+                        "STATUS=${it?.code?.name}", "WORKER=${w.id}"
+                )
+            }
             val semaphore = Semaphore(0)
             synchronized(concurrentSemaphoreLock) {
                 concurrentFIFOQueueSemaphore.addLast(semaphore)
@@ -248,12 +257,12 @@ object SchedulerService {
         val deadlineTime: Long = task.deadline ?: System.currentTimeMillis() + ((task.deadlineDuration ?: 0) * 1000)
         JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", task.id,
                 "WORKER=${worker.id}",
-                "MAX_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask)}",
-                "EXPECTED_DEADLINE=${deadlineTime}",
+                "MAX_DEADLINE=${deadlineTime}",
+                "EXPECTED_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask)}",
                 "QUEUE_SIZE=${worker.queuedTasks + 1}",
                 "AVG_TIME_PER_TASK=${worker.avgTimePerTask}"
         )
-        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask) <= deadlineTime) {
+        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask) <= (deadlineTime - 500)) {
             JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id}")
             return true
         }
@@ -264,5 +273,4 @@ object SchedulerService {
     fun setSchedulerSettings(settingMap: Map<String, Any>, callback: ((JayProto.Status?) -> Unit)?) {
         callback?.invoke(this.scheduler?.setSettings(settingMap))
     }
-
 }
