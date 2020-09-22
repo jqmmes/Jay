@@ -24,7 +24,7 @@ abstract class AbstractJay {
     }
 
     internal companion object {
-        val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(100, 100, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>(Int.MAX_VALUE))
+        val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(100, 100, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue(Int.MAX_VALUE))
     }
 
     fun listSchedulers(callback: ((Set<Pair<String, String>>) -> Unit)? = null) {

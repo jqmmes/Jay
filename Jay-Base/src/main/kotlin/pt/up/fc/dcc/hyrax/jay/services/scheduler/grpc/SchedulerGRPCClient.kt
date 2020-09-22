@@ -33,8 +33,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
     fun schedule(request: JayProto.TaskDetails?, callback: ((JayProto.Worker?) -> Unit)? = null) {
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val call = futureStub.schedule(request)
-        call.addListener({ callback?.invoke(call.get()) }, AbstractJay.executorPool)
+        callback?.invoke(blockingStub.schedule(request))
     }
 
     fun notifyTaskComplete(request: JayProto.TaskDetails?) {

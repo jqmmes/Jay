@@ -250,7 +250,9 @@ object SchedulerService {
     internal fun canMeetDeadline(task: Task, worker: Worker?): Boolean {
         if (worker == null) return false
         JayLogger.logInfo("CAN_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
-        if (task.deadlineDuration == null && task.deadline == null) {
+        if ((task.deadlineDuration == null && task.deadline == null)
+                || (task.deadlineDuration == 0L)
+                || (task.creationTimeStamp == task.deadline)) {
             JayLogger.logInfo("NO_DEADLINE_SET", task.id, "WORKER=${worker.id}")
             return true
         }

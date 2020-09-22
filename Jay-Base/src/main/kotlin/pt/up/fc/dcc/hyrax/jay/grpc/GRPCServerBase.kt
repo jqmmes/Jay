@@ -72,6 +72,8 @@ abstract class GRPCServerBase(private val port: Int,
                 responseObserver.onCompleted()
             } catch (e: StatusRuntimeException) {
                 JayLogger.logError("CONTEXT_CANCELED")
+            } catch (e: IllegalStateException) {
+                JayLogger.logError("CONTEXT_CANCELED")
             }
         } else {
             JayLogger.logError("CONTEXT_CANCELED")
