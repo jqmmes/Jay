@@ -52,7 +52,7 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
     }
 
     override fun getQueueSize(): Int {
-        return 100
+        return 50
     }
 
     override fun callAction(action: String, statusCallback: ((JayProto.Status, Any?) -> Unit)?, vararg args: Any) {
