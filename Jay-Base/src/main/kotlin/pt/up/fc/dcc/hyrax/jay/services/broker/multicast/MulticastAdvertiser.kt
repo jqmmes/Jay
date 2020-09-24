@@ -5,6 +5,7 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import java.io.IOException
 import java.lang.Thread.sleep
 import java.net.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -63,7 +64,9 @@ object MulticastAdvertiser {
                             mcSocket.send(packet)
                             JayLogger.logInfo("SENT_MULTICAST_PACKET", actions = arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
                         } catch (e: SocketException) {
-                            JayLogger.logError("MULTICAST_SOCKET_ERROR", actions = arrayOf("INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
+                            JayLogger.logError("MULTICAST_SOCKET_ERROR", actions = arrayOf("ERROR=SocketException", "INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
+                        } catch (e: IOException) {
+                            JayLogger.logError("MULTICAST_SOCKET_ERROR", actions = arrayOf("ERROR=IOException", "INTERFACE=${mcSocket.`interface`.address}", "PACKET_SIZE=${packet?.data?.size}"))
                         }
                 }
                 sleep(JaySettings.MULTICAST_PKT_INTERVAL)
