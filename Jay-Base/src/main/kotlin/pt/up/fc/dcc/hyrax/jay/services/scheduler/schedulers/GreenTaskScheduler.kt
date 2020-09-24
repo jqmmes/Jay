@@ -89,7 +89,8 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
     }
 
     private fun estimateCompletionTime(worker: JayProto.Worker, task: Task): Float {
-        return (worker.queuedTasks + 1) * worker.avgTimePerTask + task.dataSize * worker.bandwidthEstimate +
+        return (worker.queuedTasks + worker.waitingToReceiveTasks + 1) * worker.avgTimePerTask +
+                task.dataSize * worker.bandwidthEstimate +
                 worker.avgResultSize * worker.bandwidthEstimate
     }
 
@@ -160,10 +161,10 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         if (worker.id == local.id) {
             return 0.0f
         }
-        val expectedTaskTime = ((worker.queuedTasks + 1) * worker.avgTimePerTask) +
+        val expectedTaskTime = ((worker.queuedTasks + worker.waitingToReceiveTasks + 1) * worker.avgTimePerTask) +
                 (worker.bandwidthEstimate.toLong() * task.dataSize) +
                 (worker.avgResultSize * worker.bandwidthEstimate)
-        val localComputingTime = (local.queuedTasks * local.avgTimePerTask)
+        val localComputingTime = ((local.queuedTasks + local.waitingToReceiveTasks) * local.avgTimePerTask)
         return ((max(0f, expectedTaskTime - localComputingTime) / 1000) / 3600) * local.powerEstimations.idle
     }
 

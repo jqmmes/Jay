@@ -140,7 +140,7 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
             if (worker == null) return
             if (maxAvgTimePerTask < worker.avgTimePerTask) maxAvgTimePerTask = worker.avgTimePerTask
             if (maxBandwidthEstimate < worker.bandwidthEstimate) maxBandwidthEstimate = worker.bandwidthEstimate.toLong()
-            weightQueue = (worker.queuedTasks + 1) * worker.avgTimePerTask
+            weightQueue = (worker.queuedTasks + worker.waitingToReceiveTasks + 1) * worker.avgTimePerTask
             estimatedBandwidth = worker.bandwidthEstimate
             JayLogger.logInfo("WEIGHT_UPDATED", actions = arrayOf("WORKER_ID=$id", "QUEUE_SIZE=${
                 worker

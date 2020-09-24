@@ -36,6 +36,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
     private var cpuCores = 0
     private var queueSize = 1
     private var queuedTasks = 0
+    private var waitingToReceiveTasks = 0
     private var runningTasks = 0
     private var totalMemory = 0L
     private var freeMemory = 0L
@@ -93,6 +94,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         worker.cpuCores = cpuCores // Set by Worker
         worker.queueSize = queueSize // Set by Worker
         worker.queuedTasks = queuedTasks
+        worker.waitingToReceiveTasks = waitingToReceiveTasks
         worker.runningTasks = runningTasks // Modified by Worker
         worker.type = type // Set in Broker
         worker.bandwidthEstimate = bandwidthEstimate // Set internally
@@ -114,6 +116,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         avgComputingEstimate = proto.avgTimePerTask
         queueSize = proto.queueSize
         queuedTasks = proto.queuedTasks
+        waitingToReceiveTasks = proto.waitingToReceiveTasks
     }
 
     internal fun updateStatus(computeProto: JayProto.WorkerComputeStatus?, profileProto: JayProto.ProfileRecording?): JayProto.Worker? {
@@ -136,6 +139,7 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         cpuCores = proto.cpuCores
         queueSize = proto.queueSize
         queuedTasks = proto.queuedTasks
+        waitingToReceiveTasks = proto.waitingToReceiveTasks
         totalMemory = proto.totalMemory
         freeMemory = proto.freeMemory
         powerEstimations = proto.powerEstimations

@@ -197,7 +197,8 @@ object WorkerService {
                 ?: Integer.MAX_VALUE
         workerComputeStatusBuilder.runningTasks = runningTasks.get()
         synchronized(tasksLock) {
-            workerComputeStatusBuilder.queuedTasks = totalTasks.get() + waitingToReceiveTasks.size
+            workerComputeStatusBuilder.queuedTasks = totalTasks.get()
+            workerComputeStatusBuilder.waitingToReceiveTasks = waitingToReceiveTasks.size
         }
         return workerComputeStatusBuilder.build()
     }
