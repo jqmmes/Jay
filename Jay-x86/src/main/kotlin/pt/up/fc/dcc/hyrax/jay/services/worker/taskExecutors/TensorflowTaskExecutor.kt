@@ -51,6 +51,10 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
         return models.build()
     }
 
+    override fun getQueueSize(): Int {
+        return 100
+    }
+
     override fun callAction(action: String, statusCallback: ((JayProto.Status, Any?) -> Unit)?, vararg args: Any) {
         when (action) {
             "listModels" -> statusCallback?.invoke(JayUtils.genStatusSuccess(), genModelRequest(classifier.models.toSet())?.toByteArray())
