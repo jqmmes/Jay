@@ -112,6 +112,6 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
     }
 
     override fun getQueueSize(): Int {
-        return 50
+        return 20
     }
 }

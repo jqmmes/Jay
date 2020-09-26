@@ -105,7 +105,7 @@ object SchedulerService {
             var queueIsFull: Boolean
             synchronized(workersLock) {
                 queueIsFull = try {
-                    workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+                    workers[w.id]!!.queuedTasks >= max(5, workers[w.id]!!.queueSize - 5)
                 } catch (ignore: Exception) {
                     false
                 }
@@ -119,7 +119,7 @@ object SchedulerService {
                 semaphore.acquire()
                 synchronized(workersLock) {
                     queueIsFull = try {
-                        workers[w.id]!!.queuedTasks >= max(1, workers[w.id]!!.queueSize - 10)
+                        workers[w.id]!!.queuedTasks >= max(5, workers[w.id]!!.queueSize - 5)
                     } catch (ignore: Exception) {
                         false
                     }
