@@ -57,7 +57,28 @@ object ProfilerService {
     private val EXPECTED_CURRENT_MAP_LOCK = Object()
     private val EXPECTED_POWER_MAP_LOCK = Object()
 
+    private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<List<Long>>>()
+    private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, CircularFifoQueue<Float>>>()
+    private val rawExpectedPowerHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, CircularFifoQueue<Float>>>()
+
+    private val expectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, List<Long>?>()
+    private val expectedCurrentHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, Float>>()
+    private val expectedPowerHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, Float>>()
+
+
+    // New simplified power estimation
+    private val simpleExpectedCurrentHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<Set<JayState>, Float>>()
+    private val simpleExpectedPowerHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<Set<JayState>, Float>>()
+    private val simpleRawExpectedCurrentHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<Set<JayState>, CircularFifoQueue<Float>>>()
+    private val simpleRawExpectedPowerHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<Set<JayState>, CircularFifoQueue<Float>>>()
+
+    private var recordingDir: File? = null
+    private var saveCounter = 0
+
     private data class CpuEstimatorKey(val jayState: Set<JayState>, val deviceLoad: PackageUsages?)
+
+    private data class BatteryEstimationKey(val transportInfo: TransportInfo?, val sensors: Set<String>,
+                                            val batteryStatus: PowerStatus)
 
     private fun genCpuEstimatorKeyFromStr(str: String): CpuEstimatorKey {
         val stateSet = mutableSetOf<JayState>()
@@ -74,8 +95,22 @@ object ProfilerService {
         return CpuEstimatorKey(stateSet, null)
     }
 
-    private data class BatteryEstimationKey(val transportInfo: TransportInfo?, val sensors: Set<String>,
-                                            val batteryStatus: PowerStatus)
+    // todo: Read recorded file and fix reading
+    private fun genJaySetFromRaw(str: String): Set<JayState> {
+        val stateSet = mutableSetOf<JayState>()
+        str.substring("CpuEstimatorKey(jayState=[".length, str.indexOf("]")).split(", ").forEach {
+            stateSet.add(when (it) {
+                "MULTICAST_LISTEN" -> JayState.MULTICAST_LISTEN
+                "COMPUTE" -> JayState.COMPUTE
+                "DATA_RCV" -> JayState.DATA_RCV
+                "DATA_SND" -> JayState.DATA_SND
+                "MULTICAST_ADVERTISE" -> JayState.MULTICAST_ADVERTISE
+                else -> JayState.IDLE
+            })
+        }
+        return stateSet
+    }
+
 
     private fun genBatteryEstimationKey(str: String): BatteryEstimationKey {
         val transportInfo = str.substring("BatteryEstimationKey(transportInfo=TransportInfo(".length, str.indexOf(")"))
@@ -86,6 +121,7 @@ object ProfilerService {
         var up: Int? = null
         var down: Int? = null
         var cellular: CellularTechnology? = null
+
         transportInfo.split(", ").forEach {
             when (it.substring(0, it.indexOf("="))) {
                 "medium" -> {
@@ -120,6 +156,7 @@ object ProfilerService {
                 }
             }
         }
+
         val sensorSet = mutableSetOf<String>()
         sensors.split(", ").forEach { sensorSet.add(it) }
 
@@ -136,15 +173,6 @@ object ProfilerService {
         return BatteryEstimationKey(TransportInfo(medium!!, up ?: 0, down ?: 0, cellular), sensorSet.toSet(), battery)
     }
 
-    private val rawExpectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, CircularFifoQueue<List<Long>>>()
-    private val rawExpectedCurrentHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, CircularFifoQueue<Float>>>()
-    private val rawExpectedPowerHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, CircularFifoQueue<Float>>>()
-
-    private val expectedCpuHashMap = LinkedHashMap<CpuEstimatorKey, List<Long>?>()
-    private val expectedCurrentHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, Float>>()
-    private val expectedPowerHashMap = LinkedHashMap<BatteryEstimationKey, HashMap<List<Long>, Float>>()
-
-    private var recordingDir: File? = null
 
     private fun setSimilarity(v1: List<Long>, v2: List<Long>): Long {
         var diff = 0L
@@ -222,15 +250,24 @@ object ProfilerService {
                 this.powerInfo.status)
 
         val builder = CurrentEstimations.newBuilder()
-        synchronized(EXPECTED_CPU_MAP_LOCK) {
-            builder.idle = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(setOf(JayState.IDLE), null)]
-                    ?: listOf()) ?: 0f
-            builder.compute = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)]
-                    ?: listOf()) ?: 0f
-            builder.rx = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)]
-                    ?: listOf()) ?: 0f
-            builder.tx = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)]
-                    ?: listOf()) ?: 0f
+        if (JaySettings.USE_CPU_ESTIMATIONS) {
+            synchronized(EXPECTED_CPU_MAP_LOCK) {
+                builder.idle = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(setOf(JayState.IDLE), null)]
+                        ?: listOf()) ?: 0f
+                builder.compute = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)]
+                        ?: listOf()) ?: 0f
+                builder.rx = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)]
+                        ?: listOf()) ?: 0f
+                builder.tx = getExpectedCurrent(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)]
+                        ?: listOf()) ?: 0f
+            }
+        } else {
+            synchronized(EXPECTED_CURRENT_MAP_LOCK) {
+                builder.idle = simpleExpectedCurrentHashMap[key]?.get(setOf(JayState.IDLE)) ?: 0f
+                builder.compute = simpleExpectedCurrentHashMap[key]?.get(genJayStates(JayState.COMPUTE)) ?: 0f
+                builder.rx = simpleExpectedCurrentHashMap[key]?.get(genJayStates(JayState.DATA_RCV)) ?: 0f
+                builder.tx = simpleExpectedCurrentHashMap[key]?.get(genJayStates(JayState.DATA_SND)) ?: 0f
+            }
         }
         builder.batteryLevel = this.powerInfo.level
         builder.batteryCapacity = this.powerInfo.capacity
@@ -257,15 +294,22 @@ object ProfilerService {
                     this.powerInfo.status)
 
             val builder = PowerEstimations.newBuilder()
-            synchronized(EXPECTED_CPU_MAP_LOCK) {
-                builder.idle = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(setOf(JayState.IDLE), null)]
-                        ?: listOf()) ?: 0f
-                builder.compute = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)]
-                        ?: listOf()) ?: 0f
-                builder.rx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)]
-                        ?: listOf()) ?: 0f
-                builder.tx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)]
-                        ?: listOf()) ?: 0f
+            if (JaySettings.USE_CPU_ESTIMATIONS) {
+                synchronized(EXPECTED_CPU_MAP_LOCK) {
+                    builder.idle = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(setOf(JayState.IDLE), null)]
+                            ?: listOf()) ?: 0f
+                    builder.compute = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.COMPUTE), null)]
+                            ?: listOf()) ?: 0f
+                    builder.rx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_RCV), null)]
+                            ?: listOf()) ?: 0f
+                    builder.tx = getExpectedPower(key, expectedCpuHashMap[CpuEstimatorKey(genJayStates(JayState.DATA_SND), null)]
+                            ?: listOf()) ?: 0f
+                }
+            } else {
+                builder.idle = simpleExpectedPowerHashMap[key]?.get(setOf(JayState.IDLE)) ?: 0f
+                builder.compute = simpleExpectedPowerHashMap[key]?.get(genJayStates(JayState.COMPUTE)) ?: 0f
+                builder.rx = simpleExpectedPowerHashMap[key]?.get(genJayStates(JayState.DATA_RCV)) ?: 0f
+                builder.tx = simpleExpectedPowerHashMap[key]?.get(genJayStates(JayState.DATA_SND)) ?: 0f
             }
             builder.batteryLevel = this.powerInfo.level
             builder.batteryCapacity = (this.powerInfo.capacity * this.powerInfo.voltage)
@@ -451,38 +495,63 @@ object ProfilerService {
             /**
              * Insert recorded values in the circular FIFO for future processing
              */
-            val cpuEstimatorKey = CpuEstimatorKey(jayStates, null)
-            synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
-                if (!this.rawExpectedCpuHashMap.containsKey(cpuEstimatorKey)) {
-                    this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
-                }
-                this.rawExpectedCpuHashMap[cpuEstimatorKey]!!.add(cpuSpeeds)
-                JayLogger.logInfo("NEW_CPU_READING", "", "STATE=$cpuEstimatorKey", "SPEED=$cpuSpeeds")
-            }
-
             val batteryEstimationKey = BatteryEstimationKey(medium, activeSensors, this.powerInfo.status)
-            synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
-                if (!this.rawExpectedCurrentHashMap.containsKey(batteryEstimationKey)) {
-                    this.rawExpectedCurrentHashMap[batteryEstimationKey] = LinkedHashMap()
+            if (JaySettings.USE_CPU_ESTIMATIONS) {
+                val cpuEstimatorKey = CpuEstimatorKey(jayStates, null)
+                synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
+                    if (!this.rawExpectedCpuHashMap.containsKey(cpuEstimatorKey)) {
+                        this.rawExpectedCpuHashMap[cpuEstimatorKey] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+                    }
+                    this.rawExpectedCpuHashMap[cpuEstimatorKey]!!.add(cpuSpeeds)
+                    JayLogger.logInfo("NEW_CPU_READING", "", "STATE=$cpuEstimatorKey", "SPEED=$cpuSpeeds")
                 }
-                if (!this.rawExpectedCurrentHashMap[batteryEstimationKey]!!.containsKey(cpuSpeeds)) {
-                    this.rawExpectedCurrentHashMap[batteryEstimationKey]!![cpuSpeeds] =
-                            CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+                synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                    if (!this.rawExpectedCurrentHashMap.containsKey(batteryEstimationKey)) {
+                        this.rawExpectedCurrentHashMap[batteryEstimationKey] = LinkedHashMap()
+                    }
+                    if (!this.rawExpectedCurrentHashMap[batteryEstimationKey]!!.containsKey(cpuSpeeds)) {
+                        this.rawExpectedCurrentHashMap[batteryEstimationKey]!![cpuSpeeds] =
+                                CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+                    }
+                    this.rawExpectedCurrentHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(this.powerInfo.current)
+                    JayLogger.logInfo("NEW_CURRENT_READING", "", "STATE=$batteryEstimationKey", "CURRENT=${this.powerInfo.current}")
                 }
-                this.rawExpectedCurrentHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(this.powerInfo.current)
-                JayLogger.logInfo("NEW_CURRENT_READING", "", "STATE=$batteryEstimationKey", "CURRENT=${this.powerInfo.current}")
-            }
 
-            synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
-                if (!this.rawExpectedPowerHashMap.containsKey(batteryEstimationKey)) {
-                    this.rawExpectedPowerHashMap[batteryEstimationKey] = LinkedHashMap()
+                synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
+                    if (!this.rawExpectedPowerHashMap.containsKey(batteryEstimationKey)) {
+                        this.rawExpectedPowerHashMap[batteryEstimationKey] = LinkedHashMap()
+                    }
+                    if (!this.rawExpectedPowerHashMap[batteryEstimationKey]!!.containsKey(cpuSpeeds)) {
+                        this.rawExpectedPowerHashMap[batteryEstimationKey]!![cpuSpeeds] =
+                                CircularFifoQueue(JaySettings.CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE)
+                    }
+                    this.rawExpectedPowerHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(this.powerInfo.power)
+                    JayLogger.logInfo("NEW_POWER_READING", "", "STATE=$batteryEstimationKey", "POWER=${this.powerInfo.power}")
                 }
-                if (!this.rawExpectedPowerHashMap[batteryEstimationKey]!!.containsKey(cpuSpeeds)) {
-                    this.rawExpectedPowerHashMap[batteryEstimationKey]!![cpuSpeeds] =
-                            CircularFifoQueue(JaySettings.CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE)
+            } else {
+                synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                    if (!this.simpleRawExpectedCurrentHashMap.containsKey(batteryEstimationKey)) {
+                        this.simpleRawExpectedCurrentHashMap[batteryEstimationKey] = LinkedHashMap()
+                    }
+                    if (!this.simpleRawExpectedCurrentHashMap[batteryEstimationKey]!!.containsKey(jayStates)) {
+                        this.simpleRawExpectedCurrentHashMap[batteryEstimationKey]!![jayStates] =
+                                CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+                    }
+                    this.simpleRawExpectedCurrentHashMap[batteryEstimationKey]!![jayStates]!!.add(this.powerInfo.current)
+                    JayLogger.logInfo("NEW_CURRENT_READING", "", "STATE=$batteryEstimationKey", "CURRENT=${this.powerInfo.current}")
                 }
-                this.rawExpectedPowerHashMap[batteryEstimationKey]!![cpuSpeeds]!!.add(this.powerInfo.power)
-                JayLogger.logInfo("NEW_POWER_READING", "", "STATE=$batteryEstimationKey", "POWER=${this.powerInfo.power}")
+
+                synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
+                    if (!this.simpleRawExpectedPowerHashMap.containsKey(batteryEstimationKey)) {
+                        this.simpleRawExpectedPowerHashMap[batteryEstimationKey] = LinkedHashMap()
+                    }
+                    if (!this.simpleRawExpectedPowerHashMap[batteryEstimationKey]!!.containsKey(jayStates)) {
+                        this.simpleRawExpectedPowerHashMap[batteryEstimationKey]!![jayStates] =
+                                CircularFifoQueue(JaySettings.CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE)
+                    }
+                    this.simpleRawExpectedPowerHashMap[batteryEstimationKey]!![jayStates]!!.add(this.powerInfo.power)
+                    JayLogger.logInfo("NEW_POWER_READING", "", "STATE=$batteryEstimationKey", "POWER=${this.powerInfo.power}")
+                }
             }
 
             JayLogger.logInfo("ACTIVE_SENSORS", "", sensorStr)
@@ -514,7 +583,7 @@ object ProfilerService {
                 }
         )
     }
-    private var saveCounter = 0
+
 
     internal fun startRecording(): Boolean {
         synchronized(LOCK) {
@@ -536,6 +605,8 @@ object ProfilerService {
                 var cpuRecordingsFile: File? = null
                 var currentRecordingsFile: File? = null
                 var powerRecordingsFile: File? = null
+                var simpleCurrentRecordingsFile: File? = null
+                var simplePowerRecordingsFile: File? = null
                 if (this.recordingDir != null) {
                     if (!this.recordingDir!!.exists()) this.recordingDir!!.mkdirs()
                     cpuRecordingsFile = File(this.recordingDir, "cpu_recordings.json")
@@ -544,116 +615,208 @@ object ProfilerService {
                     if (!currentRecordingsFile.exists()) currentRecordingsFile.createNewFile()
                     powerRecordingsFile = File(this.recordingDir, "power_recordings.json")
                     if (!powerRecordingsFile.exists()) powerRecordingsFile.createNewFile()
+
+                    simpleCurrentRecordingsFile = File(this.recordingDir, "simple_current_recordings.json")
+                    if (!simpleCurrentRecordingsFile.exists()) simpleCurrentRecordingsFile.createNewFile()
+                    simplePowerRecordingsFile = File(this.recordingDir, "simple_power_recordings.json")
+                    if (!simplePowerRecordingsFile.exists()) simplePowerRecordingsFile.createNewFile()
                 }
                 if (JaySettings.READ_RECORDED_PROFILE_DATA) {
                     JayLogger.logInfo("READING_RECORDED_PROFILE_DATA")
-                    if (cpuRecordingsFile?.readText() != "") {
-                        synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
-                            try {
-                                Gson().fromJson<LinkedHashMap<String, ArrayList<List<Long>>>>(
-                                        cpuRecordingsFile?.readText() ?: "", this.rawExpectedCpuHashMap::class.java
-                                ).forEach { (keyStr, values) ->
-                                    val key = genCpuEstimatorKeyFromStr(keyStr)
-                                    if (!this.rawExpectedCpuHashMap.containsKey(key)) {
-                                        this.rawExpectedCpuHashMap[key] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+                    if (JaySettings.USE_CPU_ESTIMATIONS) {
+                        if (cpuRecordingsFile?.readText() != "") {
+                            synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
+                                try {
+                                    Gson().fromJson<LinkedHashMap<String, ArrayList<List<Long>>>>(
+                                            cpuRecordingsFile?.readText() ?: "", this.rawExpectedCpuHashMap::class.java
+                                    ).forEach { (keyStr, values) ->
+                                        val key = genCpuEstimatorKeyFromStr(keyStr)
+                                        if (!this.rawExpectedCpuHashMap.containsKey(key)) {
+                                            this.rawExpectedCpuHashMap[key] = CircularFifoQueue(JaySettings.JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE)
+                                        }
+                                        values.forEach {
+                                            this.rawExpectedCpuHashMap[key]?.add(it)
+                                            JayLogger.logInfo("READING_RECORDED_CPU", "", "KEY=$key", "VALUE=$it")
+                                        }
                                     }
-                                    values.forEach {
-                                        this.rawExpectedCpuHashMap[key]?.add(it)
-                                        JayLogger.logInfo("READING_RECORDED_CPU", "", "KEY=$key", "VALUE=$it")
+                                } catch (ignore: Exception) {
+                                }
+                            }
+                        }
+                        synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                            try {
+                                Gson().fromJson<LinkedHashMap<String, LinkedTreeMap<String, ArrayList<Float>>>>(
+                                        currentRecordingsFile?.readText()
+                                                ?: "", this.rawExpectedCurrentHashMap::class.java
+                                ).forEach { (rawKey, values) ->
+                                    val key = genBatteryEstimationKey(rawKey)
+                                    if (!this.rawExpectedCurrentHashMap.containsKey(key)) {
+                                        this.rawExpectedCurrentHashMap[key] = hashMapOf()
+                                    }
+                                    values.forEach { (hashKeyStr, circularFifoValues) ->
+                                        val hashKey = listFromStr(hashKeyStr)
+                                        if (!this.rawExpectedCurrentHashMap[key]!!.containsKey(hashKey)) {
+                                            this.rawExpectedCurrentHashMap[key]!![hashKey] = CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+                                        }
+                                        circularFifoValues.forEach {
+                                            this.rawExpectedCurrentHashMap[key]!![hashKey]?.add(it)
+                                            JayLogger.logInfo("READING_RECORDED_CURRENT", "", "KEY=$key", "SUB_KEY=$hashKey",
+                                                    "VALUE=$it")
+                                        }
                                     }
                                 }
                             } catch (ignore: Exception) {
                             }
                         }
-                    }
-                    synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
-                        try {
-                            Gson().fromJson<LinkedHashMap<String, LinkedTreeMap<String, ArrayList<Float>>>>(
-                                    currentRecordingsFile?.readText() ?: "", this.rawExpectedCurrentHashMap::class.java
-                            ).forEach { (rawKey, values) ->
-                                val key = genBatteryEstimationKey(rawKey)
-                                if (!this.rawExpectedCurrentHashMap.containsKey(key)) {
-                                    this.rawExpectedCurrentHashMap[key] = hashMapOf()
-                                }
-                                values.forEach { (hashKeyStr, circularFifoValues) ->
-                                    val hashKey = listFromStr(hashKeyStr)
-                                    if (!this.rawExpectedCurrentHashMap[key]!!.containsKey(hashKey)) {
-                                        this.rawExpectedCurrentHashMap[key]!![hashKey] = CircularFifoQueue(JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+                        synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
+                            try {
+                                Gson().fromJson<LinkedHashMap<String, LinkedTreeMap<String, ArrayList<Float>>>>(
+                                        powerRecordingsFile?.readText() ?: "", this.rawExpectedPowerHashMap::class.java
+                                ).forEach { (rawKey, values) ->
+                                    val key = genBatteryEstimationKey(rawKey)
+                                    if (!this.rawExpectedPowerHashMap.containsKey(key)) {
+                                        this.rawExpectedPowerHashMap[key] = hashMapOf()
                                     }
-                                    circularFifoValues.forEach {
-                                        this.rawExpectedCurrentHashMap[key]!![hashKey]?.add(it)
-                                        JayLogger.logInfo("READING_RECORDED_CURRENT", "", "KEY=$key", "SUB_KEY=$hashKey",
-                                                "VALUE=$it")
+                                    values.forEach { (hashKeyStr, circularFifoValues) ->
+                                        val hashKey = listFromStr(hashKeyStr)
+                                        if (!this.rawExpectedPowerHashMap[key]!!.containsKey(hashKey)) {
+                                            this.rawExpectedPowerHashMap[key]!![hashKey] = CircularFifoQueue(JaySettings.CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE)
+                                        }
+                                        circularFifoValues.forEach {
+                                            this.rawExpectedPowerHashMap[key]!![hashKey]?.add(it)
+                                            JayLogger.logInfo("READING_RECORDED_POWER", "", "KEY=$key", "SUB_KEY=$hashKey", "VALUE=$it")
+                                        }
                                     }
                                 }
+                            } catch (ignore: Exception) {
                             }
-                        } catch (ignore: Exception) {
                         }
-                    }
-                    synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
-                        try {
-                            Gson().fromJson<LinkedHashMap<String, LinkedTreeMap<String, ArrayList<Float>>>>(
-                                    powerRecordingsFile?.readText() ?: "", this.rawExpectedPowerHashMap::class.java
-                            ).forEach { (rawKey, values) ->
-                                val key = genBatteryEstimationKey(rawKey)
-                                if (!this.rawExpectedPowerHashMap.containsKey(key)) {
-                                    this.rawExpectedPowerHashMap[key] = hashMapOf()
-                                }
-                                values.forEach { (hashKeyStr, circularFifoValues) ->
-                                    val hashKey = listFromStr(hashKeyStr)
-                                    if (!this.rawExpectedPowerHashMap[key]!!.containsKey(hashKey)) {
-                                        this.rawExpectedPowerHashMap[key]!![hashKey] = CircularFifoQueue(JaySettings.CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE)
+                    } else {
+                        /* todo:
+                        synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                            try {
+                                Gson().fromJson<LinkedHashMap<String, LinkedTreeMap<String, ArrayList<Float>>>>(
+                                        simpleCurrentRecordingsFile?.readText()
+                                                ?: "", this.simpleRawExpectedCurrentHashMap::class.java
+                                ).forEach { (rawKey, values) ->
+                                    val key = genBatteryEstimationKey(rawKey)
+                                    if (!this.simpleRawExpectedCurrentHashMap.containsKey(key)) {
+                                        this.simpleRawExpectedCurrentHashMap[key] = hashMapOf()
                                     }
-                                    circularFifoValues.forEach {
-                                        this.rawExpectedPowerHashMap[key]!![hashKey]?.add(it)
-                                        JayLogger.logInfo("READING_RECORDED_POWER", "", "KEY=$key", "SUB_KEY=$hashKey", "VALUE=$it")
+                                    values.forEach { (hashKeyStr, circularFifoValues) ->
+                                        val hashKey = setFromStr(hashKeyStr)
+                                        if (!this.simpleRawExpectedCurrentHashMap[key]!!.containsKey(hashKey)) {
+                                            this.simpleRawExpectedCurrentHashMap[key]!![hashKey] = CircularFifoQueue
+                                            (JaySettings.CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE)
+                                        }
+                                        circularFifoValues.forEach {
+                                            this.simpleRawExpectedCurrentHashMap[key]!![hashKey]?.add(it)
+                                            JayLogger.logInfo("READING_RECORDED_CURRENT", "", "KEY=$key", "SUB_KEY=$hashKey",
+                                                    "VALUE=$it")
+                                        }
                                     }
                                 }
+                            } catch (ignore: Exception) {
                             }
-                        } catch (ignore: Exception) {
                         }
+                        synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
+                            try {
+                                Gson().fromJson<LinkedHashMap<String, LinkedTreeMap<String, ArrayList<Float>>>>(
+                                        powerRecordingsFile?.readText() ?: "", this.rawExpectedPowerHashMap::class.java
+                                ).forEach { (rawKey, values) ->
+                                    val key = genBatteryEstimationKey(rawKey)
+                                    if (!this.rawExpectedPowerHashMap.containsKey(key)) {
+                                        this.rawExpectedPowerHashMap[key] = hashMapOf()
+                                    }
+                                    values.forEach { (hashKeyStr, circularFifoValues) ->
+                                        val hashKey = listFromStr(hashKeyStr)
+                                        if (!this.rawExpectedPowerHashMap[key]!!.containsKey(hashKey)) {
+                                            this.rawExpectedPowerHashMap[key]!![hashKey] = CircularFifoQueue(JaySettings.CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE)
+                                        }
+                                        circularFifoValues.forEach {
+                                            this.rawExpectedPowerHashMap[key]!![hashKey]?.add(it)
+                                            JayLogger.logInfo("READING_RECORDED_POWER", "", "KEY=$key", "SUB_KEY=$hashKey", "VALUE=$it")
+                                        }
+                                    }
+                                }
+                            } catch (ignore: Exception) {
+                            }
+                        }*/
                     }
                 }
                 Thread.sleep(recalculateAveragesInterval)
                 do {
-                    synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
-                        rawExpectedCpuHashMap.keys.forEach {
-                            synchronized(EXPECTED_CPU_MAP_LOCK) {
-                                expectedCpuHashMap[it] = getExpectedCpuMhz(it)
-                            }
-                        }
-                        if (saveCounter % 30 == 0) {
-                            cpuRecordingsFile?.writeText(Gson().toJson(rawExpectedCpuHashMap))
-                        }
-                    }
-                    synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
-                        rawExpectedCurrentHashMap.keys.forEach {
-                            rawExpectedCurrentHashMap[it]?.keys?.forEach { cpu ->
-                                synchronized(EXPECTED_CURRENT_MAP_LOCK) {
-                                    if (!expectedCurrentHashMap.containsKey(it)) {
-                                        expectedCurrentHashMap[it] = LinkedHashMap()
-                                    }
-                                    expectedCurrentHashMap[it]!![cpu] = getMovingAvg(rawExpectedCurrentHashMap[it]!![cpu]!!)
+                    if (JaySettings.USE_CPU_ESTIMATIONS) {
+                        synchronized(RAW_EXPECTED_CPU_MAP_LOCK) {
+                            rawExpectedCpuHashMap.keys.forEach {
+                                synchronized(EXPECTED_CPU_MAP_LOCK) {
+                                    expectedCpuHashMap[it] = getExpectedCpuMhz(it)
                                 }
                             }
-                        }
-                        if (saveCounter % 30 == 0) {
-                            currentRecordingsFile?.writeText(Gson().toJson(rawExpectedCurrentHashMap))
-                        }
-                    }
-                    synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
-                        rawExpectedPowerHashMap.keys.forEach {
-                            rawExpectedPowerHashMap[it]?.keys?.forEach { cpu ->
-                                synchronized(EXPECTED_POWER_MAP_LOCK) {
-                                    if (!expectedPowerHashMap.containsKey(it)) {
-                                        expectedPowerHashMap[it] = LinkedHashMap()
-                                    }
-                                    expectedPowerHashMap[it]!![cpu] = getMovingAvg(rawExpectedPowerHashMap[it]!![cpu]!!)
-                                }
+                            if (saveCounter % 30 == 0) {
+                                cpuRecordingsFile?.writeText(Gson().toJson(rawExpectedCpuHashMap))
                             }
                         }
-                        if (saveCounter % 30 == 0) {
-                            powerRecordingsFile?.writeText(Gson().toJson(rawExpectedPowerHashMap))
+                        synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                            rawExpectedCurrentHashMap.keys.forEach {
+                                rawExpectedCurrentHashMap[it]?.keys?.forEach { cpu ->
+                                    synchronized(EXPECTED_CURRENT_MAP_LOCK) {
+                                        if (!expectedCurrentHashMap.containsKey(it)) {
+                                            expectedCurrentHashMap[it] = LinkedHashMap()
+                                        }
+                                        expectedCurrentHashMap[it]!![cpu] = getMovingAvg(rawExpectedCurrentHashMap[it]!![cpu]!!)
+                                    }
+                                }
+                            }
+                            if (saveCounter % 30 == 0) {
+                                currentRecordingsFile?.writeText(Gson().toJson(rawExpectedCurrentHashMap))
+                            }
+                        }
+                        synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
+                            rawExpectedPowerHashMap.keys.forEach {
+                                rawExpectedPowerHashMap[it]?.keys?.forEach { cpu ->
+                                    synchronized(EXPECTED_POWER_MAP_LOCK) {
+                                        if (!expectedPowerHashMap.containsKey(it)) {
+                                            expectedPowerHashMap[it] = LinkedHashMap()
+                                        }
+                                        expectedPowerHashMap[it]!![cpu] = getMovingAvg(rawExpectedPowerHashMap[it]!![cpu]!!)
+                                    }
+                                }
+                            }
+                            if (saveCounter % 30 == 0) {
+                                powerRecordingsFile?.writeText(Gson().toJson(rawExpectedPowerHashMap))
+                            }
+                        }
+                    } else {
+                        synchronized(RAW_EXPECTED_CURRENT_MAP_LOCK) {
+                            simpleRawExpectedCurrentHashMap.keys.forEach {
+                                simpleRawExpectedCurrentHashMap[it]?.keys?.forEach { cpu ->
+                                    synchronized(EXPECTED_CURRENT_MAP_LOCK) {
+                                        if (!simpleExpectedCurrentHashMap.containsKey(it)) {
+                                            simpleExpectedCurrentHashMap[it] = LinkedHashMap()
+                                        }
+                                        simpleExpectedCurrentHashMap[it]!![cpu] = getMovingAvg(simpleRawExpectedCurrentHashMap[it]!![cpu]!!)
+                                    }
+                                }
+                            }
+                            if (saveCounter % 30 == 0) {
+                                simpleCurrentRecordingsFile?.writeText(Gson().toJson(simpleRawExpectedCurrentHashMap))
+                            }
+                        }
+                        synchronized(RAW_EXPECTED_POWER_MAP_LOCK) {
+                            simpleRawExpectedPowerHashMap.keys.forEach {
+                                simpleRawExpectedPowerHashMap[it]?.keys?.forEach { cpu ->
+                                    synchronized(EXPECTED_POWER_MAP_LOCK) {
+                                        if (!simpleExpectedPowerHashMap.containsKey(it)) {
+                                            simpleExpectedPowerHashMap[it] = LinkedHashMap()
+                                        }
+                                        simpleExpectedPowerHashMap[it]!![cpu] = getMovingAvg(simpleRawExpectedPowerHashMap[it]!![cpu]!!)
+                                    }
+                                }
+                            }
+                            if (saveCounter % 30 == 0) {
+                                simplePowerRecordingsFile?.writeText(Gson().toJson(simpleRawExpectedPowerHashMap))
+                            }
                         }
                     }
                     Thread.sleep(recalculateAveragesInterval)
@@ -671,6 +834,12 @@ object ProfilerService {
         val list = mutableListOf<Long>()
         str.substring(1, str.length - 1).split(", ").forEach { list.add(it.toLong()) }
         return list
+    }
+
+    private fun setFromStr(str: String): Set<Long> {
+        val set = mutableSetOf<Long>()
+        str.substring(1, str.length - 1).split(", ").forEach { set.add(it.toLong()) }
+        return set
     }
 
     fun stopRecording(): ProfileRecordings {

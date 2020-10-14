@@ -3,10 +3,10 @@ package pt.up.fc.dcc.hyrax.jay.utils
 object JaySettings {
 
     var READ_RECORDED_PROFILE_DATA: Boolean = true
-    var RESULTS_CIRCULAR_FIFO_SIZE: Int = 20
-    var CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE: Int = 20
-    var CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE: Int = 20
-    var JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE: Int = 20
+    var RESULTS_CIRCULAR_FIFO_SIZE: Int = 40
+    var CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE: Int = 40
+    var CPU_TO_BAT_POWER_CIRCULAR_FIFO_SIZE: Int = 40
+    var JAY_STATE_TO_CPU_CIRCULAR_FIFO_SIZE: Int = 40
 
     const val BLOCKING_STUB_DEADLINE: Long = 250
 
@@ -60,4 +60,6 @@ object JaySettings {
     // Green Scheduler deadline broken decision
     var TASK_DEADLINE_BROKEN_SELECTION: String = "FASTER_COMPLETION"
     var INCLUDE_IDLE_COSTS: Boolean = false
+
+    var USE_CPU_ESTIMATIONS = false
 }

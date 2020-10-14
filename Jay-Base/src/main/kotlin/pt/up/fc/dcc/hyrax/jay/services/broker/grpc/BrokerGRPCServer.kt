@@ -236,6 +236,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "BANDWIDTH_ESTIMATE_TYPE" -> JaySettings.BANDWIDTH_ESTIMATE_TYPE = V
                         "BANDWIDTH_SCALING_FACTOR" -> JaySettings.BANDWIDTH_SCALING_FACTOR = V.toFloatOrNull() ?: 1.0f
                         "MULTICAST_INTERFACE" -> JaySettings.MULTICAST_INTERFACE = V
+                        "MULTICAST_PKT_INTERVAL" -> JaySettings.MULTICAST_PKT_INTERVAL = V.toLong()
                         "BANDWIDTH_ESTIMATE_CALC_METHOD" -> {
                             if (V.toLowerCase(Locale.getDefault()) in arrayOf("mean", "median")) JaySettings.BANDWIDTH_ESTIMATE_CALC_METHOD = V.toLowerCase(Locale.getDefault())
                         }
@@ -258,6 +259,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "TASK_DEADLINE_BROKEN_SELECTION" -> JaySettings.TASK_DEADLINE_BROKEN_SELECTION = V
                         "INCLUDE_IDLE_COSTS" -> JaySettings.INCLUDE_IDLE_COSTS = (V.toLowerCase(Locale.getDefault())
                                 == "true")
+                        "USE_CPU_ESTIMATIONS" -> if (V.toLowerCase(Locale.getDefault()) != "true") JaySettings.USE_CPU_ESTIMATIONS = false
                     }
                 }
                 genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
