@@ -260,11 +260,14 @@ object SchedulerService {
         JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", task.id,
                 "WORKER=${worker.id}",
                 "MAX_DEADLINE=${deadlineTime}",
-                "EXPECTED_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask)}",
-                "QUEUE_SIZE=${worker.queuedTasks + 1}",
-                "AVG_TIME_PER_TASK=${worker.avgTimePerTask}"
+                "EXPECTED_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize))}",
+                "EXPECTED_DURATION=${((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize))}",
+                "QUEUE_SIZE=${worker.queuedTasks}",
+                "AVG_TIME_PER_TASK=${worker.avgTimePerTask}",
+                "TASK_DATA_SIZE=${task.dataSize}",
+                "WORKER_BANDWIDTH=${worker.bandwidthEstimate}"
         )
-        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask) <= (deadlineTime - 500)) {
+        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize)) <= (deadlineTime - JaySettings.DEADLINE_CHECK_TOLERANCE)) {
             JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id}")
             return true
         }

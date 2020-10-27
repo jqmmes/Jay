@@ -260,6 +260,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "INCLUDE_IDLE_COSTS" -> JaySettings.INCLUDE_IDLE_COSTS = (V.toLowerCase(Locale.getDefault())
                                 == "true")
                         "USE_CPU_ESTIMATIONS" -> if (V.toLowerCase(Locale.getDefault()) != "true") JaySettings.USE_CPU_ESTIMATIONS = false
+                        "DEADLINE_CHECK_TOLERANCE" -> JaySettings.DEADLINE_CHECK_TOLERANCE = V.toInt()
                     }
                 }
                 genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)

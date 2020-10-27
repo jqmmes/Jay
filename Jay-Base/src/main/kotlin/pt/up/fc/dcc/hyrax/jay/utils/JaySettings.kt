@@ -2,6 +2,7 @@ package pt.up.fc.dcc.hyrax.jay.utils
 
 object JaySettings {
 
+    var DEADLINE_CHECK_TOLERANCE: Int = 200
     var READ_RECORDED_PROFILE_DATA: Boolean = true
     var RESULTS_CIRCULAR_FIFO_SIZE: Int = 40
     var CPU_TO_BAT_CURRENT_CIRCULAR_FIFO_SIZE: Int = 40
