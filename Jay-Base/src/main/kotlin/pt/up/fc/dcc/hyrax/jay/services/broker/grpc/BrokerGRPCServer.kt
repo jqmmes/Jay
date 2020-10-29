@@ -71,6 +71,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
         }
 
         override fun scheduleTask(request: JayProto.Task?, responseObserver: StreamObserver<JayProto.Response>?) {
+            JayLogger.logInfo("BROKER_SCHEDULE_TASK", request?.id ?: "", "DATA_SIZE=${request?.data?.size()}")
             BrokerService.scheduleTask(request) { R -> genericComplete(R, responseObserver) }
         }
 

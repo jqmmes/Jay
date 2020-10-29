@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
+import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import java.net.DatagramPacket
 import java.net.Inet4Address
@@ -69,8 +70,13 @@ object JayUtils {
 
     fun getTaskDetails(task: JayProto.Task?): JayProto.TaskDetails? {
         if (task == null) return JayProto.TaskDetails.getDefaultInstance()
+        val dataSize = if (task.data.size() == 0 && task.fileId != null) {
+            BrokerService.getFileSizeFromId(task.fileId) ?: 0
+        } else {
+            task.data.size().toLong()
+        }
         return JayProto.TaskDetails.newBuilder().setId(task.id)
-                .setDataSize(task.data.size().toLong())
+                .setDataSize(dataSize)
                 .setDeadline(task.deadline)
                 .setCreationTimeStamp(task.creationTimeStamp)
                 .build()

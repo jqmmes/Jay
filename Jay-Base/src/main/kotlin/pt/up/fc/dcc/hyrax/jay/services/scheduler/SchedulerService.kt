@@ -257,18 +257,22 @@ object SchedulerService {
             return true
         }
         val deadlineTime: Long = task.deadline ?: System.currentTimeMillis() + ((task.deadlineDuration ?: 0) * 1000)
+        val expectedCompletion = System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize)).toLong()
+        val deadlineTimeWithTolerance = deadlineTime - JaySettings.DEADLINE_CHECK_TOLERANCE
         JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", task.id,
                 "WORKER=${worker.id}",
                 "MAX_DEADLINE=${deadlineTime}",
-                "EXPECTED_DEADLINE=${System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize))}",
-                "EXPECTED_DURATION=${((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize))}",
+                "EXPECTED_DEADLINE=${expectedCompletion}",
+                "EXPECTED_DURATION=${((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize)).toLong()}",
                 "QUEUE_SIZE=${worker.queuedTasks}",
                 "AVG_TIME_PER_TASK=${worker.avgTimePerTask}",
                 "TASK_DATA_SIZE=${task.dataSize}",
-                "WORKER_BANDWIDTH=${worker.bandwidthEstimate}"
+                "WORKER_BANDWIDTH=${worker.bandwidthEstimate}",
+                "DEADLINE_WITH_TOLERANCE=${deadlineTimeWithTolerance}"
         )
-        if (System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize)) <= (deadlineTime - JaySettings.DEADLINE_CHECK_TOLERANCE)) {
-            JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id}")
+
+        if (expectedCompletion <= deadlineTimeWithTolerance) {
+            JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id};")
             return true
         }
         JayLogger.logInfo("WORKER_CANT_MEET_DEADLINE", task.id, "WORKER=${worker.id}")

@@ -89,6 +89,7 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
                 }
                 JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
             }
+            offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
             assignedTask[task.id] = rankedWorkers.first.id!!
             return SchedulerService.getWorker(rankedWorkers.first.id!!)
         }
