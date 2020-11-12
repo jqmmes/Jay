@@ -105,7 +105,10 @@ object SchedulerService {
             var queueIsFull: Boolean
             synchronized(workersLock) {
                 queueIsFull = try {
-                    workers[w.id]!!.queuedTasks >= max(5, workers[w.id]!!.queueSize - 5)
+                    if (workers[w.id]!!.queueSize > 1)
+                        workers[w.id]!!.queuedTasks >= max(5, workers[w.id]!!.queueSize - 5)
+                    else
+                        false
                 } catch (ignore: Exception) {
                     false
                 }
