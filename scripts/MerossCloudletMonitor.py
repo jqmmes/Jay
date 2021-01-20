@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+#
+
 import asyncio
 import os
 from meross_iot.controller.mixins.electricity import ElectricityMixin

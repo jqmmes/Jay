@@ -1,4 +1,9 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ */
 /**
+ *
+ *
  * > Transform artifact Jay-Base.jar (project :Jay-Base) with DexingNoClasspathTransform
  * Injecting the input artifact of a transform as a File has been deprecated. This is scheduled to be removed in Gradle 6.0. Declare the input artifact as Provider<FileSystemLocation> instead.
  */

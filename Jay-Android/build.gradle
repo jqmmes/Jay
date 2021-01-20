@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ */
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'

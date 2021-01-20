@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ */
+
 @file:Suppress("DuplicatedCode", "DuplicatedCode")
 
 package pt.up.fc.dcc.hyrax.jay.services.profiler

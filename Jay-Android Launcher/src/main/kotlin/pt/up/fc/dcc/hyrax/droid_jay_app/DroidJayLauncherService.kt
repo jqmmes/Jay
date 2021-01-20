@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ */
+
 package pt.up.fc.dcc.hyrax.droid_jay_app
 
 import android.Manifest

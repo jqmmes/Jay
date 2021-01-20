@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ */
+
 package pt.up.fc.dcc.hyrax.jay.interfaces
 
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status

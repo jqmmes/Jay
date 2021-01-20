@@ -48,3 +48,7 @@ with a notification on the notification area, enabling the start of jay services
 #### Submitting jobs:
 In order to submit a job you must use the available broker commands detailed in 
 JayProto.proto (under Jay-Base/proto).
+
+
+
+Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
