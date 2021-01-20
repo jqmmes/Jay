@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ */
+
 buildscript {
     ext {
         KOTLIN_VERSION = '1.4.10'

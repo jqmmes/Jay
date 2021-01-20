@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ */
+
 rootProject.name = 'Jay'
 include ':Jay-Base', ':Jay-Android', ':Jay-x86', ':Jay-x86 Launcher'
 
