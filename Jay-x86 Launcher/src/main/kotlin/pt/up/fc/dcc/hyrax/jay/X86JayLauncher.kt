@@ -26,7 +26,9 @@ import java.lang.Thread.sleep
 import java.net.InetAddress
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
+import kotlin.io.path.ExperimentalPathApi
 
+@ExperimentalPathApi
 class X86JayLauncher {
     companion object {
         private var jay = Jay()

@@ -12,7 +12,9 @@
 package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
+import kotlin.io.path.ExperimentalPathApi
 
+@ExperimentalPathApi
 class TaskExecutorManager(fsAssistant: FileSystemAssistant) : AbstractTaskExecutorManager() {
     override val taskExecutors: HashSet<TaskExecutor> = hashSetOf(TensorflowTaskExecutor(fsAssistant = fsAssistant))
 }

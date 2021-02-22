@@ -23,11 +23,14 @@ buildscript {
         }
     }
     dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
     }
 }
 
+
+plugins {
+    id "com.github.johnrengelman.shadow" version "6.1.0"
+}
 
 apply plugin: 'kotlin'
 apply plugin: 'kotlin-kapt'
@@ -47,12 +50,11 @@ sourceSets {
 
 dependencies {
     // Kotlin
-    //noinspection DifferentStdlibGradleVersion
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
     implementation "org.jetbrains.anko:anko:$ANKO_VERSION"
     implementation 'nl.komponents.kovenant:kovenant:3.3.0'
     // GRPC
-    implementation 'com.google.api.grpc:proto-google-common-protos:1.18.1'
+    implementation 'com.google.api.grpc:proto-google-common-protos:2.0.1'
     implementation "io.grpc:grpc-netty:$GRPC_VERSION"
     implementation "io.grpc:grpc-protobuf:$GRPC_VERSION"
     implementation "io.grpc:grpc-stub:$GRPC_VERSION"

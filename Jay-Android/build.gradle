@@ -11,7 +11,6 @@
 
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
     aaptOptions {
@@ -20,7 +19,7 @@ android {
         return void
     }
 
-    compileSdkVersion 30
+    compileSdkVersion = 30
     
     sourceSets {
         main {
@@ -31,7 +30,6 @@ android {
         }
     }
 
-    //noinspection GroovyMissingReturnStatement
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
@@ -50,6 +48,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            multiDexEnabled false
         }
     }
 
@@ -67,12 +66,12 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${KOTLIN_VERSION}"
-    implementation 'com.google.api.grpc:proto-google-common-protos:1.18.1'
-    implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.3.1'
+    implementation 'com.google.api.grpc:proto-google-common-protos:2.0.1'
+    implementation 'com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS'
     implementation 'com.jaredrummler:android-device-names:2.0.0'
-    api 'com.google.guava:guava:29.0-jre'
+    api 'com.google.guava:guava:30.1-jre'
     api project(':Jay-Base')
-    implementation 'androidx.core:core-ktx:1.3.1'
+    implementation 'androidx.core:core-ktx:1.3.2'
     implementation 'eu.chainfire:libsuperuser:1.1.0.202004101746'
-    implementation 'com.squareup.leakcanary:plumber-android:2.4'
+    implementation 'com.squareup.leakcanary:plumber-android:2.6'
 }

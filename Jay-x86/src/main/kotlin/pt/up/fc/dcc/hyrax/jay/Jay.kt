@@ -17,7 +17,9 @@ import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 import java.io.File
+import kotlin.io.path.ExperimentalPathApi
 
+@ExperimentalPathApi
 class Jay : AbstractJay() {
 
     private var brokerStarted = false

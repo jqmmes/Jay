@@ -11,11 +11,10 @@
 
 buildscript {
     ext {
-        KOTLIN_VERSION = '1.4.10'
+        KOTLIN_VERSION = '1.4.30'
         ANKO_VERSION  = '0.10.8'
-        GRPC_VERSION = '1.32.1'
-        //TENSORFLOW_VERSION = '1.15.0'
-        TENSORFLOW_VERSION = '1.13.1' // 1.13.1
+        GRPC_VERSION = '1.35.0'
+        TENSORFLOW_VERSION = '1.13.1'
         TENSORFLOW_VERSION_ANDROID = '1.13.1'
     }
 
@@ -23,17 +22,16 @@ buildscript {
         google()
         jcenter()
         mavenCentral()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
     }
     dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
-        //noinspection DifferentKotlinGradleVersion
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KOTLIN_VERSION}"
-        classpath 'com.android.tools.build:gradle:4.0.1'
+        classpath 'com.android.tools.build:gradle:4.1.2'
         classpath "gradle.plugin.me.lucas:fat-aar-plugin:1.0.9"
     }
+}
+
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "$KOTLIN_VERSION"
+    id "com.google.protobuf" version "0.8.11"
 }
 
 apply plugin: 'idea'

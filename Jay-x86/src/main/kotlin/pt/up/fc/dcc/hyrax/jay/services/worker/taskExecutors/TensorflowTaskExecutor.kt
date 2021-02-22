@@ -20,10 +20,12 @@ import pt.up.fc.dcc.hyrax.jay.structures.Detection
 import pt.up.fc.dcc.hyrax.jay.structures.Model
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import kotlin.io.path.ExperimentalPathApi
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Detection as JayDetection
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Model as JayModel
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Results as JayResults
 
+@ExperimentalPathApi
 class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? = null, private val fsAssistant: FileSystemAssistant?) : TaskExecutor(name, description) {
 
     private val classifier = CloudletTensorFlow()
