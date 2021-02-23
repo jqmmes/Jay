@@ -56,6 +56,14 @@ abstract class AbstractJay {
         SchedulerService.start()
     }
 
+    open fun getSchedulerService(): SchedulerService {
+        return SchedulerService
+    }
+
+    open fun getWorkerService(): WorkerService {
+        return WorkerService
+    }
+
     abstract fun startWorker()
 
 

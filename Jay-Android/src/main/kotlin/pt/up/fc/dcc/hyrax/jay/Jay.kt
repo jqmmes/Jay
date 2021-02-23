@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 
 /**
- *
+ * todo: GetWorkerService, GetSchedulerService
  */
 class Jay(private val context: Context) : AbstractJay() {
 

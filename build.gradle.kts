@@ -9,9 +9,36 @@
  *
  */
 
-rootProject.name = 'Jay'
-include ':Jay-Base', ':Jay-Android', ':Jay-x86', ':Jay-x86 Launcher'
+buildscript {
+    extra.apply{
+        set("KOTLIN_VERSION", "1.4.30")
+        set("ANKO_VERSION", "0.10.8")
+        set("GRPC_VERSION", "1.35.0")
+        set("TENSORFLOW_VERSION", "1.13.1")
+        set("TENSORFLOW_VERSION_ANDROID", "1.13.1")
+    }
 
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:4.1.2")
+        classpath("gradle.plugin.me.lucas:fat-aar-plugin:1.0.9")
+    }
+}
 
-include ':Jay-Android Launcher'
-project(':Jay-Android Launcher').projectDir = file('Jay-Android Launcher')
+plugins {
+    id("org.jetbrains.kotlin.jvm") version "1.4.30"
+    id("com.google.protobuf") version "0.8.11"
+    id("idea") apply true
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
+    }
+}

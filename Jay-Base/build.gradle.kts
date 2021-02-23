@@ -15,54 +15,54 @@
  * Injecting the input artifact of a transform as a File has been deprecated. This is scheduled to be removed in Gradle 6.0. Declare the input artifact as Provider<FileSystemLocation> instead.
  */
 
+import com.google.protobuf.gradle.*
+
 buildscript {
     repositories {
         maven {
-            url "https://plugins.gradle.org/m2/"
+            setUrl("https://plugins.gradle.org/m2/")
             mavenCentral()
         }
     }
     dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
+        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.11")
     }
 }
 
-
 plugins {
-    id "com.github.johnrengelman.shadow" version "6.1.0"
+    id("com.github.johnrengelman.shadow") version "6.1.0" apply true
+    id("kotlin") apply true
+    id("kotlin-kapt") apply true
+    id("com.google.protobuf") apply true
 }
-
-apply plugin: 'kotlin'
-apply plugin: 'kotlin-kapt'
-apply plugin: 'com.google.protobuf'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 sourceSets {
     main {
-        proto {
-            srcDirs += 'src/main/proto/'
-        }
         java {
-            srcDirs += ['build/generated/source/proto/main/java/', 'build/generated/source/proto/main/grpc/']
+            srcDirs("build/generated/source/proto/main/java/")
+            srcDirs("build/generated/source/proto/main/grpc/")
+        }
+        proto {
+            srcDirs("src/main/proto/")
         }
     }
 }
 
 dependencies {
     // Kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
-    implementation "org.jetbrains.anko:anko:$ANKO_VERSION"
-    implementation 'nl.komponents.kovenant:kovenant:3.3.0'
+    "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30")
+    "implementation"("org.jetbrains.anko:anko:0.10.8")
+    "implementation"("nl.komponents.kovenant:kovenant:3.3.0")
     // GRPC
-    implementation 'com.google.api.grpc:proto-google-common-protos:2.0.1'
-    implementation "io.grpc:grpc-netty:$GRPC_VERSION"
-    implementation "io.grpc:grpc-protobuf:$GRPC_VERSION"
-    implementation "io.grpc:grpc-stub:$GRPC_VERSION"
+    "implementation"("com.google.api.grpc:proto-google-common-protos:2.0.1")
+    "implementation"("io.grpc:grpc-netty:1.35.0")
+    "implementation"("io.grpc:grpc-protobuf:1.35.0")
+    "implementation"("io.grpc:grpc-stub:1.35.0")
     // Circular FIFO
-    implementation 'org.apache.commons:commons-collections4:4.4'
-    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    "implementation"("org.apache.commons:commons-collections4:4.4")
+    "implementation"("javax.annotation:javax.annotation-api:1.3.2")
     // JSON Support
-    implementation 'com.google.code.gson:gson:2.8.6'
+    "implementation"("com.google.code.gson:gson:2.8.6")
 }
 
 
@@ -70,33 +70,25 @@ protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.10.0"
     }
-    //noinspection GroovyAssignabilityCheck
     plugins {
-        grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:$GRPC_VERSION"
+        id("grpc"){
+            artifact = "io.grpc:protoc-gen-grpc-java:1.35.0"
         }
     }
     generateProtoTasks {
-        //noinspection GroovyAssignabilityCheck
-        all().each { task ->
+        ofSourceSet("main").forEach() { task ->
             task.builtins {
                 java
             }
             task.plugins {
-                grpc {}
+                id("grpc")
             }
         }
     }
 }
 
 
-shadowJar {
+tasks.shadowJar {
     minimize()
-    version = 1.0
-}
-
-idea {
-    module {
-        sourceDirs += file("$buildDir/generated-sources/release/java")
-    }
+    archiveVersion.set("1.0")
 }

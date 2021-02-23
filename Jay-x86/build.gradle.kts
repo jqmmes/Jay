@@ -9,34 +9,24 @@
  *
  */
 
-buildscript {}
-
 plugins {
-    id "com.github.johnrengelman.shadow" version "6.1.0"
+    id("com.github.johnrengelman.shadow") version "6.1.0" apply true
+    id("kotlin")
+    id("java-library")
 }
 
-apply plugin: 'kotlin'
-apply plugin: 'java-library'
-apply plugin: 'com.github.johnrengelman.shadow'
-
-tasks.build.dependsOn tasks.shadowJar
-
-shadowJar {
+tasks.shadowJar {
     minimize()
-    version = 1.0
-}
-
-artifacts {
-    archives shadowJar
+    archiveBaseName.set("Jay-x86")
+    archiveVersion.set("1.0")
 }
 
 dependencies {
-    implementation fileTree(include: '*.jar', dir: 'lib')
-    implementation 'org.kamranzafar:jtar:2.3'
-    implementation "org.tensorflow:tensorflow:${TENSORFLOW_VERSION}"
-    implementation "org.tensorflow:libtensorflow:$TENSORFLOW_VERSION"
-    implementation "org.tensorflow:proto:${TENSORFLOW_VERSION}"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
-    implementation 'com.google.guava:guava:30.1-jre'
-    implementation project(path: ':Jay-Base')
+    "implementation"("org.kamranzafar:jtar:2.3")
+    "implementation"("org.tensorflow:tensorflow:1.13.1")
+    "implementation"("org.tensorflow:libtensorflow:1.13.1")
+    "implementation"("org.tensorflow:proto:1.13.1")
+    "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30")
+    "implementation"("com.google.guava:guava:30.1-jre")
+    "implementation"(project(":Jay-Base"))
 }

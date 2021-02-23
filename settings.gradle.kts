@@ -9,37 +9,10 @@
  *
  */
 
-buildscript {
-    ext {
-        KOTLIN_VERSION = '1.4.30'
-        ANKO_VERSION  = '0.10.8'
-        GRPC_VERSION = '1.35.0'
-        TENSORFLOW_VERSION = '1.13.1'
-        TENSORFLOW_VERSION_ANDROID = '1.13.1'
-    }
+rootProject.name = "Jay"
+include(":Jay-Base", ":Jay-Android", ":Jay-x86 Launcher", ":Jay-x86", ":Jay-Android Launcher")
 
-    repositories {
-        google()
-        jcenter()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.2'
-        classpath "gradle.plugin.me.lucas:fat-aar-plugin:1.0.9"
-    }
-}
-
-plugins {
-    id "org.jetbrains.kotlin.jvm" version "$KOTLIN_VERSION"
-    id "com.google.protobuf" version "0.8.11"
-}
-
-apply plugin: 'idea'
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        jcenter()
-    }
-}
+project(":Jay-Android").projectDir = file("Jay-Android")
+project(":Jay-x86 Launcher").projectDir = file("Jay-x86 Launcher")
+project(":Jay-x86").projectDir = file("Jay-x86")
+project(":Jay-Android Launcher").projectDir = file("Jay-Android Launcher")

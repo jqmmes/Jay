@@ -92,7 +92,7 @@ class TFLiteInference : Classifier {
         }
 
         // PREPARE OUTPUTS MAP
-        val inputArray = arrayOf<Any?>(imgData)
+        val inputArray = arrayOf<Any>(imgData!!)
         val outputMap: MutableMap<Int, Any> = HashMap()
         outputMap[0] = this.outputLocations
         outputMap[1] = this.outputClasses
