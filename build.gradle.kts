@@ -10,14 +10,6 @@
  */
 
 buildscript {
-    extra.apply{
-        set("KOTLIN_VERSION", "1.4.30")
-        set("ANKO_VERSION", "0.10.8")
-        set("GRPC_VERSION", "1.35.0")
-        set("TENSORFLOW_VERSION", "1.13.1")
-        set("TENSORFLOW_VERSION_ANDROID", "1.13.1")
-    }
-
     repositories {
         google()
         jcenter()
@@ -31,7 +23,7 @@ buildscript {
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.4.30"
-    id("com.google.protobuf") version "0.8.11"
+    id("com.google.protobuf") version "0.8.15"
     id("idea") apply true
 }
 

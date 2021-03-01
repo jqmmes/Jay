@@ -9,24 +9,47 @@
  *
  */
 
+
 plugins {
     id("com.github.johnrengelman.shadow") version "6.1.0" apply true
     id("kotlin")
-    id("java-library")
+    id("java")
+}
+
+DuplicatesStrategy.EXCLUDE
+
+dependencies {
+    "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30")
+    "implementation"("com.google.api.grpc:proto-google-common-protos:2.0.1")
+    "api"(project(":Jay-Base"))
 }
 
 tasks.shadowJar {
     minimize()
-    archiveBaseName.set("Jay-x86")
+    configurations.add(project.configurations["compile"])
+    exclude("*.aar", "*.proto", "module-info.class")
+    dependencies {
+        exclude(dependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30"))
+    }
+    archiveBaseName.set("Jay-x86-shadow")
     archiveVersion.set("1.0")
+    archiveClassifier.set("")
 }
 
-dependencies {
-    "implementation"("org.kamranzafar:jtar:2.3")
-    "implementation"("org.tensorflow:tensorflow:1.13.1")
-    "implementation"("org.tensorflow:libtensorflow:1.13.1")
-    "implementation"("org.tensorflow:proto:1.13.1")
-    "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30")
-    "implementation"("com.google.guava:guava:30.1-jre")
-    "implementation"(project(":Jay-Base"))
+tasks {
+    build {
+        dependsOn(shadowJar)
+    }
+}
+
+tasks.compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+tasks.compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }

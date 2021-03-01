@@ -28,6 +28,7 @@ import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayThreadPoolExecutor
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+//import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genTaskProto
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -36,6 +37,8 @@ import kotlin.concurrent.thread
 /**
  * https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md
  * TRANSIENT_FAILURE
+ *
+ * todo: remove baseline tests?
  */
 
 @Suppress("DuplicatedCode", "unused")
@@ -57,10 +60,16 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         futureStub = BrokerServiceGrpc.newFutureStub(channel)
     }
 
-    fun scheduleTask(task: Task, callback: ((JayProto.Response) -> Unit)? = null) {
+    /**
+     * todo: - Call this on Jay as submitTask ?
+     *       - Generate a Task from an arbitrary Task submitted (serialize it and create a Task.proto, generating an uuid)
+     *
+     */
+    fun scheduleTask(task: Task, callback: ((JayProto.Response) -> Unit)? = null) : String {
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         val call = futureStub.scheduleTask(task.getProto())
         call.addListener({ callback?.invoke(call.get()) }, AbstractJay.executorPool)
+        return task.info.getId()
     }
 
     class ResponseStreamObserver(val taskId: String, private val taskSize: Int, val local: Boolean = false,
@@ -122,6 +131,10 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
         }
     }
 
+    /**
+     * todo: This should only be called after schedule
+     *
+     */
     fun executeTask(task: JayProto.Task?, local: Boolean = false, callback: ((JayProto.Response) -> Unit)? = null,
                     schedulerInformCallback: (() -> Unit)? = null) {
         if (JaySettings.TRANSFER_BASELINE_FLAG) {
@@ -132,30 +145,31 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
             return
         }
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
-        val taskId = task?.id ?: ""
+        val taskId = task?.info?.id ?: ""
         executePool.submit {
             val startTime = System.currentTimeMillis()
             JayLogger.logInfo("INIT", taskId,
                     "BATTERY_CHARGE=${BrokerService.powerMonitor?.getCharge()}",
                     "BATTERY_CURRENT=${BrokerService.powerMonitor?.getCurrentNow()}",
                     "BATTERY_REMAINING_ENERGY=${BrokerService.powerMonitor?.getRemainingEnergy()}")
-            var taskStreamObserver: StreamObserver<JayProto.Task>? = null
+            var taskStreamObserver: StreamObserver<JayProto.TaskStream>? = null
 
             taskStreamObserver = asyncStub.executeTask(ResponseStreamObserver(
-                    task?.id ?: "", task?.toByteArray()?.size ?: 0, local, startTime,
+                    task?.info?.id ?: "", task?.toByteArray()?.size ?: 0, local, startTime,
                     sendCb = {
                         if (!local) BrokerService.profiler.setState(JayState.DATA_SND)
                         taskStreamObserver?.onNext(
-                                JayProto.Task.newBuilder(task)
-                                        .setStatus(JayProto.Task.Status.TRANSFER)
-                                        .build())
+                            JayProto.TaskStream.newBuilder()
+                                .setTask(task)
+                                .setStatus(JayProto.TaskStream.Action.TRANSFER)
+                                .build())
                     },
                     dataReachedWorkerCb = {
                         taskStreamObserver?.onNext(
-                                JayProto.Task.newBuilder()
-                                        .setId(taskId)
-                                        .setStatus(JayProto.Task.Status.END_TRANSFER)
-                                        .build())
+                            JayProto.TaskStream.newBuilder()
+                                .setTask(JayProto.Task.newBuilder(task).setData(null).build())
+                                .setStatus(JayProto.TaskStream.Action.END_TRANSFER)
+                                .build())
                         taskStreamObserver?.onCompleted()
                     },
                     endCb = {
@@ -165,11 +179,11 @@ class BrokerGRPCClient(host: String) : GRPCClientBase<BrokerServiceGrpc.BrokerSe
                     schedulerInformCallback = schedulerInformCallback)
             )
             taskStreamObserver.onNext(
-                    JayProto.Task.newBuilder()
-                            .setId(taskId)
-                            .setStatus(JayProto.Task.Status.BEGIN_TRANSFER)
-                            .setLocalTask(local)
-                            .build())
+                    JayProto.TaskStream.newBuilder()
+                        .setTask(JayProto.Task.newBuilder(task).setData(null).build())
+                        .setStatus(JayProto.TaskStream.Action.BEGIN_TRANSFER)
+                        .setLocalStream(local)
+                        .build())
         }
     }
 

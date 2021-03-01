@@ -41,13 +41,13 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         futureStub = SchedulerServiceGrpc.newFutureStub(channel)
     }
 
-    fun schedule(request: JayProto.TaskDetails?, callback: ((JayProto.Worker?) -> Unit)? = null) {
+    fun schedule(request: JayProto.TaskInfo?, callback: ((JayProto.Worker?) -> Unit)? = null) {
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         callback?.invoke(blockingStub.schedule(request))
     }
 
-    fun notifyTaskComplete(request: JayProto.TaskDetails?) {
+    fun notifyTaskComplete(request: JayProto.TaskInfo?) {
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()

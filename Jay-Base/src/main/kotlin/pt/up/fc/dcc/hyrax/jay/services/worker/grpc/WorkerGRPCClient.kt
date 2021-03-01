@@ -40,7 +40,7 @@ class WorkerGRPCClient(private val host: String) : GRPCClientBase<WorkerServiceG
         }
     }
 
-    fun execute(task: JayProto.WorkerTask?, callback: ((JayProto.Response?) -> Unit)? = null) {
+    fun execute(task: JayProto.TaskInfo?, callback: ((JayProto.Response?) -> Unit)? = null) {
         checkConnection()
         JayLogger.logInfo("INIT", task?.id ?: "")
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()

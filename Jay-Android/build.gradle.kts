@@ -60,17 +60,11 @@ android {
 }
 
 dependencies {
-    "implementation"("org.kamranzafar:jtar:2.3")
-    "implementation"("org.tensorflow:tensorflow-android:1.13.1")
-    "implementation"("org.tensorflow:tensorflow-lite:0.0.0-nightly")
-    "implementation"("org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly")
-    "implementation"("org.tensorflow:tensorflow-lite-support:0.0.0-nightly")
     "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30")
     "implementation"("com.google.api.grpc:proto-google-common-protos:2.0.1")
-    "implementation"("com.arthenica:mobile-ffmpeg-min-gpl:4.4.LTS")
     "implementation"("com.jaredrummler:android-device-names:2.0.0")
-    "api"("com.google.guava:guava:30.1-jre")
-    "implementation"(project(":Jay-Base"))
+    "implementation"("com.google.guava:guava:30.1-jre")
+    "api"(project(":Jay-Base"))
     "implementation"("androidx.core:core-ktx:1.3.2")
     "implementation"("eu.chainfire:libsuperuser:1.1.0.202004101746")
     "implementation"("com.squareup.leakcanary:plumber-android:2.6")

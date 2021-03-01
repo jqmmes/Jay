@@ -17,14 +17,12 @@ import android.os.IBinder
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
-import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
+
 
 internal class WorkerAndroidService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val taskExecutorManager = TaskExecutorManager(this, FileSystemAssistant(this))
-        WorkerService.start(taskExecutorManager, useNettyServer = true)
+        WorkerService.start(useNettyServer = true)
         return super.onStartCommand(intent, flags, startId)
     }
 

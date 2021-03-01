@@ -14,7 +14,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.LinkedBlockingDeque
@@ -77,31 +77,31 @@ class EstimatedTimeScheduler : AbstractScheduler("EstimatedTimeScheduler") {
     }
 
     // Return last ID higher estimatedDuration = Better worker
-    override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("INIT", task.id)
-        for (worker in rankedWorkers) worker.calcScore(task.dataSize)
-        JayLogger.logInfo("START_SORTING", task.id)
+    override fun scheduleTask(taskInfo: TaskInfo): JayProto.Worker? {
+        JayLogger.logInfo("INIT", taskInfo.getId())
+        for (worker in rankedWorkers) worker.calcScore(taskInfo.dataSize)
+        JayLogger.logInfo("START_SORTING", taskInfo.getId())
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy { it.estimatedDuration }))
-        JayLogger.logInfo("COMPLETE_SORTING", task.id)
-        JayLogger.logInfo("SELECTED_WORKER", task.id, actions = arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
+        JayLogger.logInfo("COMPLETE_SORTING", taskInfo.getId())
+        JayLogger.logInfo("SELECTED_WORKER", taskInfo.getId(), actions = arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
         if (rankedWorkers.isNotEmpty()) {
-            if (task.deadline != null || task.deadlineDuration != null) {
+            if (taskInfo.deadline != null) {
                 val workerInfoMap = SchedulerService.getWorkers()
                 rankedWorkers.forEach { rankedWorker ->
                     if (workerInfoMap.containsKey(rankedWorker.id)) {
-                        if (SchedulerService.canMeetDeadline(task, workerInfoMap[rankedWorker.id])) {
+                        if (SchedulerService.canMeetDeadline(taskInfo, workerInfoMap[rankedWorker.id])) {
                             synchronized(offloadedLock) {
-                                assignedTask[task.id] = rankedWorker.id!!
-                                offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
+                                assignedTask[taskInfo.getId()] = rankedWorker.id!!
+                                offloadedTasks[taskInfo.getId()] = Pair(taskInfo.creationTimeStamp, taskInfo.deadline)
                             }
                             return workerInfoMap[rankedWorker.id]
                         }
                     }
                 }
-                JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
+                JayLogger.logWarn("CANNOT_MEET_DEADLINE", taskInfo.getId())
             }
-            offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
-            assignedTask[task.id] = rankedWorkers.first.id!!
+            offloadedTasks[taskInfo.getId()] = Pair(taskInfo.creationTimeStamp, taskInfo.deadline)
+            assignedTask[taskInfo.getId()] = rankedWorkers.first.id!!
             return SchedulerService.getWorker(rankedWorkers.first.id!!)
         }
         return null

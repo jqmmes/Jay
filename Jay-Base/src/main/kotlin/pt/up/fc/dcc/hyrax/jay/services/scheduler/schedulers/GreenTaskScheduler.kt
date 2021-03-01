@@ -14,7 +14,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import kotlin.math.max
@@ -78,7 +78,7 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return "${super.getName()} [${devices.trimEnd(' ', ',')}]"
     }
 
-    private fun greenSelection(workers: Set<JayProto.Worker>, task: Task, local: JayProto.Worker): Set<JayProto.Worker> {
+    private fun greenSelection(workers: Set<JayProto.Worker>, task: TaskInfo, local: JayProto.Worker): Set<JayProto.Worker> {
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
         var maxSpend = Float.NEGATIVE_INFINITY
         synchronized(lock) {
@@ -86,7 +86,7 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
                 var spend: Float = getEnergySpentComputing(task, worker, local.powerEstimations)
                 if (JaySettings.INCLUDE_IDLE_COSTS) spend += getIdleCost(task, worker, local)
                 if (spend > 0) spend = spend.unaryMinus()
-                JayLogger.logInfo("EXPECTED_ENERGY_SPENT_REMOTE", task.id, "WORKER=${worker.id}", "SPEND=$spend")
+                JayLogger.logInfo("EXPECTED_ENERGY_SPENT_REMOTE", task.getId(), "WORKER=${worker.id}", "SPEND=$spend")
                 if (spend > maxSpend) {
                     possibleWorkers.clear()
                     maxSpend = spend
@@ -99,19 +99,19 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return possibleWorkers
     }
 
-    private fun estimateCompletionTime(worker: JayProto.Worker, task: Task): Float {
+    private fun estimateCompletionTime(worker: JayProto.Worker, task: TaskInfo): Float {
         return (worker.queuedTasks + worker.waitingToReceiveTasks + 1) * worker.avgTimePerTask +
                 task.dataSize * worker.bandwidthEstimate +
                 worker.avgResultSize * worker.bandwidthEstimate
     }
 
-    private fun performanceSelection(workers: Set<JayProto.Worker>, task: Task): Set<JayProto.Worker> {
+    private fun performanceSelection(workers: Set<JayProto.Worker>, task: TaskInfo): Set<JayProto.Worker> {
         val possibleWorkers = mutableSetOf<JayProto.Worker>()
         var faster = Float.POSITIVE_INFINITY
         synchronized(lock) {
             workers.forEach { worker ->
                 val estimatedTime = estimateCompletionTime(worker, task)
-                JayLogger.logInfo("EXPECTED_COMPLETION_TIME", task.id, "WORKER=${worker.id}", "TIME=$estimatedTime")
+                JayLogger.logInfo("EXPECTED_COMPLETION_TIME", task.getId(), "WORKER=${worker.id}", "TIME=$estimatedTime")
                 if (estimatedTime < faster) {
                     possibleWorkers.clear()
                     possibleWorkers.add(worker)
@@ -129,29 +129,29 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
      * In here we have to estimate how much energy will be spent on the remote device
      * i.e. task receive, queue time (remote device will be working), compute, result send
      */
-    override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("BEGIN_SCHEDULING", task.id)
+    override fun scheduleTask(taskInfo: TaskInfo): JayProto.Worker {
+        JayLogger.logInfo("BEGIN_SCHEDULING", taskInfo.getId())
         val workers = SchedulerService.getWorkers(devices).values
         val meetDeadlines = mutableSetOf<JayProto.Worker>()
         val local = SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.elementAt(0)!!
 
         workers.forEach { worker ->
-            if (SchedulerService.canMeetDeadline(task, worker) && worker != null) {
+            if (SchedulerService.canMeetDeadline(taskInfo, worker) && worker != null) {
                 meetDeadlines.add(worker)
             }
         }
         val possibleWorkers = if (meetDeadlines.isEmpty()) {
-            JayLogger.logWarn("CANNOT_MEET_DEADLINE", task.id)
+            JayLogger.logWarn("CANNOT_MEET_DEADLINE", taskInfo.getId())
             workers.forEach { if (it != null) meetDeadlines.add(it) }
             when (JaySettings.TASK_DEADLINE_BROKEN_SELECTION) {
                 "EXECUTE_LOCALLY" -> setOf(SchedulerService.getWorkers(JayProto.Worker.Type.LOCAL).values.first()!!)
-                "FASTER_COMPLETION" -> performanceSelection(meetDeadlines, task)
+                "FASTER_COMPLETION" -> performanceSelection(meetDeadlines, taskInfo)
                 "RANDOM" -> meetDeadlines
-                "LOWEST_ENERGY" -> greenSelection(meetDeadlines, task, local)
+                "LOWEST_ENERGY" -> greenSelection(meetDeadlines, taskInfo, local)
                 else -> meetDeadlines
             }
         } else {
-            greenSelection(meetDeadlines, task, local)
+            greenSelection(meetDeadlines, taskInfo, local)
         }
 
         val w = if (possibleWorkers.isNotEmpty()) {
@@ -161,14 +161,14 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
             meetDeadlines.elementAt(Random.nextInt(workers.size))
         }
         synchronized(offloadedLock) {
-            offloadedTasks[task.id] = Pair(task.creationTimeStamp, task.deadline)
+            offloadedTasks[taskInfo.getId()] = Pair(taskInfo.creationTimeStamp, taskInfo.deadline)
         }
-        JayLogger.logInfo("COMPLETE_SCHEDULING", task.id, "WORKER=${w.id}")
+        JayLogger.logInfo("COMPLETE_SCHEDULING", taskInfo.getId(), "WORKER=${w.id}")
         return w
     }
 
 
-    private fun getIdleCost(task: Task, worker: JayProto.Worker, local: JayProto.Worker): Float {
+    private fun getIdleCost(task: TaskInfo, worker: JayProto.Worker, local: JayProto.Worker): Float {
         if (worker.id == local.id) {
             return 0.0f
         }
@@ -179,11 +179,11 @@ class GreenTaskScheduler(vararg devices: JayProto.Worker.Type) : AbstractSchedul
         return ((max(0f, expectedTaskTime - localComputingTime) / 1000) / 3600) * local.powerEstimations.idle
     }
 
-    private fun getEnergySpentComputing(task: Task, worker: JayProto.Worker, local: JayProto.PowerEstimations): Float {
+    private fun getEnergySpentComputing(task: TaskInfo, worker: JayProto.Worker, local: JayProto.PowerEstimations): Float {
         if (worker.powerEstimations.compute == 0.0f && worker.powerEstimations.idle == 0.0f
                 && worker.powerEstimations.rx == 0.0f && worker.powerEstimations.tx == 0.0f
         ) return Float.NEGATIVE_INFINITY
-        JayLogger.logInfo("ENERGY_SPENT_ESTIMATION_PARAMS", task.id,
+        JayLogger.logInfo("ENERGY_SPENT_ESTIMATION_PARAMS", task.getId(),
                 "AVG_TIME_PER_TASK=${worker.avgTimePerTask}",
                 "BANDWIDTH_ESTIMATE=${worker.bandwidthEstimate}",
                 "AVG_RESULT_SIZE=${worker.avgResultSize}",

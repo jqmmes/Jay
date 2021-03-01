@@ -18,12 +18,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
-
+/**
+ * todo: Read a task file
+ */
 @ExperimentalPathApi
 class FileSystemAssistant : FileSystemAssistant {
 
-    //private var tmpDir: File = createTempDir("Jay-x86", directory = File("/tmp/"))
-    private var tmpDir: Path = createTempDirectory("Jay-x86")
+    private val tmpDir: Path = createTempDirectory("Jay-x86")
+    private val tasksDir: Path = Path(tmpDir.toString(), "tasks").createDirectory()
 
     override fun getByteArrayFast(id: String): ByteArray {
         return File("${this.javaClass.protectionDomain.codeSource.location.toURI().path.removeSuffix("/Jay-x86.jar")}/assets/$id").readBytes()
@@ -39,11 +41,9 @@ class FileSystemAssistant : FileSystemAssistant {
     }
 
     override fun createTempFile(data: ByteArray?): String {
-        //val tmpFile = createTempFile(prefix = "task", directory = tmpDir)
         val tmpFile: Path = createTempFile(prefix = "task", directory = tmpDir)
         return try {
             Files.write(tmpFile, data ?: ByteArray(0))
-            //Files.write(data ?: ByteArray(0), tmpFile.toFile())
             tmpFile.name
         } catch (e: IOException) {
             ""
@@ -54,6 +54,15 @@ class FileSystemAssistant : FileSystemAssistant {
 
     override fun getFileSizeFromId(id: String): Long {
         return File(tmpDir.toFile(), id).length()
+    }
+
+    override fun cacheByteArrayWithId(id: String, bytes: ByteArray): Boolean {
+        return try {
+            Files.createTempFile(tasksDir, id, ".task").writeBytes(bytes)
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     override fun getByteArrayFromId(id: String): ByteArray {

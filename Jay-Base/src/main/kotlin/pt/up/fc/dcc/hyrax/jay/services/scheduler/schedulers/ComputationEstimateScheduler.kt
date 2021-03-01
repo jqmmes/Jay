@@ -14,7 +14,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.concurrent.LinkedBlockingDeque
@@ -46,12 +46,12 @@ class ComputationEstimateScheduler : AbstractScheduler("ComputationEstimateSched
     }
 
     // Return last ID higher estimatedDuration = Better worker
-    override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("INIT", task.id)
-        JayLogger.logInfo("START_SORTING", task.id)
+    override fun scheduleTask(taskInfo: TaskInfo): JayProto.Worker? {
+        JayLogger.logInfo("INIT", taskInfo.getId())
+        JayLogger.logInfo("START_SORTING", taskInfo.getId())
         rankedWorkers = LinkedBlockingDeque(rankedWorkers.sortedWith(compareBy { it.weightQueue }))
-        JayLogger.logInfo("COMPLETE_SORTING", task.id)
-        JayLogger.logInfo("SELECTED_WORKER", task.id, actions = arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
+        JayLogger.logInfo("COMPLETE_SORTING", taskInfo.getId())
+        JayLogger.logInfo("SELECTED_WORKER", taskInfo.getId(), actions = arrayOf("WORKER_ID=${rankedWorkers.first.id}"))
         if (rankedWorkers.isNotEmpty()) return SchedulerService.getWorker(rankedWorkers.first.id!!)
         return null
     }

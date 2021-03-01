@@ -30,7 +30,7 @@ object X86PowerMonitor : PowerMonitor {
     }
 
     /**
-     * Returns the instant power spent on cloudlet in Watt.
+     * Returns the instant power spent on Cloudlet in Watt.
      *
      * We need to negate this value to match battery usage, which creates a negative current.
      */

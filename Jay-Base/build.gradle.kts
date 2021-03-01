@@ -25,7 +25,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.11")
+        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.15")
     }
 }
 
@@ -35,6 +35,8 @@ plugins {
     id("kotlin-kapt") apply true
     id("com.google.protobuf") apply true
 }
+
+DuplicatesStrategy.EXCLUDE
 
 sourceSets {
     main {
@@ -90,5 +92,5 @@ protobuf {
 
 tasks.shadowJar {
     minimize()
-    archiveVersion.set("1.0")
+   archiveVersion.set("1.0")
 }

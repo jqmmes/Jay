@@ -14,7 +14,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 
 class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : AbstractScheduler("SingleDeviceScheduler") {
@@ -37,8 +37,8 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
         return "${super.getName()} [${workerType.name}]"
     }
 
-    override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("INIT", task.id, actions = arrayOf("WORKER_ID=${worker?.id}"))
+    override fun scheduleTask(taskInfo: TaskInfo): JayProto.Worker? {
+        JayLogger.logInfo("INIT", taskInfo.getId(), actions = arrayOf("WORKER_ID=${worker?.id}"))
         if (worker == null) {
             for (w in SchedulerService.getWorkers(workerType).values) {
                 if (w?.type == workerType) {
@@ -47,7 +47,7 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
                 }
             }
         }
-        JayLogger.logInfo("COMPLETE", task.id, actions = arrayOf("WORKER_ID=${worker?.id}"))
+        JayLogger.logInfo("COMPLETE", taskInfo.getId(), actions = arrayOf("WORKER_ID=${worker?.id}"))
         return worker
     }
 

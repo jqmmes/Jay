@@ -12,19 +12,28 @@
 package pt.up.fc.dcc.hyrax.jay
 
 import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.ProfilerService
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
 import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskResult
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
+import java.io.ByteArrayInputStream
+import java.io.ObjectInputStream
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+
+
+/**
+ * Todo: - Do not give access to grpc communications. using only Jay/Each Service to communicate with things.
+ *       - Provide methods to listSchedulers, selectScheduler, listTaskExecutors, selectTaskExecutor, etc
+ *       - Remove all protobuf classes (remove schedulerTask)
+ */
 
 abstract class AbstractJay {
 
@@ -82,9 +91,22 @@ abstract class AbstractJay {
         WorkerService.stop()
     }
 
-    fun scheduleTask(data: ByteArray, result: ((JayProto.Response) -> Unit)? = null) {
-        broker.scheduleTask(Task(data), result)
+    fun scheduleTask(task: Task, result: ((TaskResult) -> Unit)? = null) : String {
+        return broker.scheduleTask(task) {response ->
+            var taskResult: TaskResult
+            ByteArrayInputStream(response.bytes.toByteArray()).use {
+                b -> ObjectInputStream(b).use {
+                    o -> taskResult = o.readObject() as TaskResult
+                }
+            }
+            taskResult.taskId = response.id
+            result?.invoke(taskResult)
+        }
     }
+
+    /*fun scheduleTask(data: ByteArray, result: ((JayProto.Response) -> Unit)? = null) {
+        broker.scheduleTask(Task(data), result)
+    }*/
 
     open fun destroy(keepServices: Boolean = false) {
         if (keepServices) return

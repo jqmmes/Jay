@@ -27,12 +27,12 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
 
     override val grpcImpl: BindableService = object : SchedulerServiceGrpc.SchedulerServiceImplBase() {
 
-        override fun schedule(request: JayProto.TaskDetails?, responseObserver: StreamObserver<JayProto.Worker>?) {
+        override fun schedule(request: JayProto.TaskInfo?, responseObserver: StreamObserver<JayProto.Worker>?) {
             val worker = SchedulerService.schedule(request)
             genericComplete(worker, responseObserver)
         }
 
-        override fun notifyTaskComplete(request: JayProto.TaskDetails?, responseObserver: StreamObserver<Empty>?) {
+        override fun notifyTaskComplete(request: JayProto.TaskInfo?, responseObserver: StreamObserver<Empty>?) {
             SchedulerService.notifyTaskComplete(request?.id)
             genericComplete(Empty.getDefaultInstance(), responseObserver)
         }

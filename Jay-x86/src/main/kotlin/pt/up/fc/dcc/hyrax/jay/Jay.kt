@@ -14,7 +14,6 @@ package pt.up.fc.dcc.hyrax.jay
 import pt.up.fc.dcc.hyrax.jay.services.profiler.ProfilerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.*
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
-import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
 import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 import java.io.File
 import kotlin.io.path.ExperimentalPathApi
@@ -38,7 +37,7 @@ class Jay : AbstractJay() {
 
     override fun startWorker() {
         startBroker()
-        WorkerService.start(TaskExecutorManager(fsAssistant))
+        WorkerService.start()
     }
 
     override fun startProfiler(fsAssistant: pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant?) {

@@ -17,7 +17,9 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 import "JayProto.proto";
 
-
+/**
+todo: move this proto to the download clients
+ */
 message Detection {
     float score = 1;
     int32 class = 3;

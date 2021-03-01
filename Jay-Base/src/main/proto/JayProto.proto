@@ -36,14 +36,14 @@ enum PowerStatus {
     UNKNOWN = 6;
 }
 
-message Task {
+/*message TaskTransfer {
     string id = 1; // uuid
-    bytes data = 2;
+    Task task = 2;
+
+    // remove?
     bool localTask = 3;
-    Status status = 4;
-    int64 creationTimeStamp = 5;
-    int64 deadlineTimeStamp = 6;
-    int64 deadline = 7;
+
+    // remove?
     string fileId = 8;
 
     enum Status {
@@ -51,18 +51,49 @@ message Task {
         TRANSFER = 1;
         END_TRANSFER = 2;
     }
+}*/
+
+
+/**
+todo: change repeated fields to hold a TaskDetails
+ */
+
+message Task {
+    //string id = 1; // uuid
+    TaskInfo info = 1;
+
+    bytes data = 2;
+    //bool localTask = 3;
+    //Status status = 4;
+    //int64 creationTimeStamp = 5;
+    //int64 deadlineTimeStamp = 6;
+    //int64 deadline = 7;
+    //string fileId = 8;
+
+    /*enum Status {
+        BEGIN_TRANSFER = 0;
+        TRANSFER = 1;
+        END_TRANSFER = 2;
+    }*/
 }
 
-message TaskDetails {
+message TaskStream {
+    Action status = 1;
+    Task task = 2;
+    bool localStream = 3;
+
+    enum Action {
+        BEGIN_TRANSFER = 0;
+        TRANSFER = 1;
+        END_TRANSFER = 2;
+    }
+}
+
+message TaskInfo {
     string id = 1;
     int64 dataSize = 2;
     int64 deadline = 3;
     int64 creationTimeStamp = 5;
-}
-
-message WorkerTask {
-    string id = 1; // uuid
-    string fileId = 2;
 }
 
 message Status {
@@ -279,10 +310,10 @@ message ProfileRecordings {
     repeated ProfileRecording profileRecording = 1;
 }
 
-message TaskInfo {
+/*message TaskInfo {
     string path = 1;
     int64 deadline = 2;
-}
+}*/
 
 message TaskAllocationNotification {
     string workerId = 1;
@@ -294,7 +325,7 @@ service BrokerService {
     rpc ping (Ping) returns (Ping) {
     }; // ExternalBroker > Broker
 
-    rpc executeTask (stream Task) returns (stream Response) {
+    rpc executeTask (stream TaskStream) returns (stream Response) {
     }; // ExternalBroker > Broker --> Calls WorkerService::execute
     rpc scheduleTask (Task) returns (Response) {
     }; // App > Broker --> Calls SchedulerService::schedule
@@ -338,9 +369,7 @@ service BrokerService {
     rpc stopService (google.protobuf.Empty) returns (Status) {
     };
 
-    rpc calibrateWorker (String) returns (google.protobuf.Empty) {
-    };
-    rpc createTask (TaskInfo) returns (Response) {
+    rpc calibrateWorker (Task) returns (google.protobuf.Empty) {
     };
     rpc setSettings (Settings) returns (Status) {
     };
@@ -368,6 +397,7 @@ service BrokerService {
     rpc getExpectedPowerFromRemote (Worker) returns (PowerEstimations) {
     };
 
+    // todo: remove?
     rpc networkBenchmark (Task) returns (google.protobuf.Empty) {
     };
     rpc informAllocatedTask (String) returns (Status) {
@@ -404,9 +434,9 @@ service ProfilerService {
 
 // Broker > SchedulerBase
 service SchedulerService {
-    rpc schedule (TaskDetails) returns (Worker) {
+    rpc schedule (TaskInfo) returns (Worker) {
     }; // Schedule a Task
-    rpc notifyTaskComplete (TaskDetails) returns (google.protobuf.Empty) {
+    rpc notifyTaskComplete (TaskInfo) returns (google.protobuf.Empty) {
     }; // Report Task completion to scheduler
     rpc notifyWorkerUpdate (Worker) returns (Status) {
     }; // Inform about Worker updates
@@ -426,7 +456,7 @@ service SchedulerService {
 
 // Broker > WorkerService
 service WorkerService {
-    rpc execute (WorkerTask) returns (Response) {
+    rpc execute (TaskInfo) returns (Response) {
     }; // Queue a Task for execution
     rpc testService (google.protobuf.Empty) returns (ServiceStatus) {
     };

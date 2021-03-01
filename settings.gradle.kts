@@ -10,9 +10,9 @@
  */
 
 rootProject.name = "Jay"
-include(":Jay-Base", ":Jay-Android", ":Jay-x86 Launcher", ":Jay-x86", ":Jay-Android Launcher")
+include(":Jay-Base", ":Jay-x86", ":Jay-Android", ":Jay-x86 Launcher", ":Jay-Android Launcher")
 
 project(":Jay-Android").projectDir = file("Jay-Android")
-project(":Jay-x86 Launcher").projectDir = file("Jay-x86 Launcher")
+project(":Jay-x86 Launcher").projectDir = file("examples/object_detection_tf/Jay-x86 Launcher")
 project(":Jay-x86").projectDir = file("Jay-x86")
-project(":Jay-Android Launcher").projectDir = file("Jay-Android Launcher")
+project(":Jay-Android Launcher").projectDir = file("examples/object_detection_tf/Jay-Android Launcher")

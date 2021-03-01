@@ -21,7 +21,7 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.PowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.AbstractScheduler
-import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
@@ -95,9 +95,9 @@ object SchedulerService {
         }
     }
 
-    internal fun schedule(request: JayProto.TaskDetails?): Worker? {
+    internal fun schedule(request: JayProto.TaskInfo?): Worker? {
         if (scheduler == null) scheduler = schedulers.first()
-        val w = scheduler?.scheduleTask(Task(request))
+        val w = scheduler?.scheduleTask(TaskInfo(request))
         JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=${w?.id}")
         if (w != null && workers.containsKey(w.id)) {
             broker.notifyAllocatedTask(JayProto.TaskAllocationNotification.newBuilder()
@@ -261,35 +261,39 @@ object SchedulerService {
         broker.getExpectedPowerFromRemote(worker) { callback(it) }
     }
 
-    internal fun canMeetDeadline(task: Task, worker: Worker?): Boolean {
+    /**
+     * todo: Validate that we check the new deadline format. We dropped taskDeadlineTimeStamp, and store deadline in ms (max task duration)
+     *
+     *
+     */
+    internal fun canMeetDeadline(taskInfo: TaskInfo, worker: Worker?): Boolean {
         if (worker == null) return false
-        JayLogger.logInfo("CAN_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
-        if ((task.deadlineDuration == null && task.deadline == null)
-                || (task.deadlineDuration == 0L)
-                || (task.creationTimeStamp == task.deadline)) {
-            JayLogger.logInfo("NO_DEADLINE_SET", task.id, "WORKER=${worker.id}")
+        JayLogger.logInfo("CAN_MEET_DEADLINE", taskInfo.getId(), "WORKER=${worker.id}")
+        if ((taskInfo.deadline == null) ||
+            (taskInfo.deadline == 0L)) {
+            JayLogger.logInfo("NO_DEADLINE_SET", taskInfo.getId(), "WORKER=${worker.id}")
             return true
         }
-        val deadlineTime: Long = task.deadline ?: System.currentTimeMillis() + ((task.deadlineDuration ?: 0) * 1000)
-        val expectedCompletion = System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize)).toLong()
+        val deadlineTime: Long = System.currentTimeMillis() + taskInfo.deadline
+        val expectedCompletion = System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * taskInfo.dataSize)).toLong()
         val deadlineTimeWithTolerance = deadlineTime - JaySettings.DEADLINE_CHECK_TOLERANCE
-        JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", task.id,
+        JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", taskInfo.getId(),
                 "WORKER=${worker.id}",
                 "MAX_DEADLINE=${deadlineTime}",
                 "EXPECTED_DEADLINE=${expectedCompletion}",
-                "EXPECTED_DURATION=${((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * task.dataSize)).toLong()}",
+                "EXPECTED_DURATION=${((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * taskInfo.dataSize)).toLong()}",
                 "QUEUE_SIZE=${worker.queuedTasks}",
                 "AVG_TIME_PER_TASK=${worker.avgTimePerTask}",
-                "TASK_DATA_SIZE=${task.dataSize}",
+                "TASK_DATA_SIZE=${taskInfo.dataSize}",
                 "WORKER_BANDWIDTH=${worker.bandwidthEstimate}",
                 "DEADLINE_WITH_TOLERANCE=${deadlineTimeWithTolerance}"
         )
 
         if (expectedCompletion <= deadlineTimeWithTolerance) {
-            JayLogger.logInfo("WORKER_MEETS_DEADLINE", task.id, "WORKER=${worker.id};")
+            JayLogger.logInfo("WORKER_MEETS_DEADLINE", taskInfo.getId(), "WORKER=${worker.id};")
             return true
         }
-        JayLogger.logInfo("WORKER_CANT_MEET_DEADLINE", task.id, "WORKER=${worker.id}")
+        JayLogger.logInfo("WORKER_CANT_MEET_DEADLINE", taskInfo.getId(), "WORKER=${worker.id}")
         return false
     }
 

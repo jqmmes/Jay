@@ -13,29 +13,34 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
-abstract class AbstractScheduler(name: String) {
+
+/**
+ * todo: remove all protobuf data structures from end user implementations
+ *
+ */
+abstract class AbstractScheduler(private val name: String) {
 
     val id: String = UUID.randomUUID().toString()
-    private val nameId: String = name
     private var waitInit = CountDownLatch(1)
 
     open fun getName(): String {
-        return nameId
+        return name
     }
 
-    abstract fun scheduleTask(task: Task): JayProto.Worker?
-    abstract fun getWorkerTypes(): JayProto.WorkerTypes
+    abstract fun scheduleTask(taskInfo: TaskInfo): JayProto.Worker?
+    abstract fun getWorkerTypes(): JayProto.WorkerTypes // todo: Replace this structure with a Jay One
+    // todo: Replace statusCallback JayProto.Status with a Boolean
     open fun setSetting(key: String, value: Any?, statusCallback: ((JayProto.Status) -> Unit)? = null) {
         statusCallback?.invoke(JayUtils.genStatusError())
     }
 
     open fun init() {
-        JayLogger.logInfo("INIT", actions = arrayOf("SCHEDULER_ID=$id", "SCHEDULER_NAME=$nameId"))
+        JayLogger.logInfo("INIT", actions = arrayOf("SCHEDULER_ID=$id", "SCHEDULER_NAME=$name"))
         waitInit.countDown()
     }
 
@@ -43,7 +48,8 @@ abstract class AbstractScheduler(name: String) {
         waitInit = CountDownLatch(1)
     }
 
-    fun getProto(): JayProto.Scheduler {
+    // This one is ok to return Proto as it is internal
+    internal fun getProto(): JayProto.Scheduler {
         return JayProto.Scheduler.newBuilder().setId(id).setName(getName()).build()
     }
 
@@ -51,6 +57,7 @@ abstract class AbstractScheduler(name: String) {
         waitInit.await()
     }
 
+    // todo: Replace JayProto.Status with a boolean
     open fun setSettings(settingsMap: Map<String, Any?>): JayProto.Status {
         var status = JayUtils.genStatusSuccess()
         for (k in settingsMap.keys) {

@@ -14,7 +14,7 @@ package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
-import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import kotlin.random.Random
 
@@ -48,8 +48,8 @@ class MultiDeviceScheduler(private val roundRobin: Boolean = false, vararg devic
         return "${super.getName()} [$strategy] [${devices.trimEnd(' ', ',')}]"
     }
 
-    override fun scheduleTask(task: Task): JayProto.Worker? {
-        JayLogger.logInfo("INIT", task.id)
+    override fun scheduleTask(taskInfo: TaskInfo): JayProto.Worker? {
+        JayLogger.logInfo("INIT", taskInfo.getId())
         val workers = SchedulerService.getWorkers(devices)
         val worker = when {
             workers.isEmpty() -> null

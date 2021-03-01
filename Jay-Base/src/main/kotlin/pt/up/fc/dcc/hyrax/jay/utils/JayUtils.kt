@@ -15,7 +15,6 @@ import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
-import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import java.net.DatagramPacket
 import java.net.Inet4Address
@@ -77,20 +76,6 @@ object JayUtils {
         val schedulerSet: MutableSet<Pair<String, String>> = mutableSetOf()
         for (scheduler in schedulers!!.schedulerList) schedulerSet.add(Pair(scheduler.id, scheduler.name))
         return schedulerSet
-    }
-
-    fun getTaskDetails(task: JayProto.Task?): JayProto.TaskDetails? {
-        if (task == null) return JayProto.TaskDetails.getDefaultInstance()
-        val dataSize = if (task.data.size() == 0 && task.fileId != null) {
-            BrokerService.getFileSizeFromId(task.fileId) ?: 0
-        } else {
-            task.data.size().toLong()
-        }
-        return JayProto.TaskDetails.newBuilder().setId(task.id)
-                .setDataSize(dataSize)
-                .setDeadline(task.deadline)
-                .setCreationTimeStamp(task.creationTimeStamp)
-                .build()
     }
 
     fun genWorkerTypes(vararg types: Type): JayProto.WorkerTypes {

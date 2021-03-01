@@ -19,10 +19,28 @@ import io.grpc.stub.StreamObserver
 import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.String as StringProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Settings as SettingsProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Request as RequestProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as WorkerProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerTypes as WorkerTypesProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Scheduler as SchedulerProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Schedulers as SchedulersProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.ServiceStatus as ServiceStatusProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.TaskExecutor as TaskExecutorProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.TaskExecutors as TaskExecutorsProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.TaskStream as TaskStreamProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.TaskAllocationNotification as TaskAllocationNotificationProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerEstimations as PowerEstimationsProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.CurrentEstimations as CurrentEstimationsProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.BandwidthEstimate as BandwidthEstimateProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Ping as PingProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status as StatusProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.StatusCode as StatusCodeProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Response as ResponseProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Task as TaskProto
 import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
-import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatus
 import java.util.*
@@ -32,36 +50,36 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
 
     override val grpcImpl: BindableService = object : BrokerServiceGrpc.BrokerServiceImplBase() {
 
-        inner class TaskResponseObserver(val responseObserver: StreamObserver<JayProto.Response>?) :
-                StreamObserver<JayProto.Task> {
+        inner class TaskResponseObserver(val responseObserver: StreamObserver<ResponseProto>?) :
+                StreamObserver<TaskStreamProto> {
 
             private var isLocalTransfer = false
 
-            override fun onNext(value: JayProto.Task?) {
-                if (value == null) {
+            override fun onNext(stream: TaskStreamProto?) {
+                if (stream == null) {
                     return genErrorResponse(responseObserver)
                 }
-                JayLogger.logInfo("RECEIVED_TASK", value.id ?: "", "ACTION=${value.status.name}")
-                when (value.status) {
-                    JayProto.Task.Status.BEGIN_TRANSFER -> {
-                        if (value.localTask) isLocalTransfer = true else BrokerService.profiler.setState(JayState.DATA_RCV)
-                        responseObserver?.onNext(JayProto.Response.newBuilder()
-                                .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Ready)).build())
+                JayLogger.logInfo("RECEIVED_TASK", stream.task.info.id ?: "", "ACTION=${stream.status.name}")
+                when (stream.status) {
+                    TaskStreamProto.Action.BEGIN_TRANSFER -> {
+                        if (stream.localStream) isLocalTransfer = true else BrokerService.profiler.setState(JayState.DATA_RCV)
+                        responseObserver?.onNext(ResponseProto.newBuilder()
+                                .setStatus(StatusProto.newBuilder().setCode(StatusCodeProto.Ready)).build())
                     }
-                    JayProto.Task.Status.TRANSFER -> {
+                    TaskStreamProto.Action.TRANSFER -> {
                         if (!isLocalTransfer) BrokerService.profiler.unSetState(JayState.DATA_RCV)
-                        responseObserver?.onNext(JayProto.Response.newBuilder()
-                                .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Received)).build())
+                        responseObserver?.onNext(ResponseProto.newBuilder()
+                                .setStatus(StatusProto.newBuilder().setCode(StatusCodeProto.Received)).build())
                         val waitCountdownLatch = CountDownLatch(1)
-                        BrokerService.executeTask(value) { R ->
+                        BrokerService.executeTask(stream.task) { R ->
                             responseObserver?.onNext(R)
                             waitCountdownLatch.countDown()
                         }
                         waitCountdownLatch.await()
                     }
-                    JayProto.Task.Status.END_TRANSFER -> {
-                        responseObserver?.onNext(JayProto.Response.newBuilder()
-                                .setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.End)).build())
+                    TaskStreamProto.Action.END_TRANSFER -> {
+                        responseObserver?.onNext(ResponseProto.newBuilder()
+                                .setStatus(StatusProto.newBuilder().setCode(StatusCodeProto.End)).build())
                     }
                     else -> genErrorResponse(responseObserver)
                 }
@@ -77,25 +95,25 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun executeTask(responseObserver: StreamObserver<JayProto.Response>?): StreamObserver<JayProto.Task> {
+        override fun executeTask(responseObserver: StreamObserver<ResponseProto>?): StreamObserver<TaskStreamProto> {
             return TaskResponseObserver(responseObserver)
         }
 
-        override fun scheduleTask(request: JayProto.Task?, responseObserver: StreamObserver<JayProto.Response>?) {
-            JayLogger.logInfo("BROKER_SCHEDULE_TASK", request?.id ?: "", "DATA_SIZE=${request?.data?.size()}")
-            BrokerService.scheduleTask(request) { R -> genericComplete(R, responseObserver) }
+        override fun scheduleTask(taskProto: TaskProto?, responseObserver: StreamObserver<ResponseProto>?) {
+            JayLogger.logInfo("BROKER_SCHEDULE_TASK", taskProto?.info?.id ?: "", "DATA_SIZE=${taskProto?.data?.size()}")
+            BrokerService.scheduleTask(taskProto) { R -> genericComplete(R, responseObserver) }
         }
 
-        override fun calibrateWorker(request: JayProto.String?, responseObserver: StreamObserver<Empty>?) {
+        override fun calibrateWorker(request: TaskProto?, responseObserver: StreamObserver<Empty>?) {
             BrokerService.calibrateWorker(request) { genericComplete(Empty.getDefaultInstance(), responseObserver) }
         }
 
-        override fun ping(request: JayProto.Ping, responseObserver: StreamObserver<JayProto.Ping>?) {
+        override fun ping(request: PingProto, responseObserver: StreamObserver<PingProto>?) {
             try {
                 if (request.reply) return genericComplete(request, responseObserver)
             } catch (ignore: Exception) {
             }
-            genericComplete(JayProto.Ping.newBuilder().setData(ByteString.copyFrom(ByteArray(0))).build(), responseObserver)
+            genericComplete(PingProto.newBuilder().setData(ByteString.copyFrom(ByteArray(0))).build(), responseObserver)
         }
 
         override fun notifySchedulerForAvailableWorkers(request: Empty?, responseObserver: StreamObserver<Empty>?) {
@@ -103,7 +121,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(request, responseObserver)
         }
 
-        override fun getSchedulers(request: Empty?, responseObserver: StreamObserver<JayProto.Schedulers>?) {
+        override fun getSchedulers(request: Empty?, responseObserver: StreamObserver<SchedulersProto>?) {
             JayLogger.logInfo("INIT")
             BrokerService.getSchedulers { S ->
                 JayLogger.logInfo("COMPLETE")
@@ -111,7 +129,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun setScheduler(request: JayProto.Scheduler?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun setScheduler(request: SchedulerProto?, responseObserver: StreamObserver<StatusProto>?) {
             JayLogger.logInfo("INIT", actions = arrayOf("SCHEDULER_ID=${request?.id}"))
             BrokerService.setScheduler(request) { S ->
                 JayLogger.logInfo("COMPLETE", actions = arrayOf("SCHEDULER_ID=${request?.id}"))
@@ -119,67 +137,67 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             }
         }
 
-        override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun listenMulticast(request: BoolValue?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.listenMulticast(request?.value ?: false)
-            genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
+            genericComplete(genStatus(StatusCodeProto.Success), responseObserver)
         }
 
-        override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<JayProto.Worker>?) {
+        override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<WorkerProto>?) {
             genericComplete(BrokerService.requestWorkerStatus(), responseObserver)
         }
 
-        override fun enableHearBeats(request: JayProto.WorkerTypes?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun enableHearBeats(request: WorkerTypesProto?, responseObserver: StreamObserver<StatusProto>?) {
             genericComplete(BrokerService.enableHearBeats(request), responseObserver)
         }
 
-        override fun enableBandwidthEstimates(request: JayProto.BandwidthEstimate?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun enableBandwidthEstimates(request: BandwidthEstimateProto?, responseObserver: StreamObserver<StatusProto>?) {
             genericComplete(BrokerService.enableBandwidthEstimates(request), responseObserver)
         }
 
-        override fun disableHearBeats(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun disableHearBeats(request: Empty?, responseObserver: StreamObserver<StatusProto>?) {
             genericComplete(BrokerService.disableHearBeats(), responseObserver)
         }
 
-        override fun disableBandwidthEstimates(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun disableBandwidthEstimates(request: Empty?, responseObserver: StreamObserver<StatusProto>?) {
             genericComplete(BrokerService.disableBandwidthEstimates(), responseObserver)
         }
 
-        override fun enableWorkerStatusAdvertisement(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun enableWorkerStatusAdvertisement(request: Empty?, responseObserver: StreamObserver<StatusProto>?) {
             genericComplete(BrokerService.enableWorkerStatusAdvertisement(), responseObserver)
         }
 
-        override fun disableWorkerStatusAdvertisement(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun disableWorkerStatusAdvertisement(request: Empty?, responseObserver: StreamObserver<StatusProto>?) {
             genericComplete(BrokerService.disableWorkerStatusAdvertisement(), responseObserver)
         }
 
-        override fun announceServiceStatus(request: JayProto.ServiceStatus?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun announceServiceStatus(request: ServiceStatusProto?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.serviceStatusUpdate(request) { S -> genericComplete(S, responseObserver) }
         }
 
-        override fun getExpectedCurrent(request: Empty?, responseObserver: StreamObserver<JayProto.CurrentEstimations>?) {
+        override fun getExpectedCurrent(request: Empty?, responseObserver: StreamObserver<CurrentEstimationsProto>?) {
             genericComplete(BrokerService.profiler.getExpectedCurrent(), responseObserver)
         }
 
-        override fun getExpectedCurrentFromRemote(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.CurrentEstimations>?) {
+        override fun getExpectedCurrentFromRemote(request: WorkerProto?, responseObserver: StreamObserver<CurrentEstimationsProto>?) {
             BrokerService.getExpectedCurrentFromRemote(request?.id) { S -> genericComplete(S, responseObserver) }
         }
 
-        override fun getExpectedPower(request: Empty?, responseObserver: StreamObserver<JayProto.PowerEstimations>?) {
+        override fun getExpectedPower(request: Empty?, responseObserver: StreamObserver<PowerEstimationsProto>?) {
             genericComplete(BrokerService.profiler.getExpectedPower(), responseObserver)
         }
 
-        override fun getExpectedPowerFromRemote(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.PowerEstimations>?) {
+        override fun getExpectedPowerFromRemote(request: WorkerProto?, responseObserver: StreamObserver<PowerEstimationsProto>?) {
             BrokerService.getExpectedPowerFromRemote(request?.id) { S -> genericComplete(S, responseObserver) }
         }
 
-        override fun stopService(request: Empty?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun stopService(request: Empty?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.stopService { S ->
                 genericComplete(S, responseObserver)
                 BrokerService.stopServer()
             }
         }
 
-        override fun createTask(request: JayProto.TaskInfo?, responseObserver: StreamObserver<JayProto.Response>?) {
+        /*override fun createTask(request: JayProto.TaskInfo?, responseObserver: StreamObserver<JayProto.Response>?) {
             val reqId = request?.path ?: ""
             JayLogger.logInfo("INIT", actions = arrayOf("REQUEST_ID=$reqId"))
             if (reqId.contains(".mp4")) {
@@ -194,37 +212,37 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                 JayLogger.logInfo("TASK_SUBMITTED", actions = arrayOf("REQUEST_TYPE=IMAGE", "REQUEST_ID=$reqId"))
             }
             JayLogger.logInfo("COMPLETE", actions = arrayOf("REQUEST_ID=$reqId"))
-        }
+        }*/
 
-        override fun callExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Response>?) {
+        override fun callExecutorAction(request: RequestProto?, responseObserver: StreamObserver<ResponseProto>?) {
             BrokerService.callExecutorAction(request) { CR -> genericComplete(CR, responseObserver) }
         }
 
-        override fun listTaskExecutors(request: Empty?, responseObserver: StreamObserver<JayProto.TaskExecutors>?) {
+        override fun listTaskExecutors(request: Empty?, responseObserver: StreamObserver<TaskExecutorsProto>?) {
             BrokerService.listTaskExecutors { TE ->
                 genericComplete(TE, responseObserver)
             }
         }
 
-        override fun runExecutorAction(request: JayProto.Request?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun runExecutorAction(request: RequestProto?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.runExecutorAction(request) { S -> genericComplete(S, responseObserver) }
         }
 
-        override fun selectTaskExecutor(request: JayProto.TaskExecutor?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun selectTaskExecutor(request: TaskExecutorProto?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.selectTaskExecutor(request) { S -> genericComplete(S, responseObserver) }
         }
 
-        override fun setExecutorSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun setExecutorSettings(request: SettingsProto?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.setExecutorSettings(request) { S -> genericComplete(S, responseObserver) }
         }
 
-        override fun setSchedulerSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun setSchedulerSettings(request: SettingsProto?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.setSchedulerSettings(request) { S -> genericComplete(S, responseObserver) }
         }
 
-        override fun setSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun setSettings(request: SettingsProto?, responseObserver: StreamObserver<StatusProto>?) {
             JayLogger.logInfo("INIT")
-            if (request == null) genericComplete(genStatus(JayProto.StatusCode.Error), responseObserver)
+            if (request == null) genericComplete(genStatus(StatusCodeProto.Error), responseObserver)
             try {
                 val settingsMap = request!!.settingMap
                 settingsMap.forEach { (K, V) ->
@@ -275,32 +293,32 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
                         "DEADLINE_CHECK_TOLERANCE" -> JaySettings.DEADLINE_CHECK_TOLERANCE = V.toInt()
                     }
                 }
-                genericComplete(genStatus(JayProto.StatusCode.Success), responseObserver)
+                genericComplete(genStatus(StatusCodeProto.Success), responseObserver)
             } catch (e: Exception) {
-                genericComplete(genStatus(JayProto.StatusCode.Error), responseObserver)
+                genericComplete(genStatus(StatusCodeProto.Error), responseObserver)
             }
             JayLogger.logInfo("COMPLETE")
         }
 
-        override fun networkBenchmark(request: JayProto.Task?, responseObserver: StreamObserver<Empty>?) {
-            JayLogger.logInfo("RECEIVED_TASK_BENCHMARK", request?.id ?: "")
+        override fun networkBenchmark(request: TaskProto?, responseObserver: StreamObserver<Empty>?) {
+            JayLogger.logInfo("RECEIVED_TASK_BENCHMARK", request?.info?.id ?: "")
             genericComplete(Empty.getDefaultInstance(), responseObserver)
         }
 
-        override fun notifyAllocatedTask(request: JayProto.TaskAllocationNotification?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun notifyAllocatedTask(request: TaskAllocationNotificationProto?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.notifyAllocatedTask(request!!) {
                 genericComplete(it, responseObserver)
             }
         }
 
-        override fun informAllocatedTask(request: JayProto.String?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun informAllocatedTask(request: StringProto?, responseObserver: StreamObserver<StatusProto>?) {
             BrokerService.worker.informAllocatedTask(request) {
                 genericComplete(it, responseObserver)
             }
         }
     }
 
-    private fun genErrorResponse(responseObserver: StreamObserver<JayProto.Response>?) {
-        responseObserver?.onNext(JayProto.Response.newBuilder().setStatus(JayProto.Status.newBuilder().setCode(JayProto.StatusCode.Error)).build())
+    private fun genErrorResponse(responseObserver: StreamObserver<ResponseProto>?) {
+        responseObserver?.onNext(ResponseProto.newBuilder().setStatus(StatusProto.newBuilder().setCode(StatusCodeProto.Error)).build())
     }
 }

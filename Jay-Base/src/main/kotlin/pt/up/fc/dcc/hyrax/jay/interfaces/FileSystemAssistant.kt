@@ -11,6 +11,10 @@
 
 package pt.up.fc.dcc.hyrax.jay.interfaces
 
+
+/**
+ * todo: create specific functions to read and store tasks. These functions should be internal
+ */
 interface FileSystemAssistant {
     fun getByteArrayFromId(id: String): ByteArray
     fun getByteArrayFast(id: String): ByteArray
@@ -19,4 +23,5 @@ interface FileSystemAssistant {
     fun createTempFile(data: ByteArray?): String
     fun clearTempFile(fileId: String?)
     fun getFileSizeFromId(id: String): Long
+    fun cacheByteArrayWithId(id: String, bytes: ByteArray): Boolean
 }

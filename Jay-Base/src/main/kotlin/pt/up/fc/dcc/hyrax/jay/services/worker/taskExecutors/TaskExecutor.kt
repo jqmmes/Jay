@@ -11,12 +11,11 @@
 
 package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.StatusCode
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerTask
+import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusError
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils.genStatusSuccess
 import java.util.UUID.randomUUID
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status as JayStatus
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Status as StatusProto
 
 abstract class TaskExecutor(val name: String, val description: String?) {
 
@@ -25,19 +24,28 @@ abstract class TaskExecutor(val name: String, val description: String?) {
     open fun init(vararg params: Any?) {}
     open fun destroy() {}
 
-    abstract fun executeTask(task: WorkerTask?, callback: ((Any) -> Unit)?)
-    abstract fun setSetting(key: String, value: Any?, statusCallback: ((JayStatus) -> Unit)? = null)
-    abstract fun callAction(action: String, statusCallback: ((JayStatus, Any?) -> Unit)? = null, vararg args: Any)
-    abstract fun runAction(action: String, statusCallback: ((JayStatus) -> Unit)? = null, vararg args: Any)
+    abstract fun executeTask(task: Task, callback: ((Any) -> Unit)?)
+    abstract fun setSetting(key: String, value: Any?, statusCallback: ((Boolean) -> Unit)? = null)
 
-    // baseline
+    internal fun callActionProto(action: String, statusCallback: ((StatusProto, Any?) -> Unit), vararg args: Any) {
+        callAction(action, {s, r -> statusCallback(if (s) genStatusSuccess() else genStatusError(), r)}, args)
+    }
+
+    abstract fun callAction(action: String, statusCallback: ((Boolean, Any?) -> Unit)? = null, vararg args: Any)
+
+    internal fun runActionProto(action: String, statusCallback: ((StatusProto) -> Unit), vararg args: Any) {
+        runAction(action, {s -> statusCallback(if (s) genStatusSuccess() else genStatusError())}, args)
+    }
+
+    abstract fun runAction(action: String, statusCallback: ((Boolean) -> Unit)? = null, vararg args: Any)
+
     abstract fun getDefaultResponse(callback: ((Any) -> Unit)?)
 
-    open fun setSettings(settingsMap: Map<String, Any?>): JayStatus {
+    open fun setSettings(settingsMap: Map<String, Any?>): StatusProto {
         var status = genStatusSuccess()
         for (k in settingsMap.keys) {
-            setSetting(k, settingsMap[k]) { setting_status ->
-                if (setting_status.code == StatusCode.Error) {
+            setSetting(k, settingsMap[k]) { setting_succeeded ->
+                if (!setting_succeeded) {
                     status = genStatusError()
                 }
             }
