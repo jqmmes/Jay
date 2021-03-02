@@ -100,7 +100,7 @@ class ProfilerGRPCClient(private val host: String) : GRPCClientBase<ProfilerServ
         checkConnection()
         if (channel.getState(true) != ConnectivityState.READY) serviceStatus(null)
         val call = futureStub.testService(Empty.getDefaultInstance())
-        call.addListener(Runnable {
+        call.addListener({
             try {
                 serviceStatus(call.get())
             } catch (e: Exception) {

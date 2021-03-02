@@ -22,16 +22,11 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutor
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
-import pt.up.fc.dcc.hyrax.jay.structures.Task
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
-import java.io.ByteArrayInputStream
-import java.io.ObjectInputStream
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
-import javax.management.RuntimeErrorException
 import kotlin.concurrent.thread
 import kotlin.random.Random
 
@@ -41,8 +36,6 @@ object WorkerService {
 
     private val taskQueue = LinkedBlockingQueue<RunnableTaskObjects>()
     private var running = false
-    // todo: allow to change task executor type
-    private var executorThreadPool: ExecutorService = Executors.newSingleThreadExecutor()
     private var server: GRPCServerBase? = null
     private val broker = BrokerGRPCClient("127.0.0.1")
     private val profiler = ProfilerGRPCClient("127.0.0.1")
@@ -55,7 +48,7 @@ object WorkerService {
     private var fsAssistant: FileSystemAssistant? = null
 
     init {
-        executorThreadPool.shutdown()
+        TaskExecutorManager.executorThreadPool.shutdown()
         JayLogger.logInfo("COMPLETE")
     }
 
@@ -96,7 +89,8 @@ object WorkerService {
         JayLogger.logInfo("INIT")
         if (running) return
         this.fsAssistant = fsAssistant
-        if (executorThreadPool.isShutdown || executorThreadPool.isTerminated) executorThreadPool = Executors.newFixedThreadPool(JaySettings.WORKING_THREADS)
+        if (TaskExecutorManager.executorThreadPool.isShutdown || TaskExecutorManager.executorThreadPool.isTerminated)
+            TaskExecutorManager.executorThreadPool = Executors.newFixedThreadPool(JaySettings.WORKING_THREADS)
         repeat(30) {
             if (this.server == null) {
                 this.server = WorkerGRPCServer(useNettyServer).start()
@@ -107,17 +101,19 @@ object WorkerService {
             running = true
             while (running) {
                 try {
-                    if (!(executorThreadPool.isShutdown || executorThreadPool.isTerminated) && running) {
+                    if (!(TaskExecutorManager.executorThreadPool.isShutdown ||
+                                TaskExecutorManager.executorThreadPool.isTerminated) && running) {
                         val task = taskQueue.take()
-                        JayLogger.logInfo("DEQUEUE_TO_EXECUTOR", task.task?.id ?: "")
-                        executorThreadPool.execute(task)
+                        JayLogger.logInfo("DEQUEUE_TO_EXECUTOR", task.taskInfo?.id ?: "")
+                        TaskExecutorManager.executorThreadPool.execute(task)
                     } else running = false
 
                 } catch (e: Exception) {
                     running = false
                 }
             }
-            if (!executorThreadPool.isShutdown) executorThreadPool.shutdownNow()
+            if (!TaskExecutorManager.executorThreadPool.isShutdown)
+                TaskExecutorManager.executorThreadPool.shutdownNow()
         }
         broker.announceServiceStatus(
                 ServiceStatus.newBuilder().setType(ServiceStatus.Type.WORKER).setRunning(true).build())
@@ -135,7 +131,7 @@ object WorkerService {
         if (stopGRPCServer) server?.stop()
         taskQueue.clear()
         taskQueue.offer(RunnableTaskObjects(null) {})
-        executorThreadPool.shutdownNow()
+        TaskExecutorManager.executorThreadPool.shutdownNow()
         TaskExecutorManager.getCurrentExecutor()?.destroy()
         runningTasks.set(0)
         totalTasks.set(0)
@@ -155,11 +151,11 @@ object WorkerService {
     }
 
     fun callExecutorAction(action: String, callback: ((Status?, Any?) -> Unit), vararg args: Any) {
-        TaskExecutorManager.getCurrentExecutor()?.callActionProto(action, callback, *args)
+        TaskExecutorManager.getCurrentExecutor()?.internalCallAction(action, callback, *args)
     }
 
     fun runExecutorAction(action: String, callback: ((Status?) -> Unit), vararg args: Any) {
-        TaskExecutorManager.getCurrentExecutor()?.runActionProto(action, callback, *args)
+        TaskExecutorManager.getCurrentExecutor()?.internalRunAction(action, callback, *args)
     }
 
     internal fun isRunning(): Boolean {
@@ -214,30 +210,22 @@ object WorkerService {
         return workerComputeStatusBuilder.build()
     }
 
-    private fun loadTaskFromFile(task: TaskInfo) : Task {
-        val taskByteArray = if (fsAssistant != null) {
-            fsAssistant!!.getByteArrayFast(task.id)
-        } else {
-            throw RuntimeErrorException(Error("FileSystem Assistant not loaded"))
-        }
-        return ObjectInputStream(ByteArrayInputStream(taskByteArray)).readObject() as Task
-    }
-
-    private class RunnableTaskObjects(val task: TaskInfo?, var callback: ((Any) -> Unit)?) : Runnable {
+    private class RunnableTaskObjects(val taskInfo: TaskInfo?, var callback: ((Any) -> Unit)?) : Runnable {
         override fun run() {
-            if (task == null) return
+            if (taskInfo == null) return
+            val task = fsAssistant?.readTask(taskInfo) ?: return
             if (JaySettings.COMPUTATION_BASELINE_DURATION_FLAG) {
                 val time = System.currentTimeMillis()
                 do {
-                    JayLogger.logInfo("INIT", task.id ?: "")
+                    JayLogger.logInfo("INIT", taskInfo.id ?: "")
                     atomicOperation(runningTasks, increment = true)
-                    profileExecution { TaskExecutorManager.getCurrentExecutor()?.executeTask(loadTaskFromFile(task), null) }
+                    profileExecution { TaskExecutorManager.getCurrentExecutor()?.executeTask(task, null) }
                     atomicOperation(runningTasks, totalTasks, increment = false)
                 } while (System.currentTimeMillis() - time < JaySettings.COMPUTATION_BASELINE_DURATION)
             }
-            JayLogger.logInfo("INIT", task.id ?: "")
+            JayLogger.logInfo("INIT", taskInfo.id ?: "")
             atomicOperation(runningTasks, increment = true)
-            profileExecution { TaskExecutorManager.getCurrentExecutor()?.executeTask(loadTaskFromFile(task), callback) }
+            profileExecution { TaskExecutorManager.getCurrentExecutor()?.executeTask(task, callback) }
             atomicOperation(runningTasks, totalTasks, increment = false)
         }
     }

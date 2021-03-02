@@ -27,13 +27,13 @@ abstract class TaskExecutor(val name: String, val description: String?) {
     abstract fun executeTask(task: Task, callback: ((Any) -> Unit)?)
     abstract fun setSetting(key: String, value: Any?, statusCallback: ((Boolean) -> Unit)? = null)
 
-    internal fun callActionProto(action: String, statusCallback: ((StatusProto, Any?) -> Unit), vararg args: Any) {
+    internal fun internalCallAction(action: String, statusCallback: ((StatusProto, Any?) -> Unit), vararg args: Any) {
         callAction(action, {s, r -> statusCallback(if (s) genStatusSuccess() else genStatusError(), r)}, args)
     }
 
     abstract fun callAction(action: String, statusCallback: ((Boolean, Any?) -> Unit)? = null, vararg args: Any)
 
-    internal fun runActionProto(action: String, statusCallback: ((StatusProto) -> Unit), vararg args: Any) {
+    internal fun internalRunAction(action: String, statusCallback: ((StatusProto) -> Unit), vararg args: Any) {
         runAction(action, {s -> statusCallback(if (s) genStatusSuccess() else genStatusError())}, args)
     }
 

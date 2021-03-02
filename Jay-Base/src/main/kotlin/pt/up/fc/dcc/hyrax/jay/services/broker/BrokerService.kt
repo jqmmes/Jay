@@ -16,7 +16,6 @@ import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCServer
 import pt.up.fc.dcc.hyrax.jay.services.broker.multicast.MulticastAdvertiser
@@ -25,20 +24,18 @@ import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.PowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.worker.grpc.WorkerGRPCClient
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
 import pt.up.fc.dcc.hyrax.jay.structures.Worker
+import pt.up.fc.dcc.hyrax.jay.structures.WorkerInfo
+import pt.up.fc.dcc.hyrax.jay.structures.WorkerType
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.lang.Thread.sleep
-import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 import kotlin.random.Random
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as JayWorker
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerInfo as JayWorker
 
-/**
- * todo: - Remove all task image storage (treat everything as a blob of data and submit the task all the way to the executor, where it shall be treated)
- *       - Use the most of local caching when possible to avoid storing objects in memory
- */
 object BrokerService {
     internal var powerMonitor: PowerMonitor? = null
     private var server: GRPCServerBase? = null
@@ -47,18 +44,18 @@ object BrokerService {
     private val scheduler = SchedulerGRPCClient("127.0.0.1")
     internal val worker = WorkerGRPCClient("127.0.0.1")
     internal val profiler = ProfilerGRPCClient("127.0.0.1")
-    private val local: Worker = if (JaySettings.DEVICE_ID != "") Worker(id = JaySettings.DEVICE_ID, address = "127.0.0.1", type = Type.LOCAL) else Worker(address = "127.0.0.1", type = Type.LOCAL)
+    private val local: Worker = if (JaySettings.DEVICE_ID != "") Worker(id = JaySettings.DEVICE_ID, address = "127.0.0.1", type = WorkerType.LOCAL) else Worker(address = "127.0.0.1", type = WorkerType.LOCAL)
     private var heartBeats = false
     private var bwEstimates = false
     private var schedulerServiceRunning = false
     private var workerServiceRunning = false
     private var profilerServiceRunning = false
-    private var fsAssistant: FileSystemAssistant? = null
+    internal var fsAssistant: FileSystemAssistant? = null
     private var readServiceData: Boolean = false
     private var readServiceDataLatch: CountDownLatch = CountDownLatch(0)
 
     init {
-        workers[local.id] = local
+        workers[local.info.id] = local
     }
 
     fun start(useNettyServer: Boolean = false, fsAssistant: FileSystemAssistant? = null, powerMonitor: PowerMonitor? = null) {
@@ -96,18 +93,18 @@ object BrokerService {
                 try {
                     val profile = if (profilerServiceRunning) profiler.getDeviceStatus() else null
                     if (workerServiceRunning) worker.getWorkerStatus {
-                        local.updateStatus(it, profile)
+                        local.info.update(it, profile)
                         controlLatch.countDown()
                     }
-                    if (profilerServiceRunning) local.updateStatus(profiler.getExpectedPower())
+                    if (profilerServiceRunning) local.info.update(profiler.getExpectedPower())
                 } catch (ignore: Exception) {
                     JayLogger.logError("Failed to read Service Data")
                 }
                 controlLatch.await()
-                announceMulticast(worker = local.getProto())
+                announceMulticast(worker = local.info.getProto())
                 // Assure that I need to inform scheduler for local host. Maybe scheduler can read this by itself.
                 // Maybe Worker is the one that should call this.
-                if (schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.getProto()) {
+                if (schedulerServiceRunning) scheduler.notifyWorkerUpdate(local.info.getProto()) {
                     JayLogger.logInfo("SCHEDULER_NOTIFIED", "", "DEVICE=LOCAL")
                 }
                 sleep(JaySettings.READ_SERVICE_DATA_INTERVAL)
@@ -121,7 +118,7 @@ object BrokerService {
         if (stopGRPCServer) server?.stop()
         readServiceData = false
         readServiceDataLatch.await()
-        workers.values.filter { w -> w.type == Type.CLOUD }.forEach { w -> w.disableAutoStatusUpdate() }
+        workers.values.filter { w -> w.info.type == WorkerType.CLOUD }.forEach { w -> w.disableAutoStatusUpdate() }
     }
 
     fun stopService(callback: ((JayProto.Status?) -> Unit)) {
@@ -136,10 +133,7 @@ object BrokerService {
     internal fun executeTask(task: JayProto.Task?, callback: ((JayProto.Response?) -> Unit)? = null) {
         val taskId = task?.info?.id ?: ""
         JayLogger.logInfo("INIT", taskId)
-        fsAssistant?.cacheByteArrayWithId(
-            task?.info?.id ?: UUID.randomUUID().toString(),
-            task?.toByteArray() ?: ByteArray(0)
-        )
+        fsAssistant?.cacheTask(task)
         val taskInfo = task?.info
         if (workerServiceRunning) worker.execute(taskInfo) { R ->
             callback?.invoke(R)
@@ -156,19 +150,19 @@ object BrokerService {
             if (W?.id == "" || W == null) {
                 callback?.invoke(null)
             } else {
-                if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != Type.LOCAL || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.address)) {
+                if (JaySettings.SINGLE_REMOTE_IP == "0.0.0.0" || (W.type != JayProto.WorkerInfo.Type.LOCAL || JaySettings.SINGLE_REMOTE_IP == workers[W.id]!!.info.address)) {
                     //workers[W.id]!!.grpc.executeTask(JayTask(task?.info).getProto(getByteArrayFromId(taskId)),
                     workers[W.id]!!.grpc.executeTask(task,
-                        local = (W.id == local.id), callback = { R ->
+                        local = (W.id == local.info.id), callback = { R ->
                         workers[W.id]!!.addResultSize(R.bytes.size().toLong())
                         callback?.invoke(R)
                     }) {
                         scheduler.notifyTaskComplete(task?.info)
                     }
                 } else {
-                    workers[local.id]!!.grpc.executeTask(task,
+                    workers[local.info.id]!!.grpc.executeTask(task,
                             true, { R ->
-                        workers[local.id]!!.addResultSize(R.bytes.size().toLong())
+                        workers[local.info.id]!!.addResultSize(R.bytes.size().toLong())
                         callback?.invoke(R)
                     }) {
                         scheduler.notifyTaskComplete(task?.info)
@@ -187,7 +181,7 @@ object BrokerService {
         }
     }
 
-    private fun updateWorker(worker: JayProto.Worker?, latch: CountDownLatch) {
+    private fun updateWorker(worker: JayProto.WorkerInfo?, latch: CountDownLatch) {
         scheduler.notifyWorkerUpdate(worker) { S ->
             if (S?.code == JayProto.StatusCode.Error) {
                 sleep(50)
@@ -199,7 +193,7 @@ object BrokerService {
     internal fun notifySchedulerForAvailableWorkers() {
         val countDownLatch = CountDownLatch(workers.size)
         for (worker in workers.values) {
-            if (worker.isOnline() || (worker.type == Type.LOCAL && workerServiceRunning)) updateWorker(worker.getProto(), countDownLatch)
+            if (worker.isOnline() || (worker.info.type == WorkerType.LOCAL && workerServiceRunning)) updateWorker(worker.info.getProto(), countDownLatch)
         }
         countDownLatch.await()
     }
@@ -229,7 +223,7 @@ object BrokerService {
         if (notification.workerId in workers) {
             try {
                 val protoStr = JayProto.String.newBuilder().setStr(notification.taskId).build()
-                if (notification.workerId == local.id) {
+                if (notification.workerId == local.info.id) {
                     worker.informAllocatedTask(protoStr) { callback.invoke(it) }
                 } else {
                     workers[notification.workerId]!!.grpc.informAllocatedTask(protoStr) { callback.invoke(it) }
@@ -242,66 +236,66 @@ object BrokerService {
         }
     }
 
-    private fun notifySchedulerOfWorkerStatusUpdate(statusUpdate: Worker.Status, workerId: String) {
-        JayLogger.logInfo("STATUS_UPDATE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+    private fun notifySchedulerOfWorkerStatusUpdate(statusUpdate: WorkerInfo.Status, workerId: String) {
+        JayLogger.logInfo("STATUS_UPDATE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.info?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.info?.type?.name}"))
         if (!schedulerServiceRunning) {
-            JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+            JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=${workers[workerId]?.info?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.info?.type?.name}"))
             return
         }
-        JayLogger.logInfo("SCHEDULER_RUNNING", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
-        if (statusUpdate == Worker.Status.ONLINE) {
-            JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
-            scheduler.notifyWorkerUpdate(workers[workerId]?.getProto()) {
+        JayLogger.logInfo("SCHEDULER_RUNNING", actions = arrayOf("DEVICE_IP=${workers[workerId]?.info?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.info?.type?.name}"))
+        if (statusUpdate == WorkerInfo.Status.ONLINE) {
+            JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.info?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.info?.type?.name}"))
+            scheduler.notifyWorkerUpdate(workers[workerId]?.info?.getProto()) {
                 JayLogger.logInfo("NOTIFY_WORKER_UPDATE_COMPLETE", actions = arrayOf(
-                        "STATUS=${it?.codeValue}", "DEVICE_IP=${workers[workerId]?.address}",
-                        "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+                        "STATUS=${it?.codeValue}", "DEVICE_IP=${workers[workerId]?.info?.address}",
+                        "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.info?.type?.name}"))
             }
         } else {
-            JayLogger.logInfo("NOTIFY_WORKER_FAILURE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
-            scheduler.notifyWorkerFailure(workers[workerId]?.getProto()) {
+            JayLogger.logInfo("NOTIFY_WORKER_FAILURE", actions = arrayOf("DEVICE_IP=${workers[workerId]?.info?.address}", "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.info?.type?.name}"))
+            scheduler.notifyWorkerFailure(workers[workerId]?.info?.getProto()) {
                 JayLogger.logInfo("NOTIFY_WORKER_FAILURE_COMPLETE", actions = arrayOf(
-                        "STATUS=${it?.codeValue}; DEVICE_IP=${workers[workerId]?.address}",
-                        "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.type?.name}"))
+                        "STATUS=${it?.codeValue}; DEVICE_IP=${workers[workerId]?.info?.address}",
+                        "DEVICE_ID=${workerId}", "WORKER_TYPE=${workers[workerId]?.info?.type?.name}"))
             }
         }
     }
 
-    private fun addOrUpdateWorker(worker: JayProto.Worker?, address: String) {
+    private fun addOrUpdateWorker(worker: JayProto.WorkerInfo?, address: String) {
         JayLogger.logInfo("INIT", actions = arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker?.id}"))
         if (worker == null) return
         if (worker.id !in workers) {
             if (address == JaySettings.SINGLE_REMOTE_IP) JaySettings.CLOUDLET_ID = worker.id
             JayLogger.logInfo("NEW_DEVICE", actions = arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-            workers[worker.id] = Worker(worker, address, heartBeats, bwEstimates) { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
+            workers[worker.id] = Worker(worker, WorkerType.REMOTE, address, heartBeats, bwEstimates) { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
             workers[worker.id]?.enableAutoStatusUpdate { _ ->
                 if (!schedulerServiceRunning) {
                     JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=$address",
-                            "DEVICE_ID=${workers[worker.id]?.id}", "WORKER_TYPE=${workers[worker.id]?.type?.name}"))
+                            "DEVICE_ID=${workers[worker.id]?.info?.id}", "WORKER_TYPE=${workers[worker.id]?.info?.type?.name}"))
                     return@enableAutoStatusUpdate
                 }
                 val latch = CountDownLatch(1)
-                updateWorker(workers[worker.id]?.getProto(), latch)
+                updateWorker(workers[worker.id]?.info?.getProto(), latch)
                 latch.await()
-                JayLogger.logInfo("PROACTIVE_WORKER_STATUS_UPDATE_COMPLETE", "", "WORKER_ID=${workers[worker.id]?.id}")
+                JayLogger.logInfo("PROACTIVE_WORKER_STATUS_UPDATE_COMPLETE", "", "WORKER_ID=${workers[worker.id]?.info?.id}")
             }
         } else {
             JayLogger.logInfo("NOTIFY_WORKER_UPDATE", actions = arrayOf("DEVICE_IP=$address", "DEVICE_ID=${worker.id}"))
-            workers[worker.id]?.updateStatus(worker)
+            workers[worker.id]?.info?.update(worker)
         }
-        notifySchedulerOfWorkerStatusUpdate(Worker.Status.ONLINE, worker.id)
+        notifySchedulerOfWorkerStatusUpdate(WorkerInfo.Status.ONLINE, worker.id)
     }
 
     internal fun announceMulticast(stopAdvertiser: Boolean = false, worker: JayWorker? = null) {
         if (stopAdvertiser) MulticastAdvertiser.stop()
         else {
-            val data = worker?.toByteArray() ?: local.getProto()?.toByteArray()
+            val data = worker?.toByteArray() ?: local.info.getProto().toByteArray()
             if (MulticastAdvertiser.isRunning()) MulticastAdvertiser.setAdvertiseData(data)
             else MulticastAdvertiser.start(data)
         }
     }
 
-    fun requestWorkerStatus(): JayProto.Worker? {
-        return local.getProto()
+    fun requestWorkerStatus(): JayProto.WorkerInfo {
+        return local.info.getProto()
     }
 
     fun enableHearBeats(types: JayProto.WorkerTypes?): JayProto.Status {
@@ -309,8 +303,8 @@ object BrokerService {
         heartBeats = true
         if (types == null) return JayUtils.genStatus(JayProto.StatusCode.Error)
         for (worker in workers.values)
-            if (worker.type in types.typeList && worker.type != Type.LOCAL)
-                worker.enableHeartBeat { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
+            if (worker.info.type in WorkerType.values() && worker.info.type != WorkerType.LOCAL)
+                worker.enableHeartBeat { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.info.id) }
         return JayUtils.genStatus(JayProto.StatusCode.Success)
     }
 
@@ -319,10 +313,10 @@ object BrokerService {
         bwEstimates = true
         if (method == null) return JayUtils.genStatus(JayProto.StatusCode.Error)
         for (worker in workers.values) {
-            if (worker.type in method.workerTypeList && worker.type != Type.LOCAL) {
+            if (worker.info.type in WorkerType.values() && worker.info.type != WorkerType.LOCAL) {
                 when (JaySettings.BANDWIDTH_ESTIMATE_TYPE) {
-                    in arrayOf("ACTIVE", "ALL") -> worker.doActiveRTTEstimates { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
-                    else -> worker.enableHeartBeat { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.id) }
+                    in arrayOf("ACTIVE", "ALL") -> worker.doActiveRTTEstimates { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.info.id) }
+                    else -> worker.enableHeartBeat { status -> notifySchedulerOfWorkerStatusUpdate(status, worker.info.id) }
                 }
             }
         }
@@ -355,8 +349,8 @@ object BrokerService {
             workerServiceRunning = serviceStatus.running
             if (!workerServiceRunning) announceMulticast(stopAdvertiser = true)
             if (schedulerServiceRunning) {
-                if (serviceStatus.running) scheduler.notifyWorkerUpdate(local.getProto()) { S -> completeCallback(S) }
-                else scheduler.notifyWorkerFailure(local.getProto()) { S -> completeCallback(S) }
+                if (serviceStatus.running) scheduler.notifyWorkerUpdate(local.info.getProto()) { S -> completeCallback(S) }
+                else scheduler.notifyWorkerFailure(local.info.getProto()) { S -> completeCallback(S) }
             } else completeCallback(JayUtils.genStatusSuccess())
         } else if (serviceStatus?.type == JayProto.ServiceStatus.Type.PROFILER) {
             profilerServiceRunning = serviceStatus.running
@@ -364,24 +358,24 @@ object BrokerService {
         }
     }
 
-    /**
-     *  todo: - Must define a calibration task
-     *        - Must check if CALIBRATION task is already stored in cache. If not store it.
-     */
     fun calibrateWorker(task: JayProto.Task?, function: () -> Unit) {
         JayLogger.logInfo("INIT", "CALIBRATION")
-        if (workerServiceRunning) worker.execute(JayProto.TaskInfo.newBuilder(task?.info).setId("CALIBRATION").build()) { function() } else function()
+        if (workerServiceRunning)
+            TaskExecutorManager.getCalibrationTasks().forEach { calibrationTask ->
+                worker.execute(calibrationTask.getProto()) { function() }
+            }
+        else function()
         JayLogger.logInfo("COMPLETE", "CALIBRATION")
     }
 
     fun addCloud(cloud_ip: String) {
         JayLogger.logInfo("INIT", "", "CLOUD_IP=$cloud_ip")
-        if (workers.values.find { w -> w.type == Type.CLOUD && w.address == cloud_ip } == null) {
+        if (workers.values.find { w -> w.info.type == WorkerType.CLOUD && w.info.address == cloud_ip } == null) {
             JayLogger.logInfo("NEW_CLOUD", "", "CLOUD_IP=$cloud_ip")
-            val cloud = Worker(address = cloud_ip, type = Type.CLOUD, checkHearBeat = true, bwEstimates = bwEstimates)
+            val cloud = Worker(address = cloud_ip, type = WorkerType.CLOUD, checkHeartBeat = true, bwEstimates = bwEstimates)
             cloud.enableAutoStatusUpdate { workerProto ->
                 if (!schedulerServiceRunning) {
-                    JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=$cloud_ip", "DEVICE_ID=${cloud.id}", "WORKER_TYPE=${cloud.type.name}"))
+                    JayLogger.logInfo("SCHEDULER_NOT_RUNNING", actions = arrayOf("DEVICE_IP=$cloud_ip", "DEVICE_ID=${cloud.info.id}", "WORKER_TYPE=${cloud.info.type.name}"))
                     return@enableAutoStatusUpdate
                 }
                 scheduler.notifyWorkerUpdate(workerProto) { status ->
@@ -389,7 +383,7 @@ object BrokerService {
                             "STATUS=${status?.code?.name}", "CLOUD_ID=$cloud.id", "CLOUD_IP=$cloud_ip")
                 }
             }
-            workers[cloud.id] = cloud
+            workers[cloud.info.id] = cloud
         }
         JayLogger.logInfo("COMPLETE", "", "CLOUD_IP=$cloud_ip")
     }

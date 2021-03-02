@@ -41,7 +41,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         futureStub = SchedulerServiceGrpc.newFutureStub(channel)
     }
 
-    fun schedule(request: JayProto.TaskInfo?, callback: ((JayProto.Worker?) -> Unit)? = null) {
+    fun schedule(request: JayProto.TaskInfo?, callback: ((JayProto.WorkerInfo?) -> Unit)? = null) {
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) channel.resetConnectBackoff()
         callback?.invoke(blockingStub.schedule(request))
@@ -95,7 +95,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         }, AbstractJay.executorPool)
     }
 
-    fun notifyWorkerUpdate(request: JayProto.Worker?, callback: ((JayProto.Status?) -> Unit)) {
+    fun notifyWorkerUpdate(request: JayProto.WorkerInfo?, callback: ((JayProto.Status?) -> Unit)) {
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()
@@ -111,7 +111,7 @@ class SchedulerGRPCClient(private val host: String) : GRPCClientBase<SchedulerSe
         }, AbstractJay.executorPool)
     }
 
-    fun notifyWorkerFailure(request: JayProto.Worker?, callback: ((JayProto.Status?) -> Unit)) {
+    fun notifyWorkerFailure(request: JayProto.WorkerInfo?, callback: ((JayProto.Status?) -> Unit)) {
         checkConnection()
         if (channel.getState(true) == ConnectivityState.TRANSIENT_FAILURE) {
             channel.resetConnectBackoff()

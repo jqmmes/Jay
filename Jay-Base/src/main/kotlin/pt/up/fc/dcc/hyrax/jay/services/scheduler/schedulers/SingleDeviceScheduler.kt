@@ -12,24 +12,25 @@
 package pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers
 
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
-import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
+import pt.up.fc.dcc.hyrax.jay.structures.WorkerInfo
+import pt.up.fc.dcc.hyrax.jay.structures.WorkerType
 
-class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : AbstractScheduler("SingleDeviceScheduler") {
+class SingleDeviceScheduler(private val workerType: WorkerType) : AbstractScheduler("SingleDeviceScheduler") {
 
-    private var worker: JayProto.Worker? = null
+    private var worker: WorkerInfo? = null
+    override var description: String? = "Single device scheduler that offload every task to a single host (Local, Remote[random] or Cloud)"
 
     override fun init() {
         JayLogger.logInfo("WORKER_TYPE=${workerType.name}")
-        if (workerType != JayProto.Worker.Type.LOCAL) {
+        if (workerType != WorkerType.LOCAL) {
             SchedulerService.listenForWorkers(true) {
                 JayLogger.logInfo("COMPLETE")
-                SchedulerService.broker.enableHeartBeats(getWorkerTypes()) { super.init() }
+                SchedulerService.enableHeartBeats(getWorkerTypes()) { super.init() }
             }
         } else {
-            SchedulerService.broker.enableHeartBeats(getWorkerTypes()) { super.init() }
+            SchedulerService.enableHeartBeats(getWorkerTypes()) { super.init() }
         }
     }
 
@@ -37,7 +38,7 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
         return "${super.getName()} [${workerType.name}]"
     }
 
-    override fun scheduleTask(taskInfo: TaskInfo): JayProto.Worker? {
+    override fun scheduleTask(taskInfo: TaskInfo): WorkerInfo? {
         JayLogger.logInfo("INIT", taskInfo.getId(), actions = arrayOf("WORKER_ID=${worker?.id}"))
         if (worker == null) {
             for (w in SchedulerService.getWorkers(workerType).values) {
@@ -54,15 +55,15 @@ class SingleDeviceScheduler(private val workerType: JayProto.Worker.Type) : Abst
     override fun destroy() {
         JayLogger.logInfo("INIT")
         worker = null
-        SchedulerService.broker.disableHeartBeats()
-        if (workerType == JayProto.Worker.Type.REMOTE) {
+        SchedulerService.disableHeartBeats()
+        if (workerType == WorkerType.REMOTE) {
             SchedulerService.listenForWorkers(false)
         }
         JayLogger.logInfo("COMPLETE")
         super.destroy()
     }
 
-    override fun getWorkerTypes(): JayProto.WorkerTypes {
-        return JayUtils.genWorkerTypes(workerType)
+    override fun getWorkerTypes(): Set<WorkerType> {
+        return setOf(WorkerType.CLOUD, WorkerType.LOCAL, WorkerType.REMOTE)
     }
 }

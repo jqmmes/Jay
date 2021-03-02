@@ -15,10 +15,6 @@ import pt.up.fc.dcc.hyrax.jay.tensorflow_task.tensorflow.Detection
 import pt.up.fc.dcc.hyrax.jay.tensorflow_task.tensorflow.Model
 import java.io.File
 
-/**
- * todo: Move this interface to the tf implementations
- */
-
 interface DetectObjects {
     var useNNAPI: Boolean
     var minimumScore: Float

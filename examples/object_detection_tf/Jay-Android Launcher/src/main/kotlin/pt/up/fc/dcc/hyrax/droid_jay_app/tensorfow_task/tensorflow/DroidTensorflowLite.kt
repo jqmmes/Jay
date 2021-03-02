@@ -14,13 +14,14 @@ package pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.tensorflow
 import android.content.Context
 import android.graphics.BitmapFactory
 import pt.up.fc.dcc.hyrax.droid_jay_app.interfaces.Classifier
+import pt.up.fc.dcc.hyrax.droid_jay_app.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.droid_jay_app.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.droid_jay_app.utils.TFUtils
 import java.io.File
 import kotlin.concurrent.thread
 
 class DroidTensorflowLite(private val context: Context) :
-    pt.up.fc.dcc.hyrax.jay.tensorflow_task.interfaces.DetectObjects {
+    DetectObjects {
 
     override var minimumScore: Float = 0f
     override var useGPU = false

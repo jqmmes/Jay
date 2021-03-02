@@ -36,45 +36,10 @@ enum PowerStatus {
     UNKNOWN = 6;
 }
 
-/*message TaskTransfer {
-    string id = 1; // uuid
-    Task task = 2;
-
-    // remove?
-    bool localTask = 3;
-
-    // remove?
-    string fileId = 8;
-
-    enum Status {
-        BEGIN_TRANSFER = 0;
-        TRANSFER = 1;
-        END_TRANSFER = 2;
-    }
-}*/
-
-
-/**
-todo: change repeated fields to hold a TaskDetails
- */
-
 message Task {
-    //string id = 1; // uuid
     TaskInfo info = 1;
 
     bytes data = 2;
-    //bool localTask = 3;
-    //Status status = 4;
-    //int64 creationTimeStamp = 5;
-    //int64 deadlineTimeStamp = 6;
-    //int64 deadline = 7;
-    //string fileId = 8;
-
-    /*enum Status {
-        BEGIN_TRANSFER = 0;
-        TRANSFER = 1;
-        END_TRANSFER = 2;
-    }*/
 }
 
 message TaskStream {
@@ -119,10 +84,11 @@ message PowerEstimations {
     float batteryCapacity = 6;
 }
 
-message Worker {
-    StatusCode status = 1;
+message WorkerInfo {
 
-    string id = 2; // uuid
+    string id = 1; // uuid
+
+    StatusCode status = 2;
 
     int32 batteryLevel = 3;
     int32 batteryCapacity = 4;
@@ -138,8 +104,8 @@ message Worker {
 
     enum Type {
         LOCAL = 0;
-        CLOUD = 1;
-        REMOTE = 2;
+        REMOTE = 1;
+        CLOUD = 2;
     }
     Type type = 12;
 
@@ -177,6 +143,7 @@ message ServiceStatus {
 message Scheduler {
     string id = 1;
     string name = 2;
+    string description = 3;
 }
 
 message Schedulers {
@@ -184,7 +151,7 @@ message Schedulers {
 }
 
 message WorkerTypes {
-    repeated Worker.Type type = 1;
+    repeated WorkerInfo.Type type = 1;
 }
 
 message BandwidthEstimate {
@@ -194,7 +161,7 @@ message BandwidthEstimate {
         ALL = 2;
     }
     Type type = 1;
-    repeated Worker.Type workerType = 2;
+    repeated WorkerInfo.Type workerType = 2;
 }
 
 message String {
@@ -310,11 +277,6 @@ message ProfileRecordings {
     repeated ProfileRecording profileRecording = 1;
 }
 
-/*message TaskInfo {
-    string path = 1;
-    int64 deadline = 2;
-}*/
-
 message TaskAllocationNotification {
     string workerId = 1;
     string taskId = 2;
@@ -331,7 +293,7 @@ service BrokerService {
     }; // App > Broker --> Calls SchedulerService::schedule
 
     //       SchedulerService::notifyWorkerUpdate
-    rpc requestWorkerStatus (google.protobuf.Empty) returns (Worker) {
+    rpc requestWorkerStatus (google.protobuf.Empty) returns (WorkerInfo) {
     }; // ExternalBroker > Broker
     //      SchedulerService::notifyWorkerUpdate
 
@@ -391,13 +353,12 @@ service BrokerService {
     rpc getExpectedPower (google.protobuf.Empty) returns (PowerEstimations) {
     };
 
-    rpc getExpectedCurrentFromRemote (Worker) returns (CurrentEstimations) {
+    rpc getExpectedCurrentFromRemote (WorkerInfo) returns (CurrentEstimations) {
     };
 
-    rpc getExpectedPowerFromRemote (Worker) returns (PowerEstimations) {
+    rpc getExpectedPowerFromRemote (WorkerInfo) returns (PowerEstimations) {
     };
 
-    // todo: remove?
     rpc networkBenchmark (Task) returns (google.protobuf.Empty) {
     };
     rpc informAllocatedTask (String) returns (Status) {
@@ -434,13 +395,13 @@ service ProfilerService {
 
 // Broker > SchedulerBase
 service SchedulerService {
-    rpc schedule (TaskInfo) returns (Worker) {
+    rpc schedule (TaskInfo) returns (WorkerInfo) {
     }; // Schedule a Task
     rpc notifyTaskComplete (TaskInfo) returns (google.protobuf.Empty) {
     }; // Report Task completion to scheduler
-    rpc notifyWorkerUpdate (Worker) returns (Status) {
+    rpc notifyWorkerUpdate (WorkerInfo) returns (Status) {
     }; // Inform about Worker updates
-    rpc notifyWorkerFailure (Worker) returns (Status) {
+    rpc notifyWorkerFailure (WorkerInfo) returns (Status) {
     }; // Inform about Worker connection failures
     rpc setScheduler (Scheduler) returns (Status) {
     }; // Select Scheduler to be used

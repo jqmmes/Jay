@@ -16,43 +16,44 @@ import android.content.Intent
 import android.os.IBinder
 import pt.up.fc.dcc.hyrax.jay.Jay
 import pt.up.fc.dcc.hyrax.jay.R
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.AndroidPowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.*
+import pt.up.fc.dcc.hyrax.jay.structures.WorkerType
 
 internal class SchedulerAndroidService : Service() {
 
+    // todo: Extract these scheduler registrations from here
     override fun onCreate() {
         super.onCreate()
         val notification = Jay.makeNotification(this, "DroidJay Scheduler", "Running", icon = R.drawable.ic_bird_scheduler_border)
         startForeground(notification.first, notification.second)
-        SchedulerService.registerScheduler(SingleDeviceScheduler(Worker.Type.LOCAL))
-        SchedulerService.registerScheduler(SingleDeviceScheduler(Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(SingleDeviceScheduler(Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(true, Worker.Type.LOCAL))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(true, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(true, Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(true, Worker.Type.CLOUD, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(true, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(false, Worker.Type.LOCAL))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(false, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(false, Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(false, Worker.Type.CLOUD, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(MultiDeviceScheduler(false, Worker.Type.LOCAL, Worker.Type.CLOUD, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(EstimatedTimeScheduler())
-        SchedulerService.registerScheduler(ComputationEstimateScheduler())
-        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL))
-        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE))
-        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.REMOTE, Worker.Type.CLOUD))
-        SchedulerService.registerScheduler(GreenTaskScheduler(Worker.Type.LOCAL, Worker.Type.REMOTE, Worker.Type.CLOUD))
+        SchedulerManager.registerScheduler(SingleDeviceScheduler(WorkerType.LOCAL))
+        SchedulerManager.registerScheduler(SingleDeviceScheduler(WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(SingleDeviceScheduler(WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(true, WorkerType.LOCAL))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(true, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(true, WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(true, WorkerType.LOCAL, WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(true, WorkerType.LOCAL, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(true, WorkerType.CLOUD, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(true, WorkerType.LOCAL, WorkerType.CLOUD, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(false, WorkerType.LOCAL))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(false, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(false, WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(false, WorkerType.LOCAL, WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(false, WorkerType.LOCAL, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(false, WorkerType.CLOUD, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(MultiDeviceScheduler(false, WorkerType.LOCAL, WorkerType.CLOUD, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(EstimatedTimeScheduler())
+        SchedulerManager.registerScheduler(ComputationEstimateScheduler())
+        SchedulerManager.registerScheduler(GreenTaskScheduler(WorkerType.LOCAL))
+        SchedulerManager.registerScheduler(GreenTaskScheduler(WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(GreenTaskScheduler(WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(GreenTaskScheduler(WorkerType.LOCAL, WorkerType.REMOTE))
+        SchedulerManager.registerScheduler(GreenTaskScheduler(WorkerType.LOCAL, WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(GreenTaskScheduler(WorkerType.REMOTE, WorkerType.CLOUD))
+        SchedulerManager.registerScheduler(GreenTaskScheduler(WorkerType.LOCAL, WorkerType.REMOTE, WorkerType.CLOUD))
         SchedulerService.start(true, AndroidPowerMonitor(this))
     }
 

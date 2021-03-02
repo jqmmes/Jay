@@ -15,8 +15,6 @@ import io.grpc.ConnectivityState
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.PowerStatus.UNKNOWN
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings.PING_PAYLOAD_SIZE
@@ -27,152 +25,54 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
-             val type: JayProto.Worker.Type = JayProto.Worker.Type.REMOTE,
-             checkHearBeat: Boolean = false, bwEstimates: Boolean = false,
-             statusChangeCallback: ((Status) -> Unit)? = null) {
+class Worker(id: String = UUID.randomUUID().toString(), address: String,
+             type: WorkerType = WorkerType.LOCAL,
+             checkHeartBeat: Boolean = false, bwEstimates: Boolean = false,
+             private var statusChangeCallback: ((WorkerInfo.Status) -> Unit)? = null
+) {
 
-    enum class Status {
-        ONLINE,
-        OFFLINE
-    }
-
-
-    val grpc: BrokerGRPCClient = BrokerGRPCClient(address)
-
-    private var avgComputingEstimate = 0L
-    private var batteryLevel = 100
-    private var batteryCapacity: Int = -1
-    private var batteryStatus: PowerStatus = UNKNOWN
-    private var cpuCores = 0
-    private var queueSize = 1
-    private var queuedTasks = 0
-    private var waitingToReceiveTasks = 0
-    private var runningTasks = 0
-    private var totalMemory = 0L
-    private var freeMemory = 0L
-    private var status = Status.OFFLINE
-    private var bandwidthEstimate: Float = 0f
-    private var avgResultSize = 0L
-    private var powerEstimations: JayProto.PowerEstimations? = null
+    internal val grpc: BrokerGRPCClient = BrokerGRPCClient(address)
+    internal val info: WorkerInfo = WorkerInfo(id, type, address, grpc.port)
 
     private var smartPingScheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
     private var circularFIFO: CircularFifoQueue<Float> = CircularFifoQueue(JaySettings.RTT_HISTORY_SIZE)
     private var circularResultsFIFO: CircularFifoQueue<Long> = CircularFifoQueue(JaySettings.RESULTS_CIRCULAR_FIFO_SIZE)
     private var consecutiveTransientFailurePing = 0
-    private var proto: JayProto.Worker? = null
     private var autoStatusUpdateEnabledFlag = false
     private var autoStatusUpdateRunning = CountDownLatch(0)
     private var calcRTT = false
     private var checkingHeartBeat = false
 
-    private var statusChangeCallback: ((Status) -> Unit)? = null
-
-    private var lastStatusUpdateTimestamp: Long = -1
-
     private val rttLock = Object()
     private val resultsLock = Object()
 
 
-    constructor(proto: JayProto.Worker?, address: String, checkHearBeat: Boolean,
-                bwEstimates: Boolean, statusChangeCallback: ((Status) -> Unit)? = null) : this(proto!!.id, address) {
-        updateStatus(proto)
+    constructor(proto: JayProto.WorkerInfo?, type: WorkerType, address: String, checkHearBeat: Boolean,
+                bwEstimates: Boolean, statusChangeCallback: ((WorkerInfo.Status) -> Unit)? = null) : this(id=proto!!.id, type=type, address=address) {
+        info.update(proto)
         if (checkHearBeat) enableHeartBeat(statusChangeCallback)
         if (bwEstimates && JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("ACTIVE", "ALL"))
             doActiveRTTEstimates(statusChangeCallback = statusChangeCallback)
     }
 
     init {
-        bandwidthEstimate = when (type) {
-            JayProto.Worker.Type.LOCAL -> 0f
-            JayProto.Worker.Type.REMOTE -> 0.003f
-            JayProto.Worker.Type.CLOUD -> 0.1f
-            else -> 0.07f
+        info.bandwidthEstimate = when (type) {
+            WorkerType.LOCAL -> 0f
+            WorkerType.REMOTE -> 0.003f
+            WorkerType.CLOUD -> 0.1f
         }
-        if (checkHearBeat) enableHeartBeat(statusChangeCallback)
+        if (checkHeartBeat) enableHeartBeat(statusChangeCallback)
         if (bwEstimates && JaySettings.BANDWIDTH_ESTIMATE_TYPE in arrayOf("ACTIVE", "ALL"))
             doActiveRTTEstimates(statusChangeCallback = statusChangeCallback)
+        info.setGPRCPortChangedCb { port -> this.grpc.setNewPort(port) }
         JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
-    }
-
-    private fun genProto() {
-        val worker = JayProto.Worker.newBuilder()
-        worker.id = id // Internal
-        worker.batteryLevel = batteryLevel // Modified by Worker
-        worker.batteryCapacity = batteryCapacity
-        worker.batteryStatus = batteryStatus
-        worker.avgTimePerTask = avgComputingEstimate // Modified by Worker
-        worker.cpuCores = cpuCores // Set by Worker
-        worker.queueSize = queueSize // Set by Worker
-        worker.queuedTasks = queuedTasks
-        worker.waitingToReceiveTasks = waitingToReceiveTasks
-        worker.runningTasks = runningTasks // Modified by Worker
-        worker.type = type // Set in Broker
-        worker.bandwidthEstimate = bandwidthEstimate // Set internally
-        worker.totalMemory = totalMemory
-        worker.freeMemory = freeMemory
-        worker.avgResultSize = avgResultSize
-        worker.brokerPort = this.grpc.port
-        if (this.powerEstimations != null) worker.powerEstimations = this.powerEstimations
-        this.proto = worker.build()
-    }
-
-    private fun updateStatus(proto: JayProto.ProfileRecording?) {
-        if (proto == null) return
-    }
-
-    private fun updateStatus(proto: JayProto.WorkerComputeStatus?) {
-        if (proto == null) return
-        runningTasks = proto.runningTasks
-        avgComputingEstimate = proto.avgTimePerTask
-        queueSize = proto.queueSize
-        queuedTasks = proto.queuedTasks
-        waitingToReceiveTasks = proto.waitingToReceiveTasks
-    }
-
-    internal fun updateStatus(computeProto: JayProto.WorkerComputeStatus?, profileProto: JayProto.ProfileRecording?): JayProto.Worker? {
-        JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
-        if (computeProto == null && profileProto == null) return this.proto
-        updateStatus(computeProto)
-        updateStatus(profileProto)
-        this.lastStatusUpdateTimestamp = System.currentTimeMillis()
-        return getProto(true)
-    }
-
-    internal fun updateStatus(proto: JayProto.Worker?): JayProto.Worker? {
-        JayLogger.logInfo("INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
-        if (proto == null) return this.proto
-        batteryLevel = proto.batteryLevel
-        batteryCapacity = proto.batteryCapacity
-        batteryStatus = proto.batteryStatus
-        avgComputingEstimate = proto.avgTimePerTask
-        runningTasks = proto.runningTasks
-        cpuCores = proto.cpuCores
-        queueSize = proto.queueSize
-        queuedTasks = proto.queuedTasks
-        waitingToReceiveTasks = proto.waitingToReceiveTasks
-        totalMemory = proto.totalMemory
-        freeMemory = proto.freeMemory
-        powerEstimations = proto.powerEstimations
-        if (proto.brokerPort != this.grpc.port) this.grpc.setNewPort(proto.brokerPort)
-        this.lastStatusUpdateTimestamp = System.currentTimeMillis()
-        return getProto(true)
-    }
-
-    internal fun updateStatus(expectedPower: JayProto.PowerEstimations?) {
-        this.powerEstimations = expectedPower
-    }
-
-    internal fun getProto(genProto: Boolean = false): JayProto.Worker? {
-        if (proto == null || genProto) genProto()
-        return proto
     }
 
     /**
      * Request Worker Current Status Automatically. When receives the new status, updates this class information
      * Only request worker status when remote worker is online.
      */
-    internal fun enableAutoStatusUpdate(updateNotificationCb: (JayProto.Worker?) -> Unit) {
+    internal fun enableAutoStatusUpdate(updateNotificationCb: (JayProto.WorkerInfo?) -> Unit) {
         if (autoStatusUpdateEnabledFlag) return
         thread {
             autoStatusUpdateEnabledFlag = true
@@ -180,20 +80,21 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
             var backoffCount = 0
             do {
                 if (grpc.channel.getState(true) != ConnectivityState.TRANSIENT_FAILURE) {
-                    JayLogger.logInfo("REQUEST_WORKER_STATUS_INIT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                    JayLogger.logInfo("REQUEST_WORKER_STATUS_INIT", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}"))
                     // Reduce a little bit the wait time because it takes time to update information and record last
-                    if (isOnline() && System.currentTimeMillis() - this.lastStatusUpdateTimestamp >= JaySettings.WORKER_STATUS_UPDATE_INTERVAL * 0.8) {
+                    if (isOnline() && System.currentTimeMillis() - info.lastStatusUpdateTimestamp >= JaySettings.WORKER_STATUS_UPDATE_INTERVAL * 0.8) {
                         grpc.requestWorkerStatus { W ->
-                            JayLogger.logInfo("REQUEST_WORKER_STATUS_ONLINE", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
-                            updateNotificationCb.invoke(updateStatus(W))
-                            JayLogger.logInfo("REQUEST_WORKER_STATUS_COMPLETE", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                            JayLogger.logInfo("REQUEST_WORKER_STATUS_ONLINE", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}"))
+                            info.update(W)
+                            updateNotificationCb.invoke(W)
+                            JayLogger.logInfo("REQUEST_WORKER_STATUS_COMPLETE", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}"))
                         }
                     } else {
-                        JayLogger.logInfo("REQUEST_WORKER_STATUS_OFFLINE", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                        JayLogger.logInfo("REQUEST_WORKER_STATUS_OFFLINE", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}"))
                     }
                 } else {
                     if (++backoffCount % 5 == 0) grpc.channel.resetConnectBackoff()
-                    JayLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}"))
+                    JayLogger.logInfo("REQUEST_WORKER_STATUS_FAIL", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}"))
                 }
                 JayLogger.logInfo("AVAILABLE_MEMORY", "", "MAX_MEMORY=${Runtime.getRuntime().maxMemory()}", "MEMORY=${
                     Runtime
@@ -216,12 +117,12 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
             circularResultsFIFO.add(size)
             var tot = 0L
             circularResultsFIFO.forEach { tot += it }
-            avgResultSize = tot / circularResultsFIFO.size
+            info.avgResultSize = tot / circularResultsFIFO.size
         }
     }
 
-    fun addRTT(millis: Int, payloadSize: Int = PING_PAYLOAD_SIZE) {
-        bandwidthEstimate = JaySettings.BANDWIDTH_SCALING_FACTOR * if (JaySettings.BANDWIDTH_ESTIMATE_CALC_METHOD == "mean") {
+    internal fun addRTT(millis: Int, payloadSize: Int = PING_PAYLOAD_SIZE) {
+        info.bandwidthEstimate = JaySettings.BANDWIDTH_SCALING_FACTOR * if (JaySettings.BANDWIDTH_ESTIMATE_CALC_METHOD == "mean") {
             synchronized(rttLock) {
                 circularFIFO.add(millis.toFloat() / payloadSize)
                 if (circularFIFO.size > 0) circularFIFO.sum() / circularFIFO.size else 0f
@@ -235,28 +136,28 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                 }
             }
         }
-        JayLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = arrayOf("WORKER_ID=$id", "BANDWIDTH_ESTIMATE=$bandwidthEstimate", "WORKER_TYPE=${type.name}"))
+        JayLogger.logInfo("NEW_BANDWIDTH_ESTIMATE", actions = arrayOf("WORKER_ID=$info.id", "BANDWIDTH_ESTIMATE=${info.bandwidthEstimate}", "WORKER_TYPE=${info.type.name}"))
     }
 
-    fun enableHeartBeat(statusChangeCallback: ((Status) -> Unit)? = null) {
+    internal fun enableHeartBeat(statusChangeCallback: ((WorkerInfo.Status) -> Unit)? = null) {
         checkingHeartBeat = true
         this.statusChangeCallback = statusChangeCallback
         if (smartPingScheduler.isShutdown) smartPingScheduler = ScheduledThreadPoolExecutor(1)
         smartPingScheduler.schedule(RTTTimer(), 0L, TimeUnit.MILLISECONDS)
     }
 
-    fun disableHeartBeat() {
+    internal fun disableHeartBeat() {
         smartPingScheduler.shutdownNow()
         checkingHeartBeat = false
         statusChangeCallback = null
     }
 
-    fun doActiveRTTEstimates(statusChangeCallback: ((Status) -> Unit)? = null) {
+    internal fun doActiveRTTEstimates(statusChangeCallback: ((WorkerInfo.Status) -> Unit)? = null) {
         calcRTT = true
         if (!checkingHeartBeat) enableHeartBeat(statusChangeCallback)
     }
 
-    fun stopActiveRTTEstimates() {
+    internal fun stopActiveRTTEstimates() {
         if (checkingHeartBeat) disableHeartBeat()
         calcRTT = false
     }
@@ -267,21 +168,21 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
 
         other as Worker
 
-        if (id != other.id) return false
+        if (info.id != other.info.id) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return id.hashCode()
+        return info.id.hashCode()
     }
 
-    fun isOnline(): Boolean {
-        return status == Status.ONLINE
+    internal fun isOnline(): Boolean {
+        return info.status == WorkerInfo.Status.ONLINE
     }
 
-    fun getStatus(): Status {
-        return status
+    internal fun getStatus(): WorkerInfo.Status {
+        return info.status
     }
 
 
@@ -289,18 +190,18 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
         override fun run() {
             grpc.ping(PING_PAYLOAD_SIZE, timeout = JaySettings.PING_TIMEOUT, callback = { T ->
                 if (T == -1) {
-                    if (status == Status.ONLINE) {
-                        JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
-                        status = Status.OFFLINE
-                        statusChangeCallback?.invoke(status)
+                    if (info.status == WorkerInfo.Status.ONLINE) {
+                        JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}", "STATUS=DEVICE_OFFLINE"))
+                        info.status = WorkerInfo.Status.OFFLINE
+                        statusChangeCallback?.invoke(info.status)
                     }
                     if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), JaySettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
                 } else if (T == -2 || T == -3) { // TRANSIENT_FAILURE || CONNECTING
-                    if (status == Status.ONLINE) {
+                    if (info.status == WorkerInfo.Status.ONLINE) {
                         if (++consecutiveTransientFailurePing > JaySettings.RTT_DELAY_MILLIS_FAIL_ATTEMPTS) {
-                            JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_OFFLINE"))
-                            status = Status.OFFLINE
-                            statusChangeCallback?.invoke(status)
+                            JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}", "STATUS=DEVICE_OFFLINE"))
+                            info.status = WorkerInfo.Status.OFFLINE
+                            statusChangeCallback?.invoke(info.status)
                             if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), JaySettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
                             consecutiveTransientFailurePing = 0
                         } else {
@@ -310,10 +211,10 @@ class Worker(val id: String = UUID.randomUUID().toString(), val address: String,
                         if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), JaySettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
                     }
                 } else {
-                    if (status == Status.OFFLINE) {
-                        JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$id", "WORKER_TYPE=${type.name}", "STATUS=DEVICE_ONLINE"))
-                        status = Status.ONLINE
-                        statusChangeCallback?.invoke(status)
+                    if (info.status == WorkerInfo.Status.OFFLINE) {
+                        JayLogger.logInfo("HEARTBEAT", actions = arrayOf("WORKER_ID=$info.id", "WORKER_TYPE=${info.type.name}", "STATUS=DEVICE_ONLINE"))
+                        info.status = WorkerInfo.Status.ONLINE
+                        statusChangeCallback?.invoke(info.status)
                     }
                     if (!smartPingScheduler.isShutdown) smartPingScheduler.schedule(RTTTimer(), JaySettings.RTT_DELAY_MILLIS, TimeUnit.MILLISECONDS)
                     if (calcRTT) addRTT(T)

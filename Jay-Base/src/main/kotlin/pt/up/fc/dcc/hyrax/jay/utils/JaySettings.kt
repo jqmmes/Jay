@@ -74,4 +74,9 @@ object JaySettings {
     var INCLUDE_IDLE_COSTS: Boolean = false
 
     var USE_CPU_ESTIMATIONS = false
+
+    // Task Caching
+    // todo: Make use of cache
+    var CACHE_TASKS: Boolean = true
+    var KEEP_CACHED_TASK: Boolean = true
 }

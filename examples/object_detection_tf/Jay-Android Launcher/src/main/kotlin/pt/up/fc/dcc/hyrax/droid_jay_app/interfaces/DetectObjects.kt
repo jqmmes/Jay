@@ -9,16 +9,12 @@
  *
  */
 
-package pt.up.fc.dcc.hyrax.jay.tensorflow_task.interfaces
+package pt.up.fc.dcc.hyrax.droid_jay_app.interfaces
 
 
 import pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.tensorflow.Detection
 import pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.tensorflow.Model
 import java.io.File
-
-/**
- * todo: Move this interface to the tf implementations
- */
 
 interface DetectObjects {
     var useNNAPI: Boolean

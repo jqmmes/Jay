@@ -64,7 +64,7 @@ object TFUtils {
         return File(modelPath, modelName).absolutePath
     }
 
-    fun loadModel(classifier: Classifier, context: Context, model: Model, modelName: String, tfOdApiInputSize: Int, assetManager: AssetManager? = null, isQuantized: Boolean? = null, numThreads: Int? = null, device: String? = null, lite: Boolean = false): Classifier? {
+    fun loadModel(classifier: Classifier, context: Context, model: Model, modelName: String, tfOdApiInputSize: Int, assetManager: AssetManager? = null, isQuantized: Boolean? = null, numThreads: Int? = null, device: String? = null, lite: Boolean = false): Classifier {
         val modelPath = getModelPath(context, model, modelName, lite)
         JayLogger.logInfo("LOADING_MODEL", actions = arrayOf("MODEL_ID=${model.modelId}", "MODEL_PATH=$modelPath"))
         try {

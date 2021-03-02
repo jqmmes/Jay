@@ -14,8 +14,10 @@ package pt.up.fc.dcc.hyrax.jay.utils
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker.Type
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.jay.JayState
+import pt.up.fc.dcc.hyrax.jay.structures.PowerStatus
+import pt.up.fc.dcc.hyrax.jay.structures.Scheduler
+import pt.up.fc.dcc.hyrax.jay.structures.TaskExecutor
 import java.net.DatagramPacket
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -41,6 +43,31 @@ object JayUtils {
             }
         }
         return interfaceList
+    }
+
+    internal fun powerStatusToProto(power: PowerStatus): JayProto.PowerStatus {
+        return when(power) {
+            PowerStatus.FULL -> JayProto.PowerStatus.FULL
+            PowerStatus.AC_CHARGING -> JayProto.PowerStatus.AC_CHARGING
+            PowerStatus.USB_CHARGING -> JayProto.PowerStatus.USB_CHARGING
+            PowerStatus.QI_CHARGING -> JayProto.PowerStatus.QI_CHARGING
+            PowerStatus.CHARGING -> JayProto.PowerStatus.CHARGING
+            PowerStatus.DISCHARGING -> JayProto.PowerStatus.DISCHARGING
+            PowerStatus.UNKNOWN -> JayProto.PowerStatus.UNKNOWN
+        }
+    }
+
+    internal fun powerStatusFromProto(power: JayProto.PowerStatus?): PowerStatus {
+        return when(power) {
+            JayProto.PowerStatus.FULL -> PowerStatus.FULL
+            JayProto.PowerStatus.AC_CHARGING -> PowerStatus.AC_CHARGING
+            JayProto.PowerStatus.USB_CHARGING -> PowerStatus.USB_CHARGING
+            JayProto.PowerStatus.QI_CHARGING -> PowerStatus.QI_CHARGING
+            JayProto.PowerStatus.CHARGING -> PowerStatus.CHARGING
+            JayProto.PowerStatus.DISCHARGING -> PowerStatus.DISCHARGING
+            JayProto.PowerStatus.UNKNOWN -> PowerStatus.UNKNOWN
+            else -> PowerStatus.UNKNOWN
+        }
     }
 
     fun getLocalIpV4(refresh: Boolean = false): String {
@@ -72,18 +99,16 @@ object JayUtils {
         return JayProto.Status.newBuilder().setCode(code).build()
     }
 
-    fun parseSchedulers(schedulers: JayProto.Schedulers?): Set<Pair<String, String>> {
-        val schedulerSet: MutableSet<Pair<String, String>> = mutableSetOf()
-        for (scheduler in schedulers!!.schedulerList) schedulerSet.add(Pair(scheduler.id, scheduler.name))
+    fun parseSchedulers(schedulers: JayProto.Schedulers?): Set<Scheduler> {
+        val schedulerSet: MutableSet<Scheduler> = mutableSetOf()
+        for (scheduler in schedulers!!.schedulerList) schedulerSet.add(Scheduler(scheduler.id, scheduler.name, scheduler.description))
         return schedulerSet
     }
 
-    fun genWorkerTypes(vararg types: Type): JayProto.WorkerTypes {
-        return JayProto.WorkerTypes.newBuilder().addAllType(types.asIterable()).build()
-    }
-
-    fun genWorkerTypes(types: List<Type>): JayProto.WorkerTypes {
-        return JayProto.WorkerTypes.newBuilder().addAllType(types).build()
+    fun parseTaskExecutors(taskExecutors: JayProto.TaskExecutors?): Set<TaskExecutor> {
+        val taskExecutorSet: MutableSet<TaskExecutor> = mutableSetOf()
+        for (taskExecutor in taskExecutors!!.taskExecutorsList) taskExecutorSet.add(TaskExecutor(taskExecutor.id, taskExecutor.name, taskExecutor.description))
+        return taskExecutorSet
     }
 
     fun genStatusSuccess(): JayProto.Status {

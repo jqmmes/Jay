@@ -11,17 +11,15 @@
 
 package pt.up.fc.dcc.hyrax.jay.interfaces
 
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.structures.Task
+import java.io.File
 
-/**
- * todo: create specific functions to read and store tasks. These functions should be internal
- */
 interface FileSystemAssistant {
-    fun getByteArrayFromId(id: String): ByteArray
-    fun getByteArrayFast(id: String): ByteArray
-    fun getAbsolutePath(): String
-    fun readTempFile(fileId: String?): ByteArray
-    fun createTempFile(data: ByteArray?): String
-    fun clearTempFile(fileId: String?)
-    fun getFileSizeFromId(id: String): Long
-    fun cacheByteArrayWithId(id: String, bytes: ByteArray): Boolean
+    fun createTempFile(name: String): File?
+    fun getTempFile(name: String): File?
+    fun deleteTempFile(name: String)
+    fun cacheTask(task: JayProto.Task?): Boolean
+    fun readTask(taskInfo: JayProto.TaskInfo?): Task?
+    fun deleteTask(taskInfo: JayProto.TaskInfo?)
 }

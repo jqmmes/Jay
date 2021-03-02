@@ -14,18 +14,22 @@ package pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task
 import android.content.Context
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.tensorflow.Detection
-import pt.up.fc.dcc.hyrax.jay.tensorflow_task.interfaces.DetectObjects
-import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto
 import pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.tensorflow.DroidTensorflow
 import pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.tensorflow.DroidTensorflowLite
 import pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.tensorflow.Model
-import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
-import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Model as JayModel
+import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
+import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutor
 import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.droid_jay_app.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Model as JayModel
 
-class TensorflowTaskExecutor(private val context: Context, name: String = "Tensorflow", description: String? = null, private val lite: Boolean = false, private val fsAssistant: FileSystemAssistant?) : TaskExecutor(name, description) {
+class TensorflowTaskExecutor(
+    private val context: Context,
+    name: String = "Tensorflow",
+    description: String? = null,
+    private val lite: Boolean = false
+) : TaskExecutor(name, description) {
 
     private lateinit var classifier: DetectObjects
 
@@ -43,11 +47,9 @@ class TensorflowTaskExecutor(private val context: Context, name: String = "Tenso
     override fun executeTask(task: Task, callback: ((Any) -> Unit)?) {
         try {
             JayLogger.logInfo("READ_IMAGE_DATA", task.info.getId())
-            // todo: we no longer use fileId. Must read task file and extract data from it
-            task.data // this can be anything. We can store a serialized object here
-            val imgData = fsAssistant?.readTempFile(task.info.getId()) ?: ByteArray(0)
+            val imgData = task.data
 
-            JayLogger.logInfo("START", task.info.getId())
+                JayLogger.logInfo("START", task.info.getId())
             val results = JayTensorFlowProto.Results.newBuilder()
             var resultsStr = ""
             for (detection in classifier.detectObjects(imgData)) {

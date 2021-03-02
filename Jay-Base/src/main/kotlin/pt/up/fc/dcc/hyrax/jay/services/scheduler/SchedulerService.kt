@@ -15,13 +15,12 @@ import pt.up.fc.dcc.hyrax.jay.grpc.GRPCServerBase
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.ServiceStatus.Type.SCHEDULER
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker
 import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.grpc.ProfilerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.status.device.power.PowerMonitor
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.grpc.SchedulerGRPCServer
-import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.AbstractScheduler
-import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
+import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.SchedulerManager
+import pt.up.fc.dcc.hyrax.jay.structures.*
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 import java.util.*
@@ -30,6 +29,7 @@ import java.util.concurrent.Semaphore
 import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.random.Random
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerInfo as WorkerInfoProto
 
 object SchedulerService {
     enum class WorkerConnectivityStatus {
@@ -39,42 +39,90 @@ object SchedulerService {
 
     private var powerMonitor: PowerMonitor? = null
     private var server: GRPCServerBase? = null
-    private val workers: MutableMap<String, Worker?> = hashMapOf()
-    internal val broker = BrokerGRPCClient("127.0.0.1")
-    internal val profiler = ProfilerGRPCClient("127.0.0.1")
-    private var scheduler: AbstractScheduler? = null
-    private val notifyListeners = LinkedList<((Worker?, WorkerConnectivityStatus) -> Unit)>()
+    private val workers: MutableMap<String, WorkerInfo?> = hashMapOf()
+    private val broker = BrokerGRPCClient("127.0.0.1")
+    private val profiler = ProfilerGRPCClient("127.0.0.1")
+    private val notifyListeners = LinkedList<((WorkerInfo?, WorkerConnectivityStatus) -> Unit)>()
     private var taskCompleteListener: ((String) -> Unit)? = null
     private var running = false
-    private val schedulers: MutableSet<AbstractScheduler> = mutableSetOf()
     private val workersLock = Object()
     private val concurrentFIFOQueueSemaphore = ConcurrentLinkedDeque<Semaphore>()
     private val concurrentSemaphoreLock = Object()
 
-    internal fun getWorker(id: String): Worker? {
+    fun enableHeartBeats(workerTypes: Set<WorkerType>, cb: ((Boolean) -> Unit)? = null) {
+        val requestBuilder = JayProto.WorkerTypes.newBuilder()
+        workerTypes.forEach { type ->
+            requestBuilder.addType(
+                when (type) {
+                    WorkerType.REMOTE -> JayProto.WorkerInfo.Type.REMOTE
+                    WorkerType.LOCAL -> JayProto.WorkerInfo.Type.LOCAL
+                    WorkerType.CLOUD -> JayProto.WorkerInfo.Type.CLOUD
+                }
+            )
+        }
+        broker.enableHeartBeats(requestBuilder.build()) {s ->
+            cb?.invoke(when(s.code) {
+                JayProto.StatusCode.Success -> true
+                else -> false
+            })
+        }
+    }
+
+    fun disableHeartBeats() {
+        broker.disableHeartBeats()
+    }
+
+    fun enableBandwidthEstimates(bandwidthEstimateConfig: BandwidthEstimationConfig, cb: ((Boolean) -> Unit)? = null) {
+        val requestBuilder = JayProto.BandwidthEstimate.newBuilder()
+            .setType(
+                when(bandwidthEstimateConfig.bandwidth) {
+                    BandwidthEstimationType.ACTIVE -> JayProto.BandwidthEstimate.Type.ACTIVE
+                    BandwidthEstimationType.PASSIVE -> JayProto.BandwidthEstimate.Type.PASSIVE
+                    BandwidthEstimationType.ALL -> JayProto.BandwidthEstimate.Type.ALL
+                })
+        bandwidthEstimateConfig.workerTypes.forEach {wt ->
+            requestBuilder.addWorkerType(when(wt) {
+                WorkerType.LOCAL -> JayProto.WorkerInfo.Type.LOCAL
+                WorkerType.REMOTE -> JayProto.WorkerInfo.Type.REMOTE
+                WorkerType.CLOUD -> JayProto.WorkerInfo.Type.CLOUD
+            })
+        }
+        broker.enableBandwidthEstimates(requestBuilder.build()) { s ->
+            cb?.invoke(
+                when (s.code) {
+                    JayProto.StatusCode.Success -> true
+                    else -> false
+                }
+            )
+        }
+    }
+
+    fun disableBandwidthEstimates() {
+        broker.disableBandwidthEstimates()
+    }
+
+    internal fun getWorker(id: String): WorkerInfo? {
         return synchronized(workersLock) {
             if (workers.containsKey(id)) workers[id] else null
         }
     }
 
-    internal fun getWorkers(vararg filter: Worker.Type): HashMap<String, Worker?> {
+    internal fun getWorkers(vararg filter: WorkerType): HashMap<String, WorkerInfo?> {
         return getWorkers(filter.asList())
     }
 
-    internal fun getWorkers(filter: List<Worker.Type>): HashMap<String, Worker?> {
-        if (filter.isEmpty()) return workers as HashMap<String, Worker?>
-        val filteredWorkers = mutableMapOf<String, Worker?>()
+    internal fun getWorkers(filter: List<WorkerType>): HashMap<String, WorkerInfo?> {
+        if (filter.isEmpty()) return workers as HashMap<String, WorkerInfo?>
+        val filteredWorkers = mutableMapOf<String, WorkerInfo?>()
         synchronized(workersLock) {
             for (worker in workers) {
                 if (worker.value?.type in filter) filteredWorkers[worker.key] = worker.value
             }
         }
-        return filteredWorkers as HashMap<String, Worker?>
+        return filteredWorkers as HashMap<String, WorkerInfo?>
     }
 
-    fun registerScheduler(scheduler: AbstractScheduler) {
-        schedulers.add(scheduler)
-    }
+
 
     fun start(useNettyServer: Boolean = false, powerMonitor: PowerMonitor? = null) {
         JayLogger.logInfo("INIT")
@@ -95,9 +143,9 @@ object SchedulerService {
         }
     }
 
-    internal fun schedule(request: JayProto.TaskInfo?): Worker? {
-        if (scheduler == null) scheduler = schedulers.first()
-        val w = scheduler?.scheduleTask(TaskInfo(request))
+    internal fun schedule(request: JayProto.TaskInfo?): WorkerInfoProto? {
+        if (SchedulerManager.scheduler == null) SchedulerManager.scheduler = SchedulerManager.schedulers.first()
+        val w = SchedulerManager.scheduler?.scheduleTask(TaskInfo(request))
         JayLogger.logInfo("SELECTED_WORKER", request?.id ?: "", "WORKER=${w?.id}")
         if (w != null && workers.containsKey(w.id)) {
             broker.notifyAllocatedTask(JayProto.TaskAllocationNotification.newBuilder()
@@ -116,8 +164,8 @@ object SchedulerService {
             var queueIsFull: Boolean
             synchronized(workersLock) {
                 queueIsFull = try {
-                    if (workers[w.id]!!.queueSize > 1)
-                        workers[w.id]!!.queuedTasks >= max(5, workers[w.id]!!.queueSize - 5)
+                    if (workers[w.id]!!.getQueueSize() > 1)
+                        workers[w.id]!!.getQueuedTasks() >= max(5, workers[w.id]!!.getQueueSize() - 5)
                     else
                         false
                 } catch (ignore: Exception) {
@@ -127,13 +175,13 @@ object SchedulerService {
             while (queueIsFull) {
                 try {
                     JayLogger.logInfo("WORKER_QUEUE_FULL", request?.id ?: "", "WORKER=${w.id}",
-                            "CURRENT_QUEUE=${workers[w.id]?.queuedTasks}", "MAX_QUEUE=${workers[w.id]?.queueSize}")
+                            "CURRENT_QUEUE=${workers[w.id]?.getQueuedTasks()}", "MAX_QUEUE=${workers[w.id]?.getQueueSize()}")
                 } catch (ignore: Exception) {
                 }
                 semaphore.acquire()
                 synchronized(workersLock) {
                     queueIsFull = try {
-                        workers[w.id]!!.queuedTasks >= max(5, workers[w.id]!!.queueSize - 5)
+                        workers[w.id]!!.getQueuedTasks() >= max(5, workers[w.id]!!.getQueueSize() - 5)
                     } catch (ignore: Exception) {
                         false
                     }
@@ -141,7 +189,8 @@ object SchedulerService {
             }
             synchronized(workersLock) {
                 try {
-                    workers[w.id] = Worker.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.queuedTasks + 1).build()
+                    //= WorkerInfoProto.newBuilder(workers[w.id]).setQueuedTasks(workers[w.id]!!.getQueuedTasks() + 1).build()
+                    workers[w.id]?.queuedTasks?.inc()
                 } catch (ignore: Exception) {
                 }
             }
@@ -150,47 +199,48 @@ object SchedulerService {
             }
             try {
                 JayLogger.logInfo("INCREMENT_QUEUED_TASKS", request?.id ?: "", "WORKER=${w.id}",
-                        "NEW_SIZE=${workers[w.id]?.queuedTasks}")
+                        "NEW_SIZE=${workers[w.id]?.getQueuedTasks()}")
             } catch (ignore: Exception) {
             }
         }
-        return w
+        return w?.getProto()
     }
 
-    internal fun notifyWorkerUpdate(worker: Worker?): JayProto.StatusCode {
+    internal fun notifyWorkerUpdate(worker: WorkerInfoProto?): JayProto.StatusCode {
         JayLogger.logInfo("WORKER_UPDATE", actions = arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
-        if (worker?.type == Worker.Type.REMOTE && JaySettings.CLOUDLET_ID != "" && JaySettings.CLOUDLET_ID != worker.id) return JayProto.StatusCode.Success
+        if (worker?.type == WorkerInfoProto.Type.REMOTE && JaySettings.CLOUDLET_ID != "" && JaySettings.CLOUDLET_ID != worker.id) return JayProto.StatusCode.Success
         synchronized(workersLock) {
-            workers[worker!!.id] = worker
+            workers[worker!!.id]?.update(worker)
         }
         synchronized(concurrentSemaphoreLock) {
             concurrentFIFOQueueSemaphore.peekFirst()?.release()
         }
         JayLogger.logInfo(
                 "WORKER=${worker!!.id}",
-                "BAT_CAPACITY=${workers[worker.id]?.powerEstimations?.batteryCapacity}",
-                "BAT_LEVEL=${workers[worker.id]?.powerEstimations?.batteryLevel}",
-                "BAT_COMPUTE=${workers[worker.id]?.powerEstimations?.compute}",
-                "BAT_IDLE=${workers[worker.id]?.powerEstimations?.idle}",
-                "BAT_TX=${workers[worker.id]?.powerEstimations?.tx}",
-                "BAT_RX=${workers[worker.id]?.powerEstimations?.rx}")
-        for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.ONLINE)
+                "BAT_CAPACITY=${workers[worker.id]?.getPowerEstimations()?.batteryCapacity}",
+                "BAT_LEVEL=${workers[worker.id]?.getPowerEstimations()?.batteryLevel}",
+                "BAT_COMPUTE=${workers[worker.id]?.getPowerEstimations()?.compute}",
+                "BAT_IDLE=${workers[worker.id]?.getPowerEstimations()?.idle}",
+                "BAT_TX=${workers[worker.id]?.getPowerEstimations()?.tx}",
+                "BAT_RX=${workers[worker.id]?.getPowerEstimations()?.rx}")
+        for (listener in notifyListeners) listener.invoke(workers[worker.id], WorkerConnectivityStatus.ONLINE)
         return JayProto.StatusCode.Success
     }
 
-    internal fun notifyWorkerFailure(worker: Worker?): JayProto.StatusCode {
+    internal fun notifyWorkerFailure(worker: WorkerInfoProto?): JayProto.StatusCode {
         JayLogger.logInfo("WORKER_FAILED", actions = arrayOf("WORKER_ID=${worker?.id}", "WORKER_TYPE=${worker?.type?.name}"))
         if (worker!!.id in workers.keys) {
+            var removedWorker: WorkerInfo?
             synchronized(workersLock) {
-                workers.remove(worker.id)
+                removedWorker = workers.remove(worker.id)
             }
-            for (listener in notifyListeners) listener.invoke(worker, WorkerConnectivityStatus.OFFLINE)
+            for (listener in notifyListeners) listener.invoke(removedWorker, WorkerConnectivityStatus.OFFLINE)
             return JayProto.StatusCode.Success
         }
         return JayProto.StatusCode.Error
     }
 
-    internal fun registerNotifyListener(listener: ((Worker?, WorkerConnectivityStatus) -> Unit)) {
+    internal fun registerNotifyListener(listener: ((WorkerInfo?, WorkerConnectivityStatus) -> Unit)) {
         notifyListeners.addLast(listener)
     }
 
@@ -220,29 +270,6 @@ object SchedulerService {
         server?.stopNowAndWait()
     }
 
-    internal fun listSchedulers(): JayProto.Schedulers {
-        JayLogger.logInfo("INIT")
-        val schedulersProto = JayProto.Schedulers.newBuilder()
-        for (scheduler in schedulers) {
-            JayLogger.logInfo("SCHEDULER_INFO", actions = arrayOf("SCHEDULER_NAME=${scheduler.getName()}", "SCHEDULER_ID=${scheduler.id}")) //.replace(",", ";")
-            schedulersProto.addScheduler(scheduler.getProto())
-        }
-        JayLogger.logInfo("COMPLETE")
-        return schedulersProto.build()
-    }
-
-    internal fun setScheduler(id: String?): JayProto.StatusCode {
-        for (scheduler in schedulers)
-            if (scheduler.id == id) {
-                this.scheduler?.destroy()
-                this.scheduler = scheduler
-                this.scheduler?.init()
-                this.scheduler?.waitInit()
-                return JayProto.StatusCode.Success
-            }
-        return JayProto.StatusCode.Error
-    }
-
     internal fun isRunning(): Boolean {
         return running
     }
@@ -251,22 +278,20 @@ object SchedulerService {
         taskCompleteListener?.invoke(id ?: "")
     }
 
-    internal fun getExpectedCurrent(worker: Worker?, callback: ((JayProto.CurrentEstimations?) -> Unit)) {
-        if (worker?.type == Worker.Type.LOCAL) callback(profiler.getExpectedCurrent())
-        broker.getExpectedCurrentFromRemote(worker) { callback(it) }
+    internal fun getExpectedCurrent(worker: WorkerInfo?, callback: ((CurrentEstimations) -> Unit)) {
+        if (worker?.type == WorkerType.LOCAL) callback(CurrentEstimations(profiler.getExpectedCurrent()!!))
+        broker.getExpectedCurrentFromRemote(worker?.getProto()) { callback(CurrentEstimations(it!!)) }
     }
 
-    internal fun getExpectedPower(worker: Worker?, callback: ((JayProto.PowerEstimations?) -> Unit)) {
-        if (worker?.type == Worker.Type.LOCAL) callback(profiler.getExpectedPower())
-        broker.getExpectedPowerFromRemote(worker) { callback(it) }
+    internal fun getExpectedPower(worker: WorkerInfo?, callback: ((PowerEstimations) -> Unit)) {
+        if (worker?.type == WorkerType.LOCAL) callback(PowerEstimations(profiler.getExpectedPower()!!))
+        broker.getExpectedPowerFromRemote(worker?.getProto()) { callback(PowerEstimations(it!!)) }
     }
 
     /**
      * todo: Validate that we check the new deadline format. We dropped taskDeadlineTimeStamp, and store deadline in ms (max task duration)
-     *
-     *
      */
-    internal fun canMeetDeadline(taskInfo: TaskInfo, worker: Worker?): Boolean {
+    internal fun canMeetDeadline(taskInfo: TaskInfo, worker: WorkerInfo?): Boolean {
         if (worker == null) return false
         JayLogger.logInfo("CAN_MEET_DEADLINE", taskInfo.getId(), "WORKER=${worker.id}")
         if ((taskInfo.deadline == null) ||
@@ -275,15 +300,15 @@ object SchedulerService {
             return true
         }
         val deadlineTime: Long = System.currentTimeMillis() + taskInfo.deadline
-        val expectedCompletion = System.currentTimeMillis() + ((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * taskInfo.dataSize)).toLong()
+        val expectedCompletion = System.currentTimeMillis() + ((worker.getQueuedTasks() + 1) * worker.getAvgComputingTimeEstimate() + (worker.bandwidthEstimate * taskInfo.dataSize)).toLong()
         val deadlineTimeWithTolerance = deadlineTime - JaySettings.DEADLINE_CHECK_TOLERANCE
         JayLogger.logInfo("CHECK_WORKER_MEETS_DEADLINE", taskInfo.getId(),
                 "WORKER=${worker.id}",
                 "MAX_DEADLINE=${deadlineTime}",
                 "EXPECTED_DEADLINE=${expectedCompletion}",
-                "EXPECTED_DURATION=${((worker.queuedTasks + 1) * worker.avgTimePerTask + (worker.bandwidthEstimate * taskInfo.dataSize)).toLong()}",
-                "QUEUE_SIZE=${worker.queuedTasks}",
-                "AVG_TIME_PER_TASK=${worker.avgTimePerTask}",
+                "EXPECTED_DURATION=${((worker.getQueuedTasks() + 1) * worker.getAvgComputingTimeEstimate() + (worker.bandwidthEstimate * taskInfo.dataSize)).toLong()}",
+                "QUEUE_SIZE=${worker.getQueuedTasks()}",
+                "AVG_TIME_PER_TASK=${worker.getAvgComputingTimeEstimate()}",
                 "TASK_DATA_SIZE=${taskInfo.dataSize}",
                 "WORKER_BANDWIDTH=${worker.bandwidthEstimate}",
                 "DEADLINE_WITH_TOLERANCE=${deadlineTimeWithTolerance}"
@@ -298,6 +323,10 @@ object SchedulerService {
     }
 
     fun setSchedulerSettings(settingMap: Map<String, Any>, callback: ((JayProto.Status?) -> Unit)?) {
-        callback?.invoke(this.scheduler?.setSettings(settingMap))
+        when(SchedulerManager.scheduler?.setSettings(settingMap)) {
+            true -> callback?.invoke(JayUtils.genStatusSuccess())
+            false -> callback?.invoke(JayUtils.genStatusError())
+        }
+
     }
 }

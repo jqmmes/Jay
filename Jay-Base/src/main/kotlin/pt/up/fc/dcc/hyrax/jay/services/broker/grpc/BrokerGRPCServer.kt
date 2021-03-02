@@ -22,7 +22,7 @@ import pt.up.fc.dcc.hyrax.jay.proto.BrokerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.String as StringProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Settings as SettingsProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Request as RequestProto
-import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Worker as WorkerProto
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerInfo as WorkerInfoProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.WorkerTypes as WorkerTypesProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Scheduler as SchedulerProto
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto.Schedulers as SchedulersProto
@@ -142,7 +142,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(genStatus(StatusCodeProto.Success), responseObserver)
         }
 
-        override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<WorkerProto>?) {
+        override fun requestWorkerStatus(request: Empty?, responseObserver: StreamObserver<WorkerInfoProto>?) {
             genericComplete(BrokerService.requestWorkerStatus(), responseObserver)
         }
 
@@ -178,7 +178,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(BrokerService.profiler.getExpectedCurrent(), responseObserver)
         }
 
-        override fun getExpectedCurrentFromRemote(request: WorkerProto?, responseObserver: StreamObserver<CurrentEstimationsProto>?) {
+        override fun getExpectedCurrentFromRemote(request: WorkerInfoProto?, responseObserver: StreamObserver<CurrentEstimationsProto>?) {
             BrokerService.getExpectedCurrentFromRemote(request?.id) { S -> genericComplete(S, responseObserver) }
         }
 
@@ -186,7 +186,7 @@ internal class BrokerGRPCServer(useNettyServer: Boolean = false) : GRPCServerBas
             genericComplete(BrokerService.profiler.getExpectedPower(), responseObserver)
         }
 
-        override fun getExpectedPowerFromRemote(request: WorkerProto?, responseObserver: StreamObserver<PowerEstimationsProto>?) {
+        override fun getExpectedPowerFromRemote(request: WorkerInfoProto?, responseObserver: StreamObserver<PowerEstimationsProto>?) {
             BrokerService.getExpectedPowerFromRemote(request?.id) { S -> genericComplete(S, responseObserver) }
         }
 

@@ -20,6 +20,8 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.logger.LogLevel
 import pt.up.fc.dcc.hyrax.jay.protoc.LauncherServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.protoc.x86JayGRPC
+import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
+import pt.up.fc.dcc.hyrax.jay.tensorflow_task.TensorflowTaskExecutor
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.Thread.sleep
@@ -89,6 +91,7 @@ class X86JayLauncher {
                 runningLatch = CountDownLatch(1)
                 enableLogs()
                 thread(start = true) {
+                    TaskExecutorManager.registerTaskExecutor(TensorflowTaskExecutor())
                     jay.startProfiler()
                     sleep(500)
                     jay.startWorker()

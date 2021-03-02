@@ -19,6 +19,7 @@ import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
 import pt.up.fc.dcc.hyrax.jay.proto.SchedulerServiceGrpc
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
+import pt.up.fc.dcc.hyrax.jay.services.scheduler.schedulers.SchedulerManager
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import pt.up.fc.dcc.hyrax.jay.utils.JayUtils
 
@@ -27,7 +28,7 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
 
     override val grpcImpl: BindableService = object : SchedulerServiceGrpc.SchedulerServiceImplBase() {
 
-        override fun schedule(request: JayProto.TaskInfo?, responseObserver: StreamObserver<JayProto.Worker>?) {
+        override fun schedule(request: JayProto.TaskInfo?, responseObserver: StreamObserver<JayProto.WorkerInfo>?) {
             val worker = SchedulerService.schedule(request)
             genericComplete(worker, responseObserver)
         }
@@ -37,22 +38,22 @@ internal class SchedulerGRPCServer(useNettyServer: Boolean = false) : GRPCServer
             genericComplete(Empty.getDefaultInstance(), responseObserver)
         }
 
-        override fun notifyWorkerUpdate(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun notifyWorkerUpdate(request: JayProto.WorkerInfo?, responseObserver: StreamObserver<JayProto.Status>?) {
             genericComplete(JayUtils.genStatus(SchedulerService.notifyWorkerUpdate(request)), responseObserver)
         }
 
-        override fun notifyWorkerFailure(request: JayProto.Worker?, responseObserver: StreamObserver<JayProto.Status>?) {
+        override fun notifyWorkerFailure(request: JayProto.WorkerInfo?, responseObserver: StreamObserver<JayProto.Status>?) {
             genericComplete(JayUtils.genStatus(SchedulerService.notifyWorkerFailure(request)), responseObserver)
         }
 
         override fun listSchedulers(request: Empty?, responseObserver: StreamObserver<JayProto.Schedulers>?) {
             JayLogger.logInfo("INIT")
-            genericComplete(SchedulerService.listSchedulers(), responseObserver)
+            genericComplete(SchedulerManager.listSchedulers(), responseObserver)
             JayLogger.logInfo("COMPLETE")
         }
 
         override fun setScheduler(request: JayProto.Scheduler?, responseObserver: StreamObserver<JayProto.Status>?) {
-            genericComplete(JayUtils.genStatus(SchedulerService.setScheduler(request?.id)), responseObserver)
+            genericComplete(JayUtils.genStatus(SchedulerManager.setScheduler(request?.id)), responseObserver)
         }
 
         override fun setSchedulerSettings(request: JayProto.Settings?, responseObserver: StreamObserver<JayProto.Status>?) {

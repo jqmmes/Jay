@@ -11,23 +11,24 @@
 
 package pt.up.fc.dcc.hyrax.jay.utils
 
+
 import pt.up.fc.dcc.hyrax.jay.interfaces.FileSystemAssistant
+import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import pt.up.fc.dcc.hyrax.jay.structures.Task
+import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.IOException
+import java.io.ObjectInputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
-/**
- * todo: Read a task file
- */
 @ExperimentalPathApi
 class FileSystemAssistant : FileSystemAssistant {
 
     private val tmpDir: Path = createTempDirectory("Jay-x86")
     private val tasksDir: Path = Path(tmpDir.toString(), "tasks").createDirectory()
 
-    override fun getByteArrayFast(id: String): ByteArray {
+    /*override fun getByteArrayFast(id: String): ByteArray {
         return File("${this.javaClass.protectionDomain.codeSource.location.toURI().path.removeSuffix("/Jay-x86.jar")}/assets/$id").readBytes()
     }
 
@@ -38,21 +39,29 @@ class FileSystemAssistant : FileSystemAssistant {
     override fun readTempFile(fileId: String?): ByteArray {
         if (fileId == null) return ByteArray(0)
         return File(tmpDir.toFile(), fileId).readBytes()
-    }
+    }*/
 
-    override fun createTempFile(data: ByteArray?): String {
-        val tmpFile: Path = createTempFile(prefix = "task", directory = tmpDir)
+    override fun createTempFile(name: String): File {
+        return Files.createFile(tmpDir.resolve(name)).toFile()
+
+        /*val tmpFile: Path = createTempFile(prefix = "task", directory = tmpDir)
         return try {
-            Files.write(tmpFile, data ?: ByteArray(0))
+            Files.write(tmpFile, name ?: ByteArray(0))
             tmpFile.name
         } catch (e: IOException) {
             ""
-        }
+        }*/
     }
 
-    override fun clearTempFile(fileId: String?) {}
+    override fun getTempFile(name: String): File? {
+        return tmpDir.resolve(name).toFile()
+    }
 
-    override fun getFileSizeFromId(id: String): Long {
+    override fun deleteTempFile(name: String) {
+        Files.deleteIfExists(tmpDir.resolve(name))
+    }
+
+    /*override fun getFileSizeFromId(id: String): Long {
         return File(tmpDir.toFile(), id).length()
     }
 
@@ -63,9 +72,34 @@ class FileSystemAssistant : FileSystemAssistant {
         } catch (e: Exception) {
             false
         }
+    }*/
+
+    override fun cacheTask(task: JayProto.Task?): Boolean {
+        return try {
+            assert(task != null)
+            Files.createTempFile(tasksDir, task!!.info.id, ".task").writeBytes(task.toByteArray())
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
-    override fun getByteArrayFromId(id: String): ByteArray {
-        return ByteArray(0)
+    override fun readTask(taskInfo: JayProto.TaskInfo?): Task? {
+        return try {
+            assert(taskInfo != null)
+            val taskProto = JayProto.Task.parseFrom(Files.readAllBytes(tasksDir.resolve("${taskInfo!!.id}.task")))
+            ObjectInputStream(ByteArrayInputStream(taskProto.data.toByteArray())).readObject() as Task
+        } catch (e: Exception) {
+            null
+        }
     }
+
+    override fun deleteTask(taskInfo: JayProto.TaskInfo?) {
+        if(taskInfo == null) return
+        Files.deleteIfExists(tasksDir.resolve("${taskInfo.id}.task"))
+    }
+
+    /*override fun getByteArrayFromId(id: String): ByteArray {
+        return ByteArray(0)
+    }*/
 }

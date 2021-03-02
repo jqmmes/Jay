@@ -52,10 +52,6 @@ internal object JayStateManager {
         JayLogger.logInfo("STATES", "", "$activeStates")
     }
 
-    fun stopRecording() {
-        recordingFlag.set(false)
-    }
-
     fun clear() {
         synchronized(SET_LOCK) {
             recordedStates.clear()

@@ -27,7 +27,7 @@ object MulticastListener {
     private lateinit var mcIPAddress: InetAddress
     private var isStopping = false
 
-    fun listen(callback: ((JayProto.Worker?, String) -> Unit)? = null, networkInterface: NetworkInterface? = null) {
+    fun listen(callback: ((JayProto.WorkerInfo?, String) -> Unit)? = null, networkInterface: NetworkInterface? = null) {
         if (running) {
             JayLogger.logWarn("ALREADY_RUNNING")
             return
@@ -68,7 +68,7 @@ object MulticastListener {
                 }
                 if (listeningSocket.`interface`.isLoopbackAddress || getHostAddressFromPacket(packet) != localIp) {
                     try {
-                        callback?.invoke(JayProto.Worker.parseFrom(ByteArray(packet.length) { pos -> packet.data[pos] }), getHostAddressFromPacket(packet))
+                        callback?.invoke(JayProto.WorkerInfo.parseFrom(ByteArray(packet.length) { pos -> packet.data[pos] }), getHostAddressFromPacket(packet))
                     } catch (ignore: Exception) { }
                 }
             } while (running)

@@ -39,13 +39,10 @@ import pt.up.fc.dcc.hyrax.jay.protoc.LauncherServiceGrpc.LauncherServiceImplBase
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutorManager
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutor
 import pt.up.fc.dcc.hyrax.droid_jay_app.tensorfow_task.TensorflowTaskExecutor
-import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random
 
-
-//@Suppress("PrivatePropertyName")
 class DroidJayLauncherService : Service() {
 
     internal class GrpcImpl(private val odClient: Jay, private val context: Context) : LauncherServiceImplBase() {
@@ -60,8 +57,14 @@ class DroidJayLauncherService : Service() {
         }
 
         override fun startWorker(request: Empty?, responseObserver: StreamObserver<BoolValue>?) {
-            TaskExecutorManager.registerTaskExecutor(TensorflowTaskExecutor(context, fsAssistant = FileSystemAssistant(context)) as TaskExecutor)
-            TaskExecutorManager.registerTaskExecutor(TensorflowTaskExecutor(context, name = "TensorflowLite", lite = true, fsAssistant = FileSystemAssistant(context)) as TaskExecutor)
+            TaskExecutorManager.registerTaskExecutor(TensorflowTaskExecutor(context) as TaskExecutor)
+            TaskExecutorManager.registerTaskExecutor(TensorflowTaskExecutor(
+                context,
+                name = "TensorflowLite",
+                lite = true
+            ) as TaskExecutor)
+            TaskExecutorManager.setCalibrationTasks(TaskExecutorManager.generateTask(ByteArray(0)))
+            TaskExecutorManager.listCalibrationTasks()
             enableLogs()
             odClient.startWorker()
             genericComplete(BoolValue.newBuilder().setValue(true).build(), responseObserver)
@@ -94,7 +97,7 @@ class DroidJayLauncherService : Service() {
 
     @Suppress("DEPRECATION")
     internal class Logs(private val logFile: FileOutputStream, private val context: Context) : LogInterface {
-        private var random_id: Int
+        private var randomId: Int
 
         override fun close() {
             logFile.flush()
@@ -104,13 +107,13 @@ class DroidJayLauncherService : Service() {
         init {
             logFile.write((("NODE_NAME,NODE_ID,NODE_TYPE,TIMESTAMP,LOG_LEVEL,CLASS_METHOD_LINE,OPERATION,TASK_ID,ACTIONS\n)").toByteArray()))
             logFile.flush()
-            random_id = Random.nextInt()
+            randomId = Random.nextInt()
         }
 
         @SuppressLint("HardwareIds", "MissingPermission")
         override fun log(id: String, message: String, logLevel: LogLevel, callerInfo: String, timestamp: Long) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                logFile.write("${Build.ID}-$random_id,$id,ANDROID,$timestamp,${logLevel.name},$callerInfo,$message\n"
+                logFile.write("${Build.ID}-$randomId,$id,ANDROID,$timestamp,${logLevel.name},$callerInfo,$message\n"
                         .toByteArray())
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
@@ -124,7 +127,7 @@ class DroidJayLauncherService : Service() {
 
     private lateinit var odClient: Jay
 
-    private val CHANNEL_ID = "DroidJayLauncherService"// The id of the channel.
+    private val channelId = "DroidJayLauncherService"// The id of the channel.
     private val name = "DroidJay Service"// The user-visible name of the channel.
     @Suppress("DEPRECATION")
     private val importance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -133,7 +136,7 @@ class DroidJayLauncherService : Service() {
         Notification.PRIORITY_LOW
     }
 
-    private val GROUP_KEY_JAY_SERVICES = "pt.up.fc.dcc.hyrax.jay.SERVICES"
+    private val groupKeyJayServices = "pt.up.fc.dcc.hyrax.jay.SERVICES"
 
     private var server: Server? = null
 
@@ -166,17 +169,17 @@ class DroidJayLauncherService : Service() {
         val mNotificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+            val mChannel = NotificationChannel(channelId, name, importance)
             mNotificationManager.createNotificationChannel(mChannel)
         }
 
-        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(applicationContext, channelId)
                 .setSmallIcon(R.drawable.ic_bird_border)
                 .setOngoing(true)
                 .setPriority(importance)
                 .setContentTitle(name)
                 .setContentText("Running")
-                .setGroup(GROUP_KEY_JAY_SERVICES)
+                .setGroup(groupKeyJayServices)
                 .build()
         Pair(1, notification)
 

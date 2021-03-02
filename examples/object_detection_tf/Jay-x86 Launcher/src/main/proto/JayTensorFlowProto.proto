@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2021 University of Porto/Faculty of Sciences (UP/FCUP).
+ *
+ * Author: Joaquim Silva
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
+syntax = "proto3";
+
+option java_package = "pt.up.fc.dcc.hyrax.jay.proto";
+option java_outer_classname = "JayTensorFlowProto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+enum StatusCode {
+    Success = 0;
+    Error = 1;
+    Waiting = 2;
+    Received = 3;
+    Ready = 4;
+    End = 5;
+    TimedOut = 6;
+}
+
+message Detection {
+    float score = 1;
+    int32 class = 3;
+}
+
+message Results {
+    StatusCode status = 1;
+    repeated Detection detections = 2;
+    string id = 3; // uuid
+}
+
+message Models {
+    repeated Model models = 1;
+}
+
+message Model {
+    int32 id = 1;
+    string name = 2;
+    string url = 3;
+    bool downloaded = 4;
+    bool isQuantized = 5;
+    int32 inputSize = 6;
+}
+
+message ModelConfig {
+    Model model = 1;
+    map<string, string> configs = 2;
+}

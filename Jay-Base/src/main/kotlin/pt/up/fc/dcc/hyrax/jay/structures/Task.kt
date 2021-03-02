@@ -13,13 +13,22 @@ package pt.up.fc.dcc.hyrax.jay.structures
 
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.proto.JayProto
+import java.io.ByteArrayOutputStream
+import java.io.ObjectOutputStream
 import java.io.Serializable
-import java.util.*
 
 class Task : Serializable {
 
     val info: TaskInfo
-    var data: ByteArray
+    val data: ByteArray
+
+    internal constructor(serializable: Serializable, deadline: Long?) {
+        val taskByteArray = ByteArrayOutputStream()
+        ObjectOutputStream(taskByteArray).writeObject(serializable)
+        taskByteArray.toByteArray()
+        info = TaskInfo(taskByteArray.toByteArray().size.toLong(), (if (deadline != null) deadline * 1000 else null), System.currentTimeMillis())
+        data = taskByteArray.toByteArray()
+    }
 
     internal constructor(taskData: ByteArray, deadline: Long? = null) {
         info = TaskInfo(taskData.size.toLong(), (if (deadline != null) deadline * 1000 else null), System.currentTimeMillis())

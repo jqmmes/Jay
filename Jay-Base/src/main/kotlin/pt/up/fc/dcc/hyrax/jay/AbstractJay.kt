@@ -17,23 +17,19 @@ import pt.up.fc.dcc.hyrax.jay.services.broker.grpc.BrokerGRPCClient
 import pt.up.fc.dcc.hyrax.jay.services.profiler.ProfilerService
 import pt.up.fc.dcc.hyrax.jay.services.scheduler.SchedulerService
 import pt.up.fc.dcc.hyrax.jay.services.worker.WorkerService
+import pt.up.fc.dcc.hyrax.jay.structures.Scheduler
 import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskExecutor
 import pt.up.fc.dcc.hyrax.jay.structures.TaskResult
 import pt.up.fc.dcc.hyrax.jay.utils.JaySettings
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import java.lang.Thread.sleep
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-
-
-/**
- * Todo: - Do not give access to grpc communications. using only Jay/Each Service to communicate with things.
- *       - Provide methods to listSchedulers, selectScheduler, listTaskExecutors, selectTaskExecutor, etc
- *       - Remove all protobuf classes (remove schedulerTask)
- */
 
 abstract class AbstractJay {
 
@@ -47,12 +43,20 @@ abstract class AbstractJay {
         val executorPool: ThreadPoolExecutor = ThreadPoolExecutor(100, 100, Long.MAX_VALUE, TimeUnit.MILLISECONDS, LinkedBlockingQueue(Int.MAX_VALUE))
     }
 
-    fun listSchedulers(callback: ((Set<Pair<String, String>>) -> Unit)? = null) {
+    fun listSchedulers(callback: ((Set<Scheduler>) -> Unit)? = null) {
         broker.getSchedulers(callback)
     }
 
-    fun setScheduler(id: String, completeCallback: (Boolean) -> Unit) {
-        broker.setScheduler(id, completeCallback)
+    fun setScheduler(scheduler: Scheduler, completeCallback: (Boolean) -> Unit) {
+        broker.setScheduler(scheduler, completeCallback)
+    }
+
+    fun listTaskExecutors(callback: ((Set<TaskExecutor>) -> Unit)? = null) {
+        broker.listTaskExecutors(callback)
+    }
+
+    fun setTaskExecutor(taskExecutor: TaskExecutor, completeCallback: (Boolean) -> Unit) {
+        broker.selectTaskExecutor(taskExecutor, completeCallback)
     }
 
     protected open fun startBroker(fsAssistant: FileSystemAssistant? = null) {
@@ -65,16 +69,47 @@ abstract class AbstractJay {
         SchedulerService.start()
     }
 
-    open fun getSchedulerService(): SchedulerService {
+    internal open fun getSchedulerService(): SchedulerService {
         return SchedulerService
     }
 
-    open fun getWorkerService(): WorkerService {
+    internal open fun getWorkerService(): WorkerService {
         return WorkerService
     }
 
     abstract fun startWorker()
 
+    /**
+     * Asynchronous scheduleTask
+     *
+     */
+    fun scheduleTask(task: Task, result: ((TaskResult) -> Unit)? = null) {
+        broker.scheduleTask(task) {response ->
+            var taskResult: TaskResult
+            ByteArrayInputStream(response.bytes.toByteArray()).use {
+                    b -> ObjectInputStream(b).use {
+                    o -> taskResult = o.readObject() as TaskResult
+            }
+            }
+            taskResult.taskId = response.id
+            result?.invoke(taskResult)
+        }
+    }
+
+    /**
+     * Synchronous scheduleTask
+     *
+     */
+    fun scheduleTask(task: Task): TaskResult? {
+        val countDownLatch = CountDownLatch(1)
+        var taskResult: TaskResult? = null
+        scheduleTask(task) {
+            taskResult = it
+            countDownLatch.countDown()
+        }
+        countDownLatch.await()
+        return taskResult
+    }
 
     protected open fun stopBroker() {
         BrokerService.stop()
@@ -90,23 +125,6 @@ abstract class AbstractJay {
         BrokerService.announceMulticast(true)
         WorkerService.stop()
     }
-
-    fun scheduleTask(task: Task, result: ((TaskResult) -> Unit)? = null) : String {
-        return broker.scheduleTask(task) {response ->
-            var taskResult: TaskResult
-            ByteArrayInputStream(response.bytes.toByteArray()).use {
-                b -> ObjectInputStream(b).use {
-                    o -> taskResult = o.readObject() as TaskResult
-                }
-            }
-            taskResult.taskId = response.id
-            result?.invoke(taskResult)
-        }
-    }
-
-    /*fun scheduleTask(data: ByteArray, result: ((JayProto.Response) -> Unit)? = null) {
-        broker.scheduleTask(Task(data), result)
-    }*/
 
     open fun destroy(keepServices: Boolean = false) {
         if (keepServices) return

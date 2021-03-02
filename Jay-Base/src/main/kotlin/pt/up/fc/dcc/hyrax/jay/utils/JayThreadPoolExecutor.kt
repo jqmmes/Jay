@@ -65,6 +65,7 @@ class JayThreadPoolExecutor(private val coreThreads: Int, maxQueueSize: Int = In
         return coreThreads
     }
 
+    @Suppress("unused")
     fun getWorkingThreadCount(): Int {
         return atomicInteger.get()
     }

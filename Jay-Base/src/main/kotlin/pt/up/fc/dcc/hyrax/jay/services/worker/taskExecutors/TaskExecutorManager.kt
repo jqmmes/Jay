@@ -11,12 +11,72 @@
 
 package pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors
 
+import pt.up.fc.dcc.hyrax.jay.services.broker.BrokerService
+import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.structures.TaskInfo
+import java.io.Serializable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
+@Suppress("unused")
 object TaskExecutorManager {
     private var taskExecutor: TaskExecutor? = null
     private val taskExecutors: HashSet<TaskExecutor> = hashSetOf()
+    private val calibrationTasksInfo: HashSet<TaskInfo> = hashSetOf()
+    private val calibrationTasks: HashSet<Task> = hashSetOf()
+    private val lock: Any = Object()
+    private val lock2: Any = Object()
+
+    internal var executorThreadPool: ExecutorService = Executors.newSingleThreadExecutor()
+
+    /**
+     * By default we use a SingleThreadExecutor
+     *
+     * Using this function, it is possible to change the executor used
+     */
+    fun setExecutorService(executor: ExecutorService) {
+        executorThreadPool = executor
+    }
 
     fun registerTaskExecutor(taskExecutor: TaskExecutor) {
         taskExecutors.add(taskExecutor)
+    }
+
+    fun generateTask(serializable: Serializable, deadline: Long? = null) : Task {
+        return Task(serializable, deadline)
+    }
+
+    fun generateTask(bytes: ByteArray, deadline: Long? = null) : Task {
+        return Task(bytes, deadline)
+    }
+
+    fun setCalibrationTasks(vararg task: Task) {
+        task.forEach { t ->
+            if (BrokerService.fsAssistant != null) {
+                BrokerService.fsAssistant?.cacheTask(t.getProto())
+            } else {
+                synchronized(lock){ calibrationTasks.add(t) }
+            }
+            synchronized(lock2) { calibrationTasksInfo.add(t.info) }
+        }
+    }
+
+    internal fun getCalibrationTasks(): Set<TaskInfo> {
+        synchronized(lock) {
+            calibrationTasks.forEach { t ->
+                BrokerService.fsAssistant?.cacheTask(t.getProto())
+                calibrationTasks.remove(t)
+            }
+        }
+        return listCalibrationTasks().toSet()
+    }
+
+    fun listCalibrationTasks(): Set<TaskInfo> {
+        return calibrationTasksInfo.toSet()
+    }
+
+    fun removeCalibrationTasks(vararg task: Task) {
+        synchronized(lock2) { task.forEach { t -> calibrationTasksInfo.remove(t.info) } }
     }
 
     internal fun getTaskExecutors(): Set<TaskExecutor> {

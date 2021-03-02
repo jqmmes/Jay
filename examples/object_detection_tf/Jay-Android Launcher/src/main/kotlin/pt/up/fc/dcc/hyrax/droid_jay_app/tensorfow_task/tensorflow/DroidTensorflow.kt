@@ -15,7 +15,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import pt.up.fc.dcc.hyrax.droid_jay_app.interfaces.Classifier
-import pt.up.fc.dcc.hyrax.jay.tensorflow_task.interfaces.DetectObjects
+import pt.up.fc.dcc.hyrax.droid_jay_app.interfaces.DetectObjects
 import pt.up.fc.dcc.hyrax.droid_jay_app.utils.ImageUtils
 import pt.up.fc.dcc.hyrax.droid_jay_app.utils.TFUtils
 import java.io.File

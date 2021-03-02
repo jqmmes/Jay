@@ -18,6 +18,7 @@ class PowerInfo {
 
     constructor()
 
+    @Suppress("unused")
     constructor(level: Int, current: Float, power: Float,
                 voltage: Float, temperature: Float,
                 energy: Long, charge: Float,

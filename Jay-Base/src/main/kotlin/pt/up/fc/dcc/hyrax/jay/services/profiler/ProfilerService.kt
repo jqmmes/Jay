@@ -109,7 +109,7 @@ object ProfilerService {
     }
 
     // todo: Read recorded file and fix reading
-    private fun genJaySetFromRaw(str: String): Set<JayState> {
+    /*private fun genJaySetFromRaw(str: String): Set<JayState> {
         val stateSet = mutableSetOf<JayState>()
         str.substring("CpuEstimatorKey(jayState=[".length, str.indexOf("]")).split(", ").forEach {
             stateSet.add(when (it) {
@@ -122,7 +122,7 @@ object ProfilerService {
             })
         }
         return stateSet
-    }
+    }*/
 
 
     private fun genBatteryEstimationKey(str: String): BatteryEstimationKey {
@@ -852,11 +852,11 @@ object ProfilerService {
         return list
     }
 
-    private fun setFromStr(str: String): Set<Long> {
+    /*private fun setFromStr(str: String): Set<Long> {
         val set = mutableSetOf<Long>()
         str.substring(1, str.length - 1).split(", ").forEach { set.add(it.toLong()) }
         return set
-    }
+    }*/
 
     fun stopRecording(): ProfileRecordings {
         JayLogger.logInfo("STOP_RECORDING")

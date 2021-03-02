@@ -78,7 +78,7 @@ protobuf {
         }
     }
     generateProtoTasks {
-        ofSourceSet("main").forEach() { task ->
+        ofSourceSet("main").forEach { task ->
             task.builtins {
                 java
             }

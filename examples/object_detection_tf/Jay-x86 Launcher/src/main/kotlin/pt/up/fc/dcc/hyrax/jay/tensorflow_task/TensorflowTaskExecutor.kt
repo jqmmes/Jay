@@ -13,20 +13,19 @@ package pt.up.fc.dcc.hyrax.jay.tensorflow_task
 
 import com.google.protobuf.ByteString
 import pt.up.fc.dcc.hyrax.jay.logger.JayLogger
-import pt.up.fc.dcc.hyrax.jay.tensorflow_task.tensorflow.CloudletTensorFlow
-import pt.up.fc.dcc.hyrax.jay.structures.Task
-import pt.up.fc.dcc.hyrax.jay.utils.FileSystemAssistant
-import kotlin.io.path.ExperimentalPathApi
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto
 import pt.up.fc.dcc.hyrax.jay.services.worker.taskExecutors.TaskExecutor
+import pt.up.fc.dcc.hyrax.jay.structures.Task
+import pt.up.fc.dcc.hyrax.jay.tensorflow_task.tensorflow.CloudletTensorFlow
 import pt.up.fc.dcc.hyrax.jay.tensorflow_task.tensorflow.Detection
 import pt.up.fc.dcc.hyrax.jay.tensorflow_task.tensorflow.Model
+import kotlin.io.path.ExperimentalPathApi
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Detection as JayDetection
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Model as JayModel
 import pt.up.fc.dcc.hyrax.jay.proto.JayTensorFlowProto.Results as JayResults
 
 @ExperimentalPathApi
-class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? = null, private val fsAssistant: FileSystemAssistant?) : TaskExecutor(name, description) {
+class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? = null) : TaskExecutor(name, description) {
 
     private val classifier = CloudletTensorFlow()
 
@@ -37,14 +36,10 @@ class TensorflowTaskExecutor(name: String = "Tensorflow", description: String? =
                 .build()
     }
 
-    /**
-     * todo: Fix loading correct data from .tmp file and casting to correct type
-     *
-     */
     override fun executeTask(task: Task, callback: ((Any) -> Unit)?) {
         try {
             JayLogger.logInfo("READ_IMAGE_DATA", task.info.getId())
-            val imgData = fsAssistant?.readTempFile(task.info.getId()) ?: ByteArray(0)
+            val imgData = task.data
             JayLogger.logInfo("START", task.info.getId())
             val results = JayResults.newBuilder()
             for (detection in classifier.detectObjects(imgData)) {
