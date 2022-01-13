@@ -16,6 +16,9 @@ Jay is a framework written in kotlin capable of offloading computations for hybr
 Clone this repository to your IDE of choice, and depending on the platform 
 you want to develop to, import Jay-Android or Jay-x86 to your project.
 
+For more information on how to use Jay please check chapters 3, 4 and appendix B
+from my PhD Thesis. You can download it [https://joaquimsilva.me/thesis.pdf](here).
+
 ## Requirements
 
 In order to build Jay, your machine must have installed the latest version of
