@@ -13,11 +13,11 @@ Jay is a framework written in kotlin capable of offloading computations for hybr
 
 ## Usage:
 
-Clone this repository to your IDE of choice, and depending on the platform 
+Clone this repository to your IDE of choice, and depending on the platform
 you want to develop to, import Jay-Android or Jay-x86 to your project.
 
 For more information on how to use Jay please check chapters 3, 4 and appendix B
-from my PhD Thesis. You can download it [https://joaquimsilva.me/thesis.pdf](here).
+from my PhD Thesis. You can download it [here](https://joaquimsilva.me/thesis.pdf).
 
 ## Requirements
 
@@ -48,7 +48,7 @@ gRPC. This application will start a server running Jay with the built-in executo
 ### Jay-Android
 
 Using your IDE of choice, build Jay-Android Launcher and control this application
-using gRPC. This application will start in the background of your android device, 
+using gRPC. This application will start in the background of your android device,
 with a notification on the notification area, enabling the start of jay services.
 
 #### Available commands:
@@ -58,7 +58,5 @@ with a notification on the notification area, enabling the start of jay services
 - SetLogName
 
 #### Submitting jobs:
-In order to submit a job you must use the available broker commands detailed in 
+In order to submit a job you must use the available broker commands detailed in
 JayProto.proto (under Jay-Base/proto).
-
-
