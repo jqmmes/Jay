@@ -17,7 +17,7 @@ Clone this repository to your IDE of choice, and depending on the platform
 you want to develop to, import Jay-Android or Jay-x86 to your project.
 
 For more information on how to use Jay please check chapters 3, 4 and appendix B
-from my PhD Thesis. You can download it [here](https://joaquimsilva.me/thesis.pdf).
+from my PhD Thesis. You can download it [here](https://hdl.handle.net/10216/139189).
 
 ## Requirements
 
